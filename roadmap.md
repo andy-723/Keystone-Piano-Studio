@@ -17,3 +17,9 @@
 - [x] Build status filters, totals and printable invoice details.
 - [x] Build Term 2 lesson preview, family drafts and Send all wizard.
 - [x] Add GST setting and verify registered / non-registered rules.
+
+# Parent portal
+- [ ] Add phone-friendly family shell and English / Chinese language toggle.
+- [ ] Add home, family-only chat, read-only progress and student practice logging.
+- [ ] Add family invoice list / detail and simulated payment sheet.
+- [ ] Verify family isolation, parent author role, translations and phone layout.
