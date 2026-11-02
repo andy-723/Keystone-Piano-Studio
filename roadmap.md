@@ -31,6 +31,6 @@
 - [x] Incorporate the uploaded earlier mock-data prompt and report conflicts: preserve built screens, allow teacher-only mock numbers, replace demo date and fixture counts.
 
 # Term renewals
-- [ ] Add teacher renewal invitations, confirmation tracking and simulated reminders.
-- [ ] Add bilingual own-family confirmation / change / decline responses.
-- [ ] Restrict renewal drafts and sending to confirmed families, review before sending; test and verify the full flow.
+- [x] Add teacher renewal invitations, confirmation tracking and simulated reminders.
+- [x] Add bilingual own-family confirmation / change / decline responses.
+- [x] Restrict renewal drafts and sending to confirmed families, review before sending; test and verify the full flow.
