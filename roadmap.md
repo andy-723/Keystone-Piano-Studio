@@ -58,3 +58,8 @@
 # Mobile layouts
 - [x] Adapt shell, lesson controls, weekly timetable and dialogs to narrow phone screens.
 - [x] Verify teacher, parent, chat and setup views at 320/390/440px and larger text; complete a phone lesson move and chat send/readback.
+
+# Mock integrations
+- [ ] Add isolated mock Stripe/Xero states, onboarding and Settings cards; connect empty-studio checklist.
+- [ ] Gate parent online payments and store invoice/payment Xero sync labels.
+- [ ] Test status transitions, payment gating and sync rules; verify full flows and phone layout.
