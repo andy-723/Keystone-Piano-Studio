@@ -8,6 +8,7 @@ import { ChatComposer } from "@/components/ChatComposer";
 import { chatThreadQuery, messageDay } from "@/lib/chat-queries";
 import { formatShortDate, formatTime } from "@/lib/format";
 import { markThreadRead } from "@/services/chat";
+import { MessageTranslation } from "@/components/MessageTranslation";
 
 export function ChatConversation({ id, initialText = "", draftKey = "", onSent }: { id: string; initialText?: string; draftKey?: string; onSent?: () => void }) {
   const { data } = useSuspenseQuery(chatThreadQuery(id));
@@ -37,6 +38,7 @@ export function ChatConversation({ id, initialText = "", draftKey = "", onSent }
               {summary && <div className="mb-3 border-b border-border pb-3"><p className="flex items-center gap-2 font-semibold text-success"><BookOpen aria-hidden className="size-5" /> Lesson summary</p><h3 className="mt-2 text-xl font-semibold">{summary.studentName}</h3><p className="text-base">{summary.gradeGoal} · {summary.readiness}% ready</p></div>}
               {message.body && <p className="whitespace-pre-wrap break-words text-lg">{summary ? message.body.split("\n\n").slice(2).join("\n\n") : message.body}</p>}
               {message.kind !== "text" && <div className="mt-2"><ChatMedia message={message} /></div>}
+              <MessageTranslation messageId={message.id} body={message.body} />
             </div>
             <p className="mt-1 flex items-center justify-end gap-2 text-base text-muted-foreground"><time dateTime={message.sentAt}>{formatTime(message.sentAt)}</time>{teacher && <span className="inline-flex items-center gap-1" title={message.readAt ? "Read by family" : "Sent"}>{message.readAt ? <CheckCheck className="size-5 text-success" aria-hidden /> : <Check className="size-5" aria-hidden />}{message.readAt ? "Read" : "Sent"}</span>}</p>
           </article>

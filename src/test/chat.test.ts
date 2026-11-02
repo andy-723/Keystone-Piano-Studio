@@ -1,6 +1,6 @@
 import { afterEach, expect, it } from "vitest";
 import { conversations, messages } from "@/mocks/data";
-import { getChatThread, getChatThreads, getMessages, markThreadRead, sendMessage } from "@/services/chat";
+import { getChatThread, getChatThreads, getMessages, markThreadRead, sendMessage, getMockEnglishTranslation } from "@/services/chat";
 import { messageDay } from "@/lib/chat-queries";
 const original = { conversations: structuredClone(conversations), messages: structuredClone(messages) };
 afterEach(() => {
@@ -38,4 +38,10 @@ it("does not send empty text or send into an unknown family thread", async () =>
 });
 it("groups messages by the Melbourne day rather than UTC", () => {
   expect(messageDay("2027-02-08T14:30:00Z")).toBe("2027-02-09");
+});
+it("returns a mock English translation without changing the original Chinese message", async () => {
+  const message = messages.find((entry) => entry.body === "谢谢老师！她每天都在练习。");
+  if (!message) throw new Error("Missing Chinese fixture");
+  expect(await getMockEnglishTranslation(message.id)).toBe("Thank you, teacher! She practises every day.");
+  expect(messages.find((entry) => entry.id === message.id)?.body).toBe("谢谢老师！她每天都在练习。");
 });
