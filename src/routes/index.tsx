@@ -123,10 +123,10 @@ function LessonCard({ lesson, date }: { lesson: LessonWithDetails; date: string 
             <BookOpenText aria-hidden /> Open lesson
           </Button>
           <div className="flex flex-wrap gap-3 sm:col-span-3">
-            <Button variant="ghost" disabled={mutation.isPending} onClick={() => mutation.mutate("cancelled_by_studio")}>
+            <Button variant="secondary" disabled={mutation.isPending} onClick={() => mutation.mutate("cancelled_by_studio")}>
               Cancelled by studio
             </Button>
-            <Button variant="ghost" disabled={mutation.isPending} onClick={() => mutation.mutate("cancelled_late")}>
+            <Button variant="secondary" disabled={mutation.isPending} onClick={() => mutation.mutate("cancelled_late")}>
               Late cancel
             </Button>
           </div>
