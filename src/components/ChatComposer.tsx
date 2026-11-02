@@ -43,15 +43,15 @@ export function ChatComposer({ conversationId }: { conversationId: string }) {
   return <form className="shrink-0 border-t border-border bg-background p-4" onSubmit={(event) => { event.preventDefault(); if (!sending.isPending && (text.trim() || attachment)) sending.mutate(); }}>
     {attachment && <div className="mb-3 border-l-4 border-primary bg-muted p-3">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2"><span className="break-all text-base">{attachment.media.fileName ?? "Voice note · 10 seconds"}</span>
-        <Button variant="ghost" disabled={sending.isPending} onClick={() => setAttachment(null)}><X aria-hidden /> Remove</Button></div>
+        <Button type="button" variant="ghost" disabled={sending.isPending} onClick={() => setAttachment(null)}><X aria-hidden /> Remove</Button></div>
       {attachment.kind === "voice" ? <VoiceClip /> : attachment.kind === "image" ? <img src={attachment.media.url} width={160} height={100} alt="Attached photo" className="h-24 w-40 rounded-md object-cover" /> : <video src={attachment.media.url} controls className="h-32 max-w-full" />}
     </div>}
     <label htmlFor="chat-message" className="sr-only">Message to family</label>
     <textarea id="chat-message" value={text} onChange={(event) => setText(event.target.value)} disabled={sending.isPending} placeholder="Write a message…" rows={2} className="w-full resize-y rounded-md border-2 border-input bg-card p-3 text-lg" />
     <input ref={fileInput} type="file" accept="image/*,video/*" aria-label="Attach photo or video" className="hidden" onChange={(event) => { void attach(event.target.files?.[0]); event.target.value = ""; }} />
     <div className="mt-2 flex flex-wrap items-center gap-2">
-      <Button variant="ghost" disabled={sending.isPending} onClick={() => fileInput.current?.click()} className="whitespace-normal"><ImagePlus aria-hidden /> Photo or video</Button>
-      <Button variant="ghost" disabled={sending.isPending} onClick={() => setAttachment({ kind: "voice", media: { durationSeconds: 10 } })} className="whitespace-normal"><Mic aria-hidden /> Record voice note</Button>
+      <Button type="button" variant="ghost" disabled={sending.isPending} onClick={() => fileInput.current?.click()} className="whitespace-normal"><ImagePlus aria-hidden /> Photo or video</Button>
+      <Button type="button" variant="ghost" disabled={sending.isPending} onClick={() => setAttachment({ kind: "voice", media: { durationSeconds: 10 } })} className="whitespace-normal"><Mic aria-hidden /> Record voice note</Button>
       <Button type="submit" disabled={sending.isPending || (!text.trim() && !attachment)} className="ml-auto"><Send aria-hidden /> {sending.isPending ? "Sending…" : "Send"}</Button>
     </div>
   </form>;

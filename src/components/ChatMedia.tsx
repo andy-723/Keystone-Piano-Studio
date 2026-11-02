@@ -18,7 +18,7 @@ export function VoiceClip({ seconds = 10 }: { seconds?: number }) {
     return () => window.clearInterval(timer);
   }, [playing, seconds]);
   return <div className="flex flex-wrap items-center gap-3">
-    <Button variant="outline" onClick={() => { if (elapsed >= seconds) setElapsed(0); setPlaying(!playing); }}>
+    <Button type="button" variant="outline" onClick={() => { if (elapsed >= seconds) setElapsed(0); setPlaying(!playing); }}>
       {playing ? <Pause aria-hidden /> : <Play aria-hidden />} {playing ? "Pause" : "Play"}
     </Button>
     <svg viewBox="0 0 180 40" className="h-10 w-28 shrink-0 text-primary" role="img" aria-label="Voice waveform">
