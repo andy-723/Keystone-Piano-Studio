@@ -28,3 +28,4 @@
 - [ ] Add searchable roster, labelled risk badges and attention ordering / reasons.
 - [ ] Add family check-in templates in the editable chat composer.
 - [ ] Add profiles with family, attendance, four-week practice, progress and invoices; verify flows.
+- [ ] Incorporate the uploaded earlier mock-data prompt and report any conflicts with existing screens.
