@@ -1,5 +1,6 @@
 import { invoices, studio, students, families, weeklySlots, lessonTypes, payments } from "@/mocks/data";
 import { termInvoiceDrafts } from "@/mocks/billing";
+import { renewalState } from "@/mocks/renewals";
 import { addDays, dayKind, TERMS_2027, weekday, PUBLIC_HOLIDAYS_2027, PROTOTYPE_TODAY } from "@/lib/calendar";
 import type { Invoice, InvoiceStatus } from "@/mocks/types";
 import { respond } from "./_delay";
@@ -47,6 +48,7 @@ export async function getTerm2Preview() {
 export async function prepareTerm2Invoices() {
   const preview = await getTerm2Preview();
   for (const family of families) {
+    if (renewalState.active && renewalState.families.get(family.id)?.status !== "confirmed") { termInvoiceDrafts.delete(`inv-term2-${family.id}`); continue; }
     if (invoices.some((invoice) => invoice.termKey === "2027-term-2" && invoice.familyId === family.id)) continue;
     const lines = preview.rows.filter((row) => row.student.familyId === family.id).map((row) => ({
       description: `${row.student.firstName} ${row.student.lastName} – ${row.lessonType?.name ?? "Piano lesson"}, Term 2 2027`, qty: row.dates.length,
@@ -60,11 +62,12 @@ export async function prepareTerm2Invoices() {
   return getTerm2Drafts();
 }
 
-export const getTerm2Drafts = (): Promise<Invoice[]> => respond([...termInvoiceDrafts.values()].map(taxView));
+export const getTerm2Drafts = (): Promise<Invoice[]> => respond([...termInvoiceDrafts.values()].filter((draft) => !renewalState.active || renewalState.families.get(draft.familyId)?.status === "confirmed").map(taxView));
 
 export async function sendTerm2Invoices() {
   const sent: Invoice[] = [];
   for (const draft of termInvoiceDrafts.values()) {
+    if (renewalState.active && renewalState.families.get(draft.familyId)?.status !== "confirmed") continue;
     const existing = invoices.find((invoice) => invoice.id === draft.id);
     if (existing) { sent.push(taxView(existing)); continue; }
     const invoice = { ...taxView(draft), status: "sent" as const };
