@@ -49,14 +49,14 @@ function Today() {
   return (
     <div className={`mx-auto ${view === "week" ? "max-w-7xl" : "max-w-4xl"}`}>
       <div className="mb-5 flex gap-2" role="group" aria-label="Timetable view"><Button variant={view === "day" ? "secondary" : "ghost"} aria-pressed={view === "day"} onClick={() => setView("day")}>Day-book</Button><Button variant={view === "week" ? "secondary" : "ghost"} aria-pressed={view === "week"} onClick={() => setView("week")}>Week</Button></div>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Button variant="outline" className="px-3 md:px-5" asChild>
+      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-2 sm:flex sm:flex-wrap sm:justify-between sm:gap-3">
+        <Button variant="outline" className="px-2 sm:px-3 md:px-5" asChild>
           <Link to="/" search={{ date: addDays(date, view === "week" ? -7 : -1) }}><ChevronLeft aria-hidden /> Previous {view === "week" ? "week" : "day"}</Link>
         </Button>
         {date !== PROTOTYPE_TODAY && (
-          <Button variant="ghost" asChild><Link to="/" search={{}}>Back to today</Link></Button>
+          <Button variant="ghost" className="col-span-2 row-start-2 sm:order-none" asChild><Link to="/" search={{}}>Back to today</Link></Button>
         )}
-        <Button variant="outline" className="px-3 md:px-5" asChild>
+        <Button variant="outline" className="col-start-2 row-start-1 px-2 sm:px-3 md:px-5" asChild>
           <Link to="/" search={{ date: addDays(date, view === "week" ? 7 : 1) }}>Next {view === "week" ? "week" : "day"} <ChevronRight aria-hidden /></Link>
         </Button>
       </div>
@@ -125,10 +125,10 @@ function LessonCard({ lesson, date }: { lesson: LessonWithDetails; date: string 
       aria-label={`${formatTime(lesson.startsAt)}, ${name}`}
       className={`rounded-lg border-2 bg-card p-4 md:p-6 ${marked ? "border-border" : "border-input"}`}
     >
-      <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-        <div className="flex flex-wrap items-baseline gap-x-5 gap-y-1">
-          <span className="whitespace-nowrap font-display text-2xl font-semibold text-primary md:text-3xl">{formatTime(lesson.startsAt)}</span>
-          <h2 className="font-sans text-2xl font-bold">{name}</h2>
+      <div className="grid min-w-0 gap-1 sm:flex sm:flex-wrap sm:items-baseline sm:justify-between sm:gap-x-6">
+        <div className="grid min-w-0 gap-1 sm:flex sm:flex-wrap sm:items-baseline sm:gap-x-5">
+          <span className="shrink-0 whitespace-nowrap font-display text-2xl font-semibold text-primary md:text-3xl">{formatTime(lesson.startsAt)}</span>
+          <h2 className="min-w-0 break-words font-sans text-2xl font-bold">{name}</h2>
         </div>
         <span className="text-lg text-muted-foreground">{lesson.lessonType.name} · {lesson.gradeGoal}</span>
       </div>

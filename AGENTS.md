@@ -10,6 +10,7 @@
 <!-- LOVABLE:END -->
 
 ## Architecture
+- Shared controls wrap on phones and dialogs stay within the dynamic viewport; the weekly timetable stacks days on phones and uses columns on larger screens to avoid page-wide horizontal scrolling.
 - Screens read/write only through async functions in src/services/ (one file per area) over fixtures in src/mocks/ — so the mock layer can be swapped for a REST API later.
 - App shell (nav rail / bottom tabs, role switcher, larger-text toggle) lives in src/routes/__root.tsx via AppShell; role switch swaps teacher app for parent portal there.
 - New-teacher mode is a separate root role gate over setup-only session fixtures and namespaced queries; it never mounts demo teacher screens or mutates demo collections. Setup selects a state calendar and saves partial progress; imports use a separate new-studio roster and chat store, never demo collections.

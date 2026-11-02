@@ -22,7 +22,7 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
   const shellText = (key: "largerText" | "viewingAs") => translate(role === "parent" ? parentLang : "en", key);
 
   return (
-    <div className="min-h-screen md:flex">
+    <div className="min-h-dvh md:flex">
       {/* Left rail on tablet and up (teacher only) */}
       {isTeacher && <nav aria-label="Main" className="hidden md:flex md:w-32 lg:w-40 shrink-0 flex-col gap-2 border-r border-sidebar-border bg-sidebar p-3 sticky top-0 h-screen">
         <div className="px-2 py-3 font-display text-2xl font-semibold text-sidebar-primary">Opus</div>
@@ -40,20 +40,20 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
         ))}
       </nav>}
 
-      <div className={`flex min-w-0 flex-1 flex-col ${isTeacher ? "pb-24 md:pb-0" : ""}`}>
-        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-background/95 px-4 py-3 md:px-8">
-          <div className="font-display text-xl font-semibold">{studio.name}</div>
-          <div className="flex min-w-0 max-w-full flex-wrap items-center gap-4">
-            <div className="relative flex min-h-12 items-center gap-3">
+      <div className={`flex min-w-0 flex-1 flex-col ${isTeacher ? "pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0" : ""}`}>
+        <header className="grid min-w-0 gap-2 border-b border-border bg-background/95 px-4 py-3 lg:flex lg:items-center lg:justify-between md:px-8">
+          <div className="min-w-0 break-words font-display text-xl font-semibold">{studio.name}</div>
+          <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-3 sm:flex sm:flex-wrap sm:gap-4">
+            <div className="relative flex min-h-12 shrink-0 items-center gap-2">
               <Switch id="larger-text" checked={largeText} onCheckedChange={setLargeText} />
               <Label htmlFor="larger-text" className="flex min-h-12 cursor-pointer items-center text-base before:absolute before:inset-0">{shellText("largerText")}</Label>
             </div>
-            <label className="flex min-w-0 max-w-full flex-wrap items-center gap-2 text-base">
-              <span className="text-muted-foreground">{shellText("viewingAs")}</span>
+            <label className="flex min-w-0 max-w-full items-center gap-2 text-base">
+              <span className="sr-only sm:not-sr-only sm:text-muted-foreground">{shellText("viewingAs")}</span>
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value as Role)}
-                className="min-h-12 min-w-0 max-w-full rounded-lg border-2 border-input bg-card px-3 min-readable font-semibold"
+                className="min-h-12 w-full min-w-0 max-w-full rounded-lg border-2 border-input bg-card px-2 min-readable font-semibold sm:w-auto sm:px-3"
               >
                 <option value="teacher">Teacher (Ms Clarke)</option>
                 <option value="parent">Parent (Wei Chen)</option>
@@ -62,17 +62,17 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
             </label>
           </div>
         </header>
-        <main className="flex-1 px-4 py-6 md:px-8 md:py-8">{children}</main>
+        <main className="min-w-0 flex-1 px-3 py-4 sm:px-4 md:px-8 md:py-8">{children}</main>
       </div>
 
       {/* Bottom tab bar on phones (teacher only) */}
-      {isTeacher && <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-sidebar-border bg-sidebar md:hidden">
+      {isTeacher && <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-sidebar-border bg-sidebar pb-[env(safe-area-inset-bottom)] md:hidden">
         {NAV.map(({ to, label, icon: Icon }) => (
           <Link
             key={to}
             to={to}
             activeOptions={{ exact: to === "/" }}
-            className="min-readable flex min-h-16 flex-col items-center justify-center gap-0.5 font-semibold text-sidebar-foreground"
+            className="min-readable flex min-h-16 min-w-0 flex-col items-center justify-center gap-0.5 font-semibold text-sidebar-foreground"
             activeProps={{ className: "text-sidebar-primary underline underline-offset-4" }}
           >
             <Icon className="size-6" aria-hidden />
