@@ -1,18 +1,21 @@
 import { families, students, weeklySlots } from "@/mocks/data";
 import { parentGuardianId, parentPayments } from "@/mocks/parent";
-import type { Message, PracticeLog } from "@/mocks/types";
+import type { Message, PracticeLog, Guardian } from "@/mocks/types";
 import { PROTOTYPE_TODAY, addDays } from "@/lib/calendar";
 import { respond } from "./_delay";
 import { getDayLessons } from "./schedule";
 import { getInvoices, setInvoiceStatus } from "./billing";
 import { getRequirements, getStudentProgress, getPracticeLogs, addPractice } from "./curriculum";
 import { getChatThread, getOrCreateFamilyConversation, sendMessage, markThreadRead } from "./chat";
+import { getNotes } from "./notes";
+
+function parentGuardian(guardian: Guardian) { return { id: guardian.id, name: guardian.name, email: guardian.email, preferredLanguage: guardian.preferredLanguage }; }
 
 export async function getParentSession() {
   const family = families.find((entry) => entry.guardians.some((guardian) => guardian.id === parentGuardianId));
   const guardian = family?.guardians.find((entry) => entry.id === parentGuardianId);
   if (!family || !guardian) throw new Error("Parent family not found");
-  return respond({ family, guardian, children: students.filter((student) => student.familyId === family.id) });
+  return respond({ family: { ...family, guardians: family.guardians.map(parentGuardian) }, guardian: parentGuardian(guardian), children: students.filter((student) => student.familyId === family.id) });
 }
 export async function getParentInvoices() {
   const { family } = await getParentSession();
@@ -22,7 +25,8 @@ export async function getParentInvoice(id: string) { return (await getParentInvo
 export async function getParentChat() {
   const { family } = await getParentSession();
   const conversation = await getOrCreateFamilyConversation(family.id);
-  return getChatThread(conversation.id);
+  const thread = await getChatThread(conversation.id);
+  return thread ? { ...thread, family } : null;
 }
 export async function readParentChat() {
   const thread = await getParentChat();
@@ -43,7 +47,12 @@ export async function getParentHome() {
     nextLesson = day.lessons.find((lesson) => lesson.student.familyId === session.family.id && lesson.status === "scheduled");
   }
   const latestTeacher = thread?.messages.filter((message) => message.authorRole === "teacher").at(-1);
-  return { ...session, nextLesson: nextLesson ?? null, unpaid: invoices.filter((invoice) => ["sent", "overdue", "partially_paid"].includes(invoice.status)), latestTeacher: latestTeacher ?? null };
+  return { ...session, nextLesson: nextLesson ?? null, unpaid: invoices.filter((invoice) => ["sent", "overdue", "partially_paid"].includes(invoice.status)), latestTeacher: latestTeacher ?? null, sharedNotes: await getParentSharedNotes() };
+}
+export async function getParentSharedNotes() {
+  const { family, children } = await getParentSession();
+  const groups = await Promise.all([getNotes("family", family.id), ...children.map((child) => getNotes("student", child.id))]);
+  return groups.flat().filter((note) => note.visibility === "shared").sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
 }
 export async function getParentProgress() {
   const { children } = await getParentSession();
