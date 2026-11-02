@@ -1,7 +1,7 @@
 import { lessonNotes, type LessonNotes } from "@/mocks/lessons";
 import { readiness, weekPractice } from "@/lib/lesson-progress";
 import { formatShortDate } from "@/lib/format";
-import { getDayLessons } from "./schedule";
+import { getLessonOccurrence } from "./schedule";
 import { getPracticeLogs, getRequirements, getStudentProgress } from "./curriculum";
 import { getMessages, getOrCreateFamilyConversation, sendMessage } from "./chat";
 import { getFamily, getTeacher } from "./roster";
@@ -11,14 +11,13 @@ export async function getLiveLesson(id: string) {
   const separator = id.lastIndexOf("_");
   const date = id.slice(separator + 1);
   if (separator < 0 || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
-  const day = await getDayLessons(date);
-  const lesson = day.lessons.find((entry) => entry.id === id);
+  const lesson = await getLessonOccurrence(id);
   if (!lesson) return null;
   const [requirements, progress, practice, family] = await Promise.all([
     getRequirements(lesson.gradeGoal.replace(/^AMEB /, "")), getStudentProgress(lesson.studentId),
     getPracticeLogs(lesson.studentId), getFamily(lesson.student.familyId),
   ]);
-  return { lesson, date, requirements, progress, practice, family, draft: await respond(lessonNotes.get(id) ?? { notes: "", voiceSeconds: 0 }) };
+  return { lesson, date: lesson.startsAt.slice(0, 10), requirements, progress, practice, family, draft: await respond(lessonNotes.get(id) ?? { notes: "", voiceSeconds: 0 }) };
 }
 
 export async function saveLessonNotes(id: string, input: Pick<LessonNotes, "notes" | "voiceSeconds">) {

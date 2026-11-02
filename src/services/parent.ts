@@ -3,10 +3,11 @@ import { parentGuardianId, parentPayments } from "@/mocks/parent";
 import type { Message, PracticeLog, Guardian } from "@/mocks/types";
 import { PROTOTYPE_TODAY, addDays } from "@/lib/calendar";
 import { respond } from "./_delay";
-import { getDayLessons } from "./schedule";
+import { getCredits, getDayLessons } from "./schedule";
 import { getInvoices, recordInvoicePayment } from "./billing";
 import { getRequirements, getStudentProgress, getPracticeLogs, addPractice } from "./curriculum";
 import { getChatThread, getOrCreateFamilyConversation, sendMessage, markThreadRead } from "./chat";
+import { parentMakeUpRequests } from "@/mocks/scheduling";
 import { getNotes } from "./notes";
 
 function parentGuardian(guardian: Guardian) { return { id: guardian.id, name: guardian.name, email: guardian.email, preferredLanguage: guardian.preferredLanguage }; }
@@ -47,7 +48,7 @@ export async function getParentHome() {
     nextLesson = day.lessons.find((lesson) => lesson.student.familyId === session.family.id && lesson.status === "scheduled");
   }
   const latestTeacher = thread?.messages.filter((message) => message.authorRole === "teacher").at(-1);
-  return { ...session, nextLesson: nextLesson ?? null, unpaid: invoices.filter((invoice) => ["sent", "overdue", "partially_paid"].includes(invoice.status)), latestTeacher: latestTeacher ?? null, sharedNotes: await getParentSharedNotes() };
+  return { ...session, nextLesson: nextLesson ?? null, unpaid: invoices.filter((invoice) => ["sent", "overdue", "partially_paid"].includes(invoice.status)), latestTeacher: latestTeacher ?? null, makeUps: await Promise.all(session.children.map(async (child) => ({ studentId: child.id, name: child.firstName, ...await getCredits(child.id) }))), sharedNotes: await getParentSharedNotes() };
 }
 export async function getParentSharedNotes() {
   const { family, children } = await getParentSession();
@@ -75,4 +76,14 @@ export async function payParentInvoice(id: string, method: "payto" | "becs" | "c
   if (!["payto", "becs", "card"].includes(method)) throw new Error("Payment method not found");
   parentPayments.push({ invoiceId: id, method });
   return recordInvoicePayment(id, method);
+}
+export async function requestParentMakeUp(studentId: string, lang: "en" | "zh-CN") {
+  const { children } = await getParentSession(); const child = children.find((entry) => entry.id === studentId);
+  if (!child) throw new Error("Child not in this family");
+  const credits = await getCredits(studentId); if (credits.balance < 1) throw new Error("No make-up credit available");
+  if (parentMakeUpRequests.has(studentId)) return respond({ requested: true });
+  parentMakeUpRequests.add(studentId);
+  try { await sendParentMessage({ kind: "text", body: lang === "zh-CN" ? `请为${child.firstName}安排一节补课。请老师告知可用时间，谢谢。` : `Could you please book a make-up lesson for ${child.firstName}? Please let us know a suitable free time. Thank you.` }); }
+  catch (error) { parentMakeUpRequests.delete(studentId); throw error; }
+  return respond({ requested: true });
 }

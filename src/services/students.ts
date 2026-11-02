@@ -1,5 +1,5 @@
 import { getStudent, getFamily, getStudents } from "./roster";
-import { getDayLessons } from "./schedule";
+import { getCredits, getDayLessons } from "./schedule";
 import { getPracticeLogs, getRequirements, getStudentProgress } from "./curriculum";
 import { getInvoices } from "./billing";
 import { getChatThread, getOrCreateFamilyConversation } from "./chat";
@@ -26,7 +26,7 @@ export async function getStudentProfile(id: string) {
     getRequirements(student.gradeGoal.replace(/^AMEB /, "")), getStudentProgress(id), getInvoices(),
   ]);
   return { student, family, attendance, practice: fourWeekPractice(logs, PROTOTYPE_TODAY), requirements, progress,
-    readiness: readiness(requirements, progress), invoices: invoices.filter((invoice) => invoice.familyId === student.familyId) };
+    credits: await getCredits(id), readiness: readiness(requirements, progress), invoices: invoices.filter((invoice) => invoice.familyId === student.familyId) };
 }
 
 export async function openStudentCheckIn(id: string) {
