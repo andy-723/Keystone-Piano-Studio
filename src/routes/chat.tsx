@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useRouterState } from "@tanstack/react-router";
 import { ComingSoon } from "@/components/AppShell";
 
 export const Route = createFileRoute("/chat")({
@@ -12,5 +12,10 @@ export const Route = createFileRoute("/chat")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: () => <ComingSoon title="Chat" note="Family chat threads are coming soon." />,
+  component: ChatLayout,
 });
+
+function ChatLayout() {
+  const isIndex = useRouterState({ select: (state) => state.location.pathname === "/chat" });
+  return <>{isIndex && <ComingSoon title="Chat" note="Family chat threads are coming soon." />}<Outlet /></>;
+}
