@@ -54,3 +54,7 @@
 - [x] Add occurrence and effective-date weekly moves, free-slot checks and family notifications.
 - [x] Add cancellation credit ledger, make-up booking and own-family parent requests.
 - [x] Add week/day lesson controls, profile history and parent Home balances; verify tests and full flows.
+
+# Mobile layouts
+- [x] Adapt shell, lesson controls, weekly timetable and dialogs to narrow phone screens.
+- [x] Verify teacher, parent, chat and setup views at 320/390/440px and larger text; complete a phone lesson move and chat send/readback.

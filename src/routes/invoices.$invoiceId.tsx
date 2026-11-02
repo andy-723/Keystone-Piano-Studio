@@ -20,7 +20,7 @@ function InvoiceDetail() {
   if (!data) return null;
   return <div className="mx-auto max-w-4xl">
     <div className="invoice-actions mb-5 flex flex-wrap items-center gap-3"><Button asChild variant="ghost"><Link to="/invoices"><ArrowLeft aria-hidden /> All invoices</Link></Button><Button variant="outline" onClick={() => window.print()}><Printer aria-hidden /> Print</Button>
-      {data.invoice.status !== "paid" && data.invoice.status !== "void" && <Button className="ml-auto" disabled={marking.isPending} onClick={() => marking.mutate()}><Check aria-hidden /> {marking.isPending ? "Saving…" : "Mark as paid"}</Button>}</div>
+      {data.invoice.status !== "paid" && data.invoice.status !== "void" && <Button className="w-full sm:ml-auto sm:w-auto" disabled={marking.isPending} onClick={() => marking.mutate()}><Check aria-hidden /> {marking.isPending ? "Saving…" : "Mark as paid"}</Button>}</div>
     <InvoicePaper invoice={data.invoice} studio={data.studio} family={data.family} />
   </div>;
 }

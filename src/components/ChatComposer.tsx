@@ -54,10 +54,10 @@ export function ChatComposer({ conversationId, parentLang, initialText = "", onS
     <label htmlFor="chat-message" className="sr-only">{parentLang ? t("messageLabel") : "Message to family"}</label>
     <textarea id="chat-message" value={text} onChange={(event) => setText(event.target.value)} disabled={sending.isPending} placeholder={t("messagePlaceholder")} rows={2} className="w-full resize-y rounded-md border-2 border-input bg-card p-3 text-lg" />
     <input ref={fileInput} type="file" accept="image/*,video/*" aria-label={t("attachLabel")} className="hidden" onChange={(event) => { void attach(event.target.files?.[0]); event.target.value = ""; }} />
-    <div className="mt-2 flex flex-wrap items-center gap-2">
-      <Button type="button" variant="ghost" disabled={sending.isPending} onClick={() => fileInput.current?.click()} className="whitespace-normal"><ImagePlus aria-hidden /> {t("attach")}</Button>
-      <Button type="button" variant="ghost" disabled={sending.isPending} onClick={() => setAttachment({ kind: "voice", media: { durationSeconds: 10 } })} className="whitespace-normal"><Mic aria-hidden /> {t("record")}</Button>
-      <Button type="submit" disabled={sending.isPending || (!text.trim() && !attachment)} className="ml-auto"><Send aria-hidden /> {sending.isPending ? t("sending") : t("send")}</Button>
+    <div className="mt-2 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-stretch gap-2 sm:flex sm:flex-wrap sm:items-center">
+      <Button type="button" variant="ghost" disabled={sending.isPending} onClick={() => fileInput.current?.click()} className="whitespace-normal px-2 sm:px-5"><ImagePlus aria-hidden /> {t("attach")}</Button>
+      <Button type="button" variant="ghost" disabled={sending.isPending} onClick={() => setAttachment({ kind: "voice", media: { durationSeconds: 10 } })} className="whitespace-normal px-2 sm:px-5"><Mic aria-hidden /> {t("record")}</Button>
+      <Button type="submit" disabled={sending.isPending || (!text.trim() && !attachment)} className="col-span-2 sm:ml-auto"><Send aria-hidden /> {sending.isPending ? t("sending") : t("send")}</Button>
     </div>
   </form>;
 }
