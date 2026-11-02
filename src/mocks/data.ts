@@ -47,7 +47,7 @@ const FAMILY_SEED: [string, string, "en" | "zh-CN", [string, number][]][] = [
   ["Bennett", "Claire Bennett", "en", [["Oliver", 2012], ["Matilda", 2015]]],
   ["Tanaka", "Yuki Tanaka", "en", [["Hana", 2014]]],
   ["Ahmed", "Fatima Ahmed", "en", [["Zara", 2017]]],
-  ["Morgan", "Rhys Morgan", "en", [["Evie", 2013]]],
+  ["Morgan", "Rhys Morgan", "en", [["Evie", 2013], ["Theo", 2017]]],
 ];
 
 export const families: Family[] = [];

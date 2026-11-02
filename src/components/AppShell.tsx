@@ -40,17 +40,17 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
       <div className={`flex min-w-0 flex-1 flex-col ${isTeacher ? "pb-24 md:pb-0" : ""}`}>
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-background/95 px-4 py-3 md:px-8">
           <div className="font-display text-xl font-semibold">{studio.name}</div>
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="flex min-w-0 max-w-full flex-wrap items-center gap-4">
             <div className="relative flex min-h-12 items-center gap-3">
               <Switch id="larger-text" checked={largeText} onCheckedChange={setLargeText} />
               <Label htmlFor="larger-text" className="flex min-h-12 cursor-pointer items-center text-base before:absolute before:inset-0">Larger text</Label>
             </div>
-            <label className="flex items-center gap-2 text-base">
+            <label className="flex min-w-0 max-w-full flex-wrap items-center gap-2 text-base">
               <span className="text-muted-foreground">Viewing as</span>
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value as Role)}
-                className="min-h-12 min-w-0 max-w-full rounded-lg border-2 border-input bg-card px-3 text-base font-semibold"
+                className="min-h-12 min-w-0 max-w-full rounded-lg border-2 border-input bg-card px-3 min-readable font-semibold"
               >
                 <option value="teacher">Teacher (Ms Clarke)</option>
                 <option value="parent">Parent (Wei Chen)</option>
