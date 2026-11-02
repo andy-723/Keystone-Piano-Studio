@@ -78,7 +78,7 @@ it("Term 3 invitations and family responses are independent and do not confirm T
 it("Term 4 invitations reach the own-family parent portal with the correct term dates", async () => {
   expect(await sendRenewalInvitations(4)).toBe(22);
   expect(await getParentRenewal(4)).toMatchObject({ familyId: "fam-1", termNumber: 4, term: { start: "2027-10-04" } });
-  expect(messages.findLast((message) => message.conversationId === "conv-1")?.body).toContain("第 4 学期");
+  expect([...messages].reverse().find((message) => message.conversationId === "conv-1")?.body).toContain("第 4 学期");
 });
 it("confirmed families alone enter draft review and sending, even if old all-family drafts already exist", async () => {
   await prepareTerm2Invoices(); expect(termInvoiceDrafts.size).toBe(22);
