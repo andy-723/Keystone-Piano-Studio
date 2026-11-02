@@ -20,18 +20,19 @@ it('guesses friendly header names and allows revised mappings', () => {
 it('sample has 12 rows with exactly two errors and one duplicate', () => {
   const rows = sampleRows(); const checks = validateRoster(rows);
   expect(rows).toHaveLength(12); expect(checks.filter((row) => row.status === 'Needs a fix')).toHaveLength(2); expect(checks.filter((row) => row.status === 'Duplicate')).toHaveLength(1);
-  expect(checks[5].problems).toHaveProperty('lesson_time'); expect(checks[6].problems).toHaveProperty('guardian_email');
+  expect(checks[5]?.problems).toHaveProperty('lesson_time'); expect(checks[6]?.problems).toHaveProperty('guardian_email');
 });
 it('groups siblings by guardian email irrespective of case or spaces', () => {
-  const rows = sampleRows().slice(0, 2); rows[1].guardian_email = ' SAM.BROOKS@EXAMPLE.COM ';
+  const rows = sampleRows().slice(0, 2); const sibling = rows[1]; if (!sibling) throw new Error('Missing sibling fixture'); sibling.guardian_email = ' SAM.BROOKS@EXAMPLE.COM ';
   expect(groupSiblings(rows)).toHaveLength(1); expect(groupSiblings(rows)[0]).toHaveLength(2);
 });
 it('validates times without interpreting 4.30 as a time', () => {
   expect(parseLessonTime('4.30')).toBeNull(); expect(parseLessonTime('4:30 pm')).toBe('16:30'); expect(parseLessonTime('12:00 am')).toBe('00:00'); expect(parseLessonTime('16:30')).toBe('16:30'); expect(parseLessonTime('24:00')).toBeNull();
 });
 it('validates language, birth year, day and configured lesson lengths', () => {
-  const row = { ...sampleRows()[0], preferred_language: 'fr', birth_year: '2028', lesson_day: 'Someday', lesson_length_min: '90' };
-  expect(Object.keys(validateRoster([row])[0].problems)).toEqual(expect.arrayContaining(['preferred_language', 'birth_year', 'lesson_day', 'lesson_length_min']));
+  const first = sampleRows()[0]; if (!first) throw new Error('Missing sample fixture');
+  const row = { ...first, preferred_language: 'fr', birth_year: '2028', lesson_day: 'Someday', lesson_length_min: '90' };
+  expect(Object.keys(validateRoster([row])[0]?.problems)).toEqual(expect.arrayContaining(['preferred_language', 'birth_year', 'lesson_day', 'lesson_length_min']));
 });
 it('commits isolated new-studio students and invites once into isolated chat only', async () => {
   const rows = sampleRows().slice(0, 2);

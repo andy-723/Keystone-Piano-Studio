@@ -50,7 +50,7 @@ export async function confirmRosterImport(scope: ImportScope, rows: ImportRow[],
 export async function getImportResult(batchId: string) {
   const batch = importBatches.get(batchId); if (!batch) throw new Error('Import not found.');
   const data = store(batch.scope);
-  return respond({ ...batch, batchId, students: data.students.filter((student) => batch.studentIds.includes(student.id)), families: data.families.filter((family) => batch.familyIds.includes(family.id)), messages: batch.scope === 'new-studio' ? newStudioRoster.messages.filter((message) => newStudioRoster.conversations.some((conv) => batch.familyIds.includes(conv.familyId) && conv.id === message.conversationId)) : [] });
+  return respond({ ...batch, batchId, students: data.students.filter((student) => batch.studentIds.includes(student.id)), families: data.families.filter((family) => batch.familyIds.includes(family.id)), messages: batch.scope === 'new-studio' ? newStudioRoster.messages.filter((message) => newStudioRoster.conversations.some((conv) => batch.familyIds.includes(conv.familyId) && conv.id === message.conversationId)).map((message) => ({ ...message, familyName: newStudioRoster.families.find((family) => family.id === newStudioRoster.conversations.find((conv) => conv.id === message.conversationId)?.familyId)?.displayName ?? 'Family chat' })) : [] });
 }
 export async function inviteImportedFamilies(batchId: string) {
   const batch = importBatches.get(batchId); if (!batch) throw new Error('Import not found.');

@@ -46,7 +46,7 @@ export const LESSON_DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursda
 export const lessonWeekday = (day: string) => LESSON_DAYS.findIndex((entry) => entry.toLowerCase() === day.trim().toLowerCase() || entry.slice(0, 3).toLowerCase() === day.trim().toLowerCase());
 export const familyKey = (email: string) => email.trim().toLowerCase();
 export const studentKey = (row: Pick<ImportRow, 'student_first_name' | 'student_last_name' | 'birth_year' | 'guardian_email'>) => [row.student_first_name.trim().toLowerCase(), row.student_last_name.trim().toLowerCase(), row.birth_year.trim(), familyKey(row.guardian_email)].join('|');
-export interface RowCheck { status: 'Ready' | 'Needs a fix' | 'Duplicate'; problems: Partial<Record<ImportField, string>>; duplicateOf?: number }
+export interface RowCheck { status: 'Ready' | 'Needs a fix' | 'Duplicate'; problems: Partial<Record<ImportField, string>>; duplicateOf?: number | undefined }
 export function validateRoster(rows: ImportRow[], existingKeys: string[] = [], durations = [30, 45, 60]): RowCheck[] {
   const seen = new Map<string, number>(existingKeys.map((key) => [key, -1]));
   return rows.map((row, index) => {
