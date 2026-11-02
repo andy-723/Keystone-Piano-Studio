@@ -1,6 +1,6 @@
 import { Suspense, useState } from "react";
 import { WeekTimetable } from "@/components/WeekTimetable";
-import { LessonScheduling } from "@/components/LessonScheduling";
+import { BookingForm, LessonScheduling } from "@/components/LessonScheduling";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { refreshSchedule } from "@/lib/schedule-queries";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -80,7 +80,7 @@ function Today() {
           {data?.lessons.map((l) => <LessonCard key={l.id} lesson={l} date={date} />)}
         </div>
       </article>}
-      <Dialog open={Boolean(selected)} onOpenChange={(open) => { if (!open) setSelected(null); }}><DialogContent className="max-h-[90dvh] overflow-y-auto"><DialogTitle className="pr-8 text-2xl">{selected?.student.firstName} {selected?.student.lastName}</DialogTitle><DialogDescription className="text-base">{selected ? `${formatLongDate(selected.startsAt.slice(0, 10))} · ${formatTime(selected.startsAt)} · ${selected.lessonType.durationMin} minutes` : ""}</DialogDescription>{selected && <><LessonScheduling student={{ id: selected.studentId, name: `${selected.student.firstName} ${selected.student.lastName}`, durationMin: selected.lessonType.durationMin }} occurrenceId={selected.id} date={selected.startsAt.slice(0, 10)} movable={selected.status === "scheduled"} balance={selected.credits} history onSaved={() => setSelected(null)} /><Button variant="outline" asChild><Link to="/lessons/$lessonId" params={{ lessonId: selected.id }}>Open lesson</Link></Button></>}</DialogContent></Dialog>
+      <Dialog open={Boolean(selected)} onOpenChange={(open) => { if (!open) setSelected(null); }}><DialogContent className="max-h-[90dvh] overflow-y-auto"><DialogTitle className="pr-8 text-2xl">{selected?.student.firstName} {selected?.student.lastName}</DialogTitle><DialogDescription className="text-base">{selected ? `${formatLongDate(selected.startsAt.slice(0, 10))} · ${formatTime(selected.startsAt)} · ${selected.lessonType.durationMin} minutes` : ""}</DialogDescription>{selected && <>{selected.status === "scheduled" ? <BookingForm mode="move" student={{ id: selected.studentId, name: `${selected.student.firstName} ${selected.student.lastName}`, durationMin: selected.lessonType.durationMin }} occurrenceId={selected.id} originalDate={selected.startsAt.slice(0, 10)} onDone={() => setSelected(null)} /> : <LessonScheduling student={{ id: selected.studentId, name: `${selected.student.firstName} ${selected.student.lastName}`, durationMin: selected.lessonType.durationMin }} movable={false} balance={selected.credits} history />}<Button variant="outline" asChild><Link to="/lessons/$lessonId" params={{ lessonId: selected.id }}>Open lesson</Link></Button></>}</DialogContent></Dialog>
     </div>
   );
 }

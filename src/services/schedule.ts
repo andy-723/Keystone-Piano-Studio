@@ -87,6 +87,7 @@ async function notify(lesson: LessonWithDetails, date: string, time: string, mak
 }
 export async function moveLesson(input: { occurrenceId: string; date: string; time: string; scope: 'this_week' | 'every_week' }) {
   const lesson = occurrence(input.occurrenceId); if (!lesson || lesson.status !== 'scheduled') throw new Error('Only an upcoming, unmarked lesson can be moved.');
+  if (!['this_week', 'every_week'].includes(input.scope)) throw new Error('Choose how often this move repeats.');
   const sourceDate = lesson.startsAt.slice(0, 10);
   if (sourceDate < PROTOTYPE_TODAY || weekMonday(sourceDate) !== weekMonday(input.date)) throw new Error('Choose a day in this lesson’s week.');
   if (input.scope === 'every_week' && lesson.isMakeUp) throw new Error('Make-ups are one-off lessons.');
