@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Lang } from "@/mocks/types";
 
-export type Role = "teacher" | "parent";
+export type Role = "teacher" | "parent" | "new-teacher";
 
 type Settings = {
   role: Role;
