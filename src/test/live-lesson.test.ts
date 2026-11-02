@@ -57,7 +57,7 @@ describe("Live Lesson rules", () => {
     expect(first.authorRole).toBe("teacher");
     expect(first.lessonSummary).toMatchObject({ lessonId: "stu-1_2027-02-08", studentName: "Lucy Chen", date: "2027-02-08" });
     expect(first.body).toContain("Keep wrists relaxed.");
-    expect(first.body).toContain("15 minutes added by teacher");
+    expect(first.body).toContain("30 minutes added by teacher");
     expect(first.body).toContain("10-second simulated clip");
     expect((await getMessages("conv-1")).some((message) => message.id === first.id)).toBe(true);
   });
