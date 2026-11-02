@@ -72,7 +72,7 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  loader: async ({ context }) => { await Promise.all([studioQuery, parentSessionQuery, parentHomeQuery, parentChatQuery, parentProgressQuery, parentInvoicesQuery].map((query) => context.queryClient.ensureQueryData(query))); },
+  loader: async ({ context }) => { await Promise.all([context.queryClient.ensureQueryData(studioQuery), context.queryClient.ensureQueryData(parentSessionQuery), context.queryClient.ensureQueryData(parentHomeQuery), context.queryClient.ensureQueryData(parentChatQuery), context.queryClient.ensureQueryData(parentProgressQuery), context.queryClient.ensureQueryData(parentInvoicesQuery)]); },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
