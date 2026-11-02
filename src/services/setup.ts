@@ -38,7 +38,7 @@ export async function saveSetupStep(input: SetupStepInput, options: { finishLate
   return getSetup();
 }
 export async function resumeSetup(step: SetupStep = setupSession.step) {
-  setupSession.step = step; setupSession.paused = false;
+  setupSession.step = step; setupSession.paused = false; setupSession.completed = false;
   return getSetup();
 }
 export async function completeSetup() {
