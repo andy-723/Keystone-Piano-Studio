@@ -19,7 +19,7 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
   const { role, setRole, largeText, setLargeText } = useAppSettings();
   const isTeacher = role === "teacher";
   const { parentLang } = useAppSettings();
-  const shellText = (key: "largerText" | "viewingAs") => translate(isTeacher ? "en" : parentLang, key);
+  const shellText = (key: "largerText" | "viewingAs") => translate(role === "parent" ? parentLang : "en", key);
 
   return (
     <div className="min-h-screen md:flex">
@@ -57,6 +57,7 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
               >
                 <option value="teacher">Teacher (Ms Clarke)</option>
                 <option value="parent">Parent (Wei Chen)</option>
+                <option value="new-teacher">New teacher (empty studio)</option>
               </select>
             </label>
           </div>
