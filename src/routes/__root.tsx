@@ -130,7 +130,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AppSettingsProvider>
         <RoleGate />
-        <Toaster position="top-center" />
+        <Toaster position="top-center" toastOptions={{ className: "!text-base !min-h-14" }} />
       </AppSettingsProvider>
     </QueryClientProvider>
   );
