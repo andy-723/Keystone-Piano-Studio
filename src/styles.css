@@ -155,3 +155,11 @@
 @media (max-width: 767px) {
   .chat-workspace { height: max(600px, calc(100dvh - 285px)); }
 }
+
+@media print {
+  nav, body header:not(.invoice-paper header), .invoice-actions, [data-sonner-toaster] { display: none !important; }
+  main { padding: 0 !important; }
+  .invoice-paper { padding: 0; }
+  .invoice-paper header { display: flex !important; }
+  body { background: var(--card); }
+}
