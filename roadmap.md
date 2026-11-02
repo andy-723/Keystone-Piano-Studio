@@ -23,3 +23,9 @@
 - [x] Add home, family-only chat, read-only progress and student practice logging.
 - [x] Add family invoice list / detail and simulated payment sheet.
 - [x] Verify family isolation, parent author role, translations and phone layout.
+
+# Teacher Students
+- [ ] Add searchable roster, labelled risk badges and attention ordering / reasons.
+- [ ] Add family check-in templates in the editable chat composer.
+- [ ] Add profiles with family, attendance, four-week practice, progress and invoices; verify flows.
+- [ ] Incorporate the uploaded earlier mock-data prompt and report any conflicts with existing screens.

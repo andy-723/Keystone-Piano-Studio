@@ -9,7 +9,7 @@ import { chatThreadQuery, messageDay } from "@/lib/chat-queries";
 import { formatShortDate, formatTime } from "@/lib/format";
 import { markThreadRead } from "@/services/chat";
 
-export function ChatConversation({ id }: { id: string }) {
+export function ChatConversation({ id, initialText = "", draftKey = "", onSent }: { id: string; initialText?: string; draftKey?: string; onSent?: () => void }) {
   const { data } = useSuspenseQuery(chatThreadQuery(id));
   const client = useQueryClient();
   const bottom = useRef<HTMLDivElement>(null);
@@ -44,6 +44,6 @@ export function ChatConversation({ id }: { id: string }) {
       })}
       <div ref={bottom} />
     </div>
-    <ChatComposer key={id} conversationId={id} />
+    <ChatComposer key={`${id}-${draftKey}`} conversationId={id} initialText={initialText} {...(onSent ? { onSent } : {})} />
   </section>;
 }

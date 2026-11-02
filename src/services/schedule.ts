@@ -2,6 +2,7 @@ import { attendanceMarks, lessonTypes, students, weeklySlots } from "@/mocks/dat
 import type { LessonOccurrence, LessonStatus, LessonType, Student } from "@/mocks/types";
 import { PROTOTYPE_TODAY, dayKind, melbourneIso, weekday, type DayKind } from "@/lib/calendar";
 import { respond } from "./_delay";
+import { studentAttendance } from "@/mocks/student-attendance";
 
 export type LessonWithDetails = LessonOccurrence & { student: Student; lessonType: LessonType; gradeGoal: string };
 export type DayPlan = { date: string; day: DayKind; lessons: LessonWithDetails[] };
@@ -21,7 +22,7 @@ function buildDay(date: string): DayPlan {
       const id = `${slot.studentId}_${date}`;
       return {
         id, studentId: slot.studentId, lessonTypeId: lessonType.id, startsAt, endsAt,
-        status: attendanceMarks.get(id) ?? "scheduled",
+        status: attendanceMarks.get(id) ?? studentAttendance.get(id) ?? "scheduled",
         student,
         lessonType, gradeGoal: slot.gradeGoal,
       } satisfies LessonWithDetails;
