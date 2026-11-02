@@ -1,10 +1,11 @@
 import { afterEach, expect, it } from "vitest";
-import { invoices, studio } from "@/mocks/data";
+import { invoices, studio, payments } from "@/mocks/data";
 import { termInvoiceDrafts } from "@/mocks/billing";
 import { getInvoice, getTerm2Preview, prepareTerm2Invoices, sendTerm2Invoices, setInvoiceStatus } from "@/services/billing";
 import { setGstRegistered } from "@/services/roster";
 const original = structuredClone(invoices);
-afterEach(() => { invoices.splice(0, invoices.length, ...structuredClone(original)); termInvoiceDrafts.clear(); studio.gstRegistered = true; });
+const originalPayments = structuredClone(payments);
+afterEach(() => { payments.splice(0, payments.length, ...structuredClone(originalPayments)); invoices.splice(0, invoices.length, ...structuredClone(original)); termInvoiceDrafts.clear(); studio.gstRegistered = true; });
 it("counts Term 2 from 12 April to 25 June, excluding calendar public holidays", async () => {
   const preview = await getTerm2Preview();
   expect(preview.term).toMatchObject({ start: "2027-04-12", end: "2027-06-25" });
