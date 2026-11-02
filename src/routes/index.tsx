@@ -68,7 +68,12 @@ function QuietNote({ children }: { children: React.ReactNode }) {
   return <p className="rounded-lg bg-muted px-6 py-8 text-center text-lg italic text-muted-foreground">{children}</p>;
 }
 
-const STATUS_LABEL: Partial<Record<LessonStatus, string>> = { attended: "Attended", absent: "Absent" };
+const STATUS_LABEL: Partial<Record<LessonStatus, string>> = {
+  attended: "Attended",
+  absent: "Absent",
+  cancelled_by_studio: "Cancelled by studio",
+  cancelled_late: "Late cancel",
+};
 
 function LessonCard({ lesson, date }: { lesson: LessonWithDetails; date: string }) {
   const qc = useQueryClient();
@@ -77,7 +82,7 @@ function LessonCard({ lesson, date }: { lesson: LessonWithDetails; date: string 
     mutationFn: (status: LessonStatus) => markAttendance(lesson.id, status),
     onSuccess: (status) => {
       qc.invalidateQueries({ queryKey: ["day", date] });
-      toast.success(status === "scheduled" ? `${name}: mark cleared` : `${name} marked ${STATUS_LABEL[status]?.toLowerCase()}`);
+      toast.success(status === "scheduled" ? `${name}: mark cleared` : `${name} marked: ${STATUS_LABEL[status]}`);
     },
   });
   const marked = lesson.status !== "scheduled";
@@ -97,7 +102,7 @@ function LessonCard({ lesson, date }: { lesson: LessonWithDetails; date: string 
 
       {marked ? (
         <div className="mt-4 flex flex-wrap items-center gap-3">
-          <span className={`inline-flex min-h-12 items-center gap-2 rounded-lg px-4 text-lg font-bold ${lesson.status === "attended" ? "bg-success-soft text-success" : "bg-warning-soft text-foreground"}`}>
+          <span className={`inline-flex min-h-12 items-center gap-2 rounded-lg px-4 text-lg font-bold ${lesson.status === "attended" ? "bg-success-soft text-success" : lesson.status === "absent" ? "bg-warning-soft text-foreground" : "bg-muted text-muted-foreground"}`}>
             {lesson.status === "attended" ? <Check aria-hidden /> : <X aria-hidden />}
             {STATUS_LABEL[lesson.status]}
           </span>
@@ -117,6 +122,14 @@ function LessonCard({ lesson, date }: { lesson: LessonWithDetails; date: string 
           <Button variant="outline" size="lg" onClick={() => toast("Live Lesson is coming next")}>
             <BookOpenText aria-hidden /> Open lesson
           </Button>
+          <div className="flex flex-wrap gap-3 sm:col-span-3">
+            <Button variant="ghost" disabled={mutation.isPending} onClick={() => mutation.mutate("cancelled_by_studio")}>
+              Cancelled by studio
+            </Button>
+            <Button variant="ghost" disabled={mutation.isPending} onClick={() => mutation.mutate("cancelled_late")}>
+              Late cancel
+            </Button>
+          </div>
         </div>
       )}
     </section>
