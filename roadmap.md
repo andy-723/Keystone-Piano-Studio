@@ -4,6 +4,6 @@
 - [x] Verify fixture requirements, attendance, dates and teacher-only navigation.
 
 # Live Lesson
-- [ ] Add lesson page with grade progress and requirement controls.
-- [ ] Add weekly practice, session notes and simulated voice clip.
-- [ ] Send and read back family summaries; verify tests and tablet / phone layouts.
+- [x] Add lesson page with grade progress and requirement controls.
+- [x] Add weekly practice, session notes and simulated voice clip.
+- [x] Send and read back family summaries; verify tests and tablet / phone layouts.
