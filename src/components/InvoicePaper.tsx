@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import type { Family, Invoice, Studio } from "@/mocks/types";
 import { formatAUD, formatNumericDate } from "@/lib/format";
 import { INVOICE_STATUS } from "@/lib/billing-queries";
@@ -5,7 +6,7 @@ import { INVOICE_STATUS } from "@/lib/billing-queries";
 export function InvoicePaper({ invoice, studio, family }: { invoice: Invoice; studio: Studio; family?: Family | undefined }) {
   return <article className="invoice-paper bg-card py-6 md:py-8" aria-label={invoice.title ?? (invoice.isTaxInvoice ? "Tax invoice" : "Invoice")}>
     <header className="flex flex-wrap items-start justify-between gap-6 border-b-2 border-primary pb-6">
-      <div><h1 className="text-3xl font-semibold">{invoice.title ?? (invoice.isTaxInvoice ? "Tax invoice" : "Invoice")}</h1><p className="mt-2 text-lg">{invoice.number}</p><p className="mt-2 text-base text-muted-foreground">{INVOICE_STATUS[invoice.status]}</p></div>
+      <div><h1 className="text-3xl font-semibold">{invoice.title ?? (invoice.isTaxInvoice ? "Tax invoice" : "Invoice")}</h1><p className="mt-2 text-lg">{invoice.number}</p><p className="mt-2 text-base text-muted-foreground">{INVOICE_STATUS[invoice.status]}</p>{invoice.xeroSyncedAt && <Badge variant="secondary" className="mt-2 text-base">Sent to Xero</Badge>}</div>
       <div><h2 className="text-xl font-semibold">{studio.name}</h2>{invoice.isTaxInvoice && studio.abn && <p className="mt-2 text-base">ABN {studio.abn}</p>}</div>
     </header>
     <div className="grid gap-6 border-b border-border py-6 sm:grid-cols-2">
@@ -22,7 +23,7 @@ export function InvoicePaper({ invoice, studio, family }: { invoice: Invoice; st
       <dt className="text-base text-muted-foreground">Amount paid</dt><dd className="text-right text-base">{formatAUD(invoice.paidCents ?? 0)}</dd>
       <dt className="font-semibold">Balance</dt><dd className="text-right font-semibold">{formatAUD(invoice.balanceCents ?? invoice.totalCents)}</dd>
     </dl>
-    {!!invoice.payments?.length && <section className="mt-6 border-t border-border pt-4"><h2 className="text-xl font-semibold">Payment history</h2>{invoice.payments.map((payment) => <p key={payment.id} className="mt-2 text-base">{formatNumericDate(payment.date)} · {payment.method === "payto" ? "PayTo" : payment.method === "becs" ? "Direct debit" : "Card"} · {formatAUD(payment.amountCents)}</p>)}</section>}
+    {!!invoice.payments?.length && <section className="mt-6 border-t border-border pt-4"><h2 className="text-xl font-semibold">Payment history</h2>{invoice.payments.map((payment) => <p key={payment.id} className="mt-2 text-base">{formatNumericDate(payment.date)} · {payment.method === "payto" ? "PayTo" : payment.method === "becs" ? "Direct debit" : "Card"} · {formatAUD(payment.amountCents)} {payment.xeroSyncedAt && <Badge variant="secondary" className="text-base">Synced to Xero</Badge>}</p>)}</section>}
     <footer className="mt-8 border-t border-border pt-5"><p className="text-base font-semibold">Payment methods</p><div className="mt-3 flex flex-wrap gap-3">{["PayTo", "Direct debit", "Card"].map((method) => <span key={method} className="border border-border bg-muted px-3 py-2 text-base">{method}</span>)}</div></footer>
   </article>;
 }

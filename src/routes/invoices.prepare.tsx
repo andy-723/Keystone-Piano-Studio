@@ -23,7 +23,7 @@ function PrepareInvoices() {
   const [sent, setSent] = useState<number | null>(null);
   const client = useQueryClient();
   const preparing = useMutation({ mutationFn: prepareTerm2Invoices, onSuccess: async () => { await client.invalidateQueries({ queryKey: ["term2-drafts"] }); setStep(2); }, onError: () => toast.error("Drafts could not be prepared. Please try again.") });
-  const sending = useMutation({ mutationFn: sendTerm2Invoices, onSuccess: async (invoices) => { setSent(invoices.length); await Promise.all([client.invalidateQueries({ queryKey: ["invoices"] }), client.invalidateQueries({ queryKey: ["term2-drafts"] }), client.invalidateQueries({ queryKey: ["parent"] })]); }, onError: () => toast.error("Invoices could not be sent. Please try again.") });
+  const sending = useMutation({ mutationFn: sendTerm2Invoices, onSuccess: async (invoices) => { setSent(invoices.length); await Promise.all([client.invalidateQueries({ queryKey: ["invoices"] }), client.invalidateQueries({ queryKey: ["term2-drafts"] }), client.invalidateQueries({ queryKey: ["parent"] }), client.invalidateQueries({ queryKey: ["integrations"] })]); }, onError: () => toast.error("Invoices could not be sent. Please try again.") });
   const total = drafts.invoices.reduce((amount, invoice) => amount + invoice.totalCents, 0);
   return <div className="mx-auto max-w-5xl">
     <Button asChild variant="ghost"><Link to="/invoices"><ArrowLeft aria-hidden /> All invoices</Link></Button>

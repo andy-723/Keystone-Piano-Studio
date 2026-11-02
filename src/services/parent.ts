@@ -9,6 +9,7 @@ import { getRequirements, getStudentProgress, getPracticeLogs, addPractice } fro
 import { getChatThread, getOrCreateFamilyConversation, sendMessage, markThreadRead } from "./chat";
 import { parentMakeUpRequests } from "@/mocks/scheduling";
 import { getNotes } from "./notes";
+import { getStripeStatus } from "./integrations";
 
 function parentGuardian(guardian: Guardian) { return { id: guardian.id, name: guardian.name, email: guardian.email, preferredLanguage: guardian.preferredLanguage }; }
 
@@ -73,6 +74,7 @@ export async function logParentPractice(input: Pick<PracticeLog, "studentId" | "
 export async function payParentInvoice(id: string, method: "payto" | "becs" | "card") {
   const invoice = await getParentInvoice(id);
   if (!invoice || !["sent", "overdue", "partially_paid"].includes(invoice.status)) throw new Error("Unpaid family invoice not found");
+  if (await getStripeStatus() !== "connected") throw new Error("Your teacher will send bank details");
   if (!["payto", "becs", "card"].includes(method)) throw new Error("Payment method not found");
   parentPayments.push({ invoiceId: id, method });
   return recordInvoicePayment(id, method);

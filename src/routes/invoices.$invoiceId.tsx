@@ -16,7 +16,7 @@ function InvoiceDetail() {
   const { invoiceId } = Route.useParams();
   const { data } = useSuspenseQuery(invoiceDetailQuery(invoiceId));
   const client = useQueryClient();
-  const marking = useMutation({ mutationFn: () => setInvoiceStatus(invoiceId, "paid"), onSuccess: async () => { await Promise.all([client.invalidateQueries({ queryKey: ["invoice", invoiceId] }), client.invalidateQueries({ queryKey: ["invoices"] })]); toast.success("Invoice marked as paid"); }, onError: () => toast.error("Invoice could not be updated.") });
+  const marking = useMutation({ mutationFn: () => setInvoiceStatus(invoiceId, "paid"), onSuccess: async () => { await Promise.all([client.invalidateQueries({ queryKey: ["invoice", invoiceId] }), client.invalidateQueries({ queryKey: ["invoices"] }), client.invalidateQueries({ queryKey: ["integrations"] }), client.invalidateQueries({ queryKey: ["parent"] })]); toast.success("Invoice marked as paid"); }, onError: () => toast.error("Invoice could not be updated.") });
   if (!data) return null;
   return <div className="mx-auto max-w-4xl">
     <div className="invoice-actions mb-5 flex flex-wrap items-center gap-3"><Button asChild variant="ghost"><Link to="/invoices"><ArrowLeft aria-hidden /> All invoices</Link></Button><Button variant="outline" onClick={() => window.print()}><Printer aria-hidden /> Print</Button>

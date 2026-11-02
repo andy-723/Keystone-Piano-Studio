@@ -44,9 +44,10 @@ export interface Invoice {
   paidCents?: number;
   balanceCents?: number;
   payments?: Payment[];
+  xeroSyncedAt?: string;
 }
 
-export interface Payment { id: string; invoiceId: string; method: "payto" | "becs" | "card"; amountCents: number; date: string }
+export interface Payment { id: string; invoiceId: string; method: "payto" | "becs" | "card"; amountCents: number; date: string; xeroSyncedAt?: string }
 export interface ClientNote {
   id: string;
   subjectType: "student" | "family";

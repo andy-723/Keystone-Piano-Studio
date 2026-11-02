@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { ArrowRight, FilePlus2, Receipt, RefreshCw } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { invoiceListQuery, INVOICE_STATUS } from "@/lib/billing-queries";
 import { formatAUD, formatNumericDate } from "@/lib/format";
@@ -27,7 +28,7 @@ function Invoices() {
     <p className="mb-3 text-base text-muted-foreground">{shown.length} invoices · {formatAUD(shown.reduce((total, invoice) => total + invoice.totalCents, 0))}</p>
     <div className="divide-y divide-border border-y border-border">{shown.map((invoice) => <Button key={invoice.id} asChild variant="ghost" className="h-auto w-full justify-start whitespace-normal rounded-none px-1 py-5 text-left"><Link to="/invoices/$invoiceId" params={{ invoiceId: invoice.id }}>
       <div className="grid min-w-0 flex-1 items-center gap-3 sm:grid-cols-[minmax(0,1fr)_8rem_8rem]">
-        <div><p className="text-xl font-semibold">{data.families.find((family) => family.id === invoice.familyId)?.displayName}</p><p className="mt-1 text-base font-normal text-muted-foreground">{invoice.number} · Due {formatNumericDate(invoice.dueDate)}</p></div>
+        <div><p className="text-xl font-semibold">{data.families.find((family) => family.id === invoice.familyId)?.displayName}</p><p className="mt-1 text-base font-normal text-muted-foreground">{invoice.number} · Due {formatNumericDate(invoice.dueDate)}</p>{invoice.xeroSyncedAt && <Badge variant="secondary" className="mt-2 text-base">Sent to Xero</Badge>}</div>
         <span className={`text-base ${invoice.status === "overdue" ? "text-destructive" : invoice.status === "paid" ? "text-success" : "text-muted-foreground"}`}>{INVOICE_STATUS[invoice.status]}</span><span className="text-xl sm:text-right">{formatAUD(invoice.status === "partially_paid" ? invoice.balanceCents ?? invoice.totalCents : invoice.totalCents)}</span>
       </div><ArrowRight aria-hidden className="ml-3" />
     </Link></Button>)}</div>

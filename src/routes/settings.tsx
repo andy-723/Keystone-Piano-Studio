@@ -3,16 +3,18 @@ import { queryOptions, useMutation, useQueryClient, useSuspenseQuery } from "@ta
 import { Switch } from "@/components/ui/switch";
 import { getStudio, setGstRegistered } from "@/services/roster";
 import { toast } from "sonner";
+import { Integrations } from "@/components/Integrations";
+import { integrationsQuery } from "@/lib/integration-queries";
 const settingsQuery = queryOptions({ queryKey: ["studio-settings"], queryFn: getStudio });
 
 export const Route = createFileRoute("/settings")({
-  loader: ({ context }) => context.queryClient.ensureQueryData(settingsQuery),
+  loader: ({ context }) => Promise.all([context.queryClient.ensureQueryData(settingsQuery), context.queryClient.ensureQueryData(integrationsQuery())]),
   head: () => ({
     meta: [
       { title: "Settings — Opus" },
-      { name: "description", content: "Manage Clarke Piano Studio GST registration for family invoices." },
+      { name: "description", content: "Manage Clarke Piano Studio GST and mock Stripe payment and Xero accounting connections." },
       { property: "og:title", content: "Settings — Opus" },
-      { property: "og:description", content: "Manage Clarke Piano Studio GST registration for family invoices." },
+      { property: "og:description", content: "Manage Clarke Piano Studio GST and mock Stripe payment and Xero accounting connections." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -24,5 +26,5 @@ function StudioSettings() {
   const { data: studio } = useSuspenseQuery(settingsQuery);
   const client = useQueryClient();
   const update = useMutation({ mutationFn: setGstRegistered, onSuccess: async () => { await Promise.all(["studio-settings", "studio", "invoices", "invoice", "term2-drafts"].map((key) => client.invalidateQueries({ queryKey: [key] }))); toast.success("GST registration updated"); }, onError: () => toast.error("Setting could not be saved.") });
-  return <div className="mx-auto max-w-3xl"><h1 className="text-3xl font-semibold">Settings</h1><h2 className="mt-8 text-2xl font-semibold">{studio.name}</h2><div className="mt-6 flex items-center justify-between gap-5 border-y border-border py-6"><label htmlFor="registered-gst" className="flex min-h-12 flex-1 cursor-pointer items-center text-lg font-semibold">Registered for GST</label><Switch id="registered-gst" className="h-12 w-20 [&>span]:size-10 [&>span[data-state=checked]]:translate-x-8" checked={studio.gstRegistered} disabled={update.isPending} onCheckedChange={(value) => update.mutate(value)} /></div>{studio.gstRegistered && studio.abn && <p className="mt-5 text-base">ABN {studio.abn}</p>}</div>;
+  return <div className="mx-auto max-w-3xl"><h1 className="text-3xl font-semibold">Settings</h1><h2 className="mt-8 text-2xl font-semibold">{studio.name}</h2><div className="mt-6 flex items-center justify-between gap-5 border-y border-border py-6"><label htmlFor="registered-gst" className="flex min-h-12 flex-1 cursor-pointer items-center text-lg font-semibold">Registered for GST</label><Switch id="registered-gst" className="h-12 w-20 [&>span]:size-10 [&>span[data-state=checked]]:translate-x-8" checked={studio.gstRegistered} disabled={update.isPending} onCheckedChange={(value) => update.mutate(value)} /></div>{studio.gstRegistered && studio.abn && <p className="mt-5 text-base">ABN {studio.abn}</p>}<Integrations studioName={studio.name} /></div>;
 }
