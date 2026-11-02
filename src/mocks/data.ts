@@ -77,7 +77,7 @@ export const weeklySlots: WeeklySlot[] = [];
 {
   let idx = 0;
   for (const day of [1, 2, 3, 4, 5, 6]) {
-    for (const time of DAY_TIMES[day]) {
+    for (const time of DAY_TIMES[day] ?? []) {
       const s = students[idx];
       if (!s) break;
       const age = 2027 - s.birthYear;
@@ -86,7 +86,7 @@ export const weeklySlots: WeeklySlot[] = [];
         weekday: day,
         time,
         lessonTypeId: age >= 14 ? "lt-60" : age >= 11 ? "lt-45" : "lt-30",
-        gradeGoal: GRADES[Math.min(4, Math.max(0, age - 9))],
+        gradeGoal: GRADES[Math.min(4, Math.max(0, age - 9))]!,
       });
       idx++;
     }
@@ -179,7 +179,7 @@ export const invoices: Invoice[] = families.map((f, i) => {
     id: `inv-${i + 1}`,
     number: `INV-2027-${String(i + 1).padStart(3, "0")}`,
     familyId: f.id,
-    status: STATUSES[i % STATUSES.length],
+    status: STATUSES[i % STATUSES.length]!,
     issueDate: "2027-01-18",
     dueDate: "2027-02-01",
     lines,
@@ -221,10 +221,10 @@ THREADS.forEach(([familyId, msgs], i) => {
   msgs.forEach(([authorName, authorRole, body, sentAt, kind]) =>
     messages.push({
       id: `msg-${messages.length + 1}`, conversationId: id, authorName, authorRole, body, kind, sentAt,
-      readAt: authorRole === "teacher" ? sentAt : undefined,
+      ...(authorRole === "teacher" ? { readAt: sentAt } : {}),
     }),
   );
-  const last = msgs[msgs.length - 1];
+  const last = msgs[msgs.length - 1]!;
   conversations.push({
     id, familyId, lastMessageAt: last[3],
     unreadCount: msgs.filter((m) => m[1] !== "teacher").length && last[1] !== "teacher" ? 1 : 0,
