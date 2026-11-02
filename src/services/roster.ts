@@ -1,13 +1,14 @@
-import { families, riskScores, students, studio, teacher, weeklySlots } from "@/mocks/data";
+import { families, lessonTypes, riskScores, students, studio, teacher, weeklySlots } from "@/mocks/data";
 import type { Family, RiskScore, Student, Studio, Teacher } from "@/mocks/types";
 import { respond } from "./_delay";
 
-export type StudentSummary = Student & { gradeGoal: string; familyName: string; risk: RiskScore };
+export type StudentSummary = Student & { gradeGoal: string; durationMin: number; familyName: string; risk: RiskScore };
 
 function summarise(s: Student): StudentSummary {
   return {
     ...s,
     gradeGoal: weeklySlots.find((w) => w.studentId === s.id)?.gradeGoal ?? "",
+    durationMin: lessonTypes.find((type) => type.id === weeklySlots.find((slot) => slot.studentId === s.id)?.lessonTypeId)?.durationMin ?? 30,
     familyName: families.find((f) => f.id === s.familyId)?.displayName ?? "",
     risk: riskScores.find((r) => r.studentId === s.id) ?? { studentId: s.id, score: 100, band: "green", reasons: [] },
   };
