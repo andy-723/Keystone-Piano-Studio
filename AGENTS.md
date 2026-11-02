@@ -8,3 +8,7 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+## Architecture
+- Screens read/write only through async functions in src/services/ (one file per area) over fixtures in src/mocks/ — so the mock layer can be swapped for a REST API later.
+- App shell (nav rail / bottom tabs, role switcher, larger-text toggle) lives in src/routes/__root.tsx via AppShell; role switch swaps teacher app for parent portal there.
