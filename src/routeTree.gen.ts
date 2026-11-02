@@ -16,6 +16,9 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as StudentsRouteImport } from './routes/students'
 import { Route as ChatIndexRouteImport } from './routes/chat.index'
 import { Route as ChatConversationIdRouteImport } from './routes/chat.$conversationId'
+import { Route as InvoicesIndexRouteImport } from './routes/invoices.index'
+import { Route as InvoicesInvoiceIdRouteImport } from './routes/invoices.$invoiceId'
+import { Route as InvoicesPrepareRouteImport } from './routes/invoices.prepare'
 import { Route as LessonsLessonIdRouteImport } from './routes/lessons.$lessonId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -53,6 +56,21 @@ const ChatConversationIdRoute = ChatConversationIdRouteImport.update({
   path: '/$conversationId',
   getParentRoute: () => ChatRoute,
 } as any)
+const InvoicesIndexRoute = InvoicesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => InvoicesRoute,
+} as any)
+const InvoicesInvoiceIdRoute = InvoicesInvoiceIdRouteImport.update({
+  id: '/$invoiceId',
+  path: '/$invoiceId',
+  getParentRoute: () => InvoicesRoute,
+} as any)
+const InvoicesPrepareRoute = InvoicesPrepareRouteImport.update({
+  id: '/prepare',
+  path: '/prepare',
+  getParentRoute: () => InvoicesRoute,
+} as any)
 const LessonsLessonIdRoute = LessonsLessonIdRouteImport.update({
   id: '/lessons/$lessonId',
   path: '/lessons/$lessonId',
@@ -62,32 +80,40 @@ const LessonsLessonIdRoute = LessonsLessonIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/chat': typeof ChatRouteWithChildren
-  '/invoices': typeof InvoicesRoute
+  '/invoices': typeof InvoicesRouteWithChildren
   '/settings': typeof SettingsRoute
   '/students': typeof StudentsRoute
   '/chat/$conversationId': typeof ChatConversationIdRoute
+  '/invoices/$invoiceId': typeof InvoicesInvoiceIdRoute
+  '/invoices/prepare': typeof InvoicesPrepareRoute
   '/lessons/$lessonId': typeof LessonsLessonIdRoute
   '/chat/': typeof ChatIndexRoute
+  '/invoices/': typeof InvoicesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/invoices': typeof InvoicesRoute
   '/settings': typeof SettingsRoute
   '/students': typeof StudentsRoute
   '/chat/$conversationId': typeof ChatConversationIdRoute
+  '/invoices/$invoiceId': typeof InvoicesInvoiceIdRoute
+  '/invoices/prepare': typeof InvoicesPrepareRoute
   '/lessons/$lessonId': typeof LessonsLessonIdRoute
   '/chat': typeof ChatIndexRoute
+  '/invoices': typeof InvoicesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/chat': typeof ChatRouteWithChildren
-  '/invoices': typeof InvoicesRoute
+  '/invoices': typeof InvoicesRouteWithChildren
   '/settings': typeof SettingsRoute
   '/students': typeof StudentsRoute
   '/chat/$conversationId': typeof ChatConversationIdRoute
+  '/invoices/$invoiceId': typeof InvoicesInvoiceIdRoute
+  '/invoices/prepare': typeof InvoicesPrepareRoute
   '/lessons/$lessonId': typeof LessonsLessonIdRoute
   '/chat/': typeof ChatIndexRoute
+  '/invoices/': typeof InvoicesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -98,17 +124,22 @@ export interface FileRouteTypes {
     | '/settings'
     | '/students'
     | '/chat/$conversationId'
+    | '/invoices/$invoiceId'
+    | '/invoices/prepare'
     | '/lessons/$lessonId'
     | '/chat/'
+    | '/invoices/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/invoices'
     | '/settings'
     | '/students'
     | '/chat/$conversationId'
+    | '/invoices/$invoiceId'
+    | '/invoices/prepare'
     | '/lessons/$lessonId'
     | '/chat'
+    | '/invoices'
   id:
     | '__root__'
     | '/'
@@ -117,14 +148,17 @@ export interface FileRouteTypes {
     | '/settings'
     | '/students'
     | '/chat/$conversationId'
+    | '/invoices/$invoiceId'
+    | '/invoices/prepare'
     | '/lessons/$lessonId'
     | '/chat/'
+    | '/invoices/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ChatRoute: typeof ChatRouteWithChildren
-  InvoicesRoute: typeof InvoicesRoute
+  InvoicesRoute: typeof InvoicesRouteWithChildren
   SettingsRoute: typeof SettingsRoute
   StudentsRoute: typeof StudentsRoute
   LessonsLessonIdRoute: typeof LessonsLessonIdRoute
@@ -181,6 +215,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ChatConversationIdRouteImport
       parentRoute: typeof ChatRoute
     }
+    '/invoices/': {
+      id: '/invoices/'
+      path: '/'
+      fullPath: '/invoices/'
+      preLoaderRoute: typeof InvoicesIndexRouteImport
+      parentRoute: typeof InvoicesRoute
+    }
+    '/invoices/$invoiceId': {
+      id: '/invoices/$invoiceId'
+      path: '/$invoiceId'
+      fullPath: '/invoices/$invoiceId'
+      preLoaderRoute: typeof InvoicesInvoiceIdRouteImport
+      parentRoute: typeof InvoicesRoute
+    }
+    '/invoices/prepare': {
+      id: '/invoices/prepare'
+      path: '/prepare'
+      fullPath: '/invoices/prepare'
+      preLoaderRoute: typeof InvoicesPrepareRouteImport
+      parentRoute: typeof InvoicesRoute
+    }
     '/lessons/$lessonId': {
       id: '/lessons/$lessonId'
       path: '/lessons/$lessonId'
@@ -203,10 +258,26 @@ const ChatRouteChildren: ChatRouteChildren = {
 
 const ChatRouteWithChildren = ChatRoute._addFileChildren(ChatRouteChildren)
 
+interface InvoicesRouteChildren {
+  InvoicesInvoiceIdRoute: typeof InvoicesInvoiceIdRoute
+  InvoicesPrepareRoute: typeof InvoicesPrepareRoute
+  InvoicesIndexRoute: typeof InvoicesIndexRoute
+}
+
+const InvoicesRouteChildren: InvoicesRouteChildren = {
+  InvoicesInvoiceIdRoute: InvoicesInvoiceIdRoute,
+  InvoicesPrepareRoute: InvoicesPrepareRoute,
+  InvoicesIndexRoute: InvoicesIndexRoute,
+}
+
+const InvoicesRouteWithChildren = InvoicesRoute._addFileChildren(
+  InvoicesRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ChatRoute: ChatRouteWithChildren,
-  InvoicesRoute: InvoicesRoute,
+  InvoicesRoute: InvoicesRouteWithChildren,
   SettingsRoute: SettingsRoute,
   StudentsRoute: StudentsRoute,
   LessonsLessonIdRoute: LessonsLessonIdRoute,
