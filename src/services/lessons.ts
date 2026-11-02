@@ -50,7 +50,7 @@ async function sendSummary(id: string) {
     draft.voiceSeconds ? `Voice note: ${draft.voiceSeconds}-second simulated clip (no audio recorded).` : "",
   ].filter(Boolean).join("\n\n");
   const message = await sendMessage({ conversationId: conversation.id, authorName: teacher.name, authorRole: "teacher", kind: "text", body,
-    lessonSummary: { lessonId: id, studentName: `${data.lesson.student.firstName} ${data.lesson.student.lastName}`, gradeGoal: data.lesson.gradeGoal, readiness: readiness(data.requirements, data.progress), date: data.date },
+    lessonSummary: { lessonId: id, studentName: `${data.lesson.student.firstName} ${data.lesson.student.lastName}`, gradeGoal: data.lesson.gradeGoal, readiness: readiness(data.requirements, data.progress), date: data.date, passedCount: passed.length, requirementCount: data.requirements.length, studentMinutes: practice.student, teacherMinutes: practice.teacher, notes: draft.notes.trim(), voiceSeconds: draft.voiceSeconds },
   });
   lessonNotes.set(id, { ...draft, summaryMessageId: message.id, conversationId: conversation.id });
   return message;

@@ -21,13 +21,13 @@ export async function getChatThread(id: string) {
   return { conversation: { ...conversation }, family: families.find((entry) => entry.id === conversation.familyId), messages: await getMessages(id) };
 }
 
-export async function markThreadRead(id: string) {
+export async function markThreadRead(id: string, reader: "teacher" | "guardian" = "teacher") {
   const conversation = conversations.find((entry) => entry.id === id);
   if (!conversation) throw new Error("Conversation not found");
-  conversation.unreadCount = 0;
+  if (reader === "teacher") conversation.unreadCount = 0;
   const readAt = mockMessageTime();
   for (const message of messages) {
-    if (message.conversationId === id && message.authorRole !== "teacher" && !message.readAt) message.readAt = readAt;
+    if (message.conversationId === id && (reader === "teacher" ? message.authorRole !== "teacher" : message.authorRole === "teacher") && !message.readAt) message.readAt = readAt;
   }
   return respond({ ...conversation });
 }

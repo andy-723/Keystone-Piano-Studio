@@ -8,12 +8,14 @@ import {
   Scripts,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { Suspense, useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AppSettingsProvider, useAppSettings } from "@/lib/app-settings";
-import { AppShell, ComingSoon } from "@/components/AppShell";
+import { AppShell } from "@/components/AppShell";
+import { ParentPortal } from "@/components/ParentPortal";
+import { parentSessionQuery, parentHomeQuery, parentChatQuery, parentProgressQuery, parentInvoicesQuery } from "@/lib/parent-queries";
 import { Toaster } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
 import { getStudio } from "@/services/roster";
@@ -70,7 +72,7 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  loader: async ({ context }) => { await context.queryClient.ensureQueryData(studioQuery); },
+  loader: async ({ context }) => { await Promise.all([context.queryClient.ensureQueryData(studioQuery), context.queryClient.ensureQueryData(parentSessionQuery), context.queryClient.ensureQueryData(parentHomeQuery), context.queryClient.ensureQueryData(parentChatQuery), context.queryClient.ensureQueryData(parentProgressQuery), context.queryClient.ensureQueryData(parentInvoicesQuery)]); },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -135,7 +137,7 @@ function RoleGate() {
   return (
     <AppShell studio={studio}>
       {role === "parent" ? (
-        <ComingSoon title="Parent portal" note="The phone-friendly parent portal for Wei Chen is coming next. Switch back to Teacher to keep exploring." />
+        <Suspense fallback={<p>Opening your family portal…</p>}><ParentPortal /></Suspense>
       ) : (
         /* Required: nested routes render here. */
         <Outlet />
