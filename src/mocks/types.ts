@@ -38,6 +38,7 @@ export interface Invoice {
   taxCents: number;
   totalCents: number;
   isTaxInvoice: boolean;
+  termKey?: string;
 }
 
 export interface Conversation { id: string; familyId: string; lastMessageAt: string; unreadCount: number }
