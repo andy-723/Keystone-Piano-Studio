@@ -37,6 +37,6 @@
 - [x] Expose renewal communications from invoice preparation, add send-now reminders and term selection, verify family receipt.
 
 # Invoice and chat corrections
-- [ ] Freeze issued tax treatment; drafts follow settings; add regression tests.
-- [ ] Add teacher-only mock English message translation.
-- [ ] Rename payment identifier to becs; verify payments and central flows.
+- [x] Freeze issued tax treatment; drafts follow settings; add regression tests.
+- [x] Add teacher-only mock English message translation.
+- [x] Rename payment identifier to becs; verify payments and central flows.
