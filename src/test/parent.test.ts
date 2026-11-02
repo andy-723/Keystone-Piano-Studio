@@ -33,7 +33,7 @@ it("parent reading marks teacher messages read without clearing the teacher's un
   expect(conversations.find((thread) => thread.id === "conv-1")?.unreadCount).toBe(1);
   expect(conversations.find((thread) => thread.id === "conv-2")?.unreadCount).toBe(1);
 });
-it.each(["payto", "debit", "card"] as const)("simulates %s only for an unpaid family invoice", async (method) => {
+it.each(["payto", "becs", "card"] as const)("simulates %s only for an unpaid family invoice", async (method) => {
   const invoice = invoices.find((entry) => entry.id === "inv-1");
   if (!invoice) throw new Error("Missing fixture");
   invoice.status = "sent";

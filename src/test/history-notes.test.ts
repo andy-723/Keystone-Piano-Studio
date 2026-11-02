@@ -48,10 +48,10 @@ describe("Realistic mock history", () => {
       if (invoice.status === "overdue") { const days = (Date.parse(PROTOTYPE_TODAY) - Date.parse(invoice.dueDate)) / 86400000; expect(days).toBeGreaterThanOrEqual(14); expect(days).toBeLessThanOrEqual(45); }
     }
     const partial = await getInvoice("inv-5");
-    const paid = await recordInvoicePayment("inv-5", "debit");
+    const paid = await recordInvoicePayment("inv-5", "becs");
     expect(paid.payments?.at(-1)?.amountCents).toBe(partial?.balanceCents);
     expect(paid.balanceCents).toBe(0);
-    expect(paid.payments?.at(-1)?.method).toBe("debit");
+    expect(paid.payments?.at(-1)?.method).toBe("becs");
   });
 });
 
