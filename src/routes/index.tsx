@@ -1,22 +1,30 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useMutation, useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, ChevronLeft, ChevronRight, X, BookOpenText, Undo2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { PROTOTYPE_TODAY, addDays } from "@/lib/calendar";
 import { formatLongDate, formatTime } from "@/lib/format";
-import { getDayLessons, markAttendance, type LessonWithDetails } from "@/services/schedule";
+import { getDayLessons, markAttendance, type DayPlan, type LessonWithDetails } from "@/services/schedule";
 import type { LessonStatus } from "@/mocks/types";
+
+const dayQuery = (date: string) => queryOptions({ queryKey: ["day", date], queryFn: () => getDayLessons(date) });
 
 export const Route = createFileRoute("/")({
   validateSearch: (s: Record<string, unknown>): { date?: string } =>
     typeof s["date"] === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s["date"]) ? { date: s["date"] } : {},
+  loaderDeps: ({ search }) => ({ date: search.date ?? PROTOTYPE_TODAY }),
+  loader: async ({ context, deps }) => { await context.queryClient.ensureQueryData(dayQuery(deps.date)); },
+  errorComponent: () => <p role="alert">The day-book could not be opened. Please refresh to try again.</p>,
+  notFoundComponent: () => <p>No day-book page found.</p>,
   head: () => ({
     meta: [
       { title: "Today — Opus day-book" },
       { name: "description", content: "Today's piano lessons, listed by time like a paper day-book." },
       { property: "og:title", content: "Today — Opus day-book" },
       { property: "og:description", content: "Today's piano lessons, listed by time like a paper day-book." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Today,
@@ -24,28 +32,28 @@ export const Route = createFileRoute("/")({
 
 function Today() {
   const { date = PROTOTYPE_TODAY } = Route.useSearch();
-  const { data } = useQuery({ queryKey: ["day", date], queryFn: () => getDayLessons(date) });
+  const { data } = useSuspenseQuery(dayQuery(date));
   const done = data?.lessons.filter((l) => l.status !== "scheduled").length ?? 0;
 
   return (
     <div className="mx-auto max-w-4xl">
-      <div className="flex items-center justify-between gap-3">
-        <Button variant="outline" asChild>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Button variant="outline" className="px-3 md:px-5" asChild>
           <Link to="/" search={{ date: addDays(date, -1) }}><ChevronLeft aria-hidden /> Previous day</Link>
         </Button>
         {date !== PROTOTYPE_TODAY && (
           <Button variant="ghost" asChild><Link to="/" search={{}}>Back to today</Link></Button>
         )}
-        <Button variant="outline" asChild>
+        <Button variant="outline" className="px-3 md:px-5" asChild>
           <Link to="/" search={{ date: addDays(date, 1) }}>Next day <ChevronRight aria-hidden /></Link>
         </Button>
       </div>
 
-      <article className="mt-6 rounded-xl daybook-page px-5 py-8 pl-16 md:px-10 md:pl-24">
-        <p className="text-base font-semibold uppercase tracking-widest text-muted-foreground">
+      <article className="mt-6 daybook-page px-4 py-6 pl-8 md:px-10 md:py-8 md:pl-24">
+        <p className="text-base font-semibold uppercase text-muted-foreground">
           {date === PROTOTYPE_TODAY ? "Today" : "Day-book"}
         </p>
-        <h1 className="mt-1 text-4xl font-semibold md:text-5xl">{formatLongDate(date)}</h1>
+        <h1 className="mt-1 text-3xl font-semibold md:text-5xl">{formatLongDate(date)}</h1>
         {data?.day.kind === "teaching" && (
           <p className="mt-2 text-lg text-muted-foreground">
             {data.day.term} · {data.lessons.length} lessons · {done} marked
@@ -56,7 +64,7 @@ function Today() {
           {!data && <p className="text-lg text-muted-foreground">Opening the page…</p>}
           {data?.day.kind === "holiday" && <QuietNote>Public holiday — {data.day.name}. No lessons today.</QuietNote>}
           {data?.day.kind === "break" && <QuietNote>School holidays — between terms. No lessons scheduled.</QuietNote>}
-          {data?.day.kind === "teaching" && data.lessons.length === 0 && <QuietNote>No lessons on Sundays. Enjoy the rest.</QuietNote>}
+          {data?.day.kind === "teaching" && data.lessons.length === 0 && <QuietNote>No lessons scheduled today.</QuietNote>}
           {data?.lessons.map((l) => <LessonCard key={l.id} lesson={l} date={date} />)}
         </div>
       </article>
@@ -65,7 +73,7 @@ function Today() {
 }
 
 function QuietNote({ children }: { children: React.ReactNode }) {
-  return <p className="rounded-lg bg-muted px-6 py-8 text-center text-lg italic text-muted-foreground">{children}</p>;
+  return <p className="py-8 text-lg italic text-muted-foreground">{children}</p>;
 }
 
 const STATUS_LABEL: Partial<Record<LessonStatus, string>> = {
@@ -80,6 +88,18 @@ function LessonCard({ lesson, date }: { lesson: LessonWithDetails; date: string 
   const name = `${lesson.student.firstName} ${lesson.student.lastName}`;
   const mutation = useMutation({
     mutationFn: (status: LessonStatus) => markAttendance(lesson.id, status),
+    onMutate: async (status) => {
+      await qc.cancelQueries({ queryKey: ["day", date] });
+      const previous = qc.getQueryData<DayPlan>(["day", date]);
+      qc.setQueryData<DayPlan>(["day", date], (plan) => plan ? {
+        ...plan, lessons: plan.lessons.map((entry) => entry.id === lesson.id ? { ...entry, status } : entry),
+      } : plan);
+      return { previous };
+    },
+    onError: (_error, _status, context) => {
+      if (context?.previous) qc.setQueryData(["day", date], context.previous);
+      toast.error("Attendance could not be saved. Please try again.");
+    },
     onSuccess: (status) => {
       qc.invalidateQueries({ queryKey: ["day", date] });
       toast.success(status === "scheduled" ? `${name}: mark cleared` : `${name} marked: ${STATUS_LABEL[status]}`);
@@ -90,11 +110,11 @@ function LessonCard({ lesson, date }: { lesson: LessonWithDetails; date: string 
   return (
     <section
       aria-label={`${formatTime(lesson.startsAt)}, ${name}`}
-      className={`rounded-xl border-2 bg-card p-5 md:p-6 ${marked ? "border-border opacity-90" : "border-input"}`}
+      className={`rounded-lg border-2 bg-card p-4 md:p-6 ${marked ? "border-border" : "border-input"}`}
     >
       <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-        <div className="flex items-baseline gap-5">
-          <span className="font-display text-2xl font-semibold text-primary md:text-3xl">{formatTime(lesson.startsAt)}</span>
+        <div className="flex flex-wrap items-baseline gap-x-5 gap-y-1">
+          <span className="whitespace-nowrap font-display text-2xl font-semibold text-primary md:text-3xl">{formatTime(lesson.startsAt)}</span>
           <h2 className="font-sans text-2xl font-bold">{name}</h2>
         </div>
         <span className="text-lg text-muted-foreground">{lesson.lessonType.name} · {lesson.gradeGoal}</span>
@@ -106,7 +126,7 @@ function LessonCard({ lesson, date }: { lesson: LessonWithDetails; date: string 
             {lesson.status === "attended" ? <Check aria-hidden /> : <X aria-hidden />}
             {STATUS_LABEL[lesson.status]}
           </span>
-          <Button variant="ghost" onClick={() => mutation.mutate("scheduled")}><Undo2 aria-hidden /> Undo</Button>
+          <Button variant="ghost" disabled={mutation.isPending} onClick={() => mutation.mutate("scheduled")}><Undo2 aria-hidden /> Undo</Button>
           <Button variant="outline" className="ml-auto" onClick={() => toast("Live Lesson is coming next")}>
             <BookOpenText aria-hidden /> Open lesson
           </Button>

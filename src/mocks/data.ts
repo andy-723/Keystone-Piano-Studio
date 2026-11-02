@@ -1,6 +1,6 @@
 import type {
   Conversation, Family, Invoice, InvoiceLine, InvoiceStatus, LessonType, Message, PracticeLog,
-  Requirement, RequirementCategory, RiskScore, Student, StudentProgress, Studio, Teacher, WeeklySlot,
+  Requirement, RequirementCategory, RiskScore, Student, StudentProgress, Studio, Teacher, WeeklySlot, LessonStatus,
 } from "./types";
 import { PROTOTYPE_TODAY, addDays, melbourneIso } from "@/lib/calendar";
 
@@ -14,6 +14,9 @@ export const studio: Studio = {
 };
 
 export const teacher: Teacher = { id: "teacher-1", name: "Ms Margaret Clarke" };
+
+// Session-only attendance state; reloading restores the sample timetable.
+export const attendanceMarks = new Map<string, LessonStatus>();
 
 export const lessonTypes: LessonType[] = [
   { id: "lt-30", name: "30 min lesson", durationMin: 30, priceCents: 4900 },

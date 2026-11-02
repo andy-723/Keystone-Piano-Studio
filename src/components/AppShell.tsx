@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useAppSettings, type Role } from "@/lib/app-settings";
-import { studio } from "@/mocks/data";
+import type { Studio } from "@/mocks/types";
 
 const NAV = [
   { to: "/", label: "Today", icon: BookOpen },
@@ -14,7 +14,7 @@ const NAV = [
   { to: "/settings", label: "Settings", icon: Settings },
 ] as const;
 
-export function AppShell({ children }: { children: ReactNode }) {
+export function AppShell({ children, studio }: { children: ReactNode; studio: Studio }) {
   const { role, setRole, largeText, setLargeText } = useAppSettings();
   const isTeacher = role === "teacher";
 
@@ -41,16 +41,16 @@ export function AppShell({ children }: { children: ReactNode }) {
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-background/95 px-4 py-3 md:px-8">
           <div className="font-display text-xl font-semibold">{studio.name}</div>
           <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-3">
+            <div className="relative flex min-h-12 items-center gap-3">
               <Switch id="larger-text" checked={largeText} onCheckedChange={setLargeText} />
-              <Label htmlFor="larger-text" className="text-base">Larger text</Label>
+              <Label htmlFor="larger-text" className="flex min-h-12 cursor-pointer items-center text-base before:absolute before:inset-0">Larger text</Label>
             </div>
             <label className="flex items-center gap-2 text-base">
               <span className="text-muted-foreground">Viewing as</span>
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value as Role)}
-                className="min-h-12 rounded-lg border-2 border-input bg-card px-3 text-base font-semibold"
+                className="min-h-12 min-w-0 max-w-full rounded-lg border-2 border-input bg-card px-3 text-base font-semibold"
               >
                 <option value="teacher">Teacher (Ms Clarke)</option>
                 <option value="parent">Parent (Wei Chen)</option>
@@ -68,7 +68,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             key={to}
             to={to}
             activeOptions={{ exact: to === "/" }}
-            className="flex min-h-16 flex-col items-center justify-center gap-0.5 text-sm font-semibold text-sidebar-foreground"
+            className="flex min-h-16 flex-col items-center justify-center gap-0.5 text-base font-semibold text-sidebar-foreground"
             activeProps={{ className: "text-sidebar-primary underline underline-offset-4" }}
           >
             <Icon className="size-6" aria-hidden />
@@ -82,7 +82,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
 export function ComingSoon({ title, note }: { title: string; note: string }) {
   return (
-    <div className="mx-auto max-w-2xl rounded-xl daybook-page p-10 pl-20">
+    <div className="mx-auto max-w-2xl daybook-page px-5 py-8 pl-10 md:p-10 md:pl-20">
       <h1 className="text-4xl font-semibold">{title}</h1>
       <p className="mt-4 text-lg text-muted-foreground">{note}</p>
     </div>
