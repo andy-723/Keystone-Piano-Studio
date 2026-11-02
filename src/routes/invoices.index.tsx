@@ -16,7 +16,7 @@ export const Route = createFileRoute("/invoices/")({
 function Invoices() {
   const { data } = useSuspenseQuery(invoiceListQuery);
   const [status, setStatus] = useState<InvoiceStatus | "all">("all");
-  const sum = (statuses: InvoiceStatus[]) => data.invoices.filter((invoice) => statuses.includes(invoice.status)).reduce((total, invoice) => total + invoice.totalCents, 0);
+  const sum = (statuses: InvoiceStatus[]) => data.invoices.filter((invoice) => statuses.includes(invoice.status)).reduce((total, invoice) => total + (statuses.includes("paid") || statuses.includes("draft") ? invoice.totalCents : invoice.balanceCents ?? invoice.totalCents), 0);
   const shown = data.invoices.filter((invoice) => status === "all" || invoice.status === status);
   return <div className="mx-auto max-w-6xl">
     <header className="flex flex-wrap items-center justify-between gap-5"><h1 className="flex items-center gap-3 text-3xl font-semibold"><Receipt className="size-7 text-primary" aria-hidden /> Invoices</h1><Button asChild className="max-w-full whitespace-normal"><Link to="/invoices/prepare"><FilePlus2 aria-hidden /> Prepare Term 2 invoices</Link></Button></header>
@@ -28,7 +28,7 @@ function Invoices() {
     <div className="divide-y divide-border border-y border-border">{shown.map((invoice) => <Button key={invoice.id} asChild variant="ghost" className="h-auto w-full justify-start whitespace-normal rounded-none px-1 py-5 text-left"><Link to="/invoices/$invoiceId" params={{ invoiceId: invoice.id }}>
       <div className="grid min-w-0 flex-1 items-center gap-3 sm:grid-cols-[minmax(0,1fr)_8rem_8rem]">
         <div><p className="text-xl font-semibold">{data.families.find((family) => family.id === invoice.familyId)?.displayName}</p><p className="mt-1 text-base font-normal text-muted-foreground">{invoice.number} · Due {formatNumericDate(invoice.dueDate)}</p></div>
-        <span className={`text-base ${invoice.status === "overdue" ? "text-destructive" : invoice.status === "paid" ? "text-success" : "text-muted-foreground"}`}>{INVOICE_STATUS[invoice.status]}</span><span className="text-xl sm:text-right">{formatAUD(invoice.totalCents)}</span>
+        <span className={`text-base ${invoice.status === "overdue" ? "text-destructive" : invoice.status === "paid" ? "text-success" : "text-muted-foreground"}`}>{INVOICE_STATUS[invoice.status]}</span><span className="text-xl sm:text-right">{formatAUD(invoice.status === "partially_paid" ? invoice.balanceCents ?? invoice.totalCents : invoice.totalCents)}</span>
       </div><ArrowRight aria-hidden className="ml-3" />
     </Link></Button>)}</div>
     {shown.length === 0 && <p className="py-8 text-muted-foreground">No invoices with this status.</p>}

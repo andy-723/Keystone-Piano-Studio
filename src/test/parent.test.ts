@@ -13,7 +13,7 @@ it("defaults Wei Chen to Chinese and exposes only Lucy and Oscar without risk fi
   expect(progress).toHaveLength(2);
   expect(JSON.stringify(progress)).not.toMatch(/risk|band|score/i);
   const home = await getParentHome();
-  expect(home.nextLesson).toMatchObject({ studentId: "stu-1", startsAt: "2027-02-08T15:30:00+11:00" });
+  expect(home.nextLesson).toMatchObject({ studentId: "stu-1", startsAt: "2027-03-15T15:30:00+11:00" });
 });
 it("only exposes this family's issued invoices", async () => {
   expect((await getParentInvoices()).map((invoice) => invoice.id)).toEqual(["inv-1"]);

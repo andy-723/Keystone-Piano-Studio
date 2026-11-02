@@ -28,7 +28,7 @@ describe("Teacher Students", () => {
       { id: "b", studentId: "stu-1", date: "2027-02-07", minutes: 15, loggedBy: "teacher" },
       { id: "c", studentId: "stu-1", date: "2027-02-08", minutes: 100, loggedBy: "student" },
       { id: "d", studentId: "stu-1", date: "2027-01-10", minutes: 100, loggedBy: "student" },
-    ], PROTOTYPE_TODAY);
+    ], "2027-02-08");
     expect(weeks.map((week) => [week.start, week.end])).toEqual([["2027-01-11", "2027-01-17"], ["2027-01-18", "2027-01-24"], ["2027-01-25", "2027-01-31"], ["2027-02-01", "2027-02-07"]]);
     expect(weeks.map((week) => week.studentMinutes)).toEqual([20, 0, 0, 0]);
     expect(weeks.map((week) => week.teacherMinutes)).toEqual([0, 0, 0, 15]);
@@ -42,9 +42,9 @@ describe("Teacher Students", () => {
     expect(await getStudentProfile("missing")).toBeNull();
   });
   it("attendance skips term breaks and honours changes from Today", async () => {
-    expect((await getStudentAttendance("stu-6")).map((lesson) => lesson.date)).toEqual(["2027-02-02"]);
+    expect((await getStudentAttendance("stu-6")).map((lesson) => lesson.date)).toEqual(["2027-03-09", "2027-03-02", "2027-02-23", "2027-02-16", "2027-02-09", "2027-02-02"]);
     attendanceMarks.set("stu-6_2027-02-02", "attended");
-    expect((await getStudentAttendance("stu-6"))[0]?.status).toBe("attended");
+    expect((await getStudentAttendance("stu-6")).find((lesson) => lesson.date === "2027-02-02")?.status).toBe("attended");
   });
   it("opens the red student's family thread without sending and returns an editable template", async () => {
     const count = messages.length;

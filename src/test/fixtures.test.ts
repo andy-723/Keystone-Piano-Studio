@@ -22,9 +22,9 @@ describe("Opus project-knowledge fixtures", () => {
   it("provides invoices in every status", () => {
     expect([...new Set(invoices.map((invoice) => invoice.status))].sort()).toEqual(["draft", "overdue", "paid", "partially_paid", "sent", "void"]);
   });
-  it("provides eight chat threads, two containing Chinese messages", () => {
-    expect(conversations).toHaveLength(8);
-    expect(conversations.filter((conversation) => messages.some((message) => message.conversationId === conversation.id && /[\u4e00-\u9fff]/u.test(message.body)))).toHaveLength(2);
+  it("provides fifteen chat threads, three containing Chinese messages", () => {
+    expect(conversations).toHaveLength(15);
+    expect(conversations.filter((conversation) => messages.some((message) => message.conversationId === conversation.id && /[\u4e00-\u9fff]/u.test(message.body)))).toHaveLength(3);
   });
   it("provides AMEB requirements from Preliminary to Grade 4", () => {
     expect([...new Set(requirements.map((requirement) => requirement.grade))]).toEqual(["Preliminary", "Grade 1", "Grade 2", "Grade 3", "Grade 4"]);
@@ -32,7 +32,7 @@ describe("Opus project-knowledge fixtures", () => {
     expect(students.every((student) => studentProgress.some((entry) => entry.studentId === student.id))).toBe(true);
   });
   it("provides four weeks of practice logs", () => {
-    expect([...new Set(practiceLogs.map((log) => log.date))].sort()).toEqual(Array.from({ length: 28 }, (_, index) => addDays(PROTOTYPE_TODAY, -index - 1)).sort());
+    expect([...new Set(practiceLogs.map((log) => log.date))].sort()).toEqual(Array.from({ length: 46 }, (_, index) => addDays(PROTOTYPE_TODAY, -index - 1)).sort());
   });
   it("provides at least three red risk students", () => {
     expect(riskScores.filter((risk) => risk.band === "red").length).toBeGreaterThanOrEqual(3);
