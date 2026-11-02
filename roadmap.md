@@ -46,6 +46,6 @@
 - [x] Build five-step wizard, save-and-resume and empty Today checklist.
 - [x] Verify setup, role switching and tablet/phone layouts; keep import and rescheduling outside this task.
 # Student import
-- [ ] Add parsing, mapping, editable validation and sibling/duplicate handling with sample/template CSVs.
-- [ ] Add isolated new-studio and demo entry points, confirmation and in-app invitations.
-- [ ] Run tests and verify imports, downloads, invitations and phone layout.
+- [x] Add parsing, mapping, editable validation and sibling/duplicate handling with sample/template CSVs.
+- [x] Add isolated new-studio and demo entry points, confirmation and in-app invitations.
+- [x] Run tests and verify imports, downloads, invitations and phone layout.
