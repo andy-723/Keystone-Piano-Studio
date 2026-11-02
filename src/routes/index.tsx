@@ -122,7 +122,7 @@ function LessonCard({ lesson, date }: { lesson: LessonWithDetails; date: string 
 
       {marked ? (
         <div className="mt-4 flex flex-wrap items-center gap-3">
-          <span className={`inline-flex min-h-12 items-center gap-2 rounded-lg px-4 text-lg font-bold ${lesson.status === "attended" ? "bg-success-soft text-success" : lesson.status === "absent" ? "bg-warning-soft text-foreground" : "bg-muted text-muted-foreground"}`}>
+          <span className={`inline-flex min-h-12 max-w-full items-center gap-2 rounded-lg px-4 text-lg font-bold ${lesson.status === "attended" ? "bg-success-soft text-success" : lesson.status === "absent" ? "bg-warning-soft text-foreground" : "bg-muted text-muted-foreground"}`}>
             {lesson.status === "attended" ? <Check aria-hidden /> : <X aria-hidden />}
             {STATUS_LABEL[lesson.status]}
           </span>
@@ -143,7 +143,7 @@ function LessonCard({ lesson, date }: { lesson: LessonWithDetails; date: string 
             <BookOpenText aria-hidden /> Open lesson
           </Button>
           <div className="flex flex-wrap gap-3 sm:col-span-3">
-            <Button variant="secondary" disabled={mutation.isPending} onClick={() => mutation.mutate("cancelled_by_studio")}>
+            <Button variant="secondary" className="max-w-full whitespace-normal" disabled={mutation.isPending} onClick={() => mutation.mutate("cancelled_by_studio")}>
               Cancelled by studio
             </Button>
             <Button variant="secondary" disabled={mutation.isPending} onClick={() => mutation.mutate("cancelled_late")}>
