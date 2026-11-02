@@ -19,6 +19,7 @@ import { Route as ChatConversationIdRouteImport } from './routes/chat.$conversat
 import { Route as InvoicesIndexRouteImport } from './routes/invoices.index'
 import { Route as InvoicesInvoiceIdRouteImport } from './routes/invoices.$invoiceId'
 import { Route as InvoicesPrepareRouteImport } from './routes/invoices.prepare'
+import { Route as InvoicesRenewalsRouteImport } from './routes/invoices.renewals'
 import { Route as LessonsLessonIdRouteImport } from './routes/lessons.$lessonId'
 import { Route as StudentsIndexRouteImport } from './routes/students.index'
 import { Route as StudentsStudentIdRouteImport } from './routes/students.$studentId'
@@ -73,6 +74,11 @@ const InvoicesPrepareRoute = InvoicesPrepareRouteImport.update({
   path: '/prepare',
   getParentRoute: () => InvoicesRoute,
 } as any)
+const InvoicesRenewalsRoute = InvoicesRenewalsRouteImport.update({
+  id: '/renewals',
+  path: '/renewals',
+  getParentRoute: () => InvoicesRoute,
+} as any)
 const LessonsLessonIdRoute = LessonsLessonIdRouteImport.update({
   id: '/lessons/$lessonId',
   path: '/lessons/$lessonId',
@@ -98,6 +104,7 @@ export interface FileRoutesByFullPath {
   '/chat/$conversationId': typeof ChatConversationIdRoute
   '/invoices/$invoiceId': typeof InvoicesInvoiceIdRoute
   '/invoices/prepare': typeof InvoicesPrepareRoute
+  '/invoices/renewals': typeof InvoicesRenewalsRoute
   '/lessons/$lessonId': typeof LessonsLessonIdRoute
   '/students/$studentId': typeof StudentsStudentIdRoute
   '/chat/': typeof ChatIndexRoute
@@ -110,6 +117,7 @@ export interface FileRoutesByTo {
   '/chat/$conversationId': typeof ChatConversationIdRoute
   '/invoices/$invoiceId': typeof InvoicesInvoiceIdRoute
   '/invoices/prepare': typeof InvoicesPrepareRoute
+  '/invoices/renewals': typeof InvoicesRenewalsRoute
   '/lessons/$lessonId': typeof LessonsLessonIdRoute
   '/students/$studentId': typeof StudentsStudentIdRoute
   '/chat': typeof ChatIndexRoute
@@ -126,6 +134,7 @@ export interface FileRoutesById {
   '/chat/$conversationId': typeof ChatConversationIdRoute
   '/invoices/$invoiceId': typeof InvoicesInvoiceIdRoute
   '/invoices/prepare': typeof InvoicesPrepareRoute
+  '/invoices/renewals': typeof InvoicesRenewalsRoute
   '/lessons/$lessonId': typeof LessonsLessonIdRoute
   '/students/$studentId': typeof StudentsStudentIdRoute
   '/chat/': typeof ChatIndexRoute
@@ -143,6 +152,7 @@ export interface FileRouteTypes {
     | '/chat/$conversationId'
     | '/invoices/$invoiceId'
     | '/invoices/prepare'
+    | '/invoices/renewals'
     | '/lessons/$lessonId'
     | '/students/$studentId'
     | '/chat/'
@@ -155,6 +165,7 @@ export interface FileRouteTypes {
     | '/chat/$conversationId'
     | '/invoices/$invoiceId'
     | '/invoices/prepare'
+    | '/invoices/renewals'
     | '/lessons/$lessonId'
     | '/students/$studentId'
     | '/chat'
@@ -170,6 +181,7 @@ export interface FileRouteTypes {
     | '/chat/$conversationId'
     | '/invoices/$invoiceId'
     | '/invoices/prepare'
+    | '/invoices/renewals'
     | '/lessons/$lessonId'
     | '/students/$studentId'
     | '/chat/'
@@ -258,6 +270,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InvoicesPrepareRouteImport
       parentRoute: typeof InvoicesRoute
     }
+    '/invoices/renewals': {
+      id: '/invoices/renewals'
+      path: '/renewals'
+      fullPath: '/invoices/renewals'
+      preLoaderRoute: typeof InvoicesRenewalsRouteImport
+      parentRoute: typeof InvoicesRoute
+    }
     '/lessons/$lessonId': {
       id: '/lessons/$lessonId'
       path: '/lessons/$lessonId'
@@ -297,12 +316,14 @@ const ChatRouteWithChildren = ChatRoute._addFileChildren(ChatRouteChildren)
 interface InvoicesRouteChildren {
   InvoicesInvoiceIdRoute: typeof InvoicesInvoiceIdRoute
   InvoicesPrepareRoute: typeof InvoicesPrepareRoute
+  InvoicesRenewalsRoute: typeof InvoicesRenewalsRoute
   InvoicesIndexRoute: typeof InvoicesIndexRoute
 }
 
 const InvoicesRouteChildren: InvoicesRouteChildren = {
   InvoicesInvoiceIdRoute: InvoicesInvoiceIdRoute,
   InvoicesPrepareRoute: InvoicesPrepareRoute,
+  InvoicesRenewalsRoute: InvoicesRenewalsRoute,
   InvoicesIndexRoute: InvoicesIndexRoute,
 }
 
