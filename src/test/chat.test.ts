@@ -13,7 +13,7 @@ it("lists families newest first by timestamp and returns only the selected famil
   expect(threads.every((thread, index) => index === 0 || Date.parse(threads[index - 1]?.lastMessageAt ?? "") >= Date.parse(thread.lastMessageAt))).toBe(true);
   const thread = await getChatThread("conv-1");
   expect(thread?.family?.id).toBe("fam-1");
-  expect(thread?.messages).toHaveLength(3);
+  expect(thread?.messages).toHaveLength(10);
   expect(thread?.messages.every((message) => message.conversationId === "conv-1")).toBe(true);
 });
 it("opening a thread clears only that family's unread messages", async () => {

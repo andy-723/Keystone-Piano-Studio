@@ -23,7 +23,7 @@ export const PUBLIC_HOLIDAYS_2027: Record<string, string> = {
 };
 
 /** The prototype pretends today is this date so the mock week is always full. */
-export const PROTOTYPE_TODAY = "2027-02-08";
+export const PROTOTYPE_TODAY = "2027-03-15";
 
 export function addDays(date: string, n: number): string {
   const d = new Date(`${date}T12:00:00Z`);

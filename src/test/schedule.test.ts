@@ -20,14 +20,14 @@ describe("lesson times across daylight saving", () => {
 describe("teacher day-book", () => {
   it("gets today's sample lessons in chronological order", async () => {
     const plan = await getTodayLessons();
-    expect(plan.date).toBe("2027-02-08");
+    expect(plan.date).toBe("2027-03-15");
     expect(plan.lessons).toHaveLength(5);
     const times = plan.lessons.map((lesson) => lesson.startsAt);
     expect(times).toEqual([...times].sort());
   });
 
   it.each(["attended", "absent", "cancelled_by_studio", "cancelled_late"] as const)("stores %s immediately and supports undo", async (status) => {
-    const id = "stu-1_2027-02-08";
+    const id = "stu-1_2027-03-15";
     const marking = markAttendance(id, status);
     const reading = getTodayLessons();
     expect((await reading).lessons.find((lesson) => lesson.id === id)?.status).toBe(status);

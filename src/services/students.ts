@@ -10,7 +10,9 @@ import { readiness } from "@/lib/lesson-progress";
 export const getTeacherStudents = getStudents;
 
 export async function getStudentAttendance(id: string) {
-  const plans = await Promise.all(Array.from({ length: 28 }, (_, index) => getDayLessons(addDays(PROTOTYPE_TODAY, -index - 1))));
+  const dates: string[] = [];
+  for (let date = "2027-01-28"; date < PROTOTYPE_TODAY; date = addDays(date, 1)) dates.push(date);
+  const plans = await Promise.all(dates.map(getDayLessons));
   return plans.flatMap((plan) => plan.lessons.filter((lesson) => lesson.studentId === id).map((lesson) => ({
     ...lesson, date: plan.date,
   }))).sort((a, b) => b.startsAt.localeCompare(a.startsAt));

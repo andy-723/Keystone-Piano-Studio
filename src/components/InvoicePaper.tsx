@@ -19,7 +19,10 @@ export function InvoicePaper({ invoice, studio, family }: { invoice: Invoice; st
     <dl className="ml-auto mt-6 grid max-w-sm grid-cols-2 gap-x-5 gap-y-3">
       {invoice.isTaxInvoice && <><dt className="text-base text-muted-foreground">Subtotal</dt><dd className="text-right text-base">{formatAUD(invoice.subtotalCents)}</dd><dt className="text-base text-muted-foreground">GST included</dt><dd className="text-right text-base">{formatAUD(invoice.taxCents)}</dd></>}
       <dt className="border-t border-border pt-3 text-xl font-semibold">Total</dt><dd className="border-t border-border pt-3 text-right text-xl font-semibold">{formatAUD(invoice.totalCents)}</dd>
+      <dt className="text-base text-muted-foreground">Amount paid</dt><dd className="text-right text-base">{formatAUD(invoice.paidCents ?? 0)}</dd>
+      <dt className="font-semibold">Balance</dt><dd className="text-right font-semibold">{formatAUD(invoice.balanceCents ?? invoice.totalCents)}</dd>
     </dl>
+    {!!invoice.payments?.length && <section className="mt-6 border-t border-border pt-4"><h2 className="text-xl font-semibold">Payment history</h2>{invoice.payments.map((payment) => <p key={payment.id} className="mt-2 text-base">{formatNumericDate(payment.date)} · {payment.method === "payto" ? "PayTo" : payment.method === "debit" ? "Direct debit" : "Card"} · {formatAUD(payment.amountCents)}</p>)}</section>}
     <footer className="mt-8 border-t border-border pt-5"><p className="text-base font-semibold">Payment methods</p><div className="mt-3 flex flex-wrap gap-3">{["PayTo", "Direct debit", "Card"].map((method) => <span key={method} className="border border-border bg-muted px-3 py-2 text-base">{method}</span>)}</div></footer>
   </article>;
 }

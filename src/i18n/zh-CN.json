@@ -1,5 +1,10 @@
 {
   "home": "首页",
+  "sharedNotes": "共享笔记",
+  "shared": "已共享",
+  "amountPaid": "已付金额",
+  "balance": "待付金额",
+  "paymentHistory": "付款记录",
   "chat": "聊天",
   "progress": "学习进度",
   "invoices": "账单",

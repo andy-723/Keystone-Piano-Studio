@@ -1,6 +1,6 @@
 import type {
   Conversation, Family, Invoice, InvoiceLine, InvoiceStatus, LessonType, Message, PracticeLog,
-  Requirement, RequirementCategory, RiskScore, Student, StudentProgress, Studio, Teacher, WeeklySlot, LessonStatus,
+  Requirement, RequirementCategory, RiskScore, Student, StudentProgress, Studio, Teacher, WeeklySlot, LessonStatus, Payment,
 } from "./types";
 import { PROTOTYPE_TODAY, addDays, melbourneIso } from "@/lib/calendar";
 
@@ -59,11 +59,22 @@ FAMILY_SEED.forEach(([surname, gName, lang, kids], i) => {
   families.push({
     id: familyId,
     displayName: `${surname} family`,
-    guardians: [{ id: `g-${i + 1}`, name: gName, email: `${slug}@example.com`, preferredLanguage: lang }],
+    guardians: [{ id: `g-${i + 1}`, name: gName, email: `${slug}@example.com`, preferredLanguage: lang, mobile: `0491 570 ${String(6 + i).padStart(3, "0")}` }],
   });
   kids.forEach(([first, year]) => {
     students.push({ id: `stu-${students.length + 1}`, familyId, firstName: first, lastName: surname, birthYear: year });
   });
+});
+
+const SECOND_GUARDIANS = ["Alex Chen", "Jamie Nguyen", "Rohan Patel", "Patrick O'Brien", "Mei Li", "Anna Rossi"];
+families.slice(0, 6).forEach((family, index) => {
+  const name = SECOND_GUARDIANS[index];
+  if (!name) return;
+  family.guardians.push({ id: `g-second-${index + 1}`, name, email: `${name.toLowerCase().replace(/[^a-z]+/g, ".")}@example.com`, preferredLanguage: "en", mobile: `0491 570 ${String(40 + index).padStart(3, "0")}` });
+});
+students.forEach((student, index) => {
+  if (index < 6) student.examDate = index < 3 ? `2027-06-${String(18 + index).padStart(2, "0")}` : `2027-08-${String(20 + index).padStart(2, "0")}`;
+  else student.targetTerm = index % 2 === 0 ? "Term 2 2027" : "Term 3 2027";
 });
 
 // Weekly timetable: Mon–Fri afternoons, Saturday mornings.
@@ -89,7 +100,7 @@ export const weeklySlots: WeeklySlot[] = [];
         weekday: day,
         time,
         lessonTypeId: age >= 14 ? "lt-60" : age >= 11 ? "lt-45" : "lt-30",
-        gradeGoal: GRADES[Math.min(4, Math.max(0, age - 9))]!,
+        gradeGoal: GRADES[Math.min(4, Math.max(0, age - 9))] ?? "AMEB Preliminary",
       });
       idx++;
     }
@@ -135,7 +146,7 @@ const YELLOW = ["stu-3", "stu-9", "stu-16", "stu-24", "stu-27"];
 
 export const practiceLogs: PracticeLog[] = [];
 for (const s of students) {
-  for (let d = 1; d <= 28; d++) {
+  for (let d = 1; addDays(PROTOTYPE_TODAY, -d) >= "2027-01-28"; d++) {
     const date = addDays(PROTOTYPE_TODAY, -d);
     const chance = RED.includes(s.id) ? (d > 14 ? 0.3 : 0) : YELLOW.includes(s.id) ? 0.3 : 0.65;
     if (rand() < chance) {
@@ -147,17 +158,26 @@ for (const s of students) {
   }
 }
 
+for (let date = "2027-01-28"; date < PROTOTYPE_TODAY; date = addDays(date, 1)) {
+  const wd = new Date(`${date}T12:00:00Z`).getUTCDay();
+  if (date === "2027-03-08") continue;
+  for (const slot of weeklySlots.filter((entry) => entry.weekday === wd)) {
+    if (RED.includes(slot.studentId) && date >= addDays(PROTOTYPE_TODAY, -14)) continue;
+    practiceLogs.push({ id: `pl-${practiceLogs.length + 1}`, studentId: slot.studentId, date, minutes: 10 + (Number(slot.studentId.replace("stu-", "")) % 3) * 5, loggedBy: "teacher" });
+  }
+}
+
 export const riskScores: RiskScore[] = students.map((s) => {
   if (RED.includes(s.id)) {
     return {
-      studentId: s.id, score: 78 + Math.round(rand() * 15), band: "red" as const,
+      studentId: s.id, score: 20 + Math.round(rand() * 29), band: "red" as const,
       reasons: ["No practice logged in 14 days", "Missed 2 weeks in a row", "Invoice 21 days overdue"].slice(0, 2 + (s.id === "stu-13" ? 1 : 0)),
     };
   }
   if (YELLOW.includes(s.id)) {
-    return { studentId: s.id, score: 45 + Math.round(rand() * 20), band: "yellow" as const, reasons: ["Practice down by half this month"] };
+    return { studentId: s.id, score: 50 + Math.round(rand() * 29), band: "yellow" as const, reasons: ["Practice down by half this month"] };
   }
-  return { studentId: s.id, score: Math.round(rand() * 30), band: "green" as const, reasons: [] };
+  return { studentId: s.id, score: 80 + Math.round(rand() * 20), band: "green" as const, reasons: [] };
 });
 
 // Invoices: Term 1 2027, one per family, covering every status.
@@ -165,8 +185,9 @@ const STATUSES: InvoiceStatus[] = ["paid", "paid", "sent", "overdue", "partially
 export const invoices: Invoice[] = families.map((f, i) => {
   const kids = students.filter((s) => s.familyId === f.id);
   const lines: InvoiceLine[] = kids.map((k) => {
-    const slot = weeklySlots.find((w) => w.studentId === k.id)!;
-    const lt = lessonTypes.find((l) => l.id === slot.lessonTypeId)!;
+    const slot = weeklySlots.find((w) => w.studentId === k.id);
+    const lt = lessonTypes.find((l) => l.id === slot?.lessonTypeId);
+    if (!lt) throw new Error("Incomplete invoice timetable");
     const qty = 8;
     const lineTotalCents = lt.priceCents * qty;
     return {
@@ -182,9 +203,9 @@ export const invoices: Invoice[] = families.map((f, i) => {
     id: `inv-${i + 1}`,
     number: `INV-2027-${String(i + 1).padStart(3, "0")}`,
     familyId: f.id,
-    status: STATUSES[i % STATUSES.length]!,
+    status: f.id === "fam-10" ? "overdue" : STATUSES[i % STATUSES.length] ?? "draft",
     issueDate: "2027-01-18",
-    dueDate: "2027-02-01",
+    dueDate: f.id === "fam-10" ? addDays(PROTOTYPE_TODAY, -21) : STATUSES[i % STATUSES.length] === "overdue" ? addDays(PROTOTYPE_TODAY, -(14 + i % 32)) : "2027-02-01",
     lines,
     subtotalCents: totalCents - taxCents,
     taxCents,
@@ -193,7 +214,13 @@ export const invoices: Invoice[] = families.map((f, i) => {
   };
 });
 
-// Chat: 8 threads, 2 in Chinese.
+export const payments: Payment[] = [];
+invoices.forEach((invoice, index) => {
+  if (invoice.status !== "paid" && invoice.status !== "partially_paid") return;
+  payments.push({ id: `payment-${payments.length + 1}`, invoiceId: invoice.id, method: index % 3 === 0 ? "payto" : index % 3 === 1 ? "debit" : "card", amountCents: invoice.status === "paid" ? invoice.totalCents : Math.round(invoice.totalCents / 2), date: "2027-02-05" });
+});
+
+// Keep initial conversation IDs stable while expanding to fifteen realistic family threads.
 const t = (daysAgo: number, hm: string) => melbourneIso(addDays(PROTOTYPE_TODAY, -daysAgo), hm);
 const THREADS: [string, [string, "teacher" | "guardian" | "student", string, string, Message["kind"]][]][] = [
   ["fam-1", [
@@ -227,9 +254,36 @@ THREADS.forEach(([familyId, msgs], i) => {
       ...(authorRole === "teacher" ? { readAt: sentAt } : {}),
     }),
   );
-  const last = msgs[msgs.length - 1]!;
+  const last = msgs[msgs.length - 1];
+  if (!last) return;
   conversations.push({
     id, familyId, lastMessageAt: last[3],
     unreadCount: msgs.filter((m) => m[1] !== "teacher").length && last[1] !== "teacher" ? 1 : 0,
   });
 });
+
+for (const familyId of ["fam-8", "fam-6", "fam-9", "fam-10", "fam-11", "fam-13", "fam-14"]) {
+  conversations.push({ id: `conv-${conversations.length + 1}`, familyId, lastMessageAt: t(1, "18:00"), unreadCount: 1 });
+}
+const chineseFamilies = new Set(["fam-1", "fam-5", "fam-8"]);
+for (const [index, conversation] of conversations.entries()) {
+  const family = families.find((entry) => entry.id === conversation.familyId);
+  const student = students.find((entry) => entry.familyId === conversation.familyId);
+  if (!family || !student) continue;
+  const chinese = chineseFamilies.has(family.id);
+  const gradeGoal = weeklySlots.find((slot) => slot.studentId === student.id)?.gradeGoal ?? "AMEB Preliminary";
+  const extra: { days: number; teacher: boolean; body: string; kind?: Message["kind"]; summary?: boolean }[] = [
+    { days: 44, teacher: true, body: chinese ? "欢迎回来！这学期我们会练习音阶和新曲目。" : `Welcome back! This term we'll work on ${student.firstName}'s scales and a new List B piece.` },
+    { days: 33, teacher: false, body: chinese ? "下周学校有活动，可以安排补课吗？" : "There is a school event next week. Could we arrange a make-up lesson?" },
+    { days: 32, teacher: true, body: chinese ? "可以，我们一起找一个合适的时间。" : "Of course — let's find a time that works for your family." },
+    { days: 24, teacher: false, body: chinese ? "请问学费可以分两次支付吗？" : "Could we pay the term invoice in two instalments?" },
+    { days: 23, teacher: true, body: chinese ? "可以，请在聊天里告诉我方便的日期。" : "Yes, that's fine. Let me know which dates would suit you." },
+    { days: 13, teacher: false, body: chinese ? "这是今天在家的练习视频。" : `${student.firstName}'s practice at home today.`, kind: "video" },
+    { days: 12, teacher: true, body: chinese ? "节奏更稳定了！请继续慢练，保持手腕放松。" : "The rhythm is much steadier! Keep practising slowly with relaxed wrists." },
+  ];
+  const existingCount = messages.filter((message) => message.conversationId === conversation.id).length;
+  for (const entry of extra.slice(0, Math.min(7, 9 - existingCount))) messages.push({ id: `msg-${messages.length + 1}`, conversationId: conversation.id, authorName: entry.teacher ? "Ms Clarke" : family.guardians[0]?.name ?? "Parent", authorRole: entry.teacher ? "teacher" : "guardian", body: entry.body, kind: entry.kind ?? "text", sentAt: t(entry.days, "18:10"), ...(entry.teacher ? { readAt: t(entry.days - 1, "09:00") } : {}), ...(entry.kind === "video" ? { media: { durationSeconds: 24 } } : {}) });
+  if (index === 0) messages.push({ id: `msg-${messages.length + 1}`, conversationId: conversation.id, authorName: "Ms Clarke", authorRole: "teacher", body: "Lucy Chen · Lesson summary\n\nKeep wrists relaxed and try slow practice in short bursts.", kind: "text", sentAt: t(7, "17:00"), readAt: t(6, "18:00"), lessonSummary: { lessonId: `${student.id}_${addDays(PROTOTYPE_TODAY, -7)}`, studentName: `${student.firstName} ${student.lastName}`, gradeGoal, readiness: 45, date: addDays(PROTOTYPE_TODAY, -7), notes: "Keep wrists relaxed and try slow practice in short bursts.", passedCount: 5, requirementCount: 11, studentMinutes: 80, teacherMinutes: 15 } });
+  const threadMessages = messages.filter((message) => message.conversationId === conversation.id).sort((a, b) => Date.parse(a.sentAt) - Date.parse(b.sentAt));
+  conversation.lastMessageAt = threadMessages.at(-1)?.sentAt ?? conversation.lastMessageAt;
+}

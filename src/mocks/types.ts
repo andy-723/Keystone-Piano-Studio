@@ -9,9 +9,9 @@ export interface Studio {
   timezone: "Australia/Melbourne";
 }
 export interface Teacher { id: string; name: string }
-export interface Guardian { id: string; name: string; email: string; preferredLanguage: Lang }
+export interface Guardian { id: string; name: string; email: string; preferredLanguage: Lang; mobile?: string }
 export interface Family { id: string; displayName: string; guardians: Guardian[] }
-export interface Student { id: string; familyId: string; firstName: string; lastName: string; birthYear: number }
+export interface Student { id: string; familyId: string; firstName: string; lastName: string; birthYear: number; examDate?: string; targetTerm?: string }
 export interface LessonType { id: string; name: string; durationMin: number; priceCents: number }
 
 export type LessonStatus = "scheduled" | "attended" | "absent" | "cancelled_by_studio" | "cancelled_late";
@@ -39,6 +39,23 @@ export interface Invoice {
   totalCents: number;
   isTaxInvoice: boolean;
   termKey?: string;
+  paidCents?: number;
+  balanceCents?: number;
+  payments?: Payment[];
+}
+
+export interface Payment { id: string; invoiceId: string; method: "payto" | "debit" | "card"; amountCents: number; date: string }
+export interface ClientNote {
+  id: string;
+  subjectType: "student" | "family";
+  subjectId: string;
+  authorName: string;
+  body: string;
+  category: "lesson" | "general" | "billing" | "pastoral";
+  visibility: "private" | "shared";
+  pinned: boolean;
+  createdAt: string;
+  lessonOccurrenceId?: string;
 }
 
 export interface Conversation { id: string; familyId: string; lastMessageAt: string; unreadCount: number }

@@ -7,6 +7,7 @@ import { PROTOTYPE_TODAY, addDays } from "@/lib/calendar";
 import { formatLongDate, formatTime } from "@/lib/format";
 import { getDayLessons, markAttendance, type DayPlan, type LessonWithDetails } from "@/services/schedule";
 import type { LessonStatus } from "@/mocks/types";
+import { LessonClientNotes, studentNotesQuery } from "@/components/LessonClientNotes";
 
 const dayQuery = (date: string) => queryOptions({ queryKey: ["day", date], queryFn: () => getDayLessons(date) });
 
@@ -14,7 +15,10 @@ export const Route = createFileRoute("/")({
   validateSearch: (s: Record<string, unknown>): { date?: string } =>
     typeof s["date"] === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s["date"]) ? { date: s["date"] } : {},
   loaderDeps: ({ search }) => ({ date: search.date ?? PROTOTYPE_TODAY }),
-  loader: async ({ context, deps }) => { await context.queryClient.ensureQueryData(dayQuery(deps.date)); },
+  loader: async ({ context, deps }) => {
+    const plan = await context.queryClient.ensureQueryData(dayQuery(deps.date));
+    await Promise.all(plan.lessons.map((lesson) => context.queryClient.ensureQueryData(studentNotesQuery(lesson.studentId))));
+  },
   errorComponent: () => <p role="alert">The day-book could not be opened. Please refresh to try again.</p>,
   notFoundComponent: () => <p>No day-book page found.</p>,
   head: () => ({
@@ -152,6 +156,7 @@ function LessonCard({ lesson, date }: { lesson: LessonWithDetails; date: string 
           </div>
         </div>
       )}
+      <LessonClientNotes studentId={lesson.studentId} name={name} occurrenceId={lesson.id} />
     </section>
   );
 }

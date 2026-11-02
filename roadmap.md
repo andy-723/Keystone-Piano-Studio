@@ -25,7 +25,7 @@
 - [x] Verify family isolation, parent author role, translations and phone layout.
 
 # Teacher Students
-- [ ] Add searchable roster, labelled risk badges and attention ordering / reasons.
-- [ ] Add family check-in templates in the editable chat composer.
-- [ ] Add profiles with family, attendance, four-week practice, progress and invoices; verify flows.
-- [ ] Incorporate the uploaded earlier mock-data prompt and report any conflicts with existing screens.
+- [x] Add searchable roster, labelled risk badges and attention ordering / reasons.
+- [x] Add family check-in templates in the editable chat composer.
+- [x] Add profiles with family, attendance, four-week practice, progress and invoices; verify flows.
+- [x] Incorporate the uploaded earlier mock-data prompt and report conflicts: preserve built screens, allow teacher-only mock numbers, replace demo date and fixture counts.

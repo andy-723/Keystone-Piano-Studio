@@ -1,6 +1,6 @@
-import { invoices, studio, students, families, weeklySlots, lessonTypes } from "@/mocks/data";
+import { invoices, studio, students, families, weeklySlots, lessonTypes, payments } from "@/mocks/data";
 import { termInvoiceDrafts } from "@/mocks/billing";
-import { addDays, dayKind, TERMS_2027, weekday, PUBLIC_HOLIDAYS_2027 } from "@/lib/calendar";
+import { addDays, dayKind, TERMS_2027, weekday, PUBLIC_HOLIDAYS_2027, PROTOTYPE_TODAY } from "@/lib/calendar";
 import type { Invoice, InvoiceStatus } from "@/mocks/types";
 import { respond } from "./_delay";
 
@@ -17,7 +17,9 @@ function taxView(invoice: Invoice): Invoice {
     allocated += tax;
     return { ...line, taxCents: tax };
   });
-  return { ...invoice, lines, taxCents, subtotalCents: invoice.totalCents - taxCents, isTaxInvoice: studio.gstRegistered };
+  const records = payments.filter((payment) => payment.invoiceId === invoice.id);
+  const paidCents = Math.min(invoice.totalCents, records.reduce((sum, payment) => sum + payment.amountCents, 0));
+  return { ...invoice, lines, taxCents, subtotalCents: invoice.totalCents - taxCents, isTaxInvoice: studio.gstRegistered, paidCents, balanceCents: invoice.totalCents - paidCents, payments: records };
 }
 
 export const getInvoices = (): Promise<Invoice[]> => respond(invoices.map(taxView));
@@ -74,6 +76,18 @@ export async function sendTerm2Invoices() {
 
 export async function setInvoiceStatus(id: string, status: InvoiceStatus): Promise<Invoice | null> {
   const inv = invoices.find((i) => i.id === id);
-  if (inv) inv.status = status;
-  return respond(inv ?? null);
+  if (inv) {
+    if (status === "paid") await recordInvoicePayment(id, "card");
+    else inv.status = status;
+  }
+  return respond(inv ? taxView(inv) : null);
+}
+
+export async function recordInvoicePayment(id: string, method: "payto" | "debit" | "card") {
+  const invoice = invoices.find((entry) => entry.id === id);
+  if (!invoice) throw new Error("Invoice not found");
+  const balance = taxView(invoice).balanceCents ?? invoice.totalCents;
+  if (balance > 0) payments.push({ id: `payment-${crypto.randomUUID()}`, invoiceId: id, method, amountCents: balance, date: PROTOTYPE_TODAY });
+  invoice.status = "paid";
+  return respond(taxView(invoice));
 }
