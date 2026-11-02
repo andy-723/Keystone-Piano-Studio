@@ -28,14 +28,17 @@ export function ChatComposer({ conversationId }: { conversationId: string }) {
     const url = URL.createObjectURL(file);
     const kind = file.type.startsWith("image/") ? "image" : "video";
     let durationSeconds: number | undefined;
+    let thumbnailUrl: string | undefined;
     if (kind === "video") {
       durationSeconds = await new Promise<number | undefined>((resolve) => {
         const video = document.createElement("video"); video.preload = "metadata"; video.src = url;
+        const timer = window.setTimeout(() => resolve(undefined), 3000);
         video.onloadedmetadata = () => resolve(Number.isFinite(video.duration) ? Math.round(video.duration) : undefined);
-        video.onerror = () => resolve(undefined);
+        video.onloadeddata = () => { window.clearTimeout(timer); const canvas = document.createElement("canvas"); canvas.width = 480; canvas.height = 320; const context = canvas.getContext("2d"); if (context) { context.drawImage(video, 0, 0, 480, 320); thumbnailUrl = canvas.toDataURL("image/jpeg"); } };
+        video.onerror = () => { window.clearTimeout(timer); resolve(undefined); };
       });
     }
-    setAttachment({ kind, media: { url, fileName: file.name, durationSeconds } });
+    setAttachment({ kind, media: { url, fileName: file.name, ...(durationSeconds !== undefined ? { durationSeconds } : {}), ...(thumbnailUrl ? { thumbnailUrl } : {}) } });
   }
   return <form className="shrink-0 border-t border-border bg-background p-4" onSubmit={(event) => { event.preventDefault(); if (!sending.isPending && (text.trim() || attachment)) sending.mutate(); }}>
     {attachment && <div className="mb-3 border-l-4 border-primary bg-muted p-3">
