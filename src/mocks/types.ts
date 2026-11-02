@@ -50,6 +50,8 @@ export interface Message {
   kind: "text" | "voice" | "video" | "image";
   sentAt: string;
   readAt?: string;
+  media?: { url?: string; thumbnailUrl?: string; durationSeconds?: number; fileName?: string };
+  lessonSummary?: { lessonId: string; studentName: string; gradeGoal: string; readiness: number; date: string };
 }
 
 export type Framework = "AMEB" | "Trinity" | "ABRSM";
