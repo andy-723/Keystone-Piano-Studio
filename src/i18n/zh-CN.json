@@ -1,4 +1,8 @@
 {
+  "makeUpOwed": "待补课次数：{count}",
+  "requestMakeUp": "申请补课",
+  "makeUpRequested": "补课申请已发送给老师",
+  "makeUpError": "无法发送补课申请，请重试。",
   "home": "首页",
   "renewalTitle": "第 {term} 学期续课",
   "renewalDeadline": "请在此日期前回复：",

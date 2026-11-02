@@ -1,4 +1,8 @@
 {
+  "makeUpOwed": "Make-up lessons owed: {count}",
+  "requestMakeUp": "Request a make-up",
+  "makeUpRequested": "Request sent to your teacher",
+  "makeUpError": "Your request could not be sent. Please try again.",
   "home": "Home",
   "renewalTitle": "Term {term} renewal",
   "renewalDeadline": "Please reply by",

@@ -23,10 +23,10 @@ function buildDay(date: string): DayPlan {
     const change = recurringMoves.filter((entry) => entry.studentId === slot.studentId && entry.effectiveDate <= date).sort((a, b) => b.effectiveDate.localeCompare(a.effectiveDate)).at(0);
     if ((change?.weekday ?? slot.weekday) !== weekday(date)) continue;
     const id = `${slot.studentId}_${date}`;
-    if (!lessonMoves.has(id)) lessons.push(details(id, slot.studentId, slot.lessonTypeId, date, change?.time ?? slot.time, slot.gradeGoal));
+    if (!lessonMoves.has(id) && ![...lessonMoves.values()].some((move) => move.studentId === slot.studentId && move.date === date && move.id !== id && recurringMoves.some((change) => change.studentId === slot.studentId && change.effectiveDate <= date && weekMonday(change.effectiveDate) === weekMonday(move.originalDate)))) lessons.push(details(id, slot.studentId, slot.lessonTypeId, date, change?.time ?? slot.time, slot.gradeGoal));
   }
   for (const move of lessonMoves.values()) if (move.date === date) {
-    const slot = weeklySlots.find((entry) => entry.studentId === move.studentId); if (slot) lessons.push(details(move.id, slot.studentId, slot.lessonTypeId, date, move.time, slot.gradeGoal));
+    const slot = weeklySlots.find((entry) => entry.studentId === move.studentId); const makeup = makeUpBookings.find((entry) => entry.id === move.id); if (slot) lessons.push(details(move.id, slot.studentId, makeup?.lessonTypeId ?? slot.lessonTypeId, date, move.time, makeup?.gradeGoal ?? slot.gradeGoal, Boolean(makeup)));
   }
   for (const booking of makeUpBookings) if (booking.date === date && !lessonMoves.has(booking.id)) lessons.push(details(booking.id, booking.studentId, booking.lessonTypeId, date, booking.time, booking.gradeGoal, true));
   return { date, day, lessons: lessons.sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt)) };
@@ -94,7 +94,7 @@ export async function moveLesson(input: { occurrenceId: string; date: string; ti
     if (!recurringFree(lesson, input.date, input.time)) throw new Error('That time overlaps another lesson in this or a later week. Choose a free slot.');
     const conflict = recurringMoves.find((entry) => entry.studentId === lesson.studentId && entry.effectiveDate > weekMonday(sourceDate));
     if (conflict) throw new Error('There is a later weekly change for this student. Move that lesson instead.');
-    recurringMoves.push({ studentId: lesson.studentId, effectiveDate: weekMonday(sourceDate), weekday: weekday(input.date), time: input.time });
+    recurringMoves.push({ studentId: lesson.studentId, effectiveDate: weekMonday(sourceDate) < PROTOTYPE_TODAY ? PROTOTYPE_TODAY : weekMonday(sourceDate), weekday: weekday(input.date), time: input.time });
     if (input.date !== sourceDate) lessonMoves.set(lesson.id, { id: lesson.id, studentId: lesson.studentId, originalDate: sourceDate, date: input.date, time: input.time });
     else lessonMoves.delete(lesson.id);
   } else {

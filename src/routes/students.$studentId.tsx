@@ -7,6 +7,7 @@ import { StudentCheckIn } from "@/components/StudentCheckIn";
 import { ProgressRing } from "@/components/ProgressRing";
 import { studentProfileQuery } from "@/lib/student-queries";
 import { formatAUD, formatNumericDate, formatShortDate, formatTime } from "@/lib/format";
+import { LessonScheduling } from "@/components/LessonScheduling";
 import { INVOICE_STATUS } from "@/lib/billing-queries";
 
 export const Route = createFileRoute("/students/$studentId")({
@@ -39,6 +40,7 @@ function StudentProfile() {
       <dl className="mt-5 grid gap-4 sm:grid-cols-2"><div><dt className="text-base text-muted-foreground">Birth year</dt><dd className="mt-1">{student.birthYear}</dd></div><div><dt className="text-base text-muted-foreground">Family</dt><dd className="mt-1">{family?.displayName ?? "Not recorded"}</dd></div><div><dt className="text-base text-muted-foreground">Exam goal</dt><dd className="mt-1">{student.examDate ? formatNumericDate(student.examDate) : student.targetTerm}</dd></div></dl>
       <h3 className="mt-6 text-xl font-semibold">Guardians</h3><div className="mt-3 space-y-4">{family?.guardians.map((guardian) => <div key={guardian.id}><p className="font-semibold">{guardian.name}</p><p className="break-all text-base text-muted-foreground">{guardian.email}</p>{guardian.mobile && <p className="text-base text-muted-foreground">{guardian.mobile}</p>}<p className="text-base text-muted-foreground">Preferred language: {guardian.preferredLanguage === "zh-CN" ? "中文" : "English"}</p></div>)}</div>
     </section>
+    <section className="border-t border-border py-7"><h2 className="text-2xl font-semibold">Make-up lessons · {data.credits.balance} owed</h2><LessonScheduling student={{ id: student.id, name: `${student.firstName} ${student.lastName}`, durationMin: data.attendance[0]?.lessonType.durationMin ?? 30 }} movable={false} balance={data.credits.balance} history /></section>
     <section className="border-t border-border py-7" aria-labelledby="attendance-history"><h2 id="attendance-history" className="text-2xl font-semibold">Attendance history</h2><p className="mt-2 text-base text-muted-foreground">Term 1 to date · {data.attendance.filter((lesson) => lesson.status === "attended").length} attended of {data.attendance.length} lessons</p>
       <div className="mt-4 divide-y divide-border">{data.attendance.map((lesson) => <div key={lesson.id} className="flex flex-wrap justify-between gap-3 py-4"><div><p>{formatShortDate(lesson.date)} · {formatTime(lesson.startsAt)}</p><p className="text-base text-muted-foreground">{lesson.lessonType.name}</p></div><span className={`text-base font-semibold ${lesson.status === "absent" || lesson.status === "cancelled_late" ? "text-destructive" : lesson.status === "attended" ? "text-success" : "text-muted-foreground"}`}>{attendanceLabels[lesson.status]}</span></div>)}</div>{!data.attendance.length && <p className="mt-4 text-muted-foreground">No lessons in this period.</p>}
     </section>
