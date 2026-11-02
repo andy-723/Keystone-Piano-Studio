@@ -1,4 +1,5 @@
 {
+  "bankDetails": "Your teacher will send bank details",
   "makeUpOwed": "Make-up lessons owed: {count}",
   "requestMakeUp": "Request a make-up",
   "makeUpRequested": "Request sent to your teacher",

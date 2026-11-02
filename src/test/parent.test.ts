@@ -2,9 +2,11 @@ import { afterEach, expect, it } from "vitest";
 import { invoices, messages, conversations, practiceLogs, payments } from "@/mocks/data";
 import { getParentSession, getParentHome, getParentInvoices, getParentInvoice, getParentProgress, logParentPractice, sendParentMessage, readParentChat, payParentInvoice } from "@/services/parent";
 import { sendMessage } from "@/services/chat";
+import { integrationState, initialIntegrations } from "@/mocks/integrations";
+import { connectStripe } from "@/services/integrations";
 import { parentPayments } from "@/mocks/parent";
 const original = { payments: structuredClone(payments), invoices: structuredClone(invoices), messages: structuredClone(messages), conversations: structuredClone(conversations), practice: structuredClone(practiceLogs) };
-afterEach(() => { payments.splice(0, payments.length, ...structuredClone(original.payments)); invoices.splice(0, invoices.length, ...structuredClone(original.invoices)); messages.splice(0, messages.length, ...structuredClone(original.messages)); conversations.splice(0, conversations.length, ...structuredClone(original.conversations)); practiceLogs.splice(0, practiceLogs.length, ...structuredClone(original.practice)); parentPayments.length = 0; });
+afterEach(() => { integrationState.demo = initialIntegrations(); payments.splice(0, payments.length, ...structuredClone(original.payments)); invoices.splice(0, invoices.length, ...structuredClone(original.invoices)); messages.splice(0, messages.length, ...structuredClone(original.messages)); conversations.splice(0, conversations.length, ...structuredClone(original.conversations)); practiceLogs.splice(0, practiceLogs.length, ...structuredClone(original.practice)); parentPayments.length = 0; });
 it("defaults Wei Chen to Chinese and exposes only Lucy and Oscar without risk fields", async () => {
   const session = await getParentSession();
   expect(session.guardian).toMatchObject({ id: "g-1", name: "Wei Chen", preferredLanguage: "zh-CN" });
@@ -37,6 +39,7 @@ it.each(["payto", "becs", "card"] as const)("simulates %s only for an unpaid fam
   const invoice = invoices.find((entry) => entry.id === "inv-1");
   if (!invoice) throw new Error("Missing fixture");
   invoice.status = "sent";
+  await connectStripe();
   expect(await payParentInvoice("inv-1", method)).toMatchObject({ status: "paid" });
   expect(parentPayments).toEqual([{ invoiceId: "inv-1", method }]);
   await expect(payParentInvoice("inv-4", method)).rejects.toThrow("Unpaid family invoice not found");

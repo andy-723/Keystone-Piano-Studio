@@ -1,4 +1,5 @@
 {
+  "bankDetails": "老师会发送银行转账信息",
   "makeUpOwed": "待补课次数：{count}",
   "requestMakeUp": "申请补课",
   "makeUpRequested": "补课申请已发送给老师",

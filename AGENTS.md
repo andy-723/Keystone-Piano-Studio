@@ -25,3 +25,5 @@
 - Client notes have a dedicated mock collection and async service; teacher lesson sheets share the same student/family note context. Parent services explicitly select shared notes for their own family and strip guardian contact numbers from every response.
 - Payment records are the source of truth for amount paid and invoice balances; both teacher and parent mock payment actions settle only the remaining balance and retain method/date records.
 - Renewals keep independent Term 2–4 session campaigns with own-family parent responses and idempotent invitations plus manual/simulated reminders in family chat; no background job runs. Billing remains Term 2 only and gates on its campaign confirmations, never another term’s responses.
+
+- Integrations use scope-keyed session mock states and async services only; billing stores Xero sync timestamps on issued invoices and new payment records, while parent online payments enforce Stripe status in the service as well as the UI. New-studio integration queries and state remain isolated from demo billing.
