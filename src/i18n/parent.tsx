@@ -25,3 +25,28 @@ export function useParentLanguage() {
 export function parentDate(iso: string, lang: Lang) {
   return new Intl.DateTimeFormat(lang === "zh-CN" ? "zh-CN" : "en-AU", { timeZone: "Australia/Melbourne", weekday: "short", day: "numeric", month: "short" }).format(new Date(iso.length === 10 ? `${iso}T12:00:00+11:00` : iso));
 }
+
+export function parentGrade(goal: string, lang: Lang) {
+  const grade = goal.match(/Grade (\d+)/)?.[1];
+  return grade ? translate(lang, "grade", { grade }) : translate(lang, "preliminary");
+}
+export function parentRequirement(title: string, lang: Lang) {
+  if (lang === "en") return title;
+  const scale = title.match(/^(.+) scale, hands together$/);
+  const arpeggio = title.match(/^(.+) arpeggio$/);
+  const piece = title.match(/^List ([ABC]) piece \((.+)\)$/);
+  const sight = title.match(/^Sight-reading at (.+) level$/);
+  if (scale?.[1]) return translate(lang, "scaleTitle", { key: scale[1].replace("major", "大调").replace("minor", "小调") });
+  if (arpeggio?.[1]) return translate(lang, "arpeggioTitle", { key: arpeggio[1].replace("major", "大调").replace("minor", "小调") });
+  if (piece?.[1] && piece[2]) return translate(lang, "pieceTitle", { list: piece[1], grade: parentGrade(piece[2], lang) });
+  if (sight?.[1]) return translate(lang, "sightTitle", { grade: parentGrade(sight[1], lang) });
+  if (title === "Extra list piece") return translate(lang, "extraPiece");
+  if (title === "Clap back a rhythm") return translate(lang, "clapRhythm");
+  if (title === "Sing back a short melody") return translate(lang, "singMelody");
+  return title;
+}
+export function parentInvoiceLine(description: string, lang: Lang) {
+  if (lang === "en") return description;
+  const match = description.match(/^(.+?) [–-] (\d+) min lesson, Term ([12]) 2027$/);
+  return match?.[1] && match[2] ? translate(lang, "invoiceLine", { student: match[1], duration: translate(lang, "duration", { minutes: match[2] }), term: translate(lang, match[3] === "2" ? "term2" : "term1") }) : description;
+}
