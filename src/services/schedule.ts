@@ -1,6 +1,6 @@
 import { lessonTypes, students, weeklySlots } from "@/mocks/data";
 import type { LessonOccurrence, LessonStatus, LessonType, Student } from "@/mocks/types";
-import { dayKind, weekday, type DayKind } from "@/lib/calendar";
+import { dayKind, melbourneIso, weekday, type DayKind } from "@/lib/calendar";
 import { respond } from "./_delay";
 
 // In-memory status changes for this session, keyed by occurrence id.
@@ -17,7 +17,7 @@ function buildDay(date: string): DayPlan {
     .filter((s) => s.weekday === wd)
     .map((slot) => {
       const lessonType = lessonTypes.find((l) => l.id === slot.lessonTypeId)!;
-      const startsAt = `${date}T${slot.time}:00+11:00`;
+      const startsAt = melbourneIso(date, slot.time);
       const endsAt = new Date(new Date(startsAt).getTime() + lessonType.durationMin * 60000).toISOString();
       const id = `${slot.studentId}_${date}`;
       return {
