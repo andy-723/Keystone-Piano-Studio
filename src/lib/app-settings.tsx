@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import type { Lang } from "@/mocks/types";
 
 export type Role = "teacher" | "parent";
 
@@ -7,6 +8,8 @@ type Settings = {
   setRole: (r: Role) => void;
   largeText: boolean;
   setLargeText: (v: boolean) => void;
+  parentLang: Lang;
+  setParentLang: (lang: Lang) => void;
 };
 
 const Ctx = createContext<Settings | null>(null);
@@ -14,12 +17,13 @@ const Ctx = createContext<Settings | null>(null);
 export function AppSettingsProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<Role>("teacher");
   const [largeText, setLargeText] = useState(false);
+  const [parentLang, setParentLang] = useState<Lang>("zh-CN");
 
   useEffect(() => {
     document.documentElement.classList.toggle("text-large", largeText);
   }, [largeText]);
 
-  return <Ctx.Provider value={{ role, setRole, largeText, setLargeText }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ role, setRole, largeText, setLargeText, parentLang, setParentLang }}>{children}</Ctx.Provider>;
 }
 
 export function useAppSettings() {

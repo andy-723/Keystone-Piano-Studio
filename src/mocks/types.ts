@@ -52,7 +52,7 @@ export interface Message {
   sentAt: string;
   readAt?: string;
   media?: { url?: string; thumbnailUrl?: string; durationSeconds?: number; fileName?: string };
-  lessonSummary?: { lessonId: string; studentName: string; gradeGoal: string; readiness: number; date: string };
+  lessonSummary?: { lessonId: string; studentName: string; gradeGoal: string; readiness: number; date: string; passedCount?: number; requirementCount?: number; studentMinutes?: number; teacherMinutes?: number; notes?: string; voiceSeconds?: number };
 }
 
 export type Framework = "AMEB" | "Trinity" | "ABRSM";

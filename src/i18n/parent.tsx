@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from "
 import en from "./en.json";
 import zh from "./zh-CN.json";
 import type { Lang } from "@/mocks/types";
+import { useAppSettings } from "@/lib/app-settings";
 export type ParentKey = keyof typeof en;
 export function translate(lang: Lang, key: ParentKey, values: Record<string, string | number> = {}) {
   let text: string = (lang === "zh-CN" ? zh : en)[key];
@@ -11,6 +12,8 @@ export function translate(lang: Lang, key: ParentKey, values: Record<string, str
 const Context = createContext<{ lang: Lang; setLang: (lang: Lang) => void } | null>(null);
 export function ParentLanguageProvider({ initial, children }: { initial: Lang; children: ReactNode }) {
   const [lang, setLang] = useState(initial);
+  const { setParentLang } = useAppSettings();
+  useEffect(() => { setParentLang(lang); }, [lang, setParentLang]);
   useEffect(() => { document.documentElement.lang = lang === "zh-CN" ? "zh-CN" : "en-AU"; return () => { document.documentElement.lang = "en-AU"; }; }, [lang]);
   return <Context.Provider value={{ lang, setLang }}>{children}</Context.Provider>;
 }

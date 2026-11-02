@@ -5,6 +5,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useAppSettings, type Role } from "@/lib/app-settings";
 import type { Studio } from "@/mocks/types";
+import { translate } from "@/i18n/parent";
 
 const NAV = [
   { to: "/", label: "Today", icon: BookOpen },
@@ -17,6 +18,8 @@ const NAV = [
 export function AppShell({ children, studio }: { children: ReactNode; studio: Studio }) {
   const { role, setRole, largeText, setLargeText } = useAppSettings();
   const isTeacher = role === "teacher";
+  const { parentLang } = useAppSettings();
+  const shellText = (key: "largerText" | "viewingAs") => translate(isTeacher ? "en" : parentLang, key);
 
   return (
     <div className="min-h-screen md:flex">
@@ -43,10 +46,10 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
           <div className="flex min-w-0 max-w-full flex-wrap items-center gap-4">
             <div className="relative flex min-h-12 items-center gap-3">
               <Switch id="larger-text" checked={largeText} onCheckedChange={setLargeText} />
-              <Label htmlFor="larger-text" className="flex min-h-12 cursor-pointer items-center text-base before:absolute before:inset-0">Larger text</Label>
+              <Label htmlFor="larger-text" className="flex min-h-12 cursor-pointer items-center text-base before:absolute before:inset-0">{shellText("largerText")}</Label>
             </div>
             <label className="flex min-w-0 max-w-full flex-wrap items-center gap-2 text-base">
-              <span className="text-muted-foreground">Viewing as</span>
+              <span className="text-muted-foreground">{shellText("viewingAs")}</span>
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value as Role)}
