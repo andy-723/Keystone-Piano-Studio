@@ -9,7 +9,7 @@ function summarise(s: Student): StudentSummary {
     ...s,
     gradeGoal: weeklySlots.find((w) => w.studentId === s.id)?.gradeGoal ?? "",
     familyName: families.find((f) => f.id === s.familyId)?.displayName ?? "",
-    risk: riskScores.find((r) => r.studentId === s.id) ?? { studentId: s.id, score: 0, band: "green", reasons: [] },
+    risk: riskScores.find((r) => r.studentId === s.id) ?? { studentId: s.id, score: 100, band: "green", reasons: [] },
   };
 }
 
