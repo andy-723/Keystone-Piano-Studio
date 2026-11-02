@@ -42,9 +42,27 @@ it("non-registered invoices have zero GST and keep inclusive family prices", asy
   expect(drafts.every((invoice) => invoice.lines.every((line) => line.taxCents === 0))).toBe(true);
   await sendTerm2Invoices();
   await setGstRegistered(true);
-  expect(await getInvoice("inv-term2-fam-1")).toMatchObject({ isTaxInvoice: true, taxCents: 9655, totalCents: 106200 });
+  expect(await getInvoice("inv-term2-fam-1")).toMatchObject({ gstRegistered: false, title: "Invoice", isTaxInvoice: false, taxCents: 0, subtotalCents: 106200, totalCents: 106200 });
 });
 it("Mark as paid reads back as paid", async () => {
   await setInvoiceStatus("inv-4", "paid");
   expect((await getInvoice("inv-4"))?.status).toBe("paid");
+});
+it("freezes registered treatment and exact line GST on sending despite later Settings changes", async () => {
+  await prepareTerm2Invoices(); await sendTerm2Invoices();
+  const before = await getInvoice("inv-term2-fam-1");
+  expect(before).toMatchObject({ gstRegistered: true, title: "Tax invoice", isTaxInvoice: true, taxCents: 9655, subtotalCents: 96545 });
+  expect(before?.lines.map((line) => line.taxCents)).toEqual([5645, 4010]);
+  await setGstRegistered(false);
+  const after = await getInvoice("inv-term2-fam-1");
+  expect(after).toEqual(before);
+  await setInvoiceStatus("inv-term2-fam-1", "paid");
+  expect(await getInvoice("inv-term2-fam-1")).toMatchObject({ title: "Tax invoice", gstRegistered: true, taxCents: 9655 });
+});
+it("only drafts follow Settings and generic draft-to-sent transitions freeze current treatment", async () => {
+  expect(await getInvoice("inv-6")).toMatchObject({ status: "draft", title: "Tax invoice", taxCents: 5018 });
+  await setGstRegistered(false);
+  expect(await getInvoice("inv-6")).toMatchObject({ status: "draft", title: "Invoice", taxCents: 0 });
+  await setInvoiceStatus("inv-6", "sent"); await setGstRegistered(true);
+  expect(await getInvoice("inv-6")).toMatchObject({ status: "sent", gstRegistered: false, title: "Invoice", taxCents: 0 });
 });

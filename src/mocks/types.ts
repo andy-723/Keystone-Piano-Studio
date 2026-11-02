@@ -38,13 +38,15 @@ export interface Invoice {
   taxCents: number;
   totalCents: number;
   isTaxInvoice: boolean;
+  gstRegistered?: boolean;
+  title?: "Tax invoice" | "Invoice";
   termKey?: string;
   paidCents?: number;
   balanceCents?: number;
   payments?: Payment[];
 }
 
-export interface Payment { id: string; invoiceId: string; method: "payto" | "debit" | "card"; amountCents: number; date: string }
+export interface Payment { id: string; invoiceId: string; method: "payto" | "becs" | "card"; amountCents: number; date: string }
 export interface ClientNote {
   id: string;
   subjectType: "student" | "family";
