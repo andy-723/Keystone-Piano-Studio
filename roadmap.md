@@ -7,3 +7,13 @@
 - [x] Add lesson page with grade progress and requirement controls.
 - [x] Add weekly practice, session notes and simulated voice clip.
 - [x] Send and read back family summaries; verify tests and tablet / phone layouts.
+
+# Chat
+- [x] Add searchable newest-first family threads and day-grouped conversations.
+- [x] Add text, photo, video, simulated voice and lesson-summary messages.
+- [x] Verify mock read state, sending, and tablet / phone layouts.
+
+# Invoices
+- [x] Build status filters, totals and printable invoice details.
+- [x] Build Term 2 lesson preview, family drafts and Send all wizard.
+- [x] Add GST setting and verify registered / non-registered rules.

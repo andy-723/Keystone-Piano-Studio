@@ -65,7 +65,7 @@ function LessonSession({ data }: { data: NonNullable<Awaited<ReturnType<typeof g
     mutationFn: async () => { await saveLessonNotes(lesson.id, { notes, voiceSeconds }); return finishLesson(lesson.id); },
     onSuccess: async (message) => {
       setSent({ conversationId: message.conversationId, body: message.body });
-      await Promise.all([refresh(), qc.invalidateQueries({ queryKey: ["conversations"] }), qc.invalidateQueries({ queryKey: ["messages", message.conversationId] })]);
+      await Promise.all([refresh(), qc.invalidateQueries({ queryKey: ["chat-threads"] }), qc.invalidateQueries({ queryKey: ["messages", message.conversationId] })]);
       toast.success(`Summary sent to ${data.family?.displayName ?? "family"}`);
     },
     onError: () => toast.error("Summary was not sent. Please try again."),

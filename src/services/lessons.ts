@@ -49,7 +49,9 @@ async function sendSummary(id: string) {
     draft.notes.trim() ? `Notes: ${draft.notes.trim()}` : "",
     draft.voiceSeconds ? `Voice note: ${draft.voiceSeconds}-second simulated clip (no audio recorded).` : "",
   ].filter(Boolean).join("\n\n");
-  const message = await sendMessage({ conversationId: conversation.id, authorName: teacher.name, authorRole: "teacher", kind: "text", body });
+  const message = await sendMessage({ conversationId: conversation.id, authorName: teacher.name, authorRole: "teacher", kind: "text", body,
+    lessonSummary: { lessonId: id, studentName: `${data.lesson.student.firstName} ${data.lesson.student.lastName}`, gradeGoal: data.lesson.gradeGoal, readiness: readiness(data.requirements, data.progress), date: data.date },
+  });
   lessonNotes.set(id, { ...draft, summaryMessageId: message.id, conversationId: conversation.id });
   return message;
 }

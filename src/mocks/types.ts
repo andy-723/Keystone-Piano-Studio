@@ -38,6 +38,7 @@ export interface Invoice {
   taxCents: number;
   totalCents: number;
   isTaxInvoice: boolean;
+  termKey?: string;
 }
 
 export interface Conversation { id: string; familyId: string; lastMessageAt: string; unreadCount: number }
@@ -50,6 +51,8 @@ export interface Message {
   kind: "text" | "voice" | "video" | "image";
   sentAt: string;
   readAt?: string;
+  media?: { url?: string; thumbnailUrl?: string; durationSeconds?: number; fileName?: string };
+  lessonSummary?: { lessonId: string; studentName: string; gradeGoal: string; readiness: number; date: string };
 }
 
 export type Framework = "AMEB" | "Trinity" | "ABRSM";
