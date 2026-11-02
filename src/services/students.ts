@@ -3,8 +3,6 @@ import { getDayLessons } from "./schedule";
 import { getPracticeLogs, getRequirements, getStudentProgress } from "./curriculum";
 import { getInvoices } from "./billing";
 import { getChatThread, getOrCreateFamilyConversation } from "./chat";
-import { studentAttendance } from "@/mocks/student-attendance";
-import { attendanceMarks } from "@/mocks/data";
 import { addDays, PROTOTYPE_TODAY } from "@/lib/calendar";
 import { fourWeekPractice } from "@/lib/student-insights";
 import { readiness } from "@/lib/lesson-progress";
@@ -14,7 +12,7 @@ export const getTeacherStudents = getStudents;
 export async function getStudentAttendance(id: string) {
   const plans = await Promise.all(Array.from({ length: 28 }, (_, index) => getDayLessons(addDays(PROTOTYPE_TODAY, -index - 1))));
   return plans.flatMap((plan) => plan.lessons.filter((lesson) => lesson.studentId === id).map((lesson) => ({
-    ...lesson, date: plan.date, status: attendanceMarks.get(lesson.id) ?? studentAttendance.get(lesson.id) ?? lesson.status,
+    ...lesson, date: plan.date,
   }))).sort((a, b) => b.startsAt.localeCompare(a.startsAt));
 }
 
