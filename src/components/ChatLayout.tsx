@@ -18,7 +18,7 @@ export function ChatLayout() {
       <aside className={`${selected ? "hidden md:flex" : "flex"} w-full shrink-0 flex-col md:w-72 lg:w-80 md:border-r md:border-border`} aria-label="Family threads">
         <div className="shrink-0 border-b border-border p-4">
           <label htmlFor="family-search" className="mb-2 block font-semibold">Families <span className="font-normal text-muted-foreground">· {threads.length}</span></label>
-          <div className="relative"><Search aria-hidden className="absolute left-3 top-4 size-5 text-muted-foreground" /><input id="family-search" type="search" placeholder="Search families" value={search} onChange={(event) => setSearch(event.target.value)} className="min-h-12 w-full min-w-0 rounded-md border-2 border-input bg-background py-2 pl-10 pr-3 text-base" /></div>
+          <div className="relative"><Search aria-hidden className="absolute left-3 top-4 size-5 text-muted-foreground" /><input id="family-search" type="search" aria-label="Search families" placeholder="Search families" value={search} onChange={(event) => setSearch(event.target.value)} className="min-h-12 w-full min-w-0 rounded-md border-2 border-input bg-background py-2 pl-10 pr-3 text-base" /></div>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto">
           {filtered.length === 0 && <p className="p-5 text-muted-foreground">No families found.</p>}

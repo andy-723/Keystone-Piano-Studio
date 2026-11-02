@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import type { Message } from "@/mocks/types";
 import pianoPractice from "@/assets/piano-practice.jpg";
+import pianoPerformance from "@/assets/piano-performance.mp4";
 
 export function VoiceClip({ seconds = 10 }: { seconds?: number }) {
   const [playing, setPlaying] = useState(false);
@@ -31,19 +32,19 @@ export function VoiceClip({ seconds = 10 }: { seconds?: number }) {
 export function ChatMedia({ message }: { message: Message }) {
   const [open, setOpen] = useState(false);
   if (message.kind === "voice") return <VoiceClip seconds={message.media?.durationSeconds ?? 10} />;
-  if (message.kind === "video" && message.media?.url) return <video controls preload="metadata" className="max-h-80 w-full rounded-md" src={message.media.url} aria-label={message.media.fileName ?? "Video message"} />;
   if (message.kind !== "image" && message.kind !== "video") return null;
   const source = message.media?.url ?? pianoPractice;
-  const thumbnail = message.media?.thumbnailUrl ?? source;
+  const thumbnail = message.media?.thumbnailUrl ?? (message.kind === "video" ? pianoPractice : source);
+  const seconds = message.media?.durationSeconds ?? 24;
   return <>
     <Button variant="ghost" className="h-auto w-full max-w-sm flex-col whitespace-normal p-0" onClick={() => setOpen(true)}>
       <img src={thumbnail} alt={message.kind === "image" ? message.body || "Piano practice photo" : "Piano performance video preview"} width={992} height={672} loading="lazy" className="aspect-[3/2] w-full rounded-md object-cover" />
-      <span className="flex min-h-12 items-center gap-2">{message.kind === "video" ? <><Play aria-hidden /> Play video · 0:{String(message.media?.durationSeconds ?? 24).padStart(2, "0")}</> : "Open photo"}</span>
+      <span className="flex min-h-12 items-center gap-2">{message.kind === "video" ? <><Play aria-hidden /> Play video · {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}</> : "Open photo"}</span>
     </Button>
-    <Dialog open={open} onOpenChange={setOpen}><DialogContent className="max-w-2xl">
+    <Dialog open={open} onOpenChange={setOpen}><DialogContent className="max-w-2xl [&>button:last-child]:hidden" aria-describedby={undefined}>
       <DialogTitle>{message.kind === "image" ? "Photo" : "Piano performance"}</DialogTitle>
-      <img src={source} alt="Piano practice" width={992} height={672} className="w-full rounded-md" />
-      {message.kind === "video" && <p className="text-base text-muted-foreground">Sample video preview · 24 seconds</p>}
+      {message.kind === "video" ? <video controls autoPlay preload="metadata" poster={thumbnail} src={message.media?.url ?? pianoPerformance} className="w-full rounded-md" aria-label="Piano performance video" /> : <img src={source} alt="Piano practice" width={992} height={672} className="w-full rounded-md" />}
+      {message.kind === "video" && !message.media?.url && <p className="text-base text-muted-foreground">Simulated video · 24 seconds</p>}
       <Button variant="outline" onClick={() => setOpen(false)}><X aria-hidden /> Close</Button>
     </DialogContent></Dialog>
   </>;
