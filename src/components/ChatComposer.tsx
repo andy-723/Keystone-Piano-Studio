@@ -33,8 +33,7 @@ export function ChatComposer({ conversationId }: { conversationId: string }) {
       durationSeconds = await new Promise<number | undefined>((resolve) => {
         const video = document.createElement("video"); video.preload = "metadata"; video.src = url;
         const timer = window.setTimeout(() => resolve(undefined), 3000);
-        video.onloadedmetadata = () => resolve(Number.isFinite(video.duration) ? Math.round(video.duration) : undefined);
-        video.onloadeddata = () => { window.clearTimeout(timer); const canvas = document.createElement("canvas"); canvas.width = 480; canvas.height = 320; const context = canvas.getContext("2d"); if (context) { context.drawImage(video, 0, 0, 480, 320); thumbnailUrl = canvas.toDataURL("image/jpeg"); } };
+        video.onloadeddata = () => { window.clearTimeout(timer); const canvas = document.createElement("canvas"); canvas.width = 480; canvas.height = 320; const context = canvas.getContext("2d"); if (context) { context.drawImage(video, 0, 0, 480, 320); thumbnailUrl = canvas.toDataURL("image/jpeg"); } resolve(Number.isFinite(video.duration) ? Math.round(video.duration) : undefined); };
         video.onerror = () => { window.clearTimeout(timer); resolve(undefined); };
       });
     }

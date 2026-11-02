@@ -153,7 +153,7 @@
 
 .chat-workspace { height: max(620px, calc(100dvh - 245px)); }
 @media (max-width: 767px) {
-  .chat-workspace { height: max(600px, calc(100dvh - 285px)); }
+  .chat-workspace { height: max(900px, calc(100dvh - 285px)); }
 }
 
 @media print {

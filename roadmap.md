@@ -9,11 +9,11 @@
 - [x] Send and read back family summaries; verify tests and tablet / phone layouts.
 
 # Chat
-- [ ] Add searchable newest-first family threads and day-grouped conversations.
-- [ ] Add text, photo, video, simulated voice and lesson-summary messages.
-- [ ] Verify mock read state, sending, and tablet / phone layouts.
+- [x] Add searchable newest-first family threads and day-grouped conversations.
+- [x] Add text, photo, video, simulated voice and lesson-summary messages.
+- [x] Verify mock read state, sending, and tablet / phone layouts.
 
 # Invoices
-- [ ] Build status filters, totals and printable invoice details.
-- [ ] Build Term 2 lesson preview, family drafts and Send all wizard.
-- [ ] Add GST setting and verify registered / non-registered rules.
+- [x] Build status filters, totals and printable invoice details.
+- [x] Build Term 2 lesson preview, family drafts and Send all wizard.
+- [x] Add GST setting and verify registered / non-registered rules.
