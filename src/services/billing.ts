@@ -2,7 +2,7 @@ import { invoices, studio, students, families, weeklySlots, lessonTypes, payment
 import { termInvoiceDrafts } from "@/mocks/billing";
 import { renewalState } from "@/mocks/renewals";
 import { addDays, dayKind, TERMS_2027, weekday, PUBLIC_HOLIDAYS_2027, PROTOTYPE_TODAY } from "@/lib/calendar";
-import type { Invoice, InvoiceStatus } from "@/mocks/types";
+import type { Invoice, InvoiceStatus, Payment } from "@/mocks/types";
 import { respond } from "./_delay";
 import { pushInvoiceToXero } from "./integrations";
 
@@ -99,9 +99,9 @@ export async function recordInvoicePayment(id: string, method: "payto" | "becs" 
   if (!["payto", "becs", "card"].includes(method)) throw new Error("Payment method not found");
   if (invoice.status === "draft") Object.assign(invoice, taxView(invoice));
   const balance = taxView(invoice).balanceCents ?? invoice.totalCents;
-  const payment = balance > 0 ? { id: `payment-${crypto.randomUUID()}`, invoiceId: id, method, amountCents: balance, date: PROTOTYPE_TODAY, xeroSyncedAt: undefined as string | undefined } : null;
+  const payment: Payment | null = balance > 0 ? { id: `payment-${crypto.randomUUID()}`, invoiceId: id, method, amountCents: balance, date: PROTOTYPE_TODAY } : null;
   if (payment) payments.push(payment);
   invoice.status = "paid";
-  if (payment) { const sync = await pushInvoiceToXero(id); if (sync.synced && "syncedAt" in sync) payment.xeroSyncedAt = sync.syncedAt; }
+  if (payment) { const sync = await pushInvoiceToXero(id); if (sync.synced && "syncedAt" in sync && typeof sync.syncedAt === "string") payment.xeroSyncedAt = sync.syncedAt; }
   return respond(taxView(invoice));
 }

@@ -1,4 +1,4 @@
-import { afterEach, expect, it } from "vitest";
+import { afterEach, beforeEach, expect, it } from "vitest";
 import { integrationState, initialIntegrations } from "@/mocks/integrations";
 import { invoices, payments } from "@/mocks/data";
 import { parentPayments } from "@/mocks/parent";
@@ -7,6 +7,11 @@ import { connectStripe, disconnectStripe, getIntegrations, getStripeStatus, conn
 import { getParentInvoice, payParentInvoice } from "@/services/parent";
 import { getInvoice, recordInvoicePayment, setInvoiceStatus, prepareTerm2Invoices, sendTerm2Invoices } from "@/services/billing";
 const original = { invoices: structuredClone(invoices), payments: structuredClone(payments) };
+beforeEach(() => {
+  const invoice = invoices.find((entry) => entry.id === "inv-1"); if (!invoice) throw new Error("Missing invoice");
+  invoice.status = "sent";
+  for (let index = payments.length - 1; index >= 0; index--) if (payments[index]?.invoiceId === "inv-1") payments.splice(index, 1);
+});
 afterEach(() => {
   integrationState.demo = initialIntegrations(); integrationState["new-studio"] = initialIntegrations();
   invoices.splice(0, invoices.length, ...structuredClone(original.invoices));
@@ -23,9 +28,10 @@ it("transitions Stripe from not connected to setting up to connected and disconn
 it.each(["not_connected", "setting_up"] as const)("blocks parent online payment while Stripe is %s without changing money", async (status) => {
   integrationState.demo.stripe.status = status;
   const before = await getParentInvoice("inv-1");
+  const paymentCount = payments.length;
   await expect(payParentInvoice("inv-1", "payto")).rejects.toThrow("Your teacher will send bank details");
   expect((await getParentInvoice("inv-1"))?.balanceCents).toBe(before?.balanceCents);
-  expect(payments).toHaveLength(original.payments.length); expect(parentPayments).toHaveLength(0);
+  expect(payments).toHaveLength(paymentCount); expect(parentPayments).toHaveLength(0);
 });
 it("allows connected parent payments and blocks them after disconnect", async () => {
   await connectStripe(); expect((await payParentInvoice("inv-1", "becs")).balanceCents).toBe(0);
