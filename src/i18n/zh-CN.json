@@ -1,6 +1,6 @@
 {
   "home": "首页",
-  "renewalTitle": "第 2 学期续课",
+  "renewalTitle": "第 {term} 学期续课",
   "renewalDeadline": "请在此日期前回复：",
   "renewalQuestion": "您希望继续课程吗？",
   "renewalContinue": "是的，保留现有上课时间",

@@ -1,6 +1,6 @@
 {
   "home": "Home",
-  "renewalTitle": "Term 2 renewal",
+  "renewalTitle": "Term {term} renewal",
   "renewalDeadline": "Please reply by",
   "renewalQuestion": "Would you like to continue?",
   "renewalContinue": "Yes, keep our current lesson times",
