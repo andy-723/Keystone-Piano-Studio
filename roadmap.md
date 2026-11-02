@@ -42,6 +42,6 @@
 - [x] Rename payment identifier to becs; verify payments and central flows.
 
 # First-run setup
-- [ ] Add isolated empty studio and setup services with state calendar selection and validation tests.
-- [ ] Build five-step wizard, save-and-resume and empty Today checklist.
-- [ ] Verify setup, role switching and tablet/phone layouts; keep import and rescheduling outside this task.
+- [x] Add isolated empty studio and setup services with state calendar selection and validation tests.
+- [x] Build five-step wizard, save-and-resume and empty Today checklist.
+- [x] Verify setup, role switching and tablet/phone layouts; keep import and rescheduling outside this task.
