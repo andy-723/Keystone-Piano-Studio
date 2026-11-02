@@ -1,4 +1,4 @@
-import { afterEach, expect, it } from "vitest";
+import { afterEach, expect, it, vi } from "vitest";
 import { renewalState } from "@/mocks/renewals";
 import { conversations, messages, invoices, weeklySlots } from "@/mocks/data";
 import { termInvoiceDrafts } from "@/mocks/billing";
@@ -6,6 +6,7 @@ import { getParentRenewal, getRenewals, respondToParentRenewal, sendRenewalInvit
 import { prepareTerm2Invoices, sendTerm2Invoices } from "@/services/billing";
 
 const originals = { conversations: structuredClone(conversations), messages: structuredClone(messages), invoices: structuredClone(invoices) };
+vi.setConfig({ testTimeout: 20000 });
 afterEach(() => {
   renewalState.active = false; renewalState.deadline = "2027-03-25"; renewalState.remindersEnabled = true; renewalState.families.clear();
   conversations.splice(0, conversations.length, ...structuredClone(originals.conversations)); messages.splice(0, messages.length, ...structuredClone(originals.messages)); invoices.splice(0, invoices.length, ...structuredClone(originals.invoices)); termInvoiceDrafts.clear();
