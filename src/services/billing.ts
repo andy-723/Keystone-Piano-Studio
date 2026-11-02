@@ -4,6 +4,7 @@ import { renewalState } from "@/mocks/renewals";
 import { addDays, dayKind, TERMS_2027, weekday, PUBLIC_HOLIDAYS_2027, PROTOTYPE_TODAY } from "@/lib/calendar";
 import type { Invoice, InvoiceStatus } from "@/mocks/types";
 import { respond } from "./_delay";
+import { pushInvoiceToXero } from "./integrations";
 
 /** GST-inclusive pricing: GST is one eleventh of the total, in whole cents. */
 export function gstFromInclusive(totalCents: number): number {
@@ -73,7 +74,9 @@ export async function sendTerm2Invoices() {
     const existing = invoices.find((invoice) => invoice.id === draft.id);
     if (existing) { sent.push(taxView(existing)); continue; }
     const invoice = { ...taxView(draft), status: "sent" as const };
-    invoices.push(invoice); sent.push(invoice);
+    invoices.push(invoice);
+    await pushInvoiceToXero(invoice.id);
+    sent.push(taxView(invoice));
   }
   termInvoiceDrafts.clear();
   return respond(sent);
@@ -85,7 +88,7 @@ export async function setInvoiceStatus(id: string, status: InvoiceStatus): Promi
     if (status === "draft" && inv.status !== "draft") throw new Error("An issued invoice cannot return to draft");
     if (inv.status === "draft" && status !== "draft") Object.assign(inv, taxView(inv));
     if (status === "paid") await recordInvoicePayment(id, "card");
-    else inv.status = status;
+    else { inv.status = status; if (status === "sent") await pushInvoiceToXero(id); }
   }
   return respond(inv ? taxView(inv) : null);
 }
@@ -96,7 +99,9 @@ export async function recordInvoicePayment(id: string, method: "payto" | "becs" 
   if (!["payto", "becs", "card"].includes(method)) throw new Error("Payment method not found");
   if (invoice.status === "draft") Object.assign(invoice, taxView(invoice));
   const balance = taxView(invoice).balanceCents ?? invoice.totalCents;
-  if (balance > 0) payments.push({ id: `payment-${crypto.randomUUID()}`, invoiceId: id, method, amountCents: balance, date: PROTOTYPE_TODAY });
+  const payment = balance > 0 ? { id: `payment-${crypto.randomUUID()}`, invoiceId: id, method, amountCents: balance, date: PROTOTYPE_TODAY, xeroSyncedAt: undefined as string | undefined } : null;
+  if (payment) payments.push(payment);
   invoice.status = "paid";
+  if (payment) { const sync = await pushInvoiceToXero(id); if (sync.synced && "syncedAt" in sync) payment.xeroSyncedAt = sync.syncedAt; }
   return respond(taxView(invoice));
 }

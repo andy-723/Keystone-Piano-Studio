@@ -39,7 +39,6 @@ export async function pushInvoiceToXero(invoiceId: string) {
   if (invoice.status === "draft" || invoice.status === "void") return respond({ synced: false });
   const timestamp = melbourneIso(PROTOTYPE_TODAY, "10:28");
   invoice.xeroSyncedAt ??= timestamp;
-  for (const payment of invoice.payments ?? []) payment.xeroSyncedAt ??= timestamp;
   xero.lastSyncedAt = timestamp;
   return respond({ synced: true, syncedAt: timestamp });
 }
