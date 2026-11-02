@@ -12,3 +12,8 @@
 - [ ] Add searchable newest-first family threads and day-grouped conversations.
 - [ ] Add text, photo, video, simulated voice and lesson-summary messages.
 - [ ] Verify mock read state, sending, and tablet / phone layouts.
+
+# Invoices
+- [ ] Build status filters, totals and printable invoice details.
+- [ ] Build Term 2 lesson preview, family drafts and Send all wizard.
+- [ ] Add GST setting and verify registered / non-registered rules.
