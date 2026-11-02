@@ -1,5 +1,10 @@
 {
   "home": "Home",
+  "sharedNotes": "Shared notes",
+  "shared": "Shared",
+  "amountPaid": "Amount paid",
+  "balance": "Balance",
+  "paymentHistory": "Payment history",
   "chat": "Chat",
   "progress": "Progress",
   "invoices": "Invoices",

@@ -4,7 +4,7 @@ import type { Message, PracticeLog, Guardian } from "@/mocks/types";
 import { PROTOTYPE_TODAY, addDays } from "@/lib/calendar";
 import { respond } from "./_delay";
 import { getDayLessons } from "./schedule";
-import { getInvoices, setInvoiceStatus } from "./billing";
+import { getInvoices, recordInvoicePayment } from "./billing";
 import { getRequirements, getStudentProgress, getPracticeLogs, addPractice } from "./curriculum";
 import { getChatThread, getOrCreateFamilyConversation, sendMessage, markThreadRead } from "./chat";
 import { getNotes } from "./notes";
@@ -74,5 +74,5 @@ export async function payParentInvoice(id: string, method: "payto" | "debit" | "
   if (!invoice || !["sent", "overdue", "partially_paid"].includes(invoice.status)) throw new Error("Unpaid family invoice not found");
   if (!["payto", "debit", "card"].includes(method)) throw new Error("Payment method not found");
   parentPayments.push({ invoiceId: id, method });
-  return setInvoiceStatus(id, "paid");
+  return recordInvoicePayment(id, method);
 }
