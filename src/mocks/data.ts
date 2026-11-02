@@ -2,7 +2,7 @@ import type {
   Conversation, Family, Invoice, InvoiceLine, InvoiceStatus, LessonType, Message, PracticeLog,
   Requirement, RequirementCategory, RiskScore, Student, StudentProgress, Studio, Teacher, WeeklySlot,
 } from "./types";
-import { PROTOTYPE_TODAY, addDays } from "@/lib/calendar";
+import { PROTOTYPE_TODAY, addDays, melbourneIso } from "@/lib/calendar";
 
 // All names are made up.
 export const studio: Studio = {
@@ -191,7 +191,7 @@ export const invoices: Invoice[] = families.map((f, i) => {
 });
 
 // Chat: 8 threads, 2 in Chinese.
-const t = (daysAgo: number, hm: string) => `${addDays(PROTOTYPE_TODAY, -daysAgo)}T${hm}:00+11:00`;
+const t = (daysAgo: number, hm: string) => melbourneIso(addDays(PROTOTYPE_TODAY, -daysAgo), hm);
 const THREADS: [string, [string, "teacher" | "guardian" | "student", string, string, Message["kind"]][]][] = [
   ["fam-1", [
     ["Ms Clarke", "teacher", "Lucy played her List A piece beautifully today.", t(3, "16:40"), "text"],

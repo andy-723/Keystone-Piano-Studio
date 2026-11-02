@@ -45,3 +45,19 @@ export function dayKind(date: string): DayKind {
   const term = TERMS_2027.find((t) => date >= t.start && date <= t.end);
   return term ? { kind: "teaching", term: term.name } : { kind: "break" };
 }
+
+/** UTC offset ("+11:00" or "+10:00") in force in Melbourne at a local date and time. */
+export function melbourneOffset(date: string, time: string): string {
+  // Probe the instant assuming standard time (+10); DST changes happen at 2–3 am, far from lesson hours.
+  const probe = new Date(`${date}T${time}:00+10:00`);
+  const name = new Intl.DateTimeFormat("en-AU", { timeZone: "Australia/Melbourne", timeZoneName: "longOffset" })
+    .formatToParts(probe)
+    .find((p) => p.type === "timeZoneName")?.value ?? "GMT+10:00";
+  const m = name.match(/GMT([+-]\d{2}):?(\d{2})?/);
+  return m ? `${m[1]}:${m[2] ?? "00"}` : "+10:00";
+}
+
+/** ISO timestamp for a Melbourne local date and time, with the correct offset for that date. */
+export function melbourneIso(date: string, time: string): string {
+  return `${date}T${time}:00${melbourneOffset(date, time)}`;
+}

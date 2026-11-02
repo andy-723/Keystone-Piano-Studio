@@ -16,11 +16,12 @@ const NAV = [
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { role, setRole, largeText, setLargeText } = useAppSettings();
+  const isTeacher = role === "teacher";
 
   return (
     <div className="min-h-screen md:flex">
-      {/* Left rail on tablet and up */}
-      <nav aria-label="Main" className="hidden md:flex md:w-32 lg:w-40 shrink-0 flex-col gap-2 border-r border-sidebar-border bg-sidebar p-3 sticky top-0 h-screen">
+      {/* Left rail on tablet and up (teacher only) */}
+      {isTeacher && <nav aria-label="Main" className="hidden md:flex md:w-32 lg:w-40 shrink-0 flex-col gap-2 border-r border-sidebar-border bg-sidebar p-3 sticky top-0 h-screen">
         <div className="px-2 py-3 font-display text-2xl font-semibold text-sidebar-primary">Opus</div>
         {NAV.map(({ to, label, icon: Icon }) => (
           <Link
@@ -34,9 +35,9 @@ export function AppShell({ children }: { children: ReactNode }) {
             {label}
           </Link>
         ))}
-      </nav>
+      </nav>}
 
-      <div className="flex min-w-0 flex-1 flex-col pb-24 md:pb-0">
+      <div className={`flex min-w-0 flex-1 flex-col ${isTeacher ? "pb-24 md:pb-0" : ""}`}>
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-background/95 px-4 py-3 md:px-8">
           <div className="font-display text-xl font-semibold">{studio.name}</div>
           <div className="flex flex-wrap items-center gap-4">
@@ -60,8 +61,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         <main className="flex-1 px-4 py-6 md:px-8 md:py-8">{children}</main>
       </div>
 
-      {/* Bottom tab bar on phones */}
-      <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-sidebar-border bg-sidebar md:hidden">
+      {/* Bottom tab bar on phones (teacher only) */}
+      {isTeacher && <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-sidebar-border bg-sidebar md:hidden">
         {NAV.map(({ to, label, icon: Icon }) => (
           <Link
             key={to}
@@ -74,7 +75,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             {label}
           </Link>
         ))}
-      </nav>
+      </nav>}
     </div>
   );
 }
