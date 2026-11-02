@@ -7,6 +7,7 @@ import { getOrCreateFamilyConversation, sendMessage } from "./chat";
 import { respond } from "./_delay";
 
 function row(familyId: string, term: RenewalTerm = 2): FamilyRenewal { return getRenewalState(term).families.get(familyId) ?? { familyId, status: "not_invited" }; }
+function termDates(term: RenewalTerm) { return term === 2 ? TERMS_2027[1] : term === 3 ? TERMS_2027[2] : TERMS_2027[3]; }
 function slots(familyId: string) {
   return students.filter((student) => student.familyId === familyId).map((student) => {
     const slot = weeklySlots.find((entry) => entry.studentId === student.id);
@@ -15,7 +16,7 @@ function slots(familyId: string) {
 }
 export async function getRenewals(term: RenewalTerm = 2) {
   const renewalState = getRenewalState(term);
-  return respond({ active: renewalState.active, deadline: renewalState.deadline, remindersEnabled: renewalState.remindersEnabled, reminderDays: renewalState.reminderDays, term: TERMS_2027[term - 1], termNumber: term, rows: families.map((family) => ({ ...row(family.id, term), familyName: family.displayName, slots: slots(family.id) })) });
+  return respond({ active: renewalState.active, deadline: renewalState.deadline, remindersEnabled: renewalState.remindersEnabled, reminderDays: renewalState.reminderDays, term: termDates(term), termNumber: term, rows: families.map((family) => ({ ...row(family.id, term), familyName: family.displayName, slots: slots(family.id) })) });
 }
 export async function setRenewalSettings(input: { deadline: string; remindersEnabled: boolean }, term: RenewalTerm = 2) {
   const renewalState = getRenewalState(term);
@@ -29,7 +30,7 @@ async function sendRenewalMessage(familyId: string, reminder: boolean, term: Ren
   const family = families.find((entry) => entry.id === familyId);
   const chinese = family?.guardians[0]?.preferredLanguage === "zh-CN";
   const conversation = await getOrCreateFamilyConversation(familyId);
-  const body = chinese ? `${reminder ? "温馨提醒：" : `第 ${term} 学期续课邀请：`}请于 ${renewalState.deadline} 前在家庭首页确认是否继续课程。确认后保留现有上课时间；如需调整时间或暂停，也请告诉我。谢谢！`
+  const body = chinese ? `${reminder ? `第 ${term} 学期续课提醒：` : `第 ${term} 学期续课邀请：`}请于 ${renewalState.deadline} 前在家庭首页确认是否继续课程。确认后保留现有上课时间；如需调整时间或暂停，也请告诉我。谢谢！`
     : `${reminder ? `Term ${term} renewal reminder` : `Term ${term} renewal invitation`}: please confirm on your family Home page by ${formatShortDate(renewalState.deadline)} whether you would like to continue. Your current lesson times will be kept after confirmation. You can also request a change or let me know you won't continue. Thank you!`;
   await sendMessage({ conversationId: conversation.id, authorName: teacher.name, authorRole: "teacher", body, kind: "text" });
 }
@@ -84,7 +85,7 @@ export async function getParentRenewal(term: RenewalTerm = 2) {
   const family = parentFamily();
   const renewal = row(family.id, term);
   if (!renewalState.active || renewal.status === "not_invited") return respond(null);
-  return respond({ ...renewal, deadline: renewalState.deadline, term: TERMS_2027[term - 1], termNumber: term, slots: slots(family.id) });
+  return respond({ ...renewal, deadline: renewalState.deadline, term: termDates(term), termNumber: term, slots: slots(family.id) });
 }
 export async function respondToParentRenewal(status: "confirmed" | "change_requested" | "declined", note = "", term: RenewalTerm = 2) {
   const renewalState = getRenewalState(term);
@@ -102,8 +103,8 @@ export async function respondToParentRenewal(status: "confirmed" | "change_reque
   } catch (error) { entry.status = "awaiting"; delete entry.responseDate; delete entry.responseNote; throw error; }
   return getParentRenewal(term);
 }
-export function renewalSlotLabel(weekday: number, time: string) {
-  const date = addDays("2027-04-12", (weekday + 6) % 7);
+export function renewalSlotLabel(weekday: number, time: string, term: RenewalTerm = 2) {
+  const date = addDays(termDates(term).start, (weekday + 6) % 7);
   return `${formatShortDate(date).split(" ")[0]} · ${formatTime(melbourneIso(date, time))}`;
 }
 export async function getParentRenewals() {
