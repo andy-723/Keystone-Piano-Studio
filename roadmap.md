@@ -49,3 +49,8 @@
 - [x] Add parsing, mapping, editable validation and sibling/duplicate handling with sample/template CSVs.
 - [x] Add isolated new-studio and demo entry points, confirmation and in-app invitations.
 - [x] Run tests and verify imports, downloads, invitations and phone layout.
+
+# Week timetable and make-ups
+- [ ] Add occurrence and effective-date weekly moves, free-slot checks and family notifications.
+- [ ] Add cancellation credit ledger, make-up booking and own-family parent requests.
+- [ ] Add week/day lesson controls, profile history and parent Home balances; verify tests and full flows.
