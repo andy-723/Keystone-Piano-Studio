@@ -1,9 +1,15 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { ChatConversation } from "@/components/ChatConversation";
 import { chatThreadQuery } from "@/lib/chat-queries";
+import { getStudentCheckInTemplate } from "@/services/students";
 
 export const Route = createFileRoute("/chat/$conversationId")({
-  loader: async ({ context, params }) => { if (!await context.queryClient.ensureQueryData(chatThreadQuery(params.conversationId))) throw notFound(); },
+  validateSearch: (search: Record<string, unknown>): { checkIn?: string } => ({ checkIn: typeof search["checkIn"] === "string" ? search["checkIn"] : undefined }),
+  loaderDeps: ({ search }) => ({ checkIn: search.checkIn }),
+  loader: async ({ context, params, deps }) => {
+    if (!await context.queryClient.ensureQueryData(chatThreadQuery(params.conversationId))) throw notFound();
+    return { initialText: deps.checkIn ? await getStudentCheckInTemplate(deps.checkIn, params.conversationId) : "" };
+  },
   notFoundComponent: () => <p>Family conversation not found.</p>,
   errorComponent: () => <p role="alert">Messages could not be opened. Please refresh to try again.</p>,
   head: () => ({ meta: [
@@ -16,5 +22,8 @@ export const Route = createFileRoute("/chat/$conversationId")({
 
 function FamilyThread() {
   const { conversationId } = Route.useParams();
-  return <ChatConversation id={conversationId} />;
+  const { checkIn } = Route.useSearch();
+  const { initialText } = Route.useLoaderData();
+  const navigate = Route.useNavigate();
+  return <ChatConversation id={conversationId} initialText={initialText} draftKey={checkIn ?? ""} onSent={() => { if (checkIn) void navigate({ search: {}, replace: true }); }} />;
 }

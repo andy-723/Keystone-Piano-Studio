@@ -12,9 +12,9 @@ import { translate } from "@/i18n/parent";
 import { sendParentMessage } from "@/services/parent";
 
 type Attachment = { kind: "image" | "video" | "voice"; media: NonNullable<Message["media"]> };
-export function ChatComposer({ conversationId, parentLang }: { conversationId: string; parentLang?: Lang }) {
+export function ChatComposer({ conversationId, parentLang, initialText = "", onSent }: { conversationId: string; parentLang?: Lang; initialText?: string; onSent?: () => void }) {
   const t = (key: Parameters<typeof translate>[1]) => translate(parentLang ?? "en", key);
-  const [text, setText] = useState("");
+  const [text, setText] = useState(initialText);
   const [attachment, setAttachment] = useState<Attachment | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const client = useQueryClient();
@@ -24,6 +24,7 @@ export function ChatComposer({ conversationId, parentLang }: { conversationId: s
     return sendMessage({ conversationId, authorName: teacher.name, authorRole: "teacher", body: text.trim(), kind: attachment?.kind ?? "text", ...(attachment ? { media: attachment.media } : {}) });
   }, onSuccess: async () => {
     setText(""); setAttachment(null);
+    onSent?.();
     await Promise.all([client.invalidateQueries({ queryKey: ["messages", conversationId] }), client.invalidateQueries({ queryKey: ["chat-threads"] }), client.invalidateQueries({ queryKey: ["parent"] })]);
     toast.success(t("messageSent"));
   }, onError: () => toast.error(t("messageError")) });

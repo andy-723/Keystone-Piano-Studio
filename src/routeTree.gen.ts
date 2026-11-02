@@ -20,6 +20,7 @@ import { Route as InvoicesIndexRouteImport } from './routes/invoices.index'
 import { Route as InvoicesInvoiceIdRouteImport } from './routes/invoices.$invoiceId'
 import { Route as InvoicesPrepareRouteImport } from './routes/invoices.prepare'
 import { Route as LessonsLessonIdRouteImport } from './routes/lessons.$lessonId'
+import { Route as StudentsIndexRouteImport } from './routes/students.index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -76,30 +77,36 @@ const LessonsLessonIdRoute = LessonsLessonIdRouteImport.update({
   path: '/lessons/$lessonId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StudentsIndexRoute = StudentsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => StudentsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/chat': typeof ChatRouteWithChildren
   '/invoices': typeof InvoicesRouteWithChildren
   '/settings': typeof SettingsRoute
-  '/students': typeof StudentsRoute
+  '/students': typeof StudentsRouteWithChildren
   '/chat/$conversationId': typeof ChatConversationIdRoute
   '/invoices/$invoiceId': typeof InvoicesInvoiceIdRoute
   '/invoices/prepare': typeof InvoicesPrepareRoute
   '/lessons/$lessonId': typeof LessonsLessonIdRoute
   '/chat/': typeof ChatIndexRoute
   '/invoices/': typeof InvoicesIndexRoute
+  '/students/': typeof StudentsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/settings': typeof SettingsRoute
-  '/students': typeof StudentsRoute
   '/chat/$conversationId': typeof ChatConversationIdRoute
   '/invoices/$invoiceId': typeof InvoicesInvoiceIdRoute
   '/invoices/prepare': typeof InvoicesPrepareRoute
   '/lessons/$lessonId': typeof LessonsLessonIdRoute
   '/chat': typeof ChatIndexRoute
   '/invoices': typeof InvoicesIndexRoute
+  '/students': typeof StudentsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -107,13 +114,14 @@ export interface FileRoutesById {
   '/chat': typeof ChatRouteWithChildren
   '/invoices': typeof InvoicesRouteWithChildren
   '/settings': typeof SettingsRoute
-  '/students': typeof StudentsRoute
+  '/students': typeof StudentsRouteWithChildren
   '/chat/$conversationId': typeof ChatConversationIdRoute
   '/invoices/$invoiceId': typeof InvoicesInvoiceIdRoute
   '/invoices/prepare': typeof InvoicesPrepareRoute
   '/lessons/$lessonId': typeof LessonsLessonIdRoute
   '/chat/': typeof ChatIndexRoute
   '/invoices/': typeof InvoicesIndexRoute
+  '/students/': typeof StudentsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -129,17 +137,18 @@ export interface FileRouteTypes {
     | '/lessons/$lessonId'
     | '/chat/'
     | '/invoices/'
+    | '/students/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/settings'
-    | '/students'
     | '/chat/$conversationId'
     | '/invoices/$invoiceId'
     | '/invoices/prepare'
     | '/lessons/$lessonId'
     | '/chat'
     | '/invoices'
+    | '/students'
   id:
     | '__root__'
     | '/'
@@ -153,6 +162,7 @@ export interface FileRouteTypes {
     | '/lessons/$lessonId'
     | '/chat/'
     | '/invoices/'
+    | '/students/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -160,7 +170,7 @@ export interface RootRouteChildren {
   ChatRoute: typeof ChatRouteWithChildren
   InvoicesRoute: typeof InvoicesRouteWithChildren
   SettingsRoute: typeof SettingsRoute
-  StudentsRoute: typeof StudentsRoute
+  StudentsRoute: typeof StudentsRouteWithChildren
   LessonsLessonIdRoute: typeof LessonsLessonIdRoute
 }
 
@@ -243,6 +253,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LessonsLessonIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/students/': {
+      id: '/students/'
+      path: '/'
+      fullPath: '/students/'
+      preLoaderRoute: typeof StudentsIndexRouteImport
+      parentRoute: typeof StudentsRoute
+    }
   }
 }
 
@@ -274,12 +291,24 @@ const InvoicesRouteWithChildren = InvoicesRoute._addFileChildren(
   InvoicesRouteChildren,
 )
 
+interface StudentsRouteChildren {
+  StudentsIndexRoute: typeof StudentsIndexRoute
+}
+
+const StudentsRouteChildren: StudentsRouteChildren = {
+  StudentsIndexRoute: StudentsIndexRoute,
+}
+
+const StudentsRouteWithChildren = StudentsRoute._addFileChildren(
+  StudentsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ChatRoute: ChatRouteWithChildren,
   InvoicesRoute: InvoicesRouteWithChildren,
   SettingsRoute: SettingsRoute,
-  StudentsRoute: StudentsRoute,
+  StudentsRoute: StudentsRouteWithChildren,
   LessonsLessonIdRoute: LessonsLessonIdRoute,
 }
 export const routeTree = rootRouteImport
