@@ -127,8 +127,8 @@ function LessonCard({ lesson, date }: { lesson: LessonWithDetails; date: string 
             {STATUS_LABEL[lesson.status]}
           </span>
           <Button variant="ghost" disabled={mutation.isPending} onClick={() => mutation.mutate("scheduled")}><Undo2 aria-hidden /> Undo</Button>
-          <Button variant="outline" className="ml-auto" onClick={() => toast("Live Lesson is coming next")}>
-            <BookOpenText aria-hidden /> Open lesson
+          <Button variant="outline" className="ml-auto" asChild>
+            <Link to="/lessons/$lessonId" params={{ lessonId: lesson.id }}><BookOpenText aria-hidden /> Open lesson</Link>
           </Button>
         </div>
       ) : (
@@ -139,8 +139,8 @@ function LessonCard({ lesson, date }: { lesson: LessonWithDetails; date: string 
           <Button variant="absent" size="lg" disabled={mutation.isPending} onClick={() => mutation.mutate("absent")}>
             <X aria-hidden /> Absent
           </Button>
-          <Button variant="outline" size="lg" onClick={() => toast("Live Lesson is coming next")}>
-            <BookOpenText aria-hidden /> Open lesson
+          <Button variant="outline" size="lg" asChild>
+            <Link to="/lessons/$lessonId" params={{ lessonId: lesson.id }}><BookOpenText aria-hidden /> Open lesson</Link>
           </Button>
           <div className="flex flex-wrap gap-3 sm:col-span-3">
             <Button variant="secondary" className="max-w-full whitespace-normal" disabled={mutation.isPending} onClick={() => mutation.mutate("cancelled_by_studio")}>
