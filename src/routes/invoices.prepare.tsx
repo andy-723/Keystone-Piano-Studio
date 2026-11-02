@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, Check, Send } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Send, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { term2Query, term2DraftsQuery } from "@/lib/billing-queries";
@@ -28,6 +28,7 @@ function PrepareInvoices() {
   return <div className="mx-auto max-w-5xl">
     <Button asChild variant="ghost"><Link to="/invoices"><ArrowLeft aria-hidden /> All invoices</Link></Button>
     <h1 className="mt-5 text-3xl font-semibold">Prepare Term 2 invoices</h1><p className="mt-2 text-lg">{formatShortDate(preview.term.start)} – {formatShortDate(preview.term.end)} 2027</p>
+    <section className="mt-5 flex flex-wrap items-center justify-between gap-4 border-y border-border py-5" aria-label="Family renewal communications"><div><h2 className="text-xl font-semibold">Term 2 family renewals</h2><p className="mt-2 text-base text-muted-foreground">{renewals.active ? `${renewals.rows.filter((row) => row.status === "confirmed").length} confirmed · ${renewals.rows.filter((row) => row.status === "awaiting").length} awaiting reply` : "Invitations not sent"}</p></div><Button asChild variant="outline" className="max-w-full whitespace-normal"><Link to="/invoices/renewals"><MessageCircle aria-hidden /> Invitations & reminders</Link></Button></section>
     {renewals.active && <p className="mt-4 border-l-4 border-success pl-4 text-base">Confirmed renewals only · {renewals.rows.filter((row) => row.status === "confirmed").length} families</p>}
     <ol className="my-6 grid grid-cols-3 border-y border-border py-4" aria-label="Invoice steps">{["Lessons", "Drafts", "Review"].map((label, index) => <li key={label} aria-current={step === index + 1 ? "step" : undefined} className={`text-base ${step === index + 1 ? "font-semibold text-primary" : "text-muted-foreground"}`}>{index + 1}. {label}</li>)}</ol>
     {sent !== null ? <section className="py-8" role="status"><Check className="mb-4 size-10 text-success" aria-hidden /><h2 className="text-2xl font-semibold">{sent > 0 ? `${sent} invoices sent` : "Term 2 invoices are already prepared"}</h2><p className="mt-3 text-lg">{sent > 0 ? "Every family invoice is now marked Sent." : "No new drafts were created."}</p><Button asChild className="mt-6"><Link to="/invoices">View invoices <ArrowRight aria-hidden /></Link></Button></section> : <>

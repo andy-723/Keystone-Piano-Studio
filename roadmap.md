@@ -34,3 +34,4 @@
 - [x] Add teacher renewal invitations, confirmation tracking and simulated reminders.
 - [x] Add bilingual own-family confirmation / change / decline responses.
 - [x] Restrict renewal drafts and sending to confirmed families, review before sending; test and verify the full flow.
+- [x] Expose renewal communications from invoice preparation, add send-now reminders and term selection, verify family receipt.
