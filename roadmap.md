@@ -19,7 +19,7 @@
 - [x] Add GST setting and verify registered / non-registered rules.
 
 # Parent portal
-- [ ] Add phone-friendly family shell and English / Chinese language toggle.
-- [ ] Add home, family-only chat, read-only progress and student practice logging.
-- [ ] Add family invoice list / detail and simulated payment sheet.
-- [ ] Verify family isolation, parent author role, translations and phone layout.
+- [x] Add phone-friendly family shell and English / Chinese language toggle.
+- [x] Add home, family-only chat, read-only progress and student practice logging.
+- [x] Add family invoice list / detail and simulated payment sheet.
+- [x] Verify family isolation, parent author role, translations and phone layout.
