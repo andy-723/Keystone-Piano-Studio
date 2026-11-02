@@ -6,7 +6,7 @@ import { attendanceMarks, conversations, messages } from "@/mocks/data";
 import { PROTOTYPE_TODAY } from "@/lib/calendar";
 
 const savedConversations = conversations.map((entry) => ({ ...entry }));
-afterEach(() => { attendanceMarks.delete("stu-6_2027-02-01"); conversations.splice(0, conversations.length, ...savedConversations.map((entry) => ({ ...entry }))); });
+afterEach(() => { attendanceMarks.delete("stu-6_2027-02-02"); conversations.splice(0, conversations.length, ...savedConversations.map((entry) => ({ ...entry }))); });
 
 describe("Teacher Students", () => {
   it("filters to red and yellow students with red first and retains their reasons", async () => {
@@ -42,8 +42,8 @@ describe("Teacher Students", () => {
     expect(await getStudentProfile("missing")).toBeNull();
   });
   it("attendance skips term breaks and honours changes from Today", async () => {
-    expect((await getStudentAttendance("stu-6")).map((lesson) => lesson.date)).toEqual(["2027-02-01"]);
-    attendanceMarks.set("stu-6_2027-02-01", "attended");
+    expect((await getStudentAttendance("stu-6")).map((lesson) => lesson.date)).toEqual(["2027-02-02"]);
+    attendanceMarks.set("stu-6_2027-02-02", "attended");
     expect((await getStudentAttendance("stu-6"))[0]?.status).toBe("attended");
   });
   it("opens the red student's family thread without sending and returns an editable template", async () => {

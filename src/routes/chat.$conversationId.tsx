@@ -4,7 +4,7 @@ import { chatThreadQuery } from "@/lib/chat-queries";
 import { getStudentCheckInTemplate } from "@/services/students";
 
 export const Route = createFileRoute("/chat/$conversationId")({
-  validateSearch: (search: Record<string, unknown>): { checkIn?: string } => ({ checkIn: typeof search["checkIn"] === "string" ? search["checkIn"] : undefined }),
+  validateSearch: (search: Record<string, unknown>): { checkIn?: string } => typeof search["checkIn"] === "string" ? { checkIn: search["checkIn"] } : {},
   loaderDeps: ({ search }) => ({ checkIn: search.checkIn }),
   loader: async ({ context, params, deps }) => {
     if (!await context.queryClient.ensureQueryData(chatThreadQuery(params.conversationId))) throw notFound();

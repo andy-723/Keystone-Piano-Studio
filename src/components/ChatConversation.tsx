@@ -44,6 +44,6 @@ export function ChatConversation({ id, initialText = "", draftKey = "", onSent }
       })}
       <div ref={bottom} />
     </div>
-    <ChatComposer key={`${id}-${draftKey}`} conversationId={id} initialText={initialText} onSent={onSent} />
+    <ChatComposer key={`${id}-${draftKey}`} conversationId={id} initialText={initialText} {...(onSent ? { onSent } : {})} />
   </section>;
 }
