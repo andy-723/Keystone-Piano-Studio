@@ -32,7 +32,7 @@ it('validates times without interpreting 4.30 as a time', () => {
 it('validates language, birth year, day and configured lesson lengths', () => {
   const first = sampleRows()[0]; if (!first) throw new Error('Missing sample fixture');
   const row = { ...first, preferred_language: 'fr', birth_year: '2028', lesson_day: 'Someday', lesson_length_min: '90' };
-  expect(Object.keys(validateRoster([row])[0]?.problems)).toEqual(expect.arrayContaining(['preferred_language', 'birth_year', 'lesson_day', 'lesson_length_min']));
+  expect(Object.keys(validateRoster([row])[0]?.problems ?? {})).toEqual(expect.arrayContaining(['preferred_language', 'birth_year', 'lesson_day', 'lesson_length_min']));
 });
 it('commits isolated new-studio students and invites once into isolated chat only', async () => {
   const rows = sampleRows().slice(0, 2);
