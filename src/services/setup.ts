@@ -1,5 +1,6 @@
 import { setupSession, STUDIO_STATES, type SetupData, type SetupStep } from "@/mocks/setup";
 import { respond } from "./_delay";
+import { STATE_CALENDARS } from "@/mocks/state-calendars";
 
 export type SetupStepInput =
   | { step: 1; data: SetupData["studio"] }
@@ -29,7 +30,7 @@ export function validateSetupStep(input: SetupStepInput) {
       if (!["import", "type", "later"].includes(input.data.entry)) throw new Error("Choose how to add students.");
   }
 }
-export const getSetup = () => respond(setupSession);
+export const getSetup = () => respond({ ...setupSession, calendar: STATE_CALENDARS[setupSession.studio.state], studentCount: 0, familyCount: 0, lessonCount: 0 });
 export async function saveSetupStep(input: SetupStepInput, options: { finishLater?: boolean; nextStep?: SetupStep } = {}) {
   if (!options.finishLater) validateSetupStep(input);
   const keys = { 1: "studio", 2: "tax", 3: "lessons", 4: "policies", 5: "students" } as const;

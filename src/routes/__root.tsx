@@ -19,6 +19,8 @@ import { parentSessionQuery, parentHomeQuery, parentChatQuery, parentProgressQue
 import { Toaster } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
 import { getStudio } from "@/services/roster";
+import { setupQuery } from "@/lib/setup-queries";
+import { NewTeacherSetup } from "@/components/NewTeacherSetup";
 
 const studioQuery = queryOptions({ queryKey: ["studio"], queryFn: getStudio });
 
@@ -134,6 +136,7 @@ function RootComponent() {
 function RoleGate() {
   const { role } = useAppSettings();
   const { data: studio } = useSuspenseQuery(studioQuery);
+  if (role === "new-teacher") return <Suspense fallback={<p className="p-6">Opening your new studio…</p>}><NewTeacherGate /></Suspense>;
   return (
     <AppShell studio={studio}>
       {role === "parent" ? (
@@ -144,4 +147,9 @@ function RoleGate() {
       )}
     </AppShell>
   );
+}
+
+function NewTeacherGate() {
+  const { data } = useSuspenseQuery(setupQuery);
+  return <AppShell studio={{ id: "new-studio", name: data.studio.name || "Opus · New studio", gstRegistered: data.tax.registration === "yes", abn: data.tax.abn, timezone: "Australia/Melbourne" }}><NewTeacherSetup /></AppShell>;
 }
