@@ -35,3 +35,8 @@
 - [x] Add bilingual own-family confirmation / change / decline responses.
 - [x] Restrict renewal drafts and sending to confirmed families, review before sending; test and verify the full flow.
 - [x] Expose renewal communications from invoice preparation, add send-now reminders and term selection, verify family receipt.
+
+# Invoice and chat corrections
+- [x] Freeze issued tax treatment; drafts follow settings; add regression tests.
+- [x] Add teacher-only mock English message translation.
+- [x] Rename payment identifier to becs; verify payments and central flows.

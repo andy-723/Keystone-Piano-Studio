@@ -11,16 +11,18 @@ export function gstFromInclusive(totalCents: number): number {
 }
 
 function taxView(invoice: Invoice): Invoice {
-  const taxCents = studio.gstRegistered ? gstFromInclusive(invoice.totalCents) : 0;
+  const followsSettings = invoice.status === "draft";
+  const registered = followsSettings ? studio.gstRegistered : invoice.gstRegistered ?? invoice.isTaxInvoice;
+  const taxCents = followsSettings ? registered ? gstFromInclusive(invoice.totalCents) : 0 : invoice.taxCents;
   let allocated = 0;
   const lines = invoice.lines.map((line, index) => {
-    const tax = !studio.gstRegistered ? 0 : index === invoice.lines.length - 1 ? taxCents - allocated : gstFromInclusive(line.lineTotalCents);
+    const tax = !followsSettings ? line.taxCents : !registered ? 0 : index === invoice.lines.length - 1 ? taxCents - allocated : gstFromInclusive(line.lineTotalCents);
     allocated += tax;
     return { ...line, taxCents: tax };
   });
   const records = payments.filter((payment) => payment.invoiceId === invoice.id);
   const paidCents = Math.min(invoice.totalCents, records.reduce((sum, payment) => sum + payment.amountCents, 0));
-  return { ...invoice, lines, taxCents, subtotalCents: invoice.totalCents - taxCents, isTaxInvoice: studio.gstRegistered, paidCents, balanceCents: invoice.totalCents - paidCents, payments: records };
+  return { ...invoice, lines, taxCents, subtotalCents: followsSettings ? invoice.totalCents - taxCents : invoice.subtotalCents, gstRegistered: registered, isTaxInvoice: followsSettings ? registered : invoice.isTaxInvoice, title: followsSettings ? registered ? "Tax invoice" : "Invoice" : invoice.title ?? (invoice.isTaxInvoice ? "Tax invoice" : "Invoice"), paidCents, balanceCents: invoice.totalCents - paidCents, payments: records };
 }
 
 export const getInvoices = (): Promise<Invoice[]> => respond(invoices.map(taxView));
@@ -80,15 +82,19 @@ export async function sendTerm2Invoices() {
 export async function setInvoiceStatus(id: string, status: InvoiceStatus): Promise<Invoice | null> {
   const inv = invoices.find((i) => i.id === id);
   if (inv) {
+    if (status === "draft" && inv.status !== "draft") throw new Error("An issued invoice cannot return to draft");
+    if (inv.status === "draft" && status !== "draft") Object.assign(inv, taxView(inv));
     if (status === "paid") await recordInvoicePayment(id, "card");
     else inv.status = status;
   }
   return respond(inv ? taxView(inv) : null);
 }
 
-export async function recordInvoicePayment(id: string, method: "payto" | "debit" | "card") {
+export async function recordInvoicePayment(id: string, method: "payto" | "becs" | "card") {
   const invoice = invoices.find((entry) => entry.id === id);
   if (!invoice) throw new Error("Invoice not found");
+  if (!["payto", "becs", "card"].includes(method)) throw new Error("Payment method not found");
+  if (invoice.status === "draft") Object.assign(invoice, taxView(invoice));
   const balance = taxView(invoice).balanceCents ?? invoice.totalCents;
   if (balance > 0) payments.push({ id: `payment-${crypto.randomUUID()}`, invoiceId: id, method, amountCents: balance, date: PROTOTYPE_TODAY });
   invoice.status = "paid";

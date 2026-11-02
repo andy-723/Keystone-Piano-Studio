@@ -198,7 +198,9 @@ export const invoices: Invoice[] = families.map((f, i) => {
     };
   });
   const totalCents = lines.reduce((a, l) => a + l.lineTotalCents, 0);
-  const taxCents = lines.reduce((a, l) => a + l.taxCents, 0);
+  const taxCents = Math.round(totalCents / 11);
+  const lastLine = lines.at(-1);
+  if (lastLine) lastLine.taxCents += taxCents - lines.reduce((sum, line) => sum + line.taxCents, 0);
   return {
     id: `inv-${i + 1}`,
     number: `INV-2027-${String(i + 1).padStart(3, "0")}`,
@@ -211,13 +213,15 @@ export const invoices: Invoice[] = families.map((f, i) => {
     taxCents,
     totalCents,
     isTaxInvoice: true,
+    gstRegistered: true,
+    title: "Tax invoice",
   };
 });
 
 export const payments: Payment[] = [];
 invoices.forEach((invoice, index) => {
   if (invoice.status !== "paid" && invoice.status !== "partially_paid") return;
-  payments.push({ id: `payment-${payments.length + 1}`, invoiceId: invoice.id, method: index % 3 === 0 ? "payto" : index % 3 === 1 ? "debit" : "card", amountCents: invoice.status === "paid" ? invoice.totalCents : Math.round(invoice.totalCents / 2), date: "2027-02-05" });
+  payments.push({ id: `payment-${payments.length + 1}`, invoiceId: invoice.id, method: index % 3 === 0 ? "payto" : index % 3 === 1 ? "becs" : "card", amountCents: invoice.status === "paid" ? invoice.totalCents : Math.round(invoice.totalCents / 2), date: "2027-02-05" });
 });
 
 // Keep initial conversation IDs stable while expanding to fifteen realistic family threads.
