@@ -68,7 +68,7 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
             key={to}
             to={to}
             activeOptions={{ exact: to === "/" }}
-            className="flex min-h-16 flex-col items-center justify-center gap-0.5 text-base font-semibold text-sidebar-foreground"
+            className="min-readable flex min-h-16 flex-col items-center justify-center gap-0.5 font-semibold text-sidebar-foreground"
             activeProps={{ className: "text-sidebar-primary underline underline-offset-4" }}
           >
             <Icon className="size-6" aria-hidden />
