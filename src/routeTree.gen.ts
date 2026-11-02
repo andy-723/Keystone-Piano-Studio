@@ -23,6 +23,7 @@ import { Route as InvoicesRenewalsRouteImport } from './routes/invoices.renewals
 import { Route as LessonsLessonIdRouteImport } from './routes/lessons.$lessonId'
 import { Route as StudentsIndexRouteImport } from './routes/students.index'
 import { Route as StudentsStudentIdRouteImport } from './routes/students.$studentId'
+import { Route as StudentsImportRouteImport } from './routes/students.import'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -94,6 +95,11 @@ const StudentsStudentIdRoute = StudentsStudentIdRouteImport.update({
   path: '/$studentId',
   getParentRoute: () => StudentsRoute,
 } as any)
+const StudentsImportRoute = StudentsImportRouteImport.update({
+  id: '/import',
+  path: '/import',
+  getParentRoute: () => StudentsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -107,6 +113,7 @@ export interface FileRoutesByFullPath {
   '/invoices/renewals': typeof InvoicesRenewalsRoute
   '/lessons/$lessonId': typeof LessonsLessonIdRoute
   '/students/$studentId': typeof StudentsStudentIdRoute
+  '/students/import': typeof StudentsImportRoute
   '/chat/': typeof ChatIndexRoute
   '/invoices/': typeof InvoicesIndexRoute
   '/students/': typeof StudentsIndexRoute
@@ -120,6 +127,7 @@ export interface FileRoutesByTo {
   '/invoices/renewals': typeof InvoicesRenewalsRoute
   '/lessons/$lessonId': typeof LessonsLessonIdRoute
   '/students/$studentId': typeof StudentsStudentIdRoute
+  '/students/import': typeof StudentsImportRoute
   '/chat': typeof ChatIndexRoute
   '/invoices': typeof InvoicesIndexRoute
   '/students': typeof StudentsIndexRoute
@@ -137,6 +145,7 @@ export interface FileRoutesById {
   '/invoices/renewals': typeof InvoicesRenewalsRoute
   '/lessons/$lessonId': typeof LessonsLessonIdRoute
   '/students/$studentId': typeof StudentsStudentIdRoute
+  '/students/import': typeof StudentsImportRoute
   '/chat/': typeof ChatIndexRoute
   '/invoices/': typeof InvoicesIndexRoute
   '/students/': typeof StudentsIndexRoute
@@ -155,6 +164,7 @@ export interface FileRouteTypes {
     | '/invoices/renewals'
     | '/lessons/$lessonId'
     | '/students/$studentId'
+    | '/students/import'
     | '/chat/'
     | '/invoices/'
     | '/students/'
@@ -168,6 +178,7 @@ export interface FileRouteTypes {
     | '/invoices/renewals'
     | '/lessons/$lessonId'
     | '/students/$studentId'
+    | '/students/import'
     | '/chat'
     | '/invoices'
     | '/students'
@@ -184,6 +195,7 @@ export interface FileRouteTypes {
     | '/invoices/renewals'
     | '/lessons/$lessonId'
     | '/students/$studentId'
+    | '/students/import'
     | '/chat/'
     | '/invoices/'
     | '/students/'
@@ -298,6 +310,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudentsStudentIdRouteImport
       parentRoute: typeof StudentsRoute
     }
+    '/students/import': {
+      id: '/students/import'
+      path: '/import'
+      fullPath: '/students/import'
+      preLoaderRoute: typeof StudentsImportRouteImport
+      parentRoute: typeof StudentsRoute
+    }
   }
 }
 
@@ -333,11 +352,13 @@ const InvoicesRouteWithChildren = InvoicesRoute._addFileChildren(
 
 interface StudentsRouteChildren {
   StudentsStudentIdRoute: typeof StudentsStudentIdRoute
+  StudentsImportRoute: typeof StudentsImportRoute
   StudentsIndexRoute: typeof StudentsIndexRoute
 }
 
 const StudentsRouteChildren: StudentsRouteChildren = {
   StudentsStudentIdRoute: StudentsStudentIdRoute,
+  StudentsImportRoute: StudentsImportRoute,
   StudentsIndexRoute: StudentsIndexRoute,
 }
 

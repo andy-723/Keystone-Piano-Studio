@@ -1,0 +1,13 @@
+student_first_name,student_last_name,birth_year,guardian_name,guardian_email,guardian_mobile,preferred_language,lesson_day,lesson_time,lesson_length_min,grade_goal
+Ivy,Brooks,2015,Sam Brooks,sam.brooks@example.com,0491 570 100,en,Monday,3:30 pm,30,AMEB Grade 1
+Max,Brooks,2017,Sam Brooks,sam.brooks@example.com,0491 570 100,en,Monday,4:00 pm,30,AMEB Preliminary
+Lily,Sun,2014,Mei Sun,mei.sun@example.com,0491 570 101,zh-CN,Tuesday,3:30 pm,45,AMEB Grade 2
+Noah,Sun,2016,Mei Sun,mei.sun@example.com,0491 570 101,zh-CN,Tuesday,4:15 pm,30,AMEB Grade 1
+Amelia,Reed,2013,Alex Reed,alex.reed@example.com,0491 570 102,en,Wednesday,3:30 pm,60,AMEB Grade 3
+Felix,Park,2015,Jo Park,jo.park@example.com,0491 570 103,en,Wednesday,4.30,30,AMEB Grade 1
+Sienna,Hu,2014,Lan Hu,lan.hu.example.com,0491 570 104,zh-CN,Thursday,3:30 pm,45,AMEB Grade 2
+Leo,Ellis,2016,Pat Ellis,pat.ellis@example.com,0491 570 105,en,Thursday,4:15 pm,30,AMEB Preliminary
+Zoe,Grant,2012,Kim Grant,kim.grant@example.com,0491 570 106,en,Friday,3:30 pm,60,AMEB Grade 4
+Owen,Moss,2015,Lee Moss,lee.moss@example.com,0491 570 107,en,Saturday,9:00 am,30,AMEB Grade 1
+Ada,Wu,2014,Jin Wu,jin.wu@example.com,0491 570 108,zh-CN,Saturday,9:30 am,45,AMEB Grade 2
+Ivy,Brooks,2015,Sam Brooks,sam.brooks@example.com,0491 570 100,en,Monday,3:30 pm,30,AMEB Grade 1
