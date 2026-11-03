@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { queryOptions, useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { ArrowLeft, Check, Mic, Plus, Send, MessageCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { finishLesson, getLiveLesson, saveLessonNotes } from "@/services/lessons
 import { addPractice } from "@/services/curriculum";
 import { weekPractice } from "@/lib/lesson-progress";
 import { formatShortDate, formatTime } from "@/lib/format";
+import { AssignmentEditor } from "@/components/Assignments";
 import { StudentCourse } from "@/components/StudentCourse";
 
 const lessonQuery = (id: string) => queryOptions({ queryKey: ["live-lesson", id], queryFn: () => getLiveLesson(id) });
@@ -96,6 +97,7 @@ function LessonSession({ data }: { data: NonNullable<Awaited<ReturnType<typeof g
       </div>
     </section>
 
+    <Suspense fallback={<p>Opening assignments…</p>}><AssignmentEditor occurrenceId={lesson.id}/></Suspense>
     <footer className="border-t border-border py-6">
       {finished ? <div role="status"><p className="flex items-center gap-2 text-lg font-semibold text-success"><Check aria-hidden /> Summary sent to {data.family?.displayName ?? "family"}</p>
         {conversationId && <Button className="mt-4" variant="outline" asChild><Link to="/chat/$conversationId" params={{ conversationId }}><MessageCircle aria-hidden /> View family summary</Link></Button>}
