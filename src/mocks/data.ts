@@ -60,6 +60,7 @@ FAMILY_SEED.forEach(([surname, gName, lang, kids], i) => {
   families.push({
     id: familyId,
     displayName: `${surname} family`,
+    newsPhotoConsent: i >= 3,
     guardians: [{ id: `g-${i + 1}`, name: gName, email: `${slug}@example.com`, preferredLanguage: lang, mobile: `0491 570 ${String(6 + i).padStart(3, "0")}` }],
   });
   kids.forEach(([first, year]) => {

@@ -13,7 +13,7 @@ export interface Studio {
 }
 export interface Teacher { id: string; name: string }
 export interface Guardian { id: string; name: string; email: string; preferredLanguage: Lang; mobile?: string }
-export interface Family { id: string; displayName: string; guardians: Guardian[]; mediaConsent?: boolean }
+export interface Family { id: string; displayName: string; guardians: Guardian[]; mediaConsent?: boolean; newsPhotoConsent?: boolean }
 export interface Student { id: string; familyId: string; firstName: string; lastName: string; birthYear: number; examDate?: string; targetTerm?: string }
 export interface LessonType { id: string; name: string; durationMin: number; priceCents: number }
 
