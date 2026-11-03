@@ -20,6 +20,8 @@ function Invoices() {
   const [status, setStatus] = useState<InvoiceStatus | "all">("all");
   const sum = (statuses: InvoiceStatus[]) => data.invoices.filter((invoice) => statuses.includes(invoice.status)).reduce((total, invoice) => total + (statuses.includes("paid") || statuses.includes("draft") ? invoice.totalCents : invoice.balanceCents ?? invoice.totalCents), 0);
   const shown = data.invoices.filter((invoice) => status === "all" || invoice.status === status);
+  const flags = paymentFlags(data.invoices);
+  const familyName = (id: string) => data.families.find((family) => family.id === id)?.displayName ?? "Family";
   return <div className="mx-auto max-w-6xl">
     <header className="flex flex-wrap items-center justify-between gap-5"><h1 className="flex items-center gap-3 text-3xl font-semibold"><Receipt className="size-7 text-primary" aria-hidden /> Invoices</h1><div className="flex flex-wrap gap-3"><Button asChild variant="outline" className="max-w-full whitespace-normal"><Link to="/invoices/prepare"><FilePlus2 aria-hidden /> Prepare Term 2 invoices</Link></Button><Button asChild className="max-w-full whitespace-normal"><Link to="/invoices/renewals"><RefreshCw aria-hidden /> Renewal invitations & reminders</Link></Button></div></header>
     <section aria-label="Invoice totals" className="mt-7 grid grid-cols-2 gap-5 border-y border-border py-6 lg:grid-cols-4">
