@@ -49,11 +49,10 @@ export async function getCourseReminders(studentId: string, beforeDate: string) 
   const state = courseState(studentId);
   const { getDayLessons } = await import("./schedule");
   const { addDays } = await import("@/lib/calendar");
-  const recent: string[] = [];
-  for (let date = addDays(beforeDate, -1); date >= "2027-01-28" && recent.length < 3; date = addDays(date, -1)) {
-    const day = await getDayLessons(date);
-    recent.push(...day.lessons.filter((lesson) => lesson.studentId === studentId && lesson.status === "attended").map((lesson) => lesson.id));
-  }
+  const dates: string[] = [];
+  for (let date = addDays(beforeDate, -1); date >= "2027-01-28"; date = addDays(date, -1)) dates.push(date);
+  const days = await Promise.all(dates.map(getDayLessons));
+  const recent = days.flatMap((day) => day.lessons.filter((lesson) => lesson.studentId === studentId && lesson.status === "attended").map((lesson) => lesson.id)).slice(0, 3);
   const reminders = state.sections.flatMap((section) => hasNoFeedbackInThreeLessons(state.items.filter((item) => item.sectionId === section.id).map((item) => item.id), recent, state.feedback) ? [section.name] : []);
   // Aural and sight-reading are separate teaching strands inside Musicianship.
   for (const item of state.items.filter((entry) => entry.title === "Sight-reading")) if (hasNoFeedbackInThreeLessons([item.id], recent, state.feedback) && !reminders.includes(state.sections.find((section) => section.id === item.sectionId)?.name ?? "")) reminders.push(item.title);
