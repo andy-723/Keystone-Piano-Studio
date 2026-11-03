@@ -1,7 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { BookOpen, MessageCircle, Receipt, Settings, Users } from "lucide-react";
 import { useState, type ReactNode } from "react";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { chatThreadsQuery } from "@/lib/chat-queries";
 import { Button } from "@/components/ui/button";
 import { PlanBilling } from "./PlanBilling";
 import { planBillingQuery } from "@/lib/plan-queries";
@@ -26,6 +27,9 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
   const planLabel = subscription.plan === "base" ? "Base plan" : subscription.plan === "academy" ? "Academy plan" : "Pro plan";
   const planBadge = <Button asChild={role === "teacher"} variant={subscription.plan === "base" ? "outline" : "default"} className="min-h-12 h-auto rounded-full px-3 text-base" onClick={() => role === "new-teacher" && setNewPlanOpen(true)}>{role === "teacher" ? <Link to="/settings" hash="plan-and-billing">{planLabel}</Link> : planLabel}</Button>;
   const isTeacher = role === "teacher";
+  const { data: chatThreads } = useQuery({ ...chatThreadsQuery, enabled: isTeacher });
+  const unread = chatThreads?.reduce((total, thread) => total + thread.unreadCount, 0) ?? 0;
+  const chatNotification = unread > 0 ? <span role="status" aria-label={`${unread} unread chat messages`} className="absolute -right-5 -top-2 flex min-h-7 min-w-7 items-center justify-center rounded-full bg-destructive px-1.5 text-base font-semibold text-destructive-foreground">{unread > 99 ? "99+" : unread}</span> : null;
   const { parentLang } = useAppSettings();
   const shellText = (key: "largerText" | "viewingAs") => translate(role === "parent" ? parentLang : "en", key);
 
@@ -43,7 +47,7 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
             className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-lg px-2 text-base font-semibold text-sidebar-foreground hover:bg-sidebar-accent"
             activeProps={{ className: "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary" }}
           >
-            <Icon className="size-6" aria-hidden />
+            <span className="relative flex size-6 items-center justify-center"><Icon className="size-6" aria-hidden />{to === "/chat" && chatNotification}</span>
             {label}
           </Link>
         ))}
@@ -84,7 +88,7 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
             className="min-readable flex min-h-16 min-w-0 flex-col items-center justify-center gap-0.5 font-semibold text-sidebar-foreground"
             activeProps={{ className: "text-sidebar-primary underline underline-offset-4" }}
           >
-            <Icon className="size-6" aria-hidden />
+            <span className="relative flex size-6 items-center justify-center"><Icon className="size-6" aria-hidden />{to === "/chat" && chatNotification}</span>
             {label}
           </Link>
         ))}
