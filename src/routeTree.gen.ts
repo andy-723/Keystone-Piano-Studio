@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as InvoicesRouteImport } from './routes/invoices'
 import { Route as LibraryRouteImport } from './routes/library'
+import { Route as NewsRouteImport } from './routes/news'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as StudentsRouteImport } from './routes/students'
 import { Route as ChatIndexRouteImport } from './routes/chat.index'
@@ -46,6 +47,11 @@ const InvoicesRoute = InvoicesRouteImport.update({
 const LibraryRoute = LibraryRouteImport.update({
   id: '/library',
   path: '/library',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NewsRoute = NewsRouteImport.update({
+  id: '/news',
+  path: '/news',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -124,6 +130,7 @@ export interface FileRoutesByFullPath {
   '/chat': typeof ChatRouteWithChildren
   '/invoices': typeof InvoicesRouteWithChildren
   '/library': typeof LibraryRoute
+  '/news': typeof NewsRoute
   '/settings': typeof SettingsRoute
   '/students': typeof StudentsRouteWithChildren
   '/chat/$conversationId': typeof ChatConversationIdRoute
@@ -142,6 +149,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/library': typeof LibraryRoute
+  '/news': typeof NewsRoute
   '/settings': typeof SettingsRoute
   '/chat/$conversationId': typeof ChatConversationIdRoute
   '/intake/$recordId': typeof IntakeRecordIdRoute
@@ -162,6 +170,7 @@ export interface FileRoutesById {
   '/chat': typeof ChatRouteWithChildren
   '/invoices': typeof InvoicesRouteWithChildren
   '/library': typeof LibraryRoute
+  '/news': typeof NewsRoute
   '/settings': typeof SettingsRoute
   '/students': typeof StudentsRouteWithChildren
   '/chat/$conversationId': typeof ChatConversationIdRoute
@@ -184,6 +193,7 @@ export interface FileRouteTypes {
     | '/chat'
     | '/invoices'
     | '/library'
+    | '/news'
     | '/settings'
     | '/students'
     | '/chat/$conversationId'
@@ -202,6 +212,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/library'
+    | '/news'
     | '/settings'
     | '/chat/$conversationId'
     | '/intake/$recordId'
@@ -221,6 +232,7 @@ export interface FileRouteTypes {
     | '/chat'
     | '/invoices'
     | '/library'
+    | '/news'
     | '/settings'
     | '/students'
     | '/chat/$conversationId'
@@ -242,6 +254,7 @@ export interface RootRouteChildren {
   ChatRoute: typeof ChatRouteWithChildren
   InvoicesRoute: typeof InvoicesRouteWithChildren
   LibraryRoute: typeof LibraryRoute
+  NewsRoute: typeof NewsRoute
   SettingsRoute: typeof SettingsRoute
   StudentsRoute: typeof StudentsRouteWithChildren
   IntakeRecordIdRoute: typeof IntakeRecordIdRoute
@@ -276,6 +289,13 @@ declare module '@tanstack/react-router' {
       path: '/library'
       fullPath: '/library'
       preLoaderRoute: typeof LibraryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/news': {
+      id: '/news'
+      path: '/news'
+      fullPath: '/news'
+      preLoaderRoute: typeof NewsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -432,6 +452,7 @@ const rootRouteChildren: RootRouteChildren = {
   ChatRoute: ChatRouteWithChildren,
   InvoicesRoute: InvoicesRouteWithChildren,
   LibraryRoute: LibraryRoute,
+  NewsRoute: NewsRoute,
   SettingsRoute: SettingsRoute,
   StudentsRoute: StudentsRouteWithChildren,
   IntakeRecordIdRoute: IntakeRecordIdRoute,
