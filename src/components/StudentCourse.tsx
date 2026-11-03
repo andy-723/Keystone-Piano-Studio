@@ -17,7 +17,7 @@ export async function refreshCourse(client: ReturnType<typeof useQueryClient>) {
 export function StageBar({ stage, names }: { stage: CourseStage; names: CourseData["stageNames"] }) {
   return <div className="mt-3 max-w-sm"><div className="grid h-2 grid-cols-5 gap-1" aria-hidden>{[1, 2, 3, 4, 5].map((step) => <span key={step} className={step <= stage ? "rounded-sm bg-success" : "rounded-sm bg-border"} />)}</div><p className="mt-2 text-base font-semibold text-success">{names[stage]}</p></div>;
 }
-export function StudentCourse({ data, occurrenceId, locked, reminders = [], showHeader = true }: { data: CourseData; occurrenceId?: string; locked?: boolean; reminders?: string[]; showHeader?: boolean }) {
+export function StudentCourse({ data, occurrenceId, locked, reminders = [], showHeader = true }: { data: CourseData; occurrenceId?: string; locked?: boolean | undefined; reminders?: string[]; showHeader?: boolean }) {
   const [editing, setEditing] = useState(false);
   return <section aria-label="Course" className="border-t border-border py-7">
     <div className="flex flex-wrap items-center justify-between gap-4"><h2 className="text-2xl font-semibold">Course</h2>{!occurrenceId && <Button variant="outline" onClick={() => setEditing(true)}><Pencil aria-hidden /> Edit course</Button>}</div>
@@ -31,7 +31,7 @@ export function StudentCourse({ data, occurrenceId, locked, reminders = [], show
     {editing && <CourseEditor data={data} onClose={() => setEditing(false)} />}
   </section>;
 }
-function Checkpoint({ item, data, occurrenceId, locked }: { item: CourseItem; data: CourseData; occurrenceId: string; locked?: boolean }) {
+function Checkpoint({ item, data, occurrenceId, locked }: { item: CourseItem; data: CourseData; occurrenceId: string; locked?: boolean | undefined }) {
   const client = useQueryClient();
   const [stage, setStage] = useState<CourseStage>(Math.min(5, item.stage + 1) as CourseStage);
   const [comment, setComment] = useState("");
