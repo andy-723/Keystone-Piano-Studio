@@ -1,3 +1,5 @@
+import { assignments } from "@/mocks/assignments";
+import { addDays } from "@/lib/calendar";
 import { families, students, teacher } from "@/mocks/data";
 import { newStudioRoster, type ImportScope } from "@/mocks/roster-import";
 import { enrolmentDrafts, type EnrolmentDraft } from "@/mocks/onboarding";
@@ -78,6 +80,6 @@ export async function activateEnrolment(id: string, scope: ImportScope = "demo")
   const milestones = template.defaultMilestones.flatMap((milestone) => items.map((item) => { const serial = Number(draft.targetTerm.slice(0, 4)) * 4 + Number(draft.targetTerm.slice(-1)) - 1 + milestone.termOffset; return { id: crypto.randomUUID(), studentCourseId: course.id, courseItemId: item.id, termKey: `${Math.floor(serial / 4)}-T${serial % 4 + 1}`, targetStage: milestone.targetStage }; }));
   draft.courseSnapshot = { course, sections, items, milestones }; draft.assignment = { week: PROTOTYPE_TODAY, title: "First week’s assignment", body: `Explore ${items[0]?.title ?? "your first melody"}. Practice goal: ${draft.practiceGoal} minutes this week. Assignment placeholder.` };
   await postFamily(draft, `Strengths: ${draft.strengths}\nWhat we’ll work on: ${draft.workOn}\nTerm-by-term plan:\n${template.defaultMilestones.map((milestone) => { const term = milestones.find((entry) => entry.targetStage === milestone.targetStage)?.termKey ?? draft.targetTerm; return `${termName(term)} — stage ${milestone.targetStage}`; }).join("\n")}\nPractice goal: ${draft.practiceGoal} min/week\n${draft.assignment.body}`, { welcomeSummary: { studentName: store(scope).students.find((entry) => entry.id === draft.studentId)?.firstName ?? "Student", practiceGoal: draft.practiceGoal } });
-  if (scope === "demo") { studentCourses.push(structuredClone(course)); frameworkSections.push(...structuredClone(sections)); courseItems.push(...structuredClone(items)); termMilestones.push(...structuredClone(milestones)); }
+  if (scope === "demo") { assignments.push({id:crypto.randomUUID(),studentId:draft.studentId,occurrenceId:`welcome-${draft.id}`,dueDate:addDays(PROTOTYPE_TODAY,6),tasks:items.slice(0,2).map(item=>({id:crypto.randomUUID(),courseItemId:item.id,text:`Explore ${item.title}`,minutesPerDay:Math.max(1,Math.round(draft.practiceGoal/10)),daysPerWeek:5,submissionRequested:"none",done:false}))}); studentCourses.push(structuredClone(course)); frameworkSections.push(...structuredClone(sections)); courseItems.push(...structuredClone(items)); termMilestones.push(...structuredClone(milestones)); }
   draft.status = "active"; draft.completedAt = `${PROTOTYPE_TODAY}T13:00:00+11:00`; return respond(structuredClone(draft));
 }
