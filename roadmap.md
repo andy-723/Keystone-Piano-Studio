@@ -1,5 +1,5 @@
 # Teacher day-book
-- [ ] Add Base/Pro plan billing, badges, legacy normalisation and feature gates; test and verify simulated switches and student notices.
+- [x] Add Base/Pro plan billing, badges, legacy normalisation and feature gates; test and verify simulated switches and student notices.
 - [x] Complete shell access through services and improve phone / larger-text layout.
 - [x] Complete async Today services and immediate attendance feedback.
 - [x] Verify fixture requirements, attendance, dates and teacher-only navigation.
@@ -83,4 +83,4 @@
 - [x] Add lesson assignment editor and parent This week; test rules and verify full flows.
 
 # Enrolment presentation
-- [ ] Make teacher Enrol student details a Typeform-style one-question-at-a-time flow; preserve services and later onboarding steps, verify phone and submission.
+- [x] Make teacher Enrol student details a Typeform-style one-question-at-a-time flow; preserve services and later onboarding steps, verify phone and submission.
