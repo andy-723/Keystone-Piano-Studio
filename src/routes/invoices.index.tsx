@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowRight, FilePlus2, Receipt, RefreshCw } from "lucide-react";
+import { ArrowRight, CircleAlert, FilePlus2, Receipt, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { invoiceListQuery, INVOICE_STATUS } from "@/lib/billing-queries";
+import { paymentFlags } from "@/services/billing";
 import { formatAUD, formatNumericDate } from "@/lib/format";
 import type { InvoiceStatus } from "@/mocks/types";
 
