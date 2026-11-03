@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowRight, FilePlus2, Receipt, RefreshCw } from "lucide-react";
+import { ArrowRight, CircleAlert, FilePlus2, Receipt, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { invoiceListQuery, INVOICE_STATUS } from "@/lib/billing-queries";
+import { paymentFlags } from "@/services/billing";
 import { formatAUD, formatNumericDate } from "@/lib/format";
 import type { InvoiceStatus } from "@/mocks/types";
 
@@ -19,8 +20,21 @@ function Invoices() {
   const [status, setStatus] = useState<InvoiceStatus | "all">("all");
   const sum = (statuses: InvoiceStatus[]) => data.invoices.filter((invoice) => statuses.includes(invoice.status)).reduce((total, invoice) => total + (statuses.includes("paid") || statuses.includes("draft") ? invoice.totalCents : invoice.balanceCents ?? invoice.totalCents), 0);
   const shown = data.invoices.filter((invoice) => status === "all" || invoice.status === status);
+  const flags = paymentFlags(data.invoices);
+  const familyName = (id: string) => data.families.find((family) => family.id === id)?.displayName ?? "Family";
   return <div className="mx-auto max-w-6xl">
     <header className="flex flex-wrap items-center justify-between gap-5"><h1 className="flex items-center gap-3 text-3xl font-semibold"><Receipt className="size-7 text-primary" aria-hidden /> Invoices</h1><div className="flex flex-wrap gap-3"><Button asChild variant="outline" className="max-w-full whitespace-normal"><Link to="/invoices/prepare"><FilePlus2 aria-hidden /> Prepare Term 2 invoices</Link></Button><Button asChild className="max-w-full whitespace-normal"><Link to="/invoices/renewals"><RefreshCw aria-hidden /> Renewal invitations & reminders</Link></Button></div></header>
+    {flags.length > 0 && <section aria-label="Payments to chase" className="mt-7 rounded-lg border border-destructive/40 bg-destructive/5 p-5">
+      <h2 className="flex items-center gap-2 text-xl font-semibold"><CircleAlert className="size-6 text-destructive" aria-hidden /> Payments to chase</h2>
+      <p className="mt-1 text-base text-muted-foreground">{flags.filter((flag) => flag.kind === "overdue").length} overdue · {flags.filter((flag) => flag.kind === "due_soon").length} due in the next 7 days</p>
+      <div className="mt-4 divide-y divide-border border-y border-border">{flags.map((flag) => <Button key={flag.invoice.id} asChild variant="ghost" className="h-auto w-full justify-start whitespace-normal rounded-none px-1 py-4 text-left"><Link to="/invoices/$invoiceId" params={{ invoiceId: flag.invoice.id }}>
+        <div className="grid min-w-0 flex-1 items-center gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
+          <div><p className="text-lg font-semibold">{familyName(flag.invoice.familyId)}</p><p className="mt-0.5 text-base font-normal text-muted-foreground">{flag.invoice.number} · Due {formatNumericDate(flag.invoice.dueDate)}</p></div>
+          <Badge variant={flag.kind === "overdue" ? "destructive" : "secondary"} className="text-base">{flag.kind === "overdue" ? `${flag.days} day${flag.days === 1 ? "" : "s"} overdue` : flag.days === 0 ? "Due today" : `Due in ${flag.days} day${flag.days === 1 ? "" : "s"}`}</Badge>
+          <span className="text-lg sm:text-right">{formatAUD(flag.invoice.balanceCents ?? flag.invoice.totalCents)}</span>
+        </div><ArrowRight aria-hidden className="ml-3" />
+      </Link></Button>)}</div>
+    </section>}
     <section aria-label="Invoice totals" className="mt-7 grid grid-cols-2 gap-5 border-y border-border py-6 lg:grid-cols-4">
       {[{ name: "Draft total", value: sum(["draft"]) }, { name: "Sent total", value: sum(["sent", "partially_paid"]) }, { name: "Overdue total", value: sum(["overdue"]) }, { name: "Paid total", value: sum(["paid"]) }].map((total) => <div key={total.name}><p className="text-base text-muted-foreground">{total.name}</p><p className="mt-2 break-words font-display text-2xl font-semibold">{formatAUD(total.value)}</p></div>)}
     </section>
