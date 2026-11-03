@@ -63,7 +63,7 @@ export async function getParentProgress() {
     const [requirements, progress, practice] = await Promise.all([getRequirements(gradeGoal.replace(/^AMEB /, "")), getStudentProgress(student.id), getPracticeLogs(student.id)]);
     const course = await getStudentCourse(student.id);
     return { student, gradeGoal, requirements, progress, practice, course: { framework: course.course.framework, grade: course.course.grade, readiness: course.readiness, stageNames: course.stageNames, sections: course.sections.map((section) => ({ id: section.id, name: section.name })), items: course.items.map((item) => {
-      const latest = course.feedback.filter((entry) => entry.courseItemId === item.id && entry.shared && entry.comment).at(-1);
+      const latest = course.feedback.filter((entry) => entry.courseItemId === item.id && entry.shared && entry.comment).sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt)).at(-1);
       return { id: item.id, sectionId: item.sectionId, title: item.title, composer: item.composer, stage: item.stage, comment: latest?.comment };
     }) } };
   }));
