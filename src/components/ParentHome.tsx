@@ -9,10 +9,14 @@ import { ParentMakeUps } from "@/components/ParentMakeUps";
 import { ParentRenewal } from "@/components/ParentRenewal";
 import { ParentAssignments } from "@/components/Assignments";
 import { ParentIntakes } from "@/components/StudentIntake";
+import { FamilyNews } from "./StudioNews";
+import { ProfilePicture } from "./ProfilePicture";
 export function ParentHome({ openChat, openInvoice }: { openChat: () => void; openInvoice: (id: string) => void }) {
   const { data } = useSuspenseQuery(parentHomeQuery);
   const { t, lang } = useParentLanguage();
   return <div><h1 className="text-3xl font-semibold">{t("greeting")}</h1><p className="mt-2 text-base text-muted-foreground">{data.children.map((child) => child.firstName).join(" & ")}</p>
+    <div className="mt-4 flex flex-wrap gap-4">{data.children.map(child => <ProfilePicture key={child.id} id={child.id} name={`${child.firstName} ${child.lastName}`}/>)}</div>
+    <FamilyNews/>
     <ParentIntakes />
     <ParentAssignments />
     <ParentRenewal />
