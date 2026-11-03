@@ -1,5 +1,6 @@
 import { families, lessonTypes, riskScores, students, studio, teacher, weeklySlots } from "@/mocks/data";
 import type { Family, RiskScore, Student, Studio, Teacher } from "@/mocks/types";
+import { readStudioPlan } from "./plans";
 import { respond } from "./_delay";
 
 export type StudentSummary = Student & { gradeGoal: string; durationMin: number; familyName: string; risk: RiskScore };
@@ -14,7 +15,7 @@ function summarise(s: Student): StudentSummary {
   };
 }
 
-export const getStudio = (): Promise<Studio> => respond(studio, 0);
+export const getStudio = (): Promise<Studio> => respond({ ...studio, plan: readStudioPlan() }, 0);
 export const getTeacher = (): Promise<Teacher> => respond(teacher, 0);
 
 export async function setGstRegistered(value: boolean): Promise<Studio> {

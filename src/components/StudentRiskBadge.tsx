@@ -1,5 +1,8 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { assignmentSettingsQuery } from "@/components/Assignments";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { ProSheet } from "./ProSheet";
 import type { RiskScore } from "@/mocks/types";
 
 const labels = { green: "Green", yellow: "Yellow", red: "Red" };
@@ -7,7 +10,9 @@ const tones = { green: "border-success bg-success-soft text-success", yellow: "b
 
 export function StudentRiskBadge({ band }: { band: RiskScore["band"] }) {
   const {data} = useSuspenseQuery(assignmentSettingsQuery);
+  const [pro, setPro] = useState(false);
+  if (data.plan === "base" && band === "red") return <><Button variant="outline" onClick={() => setPro(true)}>Red Risk · Pro</Button><ProSheet open={pro} close={() => setPro(false)} /></>;
   return <span className={`inline-flex shrink-0 items-center gap-2 rounded-md border px-3 py-1 text-base font-semibold ${tones[band]}`}>
-    <span aria-hidden className={`size-3 rounded-full ${band === "green" ? "bg-success" : band === "yellow" ? "bg-warning" : "bg-destructive"}`} />{labels[band]}{band === "red" && data.plan === "solo" && " · Pro"}
+    <span aria-hidden className={`size-3 rounded-full ${band === "green" ? "bg-success" : band === "yellow" ? "bg-warning" : "bg-destructive"}`} />{labels[band]}
   </span>;
 }

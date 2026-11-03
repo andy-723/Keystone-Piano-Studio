@@ -11,6 +11,7 @@ export const studio: Studio = {
   abn: "51 824 753 556",
   gstRegistered: true,
   timezone: "Australia/Melbourne",
+  plan: "pro",
 };
 
 export const teacher: Teacher = { id: "teacher-1", name: "Ms Margaret Clarke" };

@@ -2,6 +2,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { planBillingQuery } from "@/lib/plan-queries";
 import { StudentRiskBadge } from "@/components/StudentRiskBadge";
 import { StudentCheckIn } from "@/components/StudentCheckIn";
 import { StudentCourse } from "@/components/StudentCourse";
@@ -27,6 +28,8 @@ const attendanceLabels = { scheduled: "Not marked", attended: "Attended", absent
 function StudentProfile() {
   const { studentId } = Route.useParams();
   const { data } = useSuspenseQuery(studentProfileQuery(studentId));
+  const { data: subscription } = useSuspenseQuery(planBillingQuery());
+  const pro = subscription.plan !== "base";
   if (!data) return null;
   const { student, family } = data;
   const maxMinutes = Math.max(data.course.course.weeklyPracticeGoalMin, 1, ...data.practice.map((week) => week.studentMinutes + week.teacherMinutes));
@@ -34,7 +37,7 @@ function StudentProfile() {
   return <div className="mx-auto max-w-5xl">
     <Button asChild variant="ghost" className="mb-5"><Link to="/students"><ArrowLeft aria-hidden /> All students</Link></Button>
     <header className="flex flex-wrap items-start justify-between gap-4"><div><h1 className="break-words text-3xl font-semibold">{student.firstName} {student.lastName}</h1><p className="mt-2 text-lg text-muted-foreground">{student.gradeGoal}</p></div><StudentRiskBadge band={student.risk.band} /></header>
-    {student.risk.band !== "green" && <section aria-label="Needs attention" className="mt-6 border-l-4 border-warning pl-5"><h2 className="text-xl font-semibold">Needs attention</h2><ul className="my-3 space-y-1">{student.risk.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul>{student.risk.band === "red" && <StudentCheckIn studentId={student.id} />}</section>}
+    {student.risk.band !== "green" && (pro || student.risk.band !== "red") && <section aria-label="Needs attention" className="mt-6 border-l-4 border-warning pl-5"><h2 className="text-xl font-semibold">Needs attention</h2><ul className="my-3 space-y-1">{student.risk.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul>{pro && student.risk.band === "red" && <StudentCheckIn studentId={student.id} />}</section>}
     <section className="mt-8 border-t border-border py-7" aria-labelledby="student-details"><h2 id="student-details" className="text-2xl font-semibold">Details & family</h2>
       <dl className="mt-5 grid gap-4 sm:grid-cols-2"><div><dt className="text-base text-muted-foreground">Birth year</dt><dd className="mt-1">{student.birthYear}</dd></div><div><dt className="text-base text-muted-foreground">Family</dt><dd className="mt-1">{family?.displayName ?? "Not recorded"}</dd></div><div><dt className="text-base text-muted-foreground">Exam goal</dt><dd className="mt-1">{student.examDate ? formatNumericDate(student.examDate) : student.targetTerm}</dd></div></dl>
       <h3 className="mt-6 text-xl font-semibold">Guardians</h3><div className="mt-3 space-y-4">{family?.guardians.map((guardian) => <div key={guardian.id}><p className="font-semibold">{guardian.name}</p><p className="break-all text-base text-muted-foreground">{guardian.email}</p>{guardian.mobile && <p className="text-base text-muted-foreground">{guardian.mobile}</p>}<p className="text-base text-muted-foreground">Preferred language: {guardian.preferredLanguage === "zh-CN" ? "中文" : "English"}</p></div>)}</div>

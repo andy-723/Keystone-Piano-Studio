@@ -3,6 +3,8 @@ import { integrationState, initialIntegrations } from "@/mocks/integrations";
 import { invoices, payments } from "@/mocks/data";
 import { parentPayments } from "@/mocks/parent";
 import { termInvoiceDrafts } from "@/mocks/billing";
+import { setStudioPlan } from "@/services/plans";
+import { newStudioSubscription } from "@/mocks/plans";
 import { connectStripe, disconnectStripe, getIntegrations, getStripeStatus, connectXero, disconnectXero, pushInvoiceToXero } from "@/services/integrations";
 import { getParentInvoice, payParentInvoice } from "@/services/parent";
 import { getInvoice, recordInvoicePayment, setInvoiceStatus, prepareTerm2Invoices, sendTerm2Invoices } from "@/services/billing";
@@ -13,6 +15,7 @@ beforeEach(() => {
   for (let index = payments.length - 1; index >= 0; index--) if (payments[index]?.invoiceId === "inv-1") payments.splice(index, 1);
 });
 afterEach(() => {
+  newStudioSubscription.plan = "base";
   integrationState.demo = initialIntegrations(); integrationState["new-studio"] = initialIntegrations();
   invoices.splice(0, invoices.length, ...structuredClone(original.invoices));
   payments.splice(0, payments.length, ...structuredClone(original.payments));
@@ -38,6 +41,7 @@ it("allows connected parent payments and blocks them after disconnect", async ()
   await disconnectStripe(); expect(await getStripeStatus()).toBe("not_connected");
 });
 it("keeps empty-studio connections separate from demo connections", async () => {
+  await setStudioPlan("pro", "new-studio");
   await connectStripe({}, "new-studio"); await connectXero("new-studio");
   expect(await getStripeStatus()).toBe("not_connected");
   expect((await getIntegrations()).xero.status).toBe("not_connected");

@@ -10,6 +10,8 @@
 <!-- LOVABLE:END -->
 
 ## Architecture
+- Plans use a scope-keyed mock subscription service with legacy normalisation; Pro capabilities are checked without deleting data, and Opus subscription invoices stay separate from family invoices.
+- The teacher enrolment details form is a presentational question flow over the existing onboarding service; later intake, welcome and activation stages retain their service-owned validation.
 - Onboarding and libraries are scope-keyed session services; activation deep-copies template sections, items and milestones, while parent intake always derives family ownership and omits teacher diagnostics.
 - Assignment services enforce plan, family consent and guardian review approval; async delivery is occurrence-keyed separately from attendance, and policy credits are idempotent ledger entries rather than cancellations.
 - Shared controls wrap on phones and dialogs stay within the dynamic viewport; the weekly timetable stacks days on phones and uses columns on larger screens to avoid page-wide horizontal scrolling.
