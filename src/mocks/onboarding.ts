@@ -1,0 +1,4 @@
+import type { OnboardingRecord, StudentCourse, CourseItem, FrameworkSection, TermMilestone, LessonTemplate } from "./types";
+import type { ImportScope } from "./roster-import";
+export interface EnrolmentDraft extends OnboardingRecord { scope: ImportScope; step: number; templateId: string; targetTerm: string; gradeHours: number; lessonMinutes: number; strengths: string; workOn: string; welcomeTemplate?: LessonTemplate; startingStages: Record<string, 1 | 2 | 3 | 4 | 5>; welcomeChecks: string[]; courseSnapshot?: { course: StudentCourse; sections: FrameworkSection[]; items: CourseItem[]; milestones: TermMilestone[] }; assignment?: { week: string; title: string; body: string } }
+export const enrolmentDrafts: EnrolmentDraft[] = [];

@@ -73,6 +73,8 @@ export interface Message {
   readAt?: string;
   media?: { url?: string; thumbnailUrl?: string; durationSeconds?: number; fileName?: string };
   lessonSummary?: { lessonId: string; studentName: string; gradeGoal: string; readiness: number; date: string; passedCount?: number; requirementCount?: number; studentMinutes?: number; teacherMinutes?: number; notes?: string; voiceSeconds?: number };
+  intakeRecordId?: string;
+  welcomeSummary?: { studentName: string; practiceGoal: number };
 }
 
 export type Framework = "AMEB" | "Trinity" | "ABRSM" | "Custom";
@@ -91,3 +93,9 @@ export interface RiskScore { studentId: string; score: number; band: "green" | "
 
 /** Prototype-only: the weekly slot that generates each student's lessons. */
 export interface WeeklySlot { studentId: string; weekday: number; time: string; lessonTypeId: string; gradeGoal: string }
+
+export interface Intake { experience: "beginner" | "transferring"; previousGrades: string; theoryExams: string; instrument: "acoustic" | "digital" | "keyboard"; goal: string; daysPerWeek: number; minutesPerDay: number; policiesRead: boolean }
+export interface OnboardingRecord { id: string; studentId: string; intake: Intake | null; diagnostic: Record<string, CourseStage>; practiceGoal: number; status: "intake_sent" | "intake_done" | "welcome_done" | "active"; completedAt?: string }
+export interface ContentItem { id: string; kind: "text" | "link" | "file" | "video" | "audio" | "checklist"; title: string; body?: string; url?: string; mediaPlaceholder?: string; supplied?: boolean }
+export interface LessonTemplate { id: string; name: string; isWelcomeDefault: boolean; steps: { contentItemId: string; note?: string }[]; supplied?: boolean; audience: "beginner" | "transferring" }
+export interface CourseTemplate { id: string; name: string; framework: Framework; grade: string; sections: { name: string; weightPct: number; items: string[] }[]; defaultMilestones: { termOffset: number; targetStage: CourseStage }[]; supplied?: boolean }

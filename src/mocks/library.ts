@@ -1,0 +1,12 @@
+import type { ContentItem, CourseTemplate, LessonTemplate } from "./types";
+import type { ImportScope } from "./roster-import";
+const beginner = ["Finger numbers", "High and low", "Steady beat", "Black-key groups", "First duet"];
+const transferring = ["Pieces and posture", "Scales", "Sight-reading", "Aural", "Theory"];
+function initial() {
+  const content: ContentItem[] = [...beginner, ...transferring].map((title, i) => ({ id: `opus-content-${i}`, title, kind: i < 5 ? "checklist" : "text", body: i < 5 ? `Explore ${title.toLowerCase()} together. Celebrate a comfortable first attempt.` : `Listen together and discuss ${title.toLowerCase()}.`, supplied: true }));
+  content.push({ id: "opus-practice", title: "A little practice each day", kind: "video", mediaPlaceholder: "Practice video placeholder", supplied: true });
+  const lessons: LessonTemplate[] = ["beginner", "transferring"].map((audience, i) => ({ id: `opus-welcome-${audience}`, name: `Welcome - ${audience === "beginner" ? "beginner" : "transferring student"}`, audience: audience as "beginner" | "transferring", supplied: true, isWelcomeDefault: true, steps: content.slice(i * 5, i * 5 + 5).map((item) => ({ contentItemId: item.id })) }));
+  const courses: CourseTemplate[] = [{ id: "opus-beginner", name: "First steps at the piano", framework: "Custom", grade: "Beginner", supplied: true, sections: [{ name: "Repertoire", weightPct: 50, items: ["First melody", "First duet"] }, { name: "Technical work", weightPct: 15, items: ["Relaxed hands"] }, { name: "Musicianship", weightPct: 15, items: ["Steady beat", "Sight-reading"] }, { name: "Theory", weightPct: 20, items: ["Notes and rhythms"] }], defaultMilestones: [{ termOffset: 0, targetStage: 3 }, { termOffset: 1, targetStage: 5 }] }, { id: "opus-grade4", name: "AMEB Grade 4 starting plan", framework: "AMEB", grade: "Grade 4", supplied: true, sections: [{ name: "Repertoire", weightPct: 50, items: ["Piece to choose", "Second piece to choose"] }, { name: "Technical work", weightPct: 15, items: ["Scales"] }, { name: "Musicianship", weightPct: 15, items: ["Sight-reading", "Aural"] }, { name: "Theory", weightPct: 20, items: ["Theory workbook"] }], defaultMilestones: [{ termOffset: 0, targetStage: 3 }, { termOffset: 1, targetStage: 5 }] }];
+  return { content, lessons, courses };
+}
+export const libraryState: Record<ImportScope, ReturnType<typeof initial>> = { demo: initial(), "new-studio": initial() };
