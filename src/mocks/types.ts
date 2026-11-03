@@ -75,7 +75,14 @@ export interface Message {
   lessonSummary?: { lessonId: string; studentName: string; gradeGoal: string; readiness: number; date: string; passedCount?: number; requirementCount?: number; studentMinutes?: number; teacherMinutes?: number; notes?: string; voiceSeconds?: number };
 }
 
-export type Framework = "AMEB" | "Trinity" | "ABRSM";
+export type Framework = "AMEB" | "Trinity" | "ABRSM" | "Custom";
+export type CourseStage = 1 | 2 | 3 | 4 | 5;
+export interface FrameworkSection { id: string; framework: Framework; grade: string; name: string; weightPct: number }
+export interface FrameworkSlot { id: string; sectionId: string; label: string }
+export interface StudentCourse { id: string; studentId: string; framework: Framework; grade: string; stream?: string; targetTerm: string; weeklyPracticeGoalMin: number; gradeHoursEstimate: number; status: "draft" | "active" }
+export interface CourseItem { id: string; studentCourseId: string; sectionId: string; slotId?: string | undefined; title: string; composer?: string | undefined; stage: CourseStage; targetBpm?: number | undefined; currentBpm?: number | undefined; barsDone?: number | undefined; barsTotal?: number | undefined; updatedAt: string }
+export interface TermMilestone { id: string; studentCourseId: string; termKey: string; courseItemId: string; targetStage: CourseStage }
+export interface Feedback { id: string; courseItemId: string; occurrenceId?: string | undefined; submissionId?: string | undefined; outcome: "pass" | "stage_move" | "carry_over" | "needs_work"; newStage?: CourseStage | undefined; comment?: string | undefined; createdAt: string; shared?: boolean | undefined }
 export type RequirementCategory = "scales" | "pieces" | "aural" | "sight-reading";
 export interface Requirement { id: string; framework: Framework; grade: string; category: RequirementCategory; title: string }
 export interface StudentProgress { studentId: string; requirementId: string; status: "not_started" | "learning" | "passed" }

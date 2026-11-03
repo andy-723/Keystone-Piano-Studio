@@ -33,12 +33,11 @@ describe("Teacher Students", () => {
     expect(weeks.map((week) => week.studentMinutes)).toEqual([20, 0, 0, 0]);
     expect(weeks.map((week) => week.teacherMinutes)).toEqual([0, 0, 0, 15]);
   });
-  it("profiles scope invoices and guardians to the student family and calculate passed readiness", async () => {
+  it("profiles scope invoices and guardians to the student family and use weighted course readiness", async () => {
     const profile = await getStudentProfile("stu-1");
     expect(profile?.family?.guardians[0]?.name).toBe("Wei Chen");
     expect(profile?.invoices.map((invoice) => invoice.id)).toEqual(["inv-1"]);
-    const passed = profile?.requirements.filter((requirement) => profile.progress.some((progress) => progress.requirementId === requirement.id && progress.status === "passed")).length ?? 0;
-    expect(profile?.readiness).toBe(Math.round(passed / (profile?.requirements.length ?? 1) * 100));
+    expect(profile?.readiness).toBe(53);
     expect(await getStudentProfile("missing")).toBeNull();
   });
   it("attendance skips term breaks and honours changes from Today", async () => {
