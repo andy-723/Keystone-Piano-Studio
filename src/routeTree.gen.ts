@@ -12,10 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as InvoicesRouteImport } from './routes/invoices'
+import { Route as LibraryRouteImport } from './routes/library'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as StudentsRouteImport } from './routes/students'
 import { Route as ChatIndexRouteImport } from './routes/chat.index'
 import { Route as ChatConversationIdRouteImport } from './routes/chat.$conversationId'
+import { Route as IntakeRecordIdRouteImport } from './routes/intake.$recordId'
 import { Route as InvoicesIndexRouteImport } from './routes/invoices.index'
 import { Route as InvoicesInvoiceIdRouteImport } from './routes/invoices.$invoiceId'
 import { Route as InvoicesPrepareRouteImport } from './routes/invoices.prepare'
@@ -23,6 +25,7 @@ import { Route as InvoicesRenewalsRouteImport } from './routes/invoices.renewals
 import { Route as LessonsLessonIdRouteImport } from './routes/lessons.$lessonId'
 import { Route as StudentsIndexRouteImport } from './routes/students.index'
 import { Route as StudentsStudentIdRouteImport } from './routes/students.$studentId'
+import { Route as StudentsEnrolRouteImport } from './routes/students.enrol'
 import { Route as StudentsImportRouteImport } from './routes/students.import'
 
 const IndexRoute = IndexRouteImport.update({
@@ -38,6 +41,11 @@ const ChatRoute = ChatRouteImport.update({
 const InvoicesRoute = InvoicesRouteImport.update({
   id: '/invoices',
   path: '/invoices',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LibraryRoute = LibraryRouteImport.update({
+  id: '/library',
+  path: '/library',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -59,6 +67,11 @@ const ChatConversationIdRoute = ChatConversationIdRouteImport.update({
   id: '/$conversationId',
   path: '/$conversationId',
   getParentRoute: () => ChatRoute,
+} as any)
+const IntakeRecordIdRoute = IntakeRecordIdRouteImport.update({
+  id: '/intake/$recordId',
+  path: '/intake/$recordId',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const InvoicesIndexRoute = InvoicesIndexRouteImport.update({
   id: '/',
@@ -95,6 +108,11 @@ const StudentsStudentIdRoute = StudentsStudentIdRouteImport.update({
   path: '/$studentId',
   getParentRoute: () => StudentsRoute,
 } as any)
+const StudentsEnrolRoute = StudentsEnrolRouteImport.update({
+  id: '/enrol',
+  path: '/enrol',
+  getParentRoute: () => StudentsRoute,
+} as any)
 const StudentsImportRoute = StudentsImportRouteImport.update({
   id: '/import',
   path: '/import',
@@ -105,14 +123,17 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/chat': typeof ChatRouteWithChildren
   '/invoices': typeof InvoicesRouteWithChildren
+  '/library': typeof LibraryRoute
   '/settings': typeof SettingsRoute
   '/students': typeof StudentsRouteWithChildren
   '/chat/$conversationId': typeof ChatConversationIdRoute
+  '/intake/$recordId': typeof IntakeRecordIdRoute
   '/invoices/$invoiceId': typeof InvoicesInvoiceIdRoute
   '/invoices/prepare': typeof InvoicesPrepareRoute
   '/invoices/renewals': typeof InvoicesRenewalsRoute
   '/lessons/$lessonId': typeof LessonsLessonIdRoute
   '/students/$studentId': typeof StudentsStudentIdRoute
+  '/students/enrol': typeof StudentsEnrolRoute
   '/students/import': typeof StudentsImportRoute
   '/chat/': typeof ChatIndexRoute
   '/invoices/': typeof InvoicesIndexRoute
@@ -120,13 +141,16 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/library': typeof LibraryRoute
   '/settings': typeof SettingsRoute
   '/chat/$conversationId': typeof ChatConversationIdRoute
+  '/intake/$recordId': typeof IntakeRecordIdRoute
   '/invoices/$invoiceId': typeof InvoicesInvoiceIdRoute
   '/invoices/prepare': typeof InvoicesPrepareRoute
   '/invoices/renewals': typeof InvoicesRenewalsRoute
   '/lessons/$lessonId': typeof LessonsLessonIdRoute
   '/students/$studentId': typeof StudentsStudentIdRoute
+  '/students/enrol': typeof StudentsEnrolRoute
   '/students/import': typeof StudentsImportRoute
   '/chat': typeof ChatIndexRoute
   '/invoices': typeof InvoicesIndexRoute
@@ -137,14 +161,17 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/chat': typeof ChatRouteWithChildren
   '/invoices': typeof InvoicesRouteWithChildren
+  '/library': typeof LibraryRoute
   '/settings': typeof SettingsRoute
   '/students': typeof StudentsRouteWithChildren
   '/chat/$conversationId': typeof ChatConversationIdRoute
+  '/intake/$recordId': typeof IntakeRecordIdRoute
   '/invoices/$invoiceId': typeof InvoicesInvoiceIdRoute
   '/invoices/prepare': typeof InvoicesPrepareRoute
   '/invoices/renewals': typeof InvoicesRenewalsRoute
   '/lessons/$lessonId': typeof LessonsLessonIdRoute
   '/students/$studentId': typeof StudentsStudentIdRoute
+  '/students/enrol': typeof StudentsEnrolRoute
   '/students/import': typeof StudentsImportRoute
   '/chat/': typeof ChatIndexRoute
   '/invoices/': typeof InvoicesIndexRoute
@@ -156,14 +183,17 @@ export interface FileRouteTypes {
     | '/'
     | '/chat'
     | '/invoices'
+    | '/library'
     | '/settings'
     | '/students'
     | '/chat/$conversationId'
+    | '/intake/$recordId'
     | '/invoices/$invoiceId'
     | '/invoices/prepare'
     | '/invoices/renewals'
     | '/lessons/$lessonId'
     | '/students/$studentId'
+    | '/students/enrol'
     | '/students/import'
     | '/chat/'
     | '/invoices/'
@@ -171,13 +201,16 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/library'
     | '/settings'
     | '/chat/$conversationId'
+    | '/intake/$recordId'
     | '/invoices/$invoiceId'
     | '/invoices/prepare'
     | '/invoices/renewals'
     | '/lessons/$lessonId'
     | '/students/$studentId'
+    | '/students/enrol'
     | '/students/import'
     | '/chat'
     | '/invoices'
@@ -187,14 +220,17 @@ export interface FileRouteTypes {
     | '/'
     | '/chat'
     | '/invoices'
+    | '/library'
     | '/settings'
     | '/students'
     | '/chat/$conversationId'
+    | '/intake/$recordId'
     | '/invoices/$invoiceId'
     | '/invoices/prepare'
     | '/invoices/renewals'
     | '/lessons/$lessonId'
     | '/students/$studentId'
+    | '/students/enrol'
     | '/students/import'
     | '/chat/'
     | '/invoices/'
@@ -205,8 +241,10 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ChatRoute: typeof ChatRouteWithChildren
   InvoicesRoute: typeof InvoicesRouteWithChildren
+  LibraryRoute: typeof LibraryRoute
   SettingsRoute: typeof SettingsRoute
   StudentsRoute: typeof StudentsRouteWithChildren
+  IntakeRecordIdRoute: typeof IntakeRecordIdRoute
   LessonsLessonIdRoute: typeof LessonsLessonIdRoute
 }
 
@@ -231,6 +269,13 @@ declare module '@tanstack/react-router' {
       path: '/invoices'
       fullPath: '/invoices'
       preLoaderRoute: typeof InvoicesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/library': {
+      id: '/library'
+      path: '/library'
+      fullPath: '/library'
+      preLoaderRoute: typeof LibraryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -260,6 +305,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/chat/$conversationId'
       preLoaderRoute: typeof ChatConversationIdRouteImport
       parentRoute: typeof ChatRoute
+    }
+    '/intake/$recordId': {
+      id: '/intake/$recordId'
+      path: '/intake/$recordId'
+      fullPath: '/intake/$recordId'
+      preLoaderRoute: typeof IntakeRecordIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/invoices/': {
       id: '/invoices/'
@@ -310,6 +362,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudentsStudentIdRouteImport
       parentRoute: typeof StudentsRoute
     }
+    '/students/enrol': {
+      id: '/students/enrol'
+      path: '/enrol'
+      fullPath: '/students/enrol'
+      preLoaderRoute: typeof StudentsEnrolRouteImport
+      parentRoute: typeof StudentsRoute
+    }
     '/students/import': {
       id: '/students/import'
       path: '/import'
@@ -352,12 +411,14 @@ const InvoicesRouteWithChildren = InvoicesRoute._addFileChildren(
 
 interface StudentsRouteChildren {
   StudentsStudentIdRoute: typeof StudentsStudentIdRoute
+  StudentsEnrolRoute: typeof StudentsEnrolRoute
   StudentsImportRoute: typeof StudentsImportRoute
   StudentsIndexRoute: typeof StudentsIndexRoute
 }
 
 const StudentsRouteChildren: StudentsRouteChildren = {
   StudentsStudentIdRoute: StudentsStudentIdRoute,
+  StudentsEnrolRoute: StudentsEnrolRoute,
   StudentsImportRoute: StudentsImportRoute,
   StudentsIndexRoute: StudentsIndexRoute,
 }
@@ -370,8 +431,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ChatRoute: ChatRouteWithChildren,
   InvoicesRoute: InvoicesRouteWithChildren,
+  LibraryRoute: LibraryRoute,
   SettingsRoute: SettingsRoute,
   StudentsRoute: StudentsRouteWithChildren,
+  IntakeRecordIdRoute: IntakeRecordIdRoute,
   LessonsLessonIdRoute: LessonsLessonIdRoute,
 }
 export const routeTree = rootRouteImport

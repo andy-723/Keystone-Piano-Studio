@@ -7,10 +7,14 @@ import { useParentLanguage, parentDate } from "@/i18n/parent";
 import { formatAUD, formatTime } from "@/lib/format";
 import { ParentMakeUps } from "@/components/ParentMakeUps";
 import { ParentRenewal } from "@/components/ParentRenewal";
+import { ParentAssignments } from "@/components/Assignments";
+import { ParentIntakes } from "@/components/StudentIntake";
 export function ParentHome({ openChat, openInvoice }: { openChat: () => void; openInvoice: (id: string) => void }) {
   const { data } = useSuspenseQuery(parentHomeQuery);
   const { t, lang } = useParentLanguage();
   return <div><h1 className="text-3xl font-semibold">{t("greeting")}</h1><p className="mt-2 text-base text-muted-foreground">{data.children.map((child) => child.firstName).join(" & ")}</p>
+    <ParentIntakes />
+    <ParentAssignments />
     <ParentRenewal />
     <ParentMakeUps />
     <section className="mt-6 border-y border-border py-6"><h2 className="flex items-center gap-2 text-xl font-semibold"><CalendarDays aria-hidden className="size-6 text-primary" />{t("nextLesson")}</h2>{data.nextLesson ? <><p className="mt-4 text-2xl font-semibold">{data.nextLesson.student.firstName} {data.nextLesson.student.lastName}</p><p className="mt-2 text-xl">{parentDate(data.nextLesson.startsAt, lang)} · {formatTime(data.nextLesson.startsAt)}</p><p className="mt-2 text-base text-muted-foreground">{t("duration", { minutes: data.nextLesson.lessonType.durationMin })}</p></> : <p className="mt-3">{t("noLesson")}</p>}</section>

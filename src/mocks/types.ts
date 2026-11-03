@@ -7,15 +7,18 @@ export interface Studio {
   abn?: string;
   gstRegistered: boolean;
   timezone: "Australia/Melbourne";
+  plan?: "solo" | "pro" | "academy";
+  asyncLessonPolicy?: "makeup_credit" | "counts_as_lesson";
 }
 export interface Teacher { id: string; name: string }
 export interface Guardian { id: string; name: string; email: string; preferredLanguage: Lang; mobile?: string }
-export interface Family { id: string; displayName: string; guardians: Guardian[] }
+export interface Family { id: string; displayName: string; guardians: Guardian[]; mediaConsent?: boolean }
 export interface Student { id: string; familyId: string; firstName: string; lastName: string; birthYear: number; examDate?: string; targetTerm?: string }
 export interface LessonType { id: string; name: string; durationMin: number; priceCents: number }
 
 export type LessonStatus = "scheduled" | "attended" | "absent" | "cancelled_by_studio" | "cancelled_late";
 export interface LessonOccurrence {
+  deliveryMode?: "in_person" | "online" | "async";
   id: string;
   studentId: string;
   lessonTypeId: string;
@@ -73,6 +76,9 @@ export interface Message {
   readAt?: string;
   media?: { url?: string; thumbnailUrl?: string; durationSeconds?: number; fileName?: string };
   lessonSummary?: { lessonId: string; studentName: string; gradeGoal: string; readiness: number; date: string; passedCount?: number; requirementCount?: number; studentMinutes?: number; teacherMinutes?: number; notes?: string; voiceSeconds?: number };
+  intakeRecordId?: string;
+  welcomeSummary?: { studentName: string; practiceGoal: number };
+  assignmentCard?: { assignmentId: string; label: "This week’s assignment" | "Video lesson" | "Feedback ready" };
 }
 
 export type Framework = "AMEB" | "Trinity" | "ABRSM" | "Custom";
@@ -86,8 +92,17 @@ export interface Feedback { id: string; courseItemId: string; occurrenceId?: str
 export type RequirementCategory = "scales" | "pieces" | "aural" | "sight-reading";
 export interface Requirement { id: string; framework: Framework; grade: string; category: RequirementCategory; title: string }
 export interface StudentProgress { studentId: string; requirementId: string; status: "not_started" | "learning" | "passed" }
-export interface PracticeLog { id: string; studentId: string; date: string; minutes: number; loggedBy: "student" | "teacher" }
+export interface PracticeLog { id: string; studentId: string; date: string; minutes: number; loggedBy: "student" | "teacher"; assignmentTaskId?: string }
 export interface RiskScore { studentId: string; score: number; band: "green" | "yellow" | "red"; reasons: string[] }
 
 /** Prototype-only: the weekly slot that generates each student's lessons. */
 export interface WeeklySlot { studentId: string; weekday: number; time: string; lessonTypeId: string; gradeGoal: string }
+
+export interface Intake { experience: "beginner" | "transferring"; previousGrades: string; theoryExams: string; instrument: "acoustic" | "digital" | "keyboard"; goal: string; daysPerWeek: number; minutesPerDay: number; policiesRead: boolean }
+export interface OnboardingRecord { id: string; studentId: string; intake: Intake | null; diagnostic: Record<string, CourseStage>; practiceGoal: number; status: "intake_sent" | "intake_done" | "welcome_done" | "active"; completedAt?: string }
+export interface ContentItem { id: string; kind: "text" | "link" | "file" | "video" | "audio" | "checklist"; title: string; body?: string; url?: string; mediaPlaceholder?: string; supplied?: boolean }
+export interface LessonTemplate { id: string; name: string; isWelcomeDefault: boolean; steps: { contentItemId: string; note?: string }[]; supplied?: boolean; audience: "beginner" | "transferring" }
+export interface CourseTemplate { id: string; name: string; framework: Framework; grade: string; sections: { name: string; weightPct: number; items: string[] }[]; defaultMilestones: { termOffset: number; targetStage: CourseStage }[]; supplied?: boolean }
+export interface AssignmentTask { id: string; courseItemId?: string; text: string; minutesPerDay: number; daysPerWeek: number; submissionRequested: "none" | "audio" | "video"; done: boolean }
+export interface Assignment { id: string; studentId: string; occurrenceId: string; dueDate: string; tasks: AssignmentTask[]; demoClip?: boolean }
+export interface Submission { id: string; assignmentTaskId: string; kind: "audio" | "video"; durationSec: number; submittedBy: "student" | "guardian"; guardianApproved: boolean; status: "waiting_review" | "reviewed"; createdAt: string; comment?: string; replyKind?: "voice" | "video"; outcome?: Feedback["outcome"] }

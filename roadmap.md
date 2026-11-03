@@ -68,3 +68,15 @@
 - [x] Add per-student mock courses, weighted readiness, milestones and feedback services with rule tests.
 - [x] Replace profile and lesson checklists with course views, course editing and goal-versus-actual practice.
 - [x] Add family-only read-only course progress and shared comments; verify lesson-to-parent flow and phone layouts.
+
+# Student onboarding and library
+- [x] Add isolated enrolment drafts, bilingual own-family intake and welcome diagnostics.
+- [x] Add reusable content, editable studio template copies and immutable course activation snapshots.
+- [x] Add practice-pace choices, welcome summaries and first-week assignment placeholders.
+- [x] Test pace, template isolation and family privacy; verify teacher-to-parent activation and phone layouts.
+
+# Weekly assignments and recording review
+- [x] Add weekly task services, task-linked practice and first-week onboarding assignments.
+- [x] Add mock plan gating, consent and guardian approval for recordings.
+- [x] Add async lesson conversion, policy credits, family requests and teacher review queue.
+- [x] Add lesson assignment editor and parent This week; test rules and verify full flows.

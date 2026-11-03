@@ -1,3 +1,4 @@
+import { deliveryModes } from '@/mocks/assignments';
 import { attendanceMarks, lessonTypes, students, weeklySlots, families, teacher } from '@/mocks/data';
 import type { LessonOccurrence, LessonStatus, LessonType, Student } from '@/mocks/types';
 import { PROTOTYPE_TODAY, addDays, dayKind, melbourneIso, weekday, type DayKind } from '@/lib/calendar';
@@ -14,7 +15,7 @@ function details(id: string, studentId: string, typeId: string, date: string, ti
   const student = students.find((entry) => entry.id === studentId); const lessonType = lessonTypes.find((entry) => entry.id === typeId);
   if (!student || !lessonType) throw new Error('Lesson not found');
   const startsAt = melbourneIso(date, time);
-  return { id, studentId, lessonTypeId: typeId, startsAt, endsAt: new Date(Date.parse(startsAt) + lessonType.durationMin * 60000).toISOString(), status: attendanceMarks.get(id) ?? studentAttendance.get(id) ?? 'scheduled', student, lessonType, gradeGoal, isMakeUp, credits: balance(studentId) };
+  return { deliveryMode: deliveryModes.get(id) ?? 'in_person', id, studentId, lessonTypeId: typeId, startsAt, endsAt: new Date(Date.parse(startsAt) + lessonType.durationMin * 60000).toISOString(), status: attendanceMarks.get(id) ?? studentAttendance.get(id) ?? 'scheduled', student, lessonType, gradeGoal, isMakeUp, credits: balance(studentId) };
 }
 function buildDay(date: string): DayPlan {
   const day = dayKind(date); if (day.kind !== 'teaching') return { date, day, lessons: [] };
@@ -42,6 +43,7 @@ export const getWeekLessons = (date: string) => respond(Array.from({ length: 6 }
 export const getCredits = (studentId: string) => respond({ balance: balance(studentId), history: creditLedger.filter((entry) => entry.studentId === studentId).map((entry) => ({ ...entry })), requested: parentMakeUpRequests.has(studentId) });
 export async function markAttendance(id: string, status: LessonStatus): Promise<LessonStatus> {
   const lesson = occurrence(id); if (!lesson) throw new Error('Lesson not found');
+  if (lesson.deliveryMode === 'async' && ['cancelled_by_studio','cancelled_late'].includes(status)) throw new Error('A video lesson is not a cancellation.');
   const current = attendanceMarks.get(id) ?? studentAttendance.get(id) ?? 'scheduled';
   const eligible = (value: LessonStatus) => value === 'cancelled_by_studio' && demoSchedulingPolicy.studioCancellationCredit || value === 'cancelled_late' && demoSchedulingPolicy.familyLateCancellationCredit;
   const sourceBalance = creditLedger.filter((entry) => entry.occurrenceId === id && entry.reason !== 'Make-up booked').reduce((sum, entry) => sum + entry.amount, 0);
