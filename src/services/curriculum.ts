@@ -40,7 +40,8 @@ export async function recordCourseFeedback(input: Omit<Feedback, "id" | "created
   }
   if (!["pass", "stage_move", "carry_over", "needs_work"].includes(input.outcome)) throw new Error("Choose a checkpoint outcome.");
   const stage = stageAfterFeedback(item.stage, input.outcome, input.newStage);
-  const feedback: Feedback = { id: crypto.randomUUID(), courseItemId: item.id, occurrenceId: input.occurrenceId, submissionId: input.submissionId, outcome: input.outcome, newStage: stage, comment: input.comment?.trim() || undefined, shared: input.shared ?? false, createdAt: new Date().toISOString() };
+  const createdAt = new Date(Math.max(Date.parse("2027-03-15T12:00:00+11:00"), ...courseFeedback.map((entry) => Date.parse(entry.createdAt) + 1000))).toISOString();
+  const feedback: Feedback = { id: crypto.randomUUID(), courseItemId: item.id, occurrenceId: input.occurrenceId, submissionId: input.submissionId, outcome: input.outcome, newStage: stage, comment: input.comment?.trim() || undefined, shared: input.shared ?? false, createdAt };
   courseFeedback.push(feedback);
   item.stage = stage; item.updatedAt = feedback.createdAt;
   return getStudentCourse(input.studentId);

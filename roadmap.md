@@ -65,6 +65,6 @@
 - [x] Test status transitions, payment gating and sync rules; verify full flows and phone layout.
 
 # Student courses
-- [ ] Add per-student mock courses, weighted readiness, milestones and feedback services with rule tests.
-- [ ] Replace profile and lesson checklists with course views, course editing and goal-versus-actual practice.
-- [ ] Add family-only read-only course progress and shared comments; verify lesson-to-parent flow and phone layouts.
+- [x] Add per-student mock courses, weighted readiness, milestones and feedback services with rule tests.
+- [x] Replace profile and lesson checklists with course views, course editing and goal-versus-actual practice.
+- [x] Add family-only read-only course progress and shared comments; verify lesson-to-parent flow and phone layouts.
