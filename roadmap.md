@@ -1,4 +1,7 @@
 # Teacher day-book
+- [ ] Add editable teacher/student pictures and teacher profile settings; verify session-only saves.
+- [ ] Add studio news publishing and family feed; test visibility and studio isolation.
+- [ ] Investigate reported Students import error and verify navigation.
 - [x] Add Base/Pro plan billing, badges, legacy normalisation and feature gates; test and verify simulated switches and student notices.
 - [x] Complete shell access through services and improve phone / larger-text layout.
 - [x] Complete async Today services and immediate attendance feedback.
