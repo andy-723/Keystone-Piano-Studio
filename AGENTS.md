@@ -10,6 +10,8 @@
 <!-- LOVABLE:END -->
 
 ## Architecture
+- Onboarding and libraries are scope-keyed session services; activation deep-copies template sections, items and milestones, while parent intake always derives family ownership and omits teacher diagnostics.
+- Assignment services enforce plan, family consent and guardian review approval; async delivery is occurrence-keyed separately from attendance, and policy credits are idempotent ledger entries rather than cancellations.
 - Shared controls wrap on phones and dialogs stay within the dynamic viewport; the weekly timetable stacks days on phones and uses columns on larger screens to avoid page-wide horizontal scrolling.
 - Screens read/write only through async functions in src/services/ (one file per area) over fixtures in src/mocks/ — so the mock layer can be swapped for a REST API later.
 - App shell (nav rail / bottom tabs, role switcher, larger-text toggle) lives in src/routes/__root.tsx via AppShell; role switch swaps teacher app for parent portal there.

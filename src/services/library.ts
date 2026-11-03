@@ -7,7 +7,7 @@ export async function copyTemplate(kind: "lessons" | "courses" | "content", id: 
   const state = libraryState[scope];
   const original = state[kind].find((item) => item.id === id);
   if (!original) throw new Error("Template not found.");
-  const copy = { ...structuredClone(original), id: crypto.randomUUID(), name: "name" in original ? `${original.name} (studio copy)` : undefined, title: "title" in original ? `${original.title} (studio copy)` : undefined, supplied: false, isWelcomeDefault: false };
+  const copy = { ...structuredClone(original), id: crypto.randomUUID(), ...("name" in original ? { name: `${original.name} (studio copy)` } : { title: `${original.title} (studio copy)` }), supplied: false, ...("steps" in original ? { isWelcomeDefault: false } : {}) };
   if (kind === "content") state.content.push(copy as ContentItem);
   else if (kind === "lessons") state.lessons.push(copy as LessonTemplate);
   else state.courses.push(copy as CourseTemplate);
