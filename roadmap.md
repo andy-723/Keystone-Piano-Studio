@@ -68,3 +68,9 @@
 - [x] Add per-student mock courses, weighted readiness, milestones and feedback services with rule tests.
 - [x] Replace profile and lesson checklists with course views, course editing and goal-versus-actual practice.
 - [x] Add family-only read-only course progress and shared comments; verify lesson-to-parent flow and phone layouts.
+
+# Student onboarding and library
+- [ ] Add isolated enrolment drafts, bilingual own-family intake and welcome diagnostics.
+- [ ] Add reusable content, editable studio template copies and immutable course activation snapshots.
+- [ ] Add practice-pace choices, welcome summaries and first-week assignment placeholders.
+- [ ] Test pace, template isolation and family privacy; verify teacher-to-parent activation and phone layouts.
