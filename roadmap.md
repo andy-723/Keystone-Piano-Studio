@@ -81,3 +81,6 @@
 - [x] Add mock plan gating, consent and guardian approval for recordings.
 - [x] Add async lesson conversion, policy credits, family requests and teacher review queue.
 - [x] Add lesson assignment editor and parent This week; test rules and verify full flows.
+
+# Enrolment presentation
+- [ ] Make teacher Enrol student details a Typeform-style one-question-at-a-time flow; preserve services and later onboarding steps, verify phone and submission.
