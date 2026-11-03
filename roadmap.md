@@ -63,3 +63,8 @@
 - [x] Add isolated mock Stripe/Xero states, onboarding and Settings cards; connect empty-studio checklist.
 - [x] Gate parent online payments and store invoice/payment Xero sync labels.
 - [x] Test status transitions, payment gating and sync rules; verify full flows and phone layout.
+
+# Student courses
+- [ ] Add per-student mock courses, weighted readiness, milestones and feedback services with rule tests.
+- [ ] Replace profile and lesson checklists with course views, course editing and goal-versus-actual practice.
+- [ ] Add family-only read-only course progress and shared comments; verify lesson-to-parent flow and phone layouts.
