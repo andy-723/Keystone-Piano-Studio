@@ -18,11 +18,11 @@ import { translate } from "@/i18n/parent";
 
 const NAV = [
   { to: "/", label: "Today", icon: BookOpen },
+  { to: "/news", label: "News", icon: Megaphone },
   { to: "/students", label: "Students", icon: Users },
   { to: "/chat", label: "Chat", icon: MessageCircle },
   { to: "/invoices", label: "Invoices", icon: Receipt },
   { to: "/settings", label: "Settings", icon: Settings },
-  { to: "/news", label: "News", icon: Megaphone },
 ] as const;
 
 export function AppShell({ children, studio }: { children: ReactNode; studio: Studio }) {
@@ -65,7 +65,7 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
           <div className="flex min-w-0 flex-wrap items-center gap-3">{role !== "parent" && <ProfilePicture id="teacher" name={profile?.name || "Teacher"} scope={role === "new-teacher" ? "new-studio" : "demo"}/>}<div className="min-w-0 break-words font-display text-xl font-semibold">{profile?.studioName || studio.name}</div>{role !== "parent" && <div className={isTeacher ? "md:hidden" : ""}>{planBadge}</div>}</div>
           <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-3 sm:flex sm:flex-wrap sm:gap-4">
             <div className="relative flex min-h-12 shrink-0 items-center gap-2">
-              <Switch id="larger-text" checked={largeText} onCheckedChange={setLargeText} />
+              <Switch id="larger-text" className="relative z-10" checked={largeText} onCheckedChange={setLargeText} />
               <Label htmlFor="larger-text" className="flex min-h-12 cursor-pointer items-center text-base before:absolute before:inset-0">{shellText("largerText")}</Label>
             </div>
             <label className="flex min-w-0 max-w-full items-center gap-2 text-base">

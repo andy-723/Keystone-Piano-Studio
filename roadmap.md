@@ -61,6 +61,7 @@
 
 # Mobile layouts
 - [ ] Recheck reported mobile failure and keep six bottom navigation labels readable on narrow phones and with larger text.
+- [ ] Expand News with targeted audiences, drafts/schedules, consent checks, receipts, family actions and simulated notifications; verify privacy rules and phone flows.
 - [x] Adapt shell, lesson controls, weekly timetable and dialogs to narrow phone screens.
 - [x] Verify teacher, parent, chat and setup views at 320/390/440px and larger text; complete a phone lesson move and chat send/readback.
 
