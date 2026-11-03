@@ -9,7 +9,7 @@ it("allows student and teacher pictures to be set and removed", async () => {
   const image = "data:image/png;base64,aGVsbG8=";
   await setProfilePicture(student.id, image); await setProfilePicture("teacher", image);
   expect((await getProfilePictures())[student.id]).toBe(image);
-  expect((await getProfilePictures()).teacher).toBe(image);
+  expect((await getProfilePictures())["teacher"]).toBe(image);
   await setProfilePicture(student.id, null); expect((await getProfilePictures())[student.id]).toBeUndefined();
 });
 it("rejects external pictures and students from another studio", async () => {
