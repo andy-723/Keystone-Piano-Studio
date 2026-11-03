@@ -1,5 +1,6 @@
 // Data shapes match the future REST API names. Money is always integer cents.
 export type Lang = "en" | "zh-CN";
+export type StudioPlan = "base" | "pro" | "academy";
 
 export interface Studio {
   id: string;
@@ -7,7 +8,7 @@ export interface Studio {
   abn?: string;
   gstRegistered: boolean;
   timezone: "Australia/Melbourne";
-  plan?: "solo" | "pro" | "academy";
+  plan?: StudioPlan;
   asyncLessonPolicy?: "makeup_credit" | "counts_as_lesson";
 }
 export interface Teacher { id: string; name: string }
