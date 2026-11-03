@@ -60,6 +60,7 @@
 - [x] Add week/day lesson controls, profile history and parent Home balances; verify tests and full flows.
 
 # Mobile layouts
+- [ ] Recheck reported mobile failure and keep six bottom navigation labels readable on narrow phones and with larger text.
 - [x] Adapt shell, lesson controls, weekly timetable and dialogs to narrow phone screens.
 - [x] Verify teacher, parent, chat and setup views at 320/390/440px and larger text; complete a phone lesson move and chat send/readback.
 
