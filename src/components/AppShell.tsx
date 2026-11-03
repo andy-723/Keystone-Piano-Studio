@@ -1,9 +1,13 @@
 import { Link } from "@tanstack/react-router";
-import { BookOpen, MessageCircle, Receipt, Settings, Users } from "lucide-react";
+import { BookOpen, MessageCircle, Receipt, Settings, Users, Megaphone } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { chatThreadsQuery } from "@/lib/chat-queries";
 import { Button } from "@/components/ui/button";
+import { StudioNews } from "./StudioNews";
+import { TeacherProfileSettings } from "./TeacherProfileSettings";
+import { ProfilePicture } from "./ProfilePicture";
+import { teacherProfileQuery } from "@/lib/community-queries";
 import { PlanBilling } from "./PlanBilling";
 import { planBillingQuery } from "@/lib/plan-queries";
 import { Switch } from "@/components/ui/switch";
@@ -18,11 +22,14 @@ const NAV = [
   { to: "/chat", label: "Chat", icon: MessageCircle },
   { to: "/invoices", label: "Invoices", icon: Receipt },
   { to: "/settings", label: "Settings", icon: Settings },
+  { to: "/news", label: "News", icon: Megaphone },
 ] as const;
 
 export function AppShell({ children, studio }: { children: ReactNode; studio: Studio }) {
   const { role, setRole, largeText, setLargeText } = useAppSettings();
   const { data: subscription } = useSuspenseQuery(planBillingQuery(role === "new-teacher" ? "new-studio" : "demo"));
+  const { data: profile } = useQuery(teacherProfileQuery(role === "new-teacher" ? "new-studio" : "demo"));
+  const [newNewsOpen, setNewNewsOpen] = useState(false);
   const [newPlanOpen, setNewPlanOpen] = useState(false);
   const planLabel = subscription.plan === "base" ? "Base plan" : subscription.plan === "academy" ? "Academy plan" : "Pro plan";
   const planBadge = <Button asChild={role === "teacher"} variant={subscription.plan === "base" ? "outline" : "default"} className="min-h-12 h-auto rounded-full px-3 text-base" onClick={() => role === "new-teacher" && setNewPlanOpen(true)}>{role === "teacher" ? <Link to="/settings" hash="plan-and-billing">{planLabel}</Link> : planLabel}</Button>;
@@ -38,7 +45,7 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
       {/* Left rail on tablet and up (teacher only) */}
       {isTeacher && <nav aria-label="Main" className="hidden md:flex md:w-32 lg:w-40 shrink-0 flex-col gap-2 border-r border-sidebar-border bg-sidebar p-3 sticky top-0 h-screen">
         <div className="px-2 py-3 font-display text-2xl font-semibold text-sidebar-primary">Opus</div>
-        <div className="mb-3 flex flex-col items-start gap-3 px-1"><p className="break-words text-base font-semibold">{studio.name}</p>{planBadge}</div>
+        <div className="mb-3 flex flex-col items-start gap-3 px-1"><p className="break-words text-base font-semibold">{profile?.studioName || studio.name}</p>{planBadge}</div>
         {NAV.map(({ to, label, icon: Icon }) => (
           <Link
             key={to}
@@ -55,7 +62,7 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
 
       <div className={`flex min-w-0 flex-1 flex-col ${isTeacher ? "pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0" : ""}`}>
         <header className="grid min-w-0 gap-2 border-b border-border bg-background/95 px-4 py-3 lg:flex lg:items-center lg:justify-between md:px-8">
-          <div className="flex min-w-0 flex-wrap items-center gap-3"><div className="min-w-0 break-words font-display text-xl font-semibold">{studio.name}</div>{role !== "parent" && <div className={isTeacher ? "md:hidden" : ""}>{planBadge}</div>}</div>
+          <div className="flex min-w-0 flex-wrap items-center gap-3">{role !== "parent" && <ProfilePicture id="teacher" name={profile?.name || "Teacher"} scope={role === "new-teacher" ? "new-studio" : "demo"}/>}<div className="min-w-0 break-words font-display text-xl font-semibold">{profile?.studioName || studio.name}</div>{role !== "parent" && <div className={isTeacher ? "md:hidden" : ""}>{planBadge}</div>}</div>
           <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-3 sm:flex sm:flex-wrap sm:gap-4">
             <div className="relative flex min-h-12 shrink-0 items-center gap-2">
               <Switch id="larger-text" checked={largeText} onCheckedChange={setLargeText} />
@@ -68,18 +75,18 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
                 onChange={(e) => setRole(e.target.value as Role)}
                 className="min-h-12 w-full min-w-0 max-w-full rounded-lg border-2 border-input bg-card px-2 min-readable font-semibold sm:w-auto sm:px-3"
               >
-                <option value="teacher">Teacher (Ms Clarke)</option>
+                <option value="teacher">Teacher ({profile?.name || "Ms Clarke"})</option>
                 <option value="parent">Parent (Wei Chen)</option>
                 <option value="new-teacher">New teacher (empty studio)</option>
               </select>
             </label>
           </div>
         </header>
-        <main className="min-w-0 flex-1 px-3 py-4 sm:px-4 md:px-8 md:py-8">{role === "new-teacher" && newPlanOpen ? <div className="mx-auto max-w-3xl"><Button variant="outline" onClick={() => setNewPlanOpen(false)}>Back to studio</Button><h1 className="mt-5 text-3xl font-semibold">Settings</h1><PlanBilling scope="new-studio" /></div> : children}</main>
+        <main className="min-w-0 flex-1 px-3 py-4 sm:px-4 md:px-8 md:py-8">{role === "new-teacher" && newPlanOpen ? <div className="mx-auto max-w-3xl"><Button variant="outline" onClick={() => setNewPlanOpen(false)}>Back to studio</Button><h1 className="mt-5 text-3xl font-semibold">Settings</h1><TeacherProfileSettings scope="new-studio"/><PlanBilling scope="new-studio" /><Button className="mt-5" variant="outline" onClick={() => { setNewPlanOpen(false); setNewNewsOpen(true); }}><Megaphone aria-hidden/>Studio news</Button></div> : role === "new-teacher" && newNewsOpen ? <div><Button variant="outline" onClick={() => setNewNewsOpen(false)}>Back to studio</Button><StudioNews scope="new-studio"/></div> : children}</main>
       </div>
 
       {/* Bottom tab bar on phones (teacher only) */}
-      {isTeacher && <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-sidebar-border bg-sidebar pb-[env(safe-area-inset-bottom)] md:hidden">
+      {isTeacher && <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-6 border-t border-sidebar-border bg-sidebar pb-[env(safe-area-inset-bottom)] md:hidden">
         {NAV.map(({ to, label, icon: Icon }) => (
           <Link
             key={to}

@@ -9,6 +9,7 @@ import { StudentCourse } from "@/components/StudentCourse";
 import { studentProfileQuery } from "@/lib/student-queries";
 import { formatAUD, formatNumericDate, formatShortDate, formatTime } from "@/lib/format";
 import { LessonScheduling } from "@/components/LessonScheduling";
+import { ProfilePicture } from "@/components/ProfilePicture";
 import { INVOICE_STATUS } from "@/lib/billing-queries";
 
 export const Route = createFileRoute("/students/$studentId")({
@@ -36,7 +37,7 @@ function StudentProfile() {
   const totalMinutes = data.practice.reduce((sum, week) => sum + week.studentMinutes + week.teacherMinutes, 0);
   return <div className="mx-auto max-w-5xl">
     <Button asChild variant="ghost" className="mb-5"><Link to="/students"><ArrowLeft aria-hidden /> All students</Link></Button>
-    <header className="flex flex-wrap items-start justify-between gap-4"><div><h1 className="break-words text-3xl font-semibold">{student.firstName} {student.lastName}</h1><p className="mt-2 text-lg text-muted-foreground">{student.gradeGoal}</p></div><StudentRiskBadge band={student.risk.band} /></header>
+    <header className="flex flex-wrap items-start justify-between gap-4"><div><div className="mb-4"><ProfilePicture id={student.id} name={`${student.firstName} ${student.lastName}`} editable/></div><h1 className="break-words text-3xl font-semibold">{student.firstName} {student.lastName}</h1><p className="mt-2 text-lg text-muted-foreground">{student.gradeGoal}</p></div><StudentRiskBadge band={student.risk.band} /></header>
     {student.risk.band !== "green" && (pro || student.risk.band !== "red") && <section aria-label="Needs attention" className="mt-6 border-l-4 border-warning pl-5"><h2 className="text-xl font-semibold">Needs attention</h2><ul className="my-3 space-y-1">{student.risk.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul>{pro && student.risk.band === "red" && <StudentCheckIn studentId={student.id} />}</section>}
     <section className="mt-8 border-t border-border py-7" aria-labelledby="student-details"><h2 id="student-details" className="text-2xl font-semibold">Details & family</h2>
       <dl className="mt-5 grid gap-4 sm:grid-cols-2"><div><dt className="text-base text-muted-foreground">Birth year</dt><dd className="mt-1">{student.birthYear}</dd></div><div><dt className="text-base text-muted-foreground">Family</dt><dd className="mt-1">{family?.displayName ?? "Not recorded"}</dd></div><div><dt className="text-base text-muted-foreground">Exam goal</dt><dd className="mt-1">{student.examDate ? formatNumericDate(student.examDate) : student.targetTerm}</dd></div></dl>

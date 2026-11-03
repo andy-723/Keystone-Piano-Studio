@@ -8,6 +8,7 @@ import { planBillingQuery } from "@/lib/plan-queries";
 import { StudentRiskBadge } from "@/components/StudentRiskBadge";
 import { StudentCheckIn } from "@/components/StudentCheckIn";
 import { studentsQuery } from "@/lib/student-queries";
+import { ProfilePicture } from "@/components/ProfilePicture";
 import { filterStudents } from "@/lib/student-insights";
 
 export const Route = createFileRoute("/students/")({
@@ -33,7 +34,7 @@ function Students() {
     </div>
     <p className="mb-4 text-base text-muted-foreground" aria-live="polite">{shown.length} {shown.length === 1 ? "student" : "students"}{attention ? " needing attention" : ""}</p>
     <div className="space-y-4">{shown.map((student) => <article key={student.id} aria-label={`${student.firstName} ${student.lastName}`} className="rounded-md border border-border bg-card p-5 md:p-6">
-      <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><h2 className="break-words text-2xl font-semibold">{student.firstName} {student.lastName}</h2><p className="mt-1 text-base text-muted-foreground">{student.gradeGoal} · {student.familyName}</p></div><StudentRiskBadge band={student.risk.band} /></div>
+      <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><div className="mb-3"><ProfilePicture id={student.id} name={`${student.firstName} ${student.lastName}`}/></div><h2 className="break-words text-2xl font-semibold">{student.firstName} {student.lastName}</h2><p className="mt-1 text-base text-muted-foreground">{student.gradeGoal} · {student.familyName}</p></div><StudentRiskBadge band={student.risk.band} /></div>
       {student.risk.band !== "green" && (pro || student.risk.band !== "red") && <ul className="mt-4 space-y-1 border-l-2 border-border pl-4 text-base">{student.risk.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul>}
       <div className="mt-5 flex flex-wrap items-center gap-3">{pro && student.risk.band === "red" && <StudentCheckIn studentId={student.id} />}<Button asChild variant="ghost" className="ml-auto"><Link to="/students/$studentId" params={{ studentId: student.id }}>Open profile <ArrowRight aria-hidden /></Link></Button></div>
     </article>)}</div>
