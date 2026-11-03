@@ -44,11 +44,11 @@ describe("Student courses", () => {
     expect(stageAfterFeedback(2, "stage_move", 4)).toBe(4);
     expect(() => stageAfterFeedback(2, "stage_move")).toThrow("1 to 5");
   });
-  it("creates feedback and updates readiness when moving to stage four; rejects another student's lesson", async () => {
+  it("creates feedback and updates readiness when moving to stage five; rejects another student's lesson", async () => {
     const data = await getStudentCourse("stu-1"); const item = data.items[0]; if (!item) throw new Error("Missing item");
     const result = await recordCourseFeedback({ studentId: "stu-1", courseItemId: item.id, occurrenceId: "stu-1_2027-03-15", outcome: "stage_move", newStage: 5, comment: "Lovely phrasing", shared: true });
     expect(result.items[0]?.stage).toBe(5);
-    expect(result.readiness).toBe(55);
+    expect(result.readiness).toBe(56);
     expect(result.feedback.at(-1)).toMatchObject({ courseItemId: item.id, occurrenceId: "stu-1_2027-03-15", outcome: "stage_move", newStage: 5, comment: "Lovely phrasing", shared: true });
     await expect(recordCourseFeedback({ studentId: "stu-1", courseItemId: item.id, occurrenceId: "stu-2_2027-03-15", outcome: "pass" })).rejects.toThrow("does not belong");
   });

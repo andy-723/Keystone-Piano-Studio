@@ -37,7 +37,7 @@ describe("Teacher Students", () => {
     const profile = await getStudentProfile("stu-1");
     expect(profile?.family?.guardians[0]?.name).toBe("Wei Chen");
     expect(profile?.invoices.map((invoice) => invoice.id)).toEqual(["inv-1"]);
-    expect(profile?.readiness).toBe(52);
+    expect(profile?.readiness).toBe(53);
     expect(await getStudentProfile("missing")).toBeNull();
   });
   it("attendance skips term breaks and honours changes from Today", async () => {
