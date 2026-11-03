@@ -2,6 +2,7 @@ import { integrationState, type IntegrationScope, type StripeStatus } from "@/mo
 import { invoices, studio } from "@/mocks/data";
 import { setupSession } from "@/mocks/setup";
 import { PROTOTYPE_TODAY, melbourneIso } from "@/lib/calendar";
+import { proFeaturesEnabled } from "./plans";
 import { respond } from "./_delay";
 
 export const getIntegrations = (scope: IntegrationScope = "demo") => respond(integrationState[scope]);
@@ -22,6 +23,7 @@ export async function disconnectStripe(scope: IntegrationScope = "demo") {
   return respond(integrationState[scope].stripe);
 }
 export async function connectXero(scope: IntegrationScope = "demo") {
+  if (!proFeaturesEnabled(scope)) throw new Error("Available on Pro. Pro is A$49 a month + GST.");
   const xero = integrationState[scope].xero;
   xero.status = "connected";
   xero.organisationName = (scope === "demo" ? studio.name : setupSession.studio.name) || "Your piano studio";
@@ -33,7 +35,7 @@ export async function disconnectXero(scope: IntegrationScope = "demo") {
 }
 export async function pushInvoiceToXero(invoiceId: string) {
   const xero = integrationState.demo.xero;
-  if (xero.status !== "connected") return respond({ synced: false });
+  if (!proFeaturesEnabled() || xero.status !== "connected") return respond({ synced: false });
   const invoice = invoices.find((entry) => entry.id === invoiceId);
   if (!invoice) throw new Error("Invoice not found");
   if (invoice.status === "draft" || invoice.status === "void") return respond({ synced: false });

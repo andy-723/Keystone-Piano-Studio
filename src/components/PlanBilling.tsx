@@ -9,7 +9,7 @@ import { planBillingQuery } from "@/lib/plan-queries";
 import { baseStudentLimitExceeded } from "@/lib/plans";
 import { setStudioPlan } from "@/services/plans";
 import type { IntegrationScope } from "@/mocks/integrations";
-import { money } from "@/lib/format";
+import { formatAUD } from "@/lib/format";
 
 const baseFeatures = ["Scheduling and make-ups", "Family chat", "Term invoices with GST", "PayTo, BECS and card payments", "Parent portal in English and Chinese", "Curriculum", "Welcome lesson", "Assignments and marking", "Practice logs", "Up to 35 students"];
 const proFeatures = ["Everything in Base", "Video lessons and recordings", "The review queue", "Red Risk", "Board rules", "Xero sync", "Unlimited students"];
@@ -42,7 +42,7 @@ export function PlanBilling({ scope = "demo" }: { scope?: IntegrationScope }) {
     </article>)}</div>
     <h3 className="mt-8 text-xl font-semibold">Invoices from Opus</h3>
     {data.invoices.length === 0 && <p className="mt-3 text-muted-foreground">No Opus invoices yet.</p>}
-    <ul className="mt-3 divide-y divide-border">{data.invoices.map(invoice => <li key={invoice.id} className="flex flex-wrap items-center justify-between gap-3 py-4"><span>{invoice.month} · Pro</span><span className="flex items-center gap-3">{money(invoice.amountCents)}<Badge variant="secondary" className="text-base">{invoice.status}</Badge></span></li>)}</ul>
+    <ul className="mt-3 divide-y divide-border">{data.invoices.map(invoice => <li key={invoice.id} className="flex flex-wrap items-center justify-between gap-3 py-4"><span>{invoice.month} · Pro</span><span className="flex items-center gap-3">{`A${formatAUD(invoice.amountCents)}`}<Badge variant="secondary" className="text-base">{invoice.status}</Badge></span></li>)}</ul>
     <Sheet open={confirm} onOpenChange={setConfirm}><SheetContent className="w-full max-w-full overflow-y-auto pt-8 sm:max-w-lg [&>button:first-child]:hidden"><div className="flex justify-end"><Button variant="ghost" onClick={() => setConfirm(false)}><X aria-hidden />Close</Button></div><SheetTitle className="mt-4 text-2xl">{base ? "Upgrade to Pro" : "Switch to Base"}?</SheetTitle><SheetDescription className="mt-4 text-base">{base ? "Pro is A$49 a month + GST. Recordings, video lessons, the review queue, Red Risk, board rules and Xero sync will be turned on." : "Base is A$29 a month + GST. Recordings, Red Risk and Xero sync will be turned off. Nothing is deleted."}</SheetDescription>{!base && <p className="mt-4">Video lessons, the review queue and board rules also become unavailable. Base includes up to 35 students; no students are removed or blocked.</p>}<p className="mt-4 text-muted-foreground">No charge is made.</p><Button className="mt-6 w-full" disabled={change.isPending} onClick={() => change.mutate()}><Check aria-hidden />Confirm {base ? "upgrade to Pro" : "switch to Base"}</Button>{change.error && <p role="alert" className="mt-3 text-destructive">{change.error.message}</p>}</SheetContent></Sheet>
   </section>;
 }
