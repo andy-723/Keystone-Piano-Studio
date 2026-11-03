@@ -46,6 +46,15 @@ export async function submitParentIntake(id: string, intake: Intake) {
   const welcome = libraryState.demo.lessons.find((entry) => entry.audience === intake.experience && entry.isWelcomeDefault); if (welcome) draft.welcomeTemplate = structuredClone(welcome);
   return getParentIntakes();
 }
+// Teacher-owned family preview, explicitly restricted to the isolated empty studio.
+export async function submitNewStudioIntake(id: string, intake: Intake) {
+  const draft = draftFor(id, "new-studio");
+  if (draft.status !== "intake_sent") throw new Error("This intake has already been submitted.");
+  validateIntake(intake); draft.intake = structuredClone(intake); draft.status = "intake_done"; draft.practiceGoal = intake.daysPerWeek * intake.minutesPerDay;
+  const welcome = libraryState["new-studio"].lessons.find((entry) => entry.audience === intake.experience && entry.isWelcomeDefault);
+  if (welcome) draft.welcomeTemplate = structuredClone(welcome);
+  return respond(structuredClone(draft));
+}
 export async function saveEnrolment(id: string, input: Pick<EnrolmentDraft, "step" | "diagnostic" | "startingStages" | "welcomeChecks" | "practiceGoal" | "templateId" | "targetTerm" | "gradeHours" | "lessonMinutes" | "strengths" | "workOn">, scope: ImportScope = "demo") {
   const draft = draftFor(id, scope); if (draft.status === "active") throw new Error("This student is already active.");
   if (![1, 2, 3, 4].includes(input.step) || !Number.isFinite(input.gradeHours) || input.gradeHours < 0 || !Number.isInteger(input.lessonMinutes) || input.lessonMinutes < 1 || !Number.isInteger(input.practiceGoal) || input.practiceGoal < 0 || Object.values({ ...input.diagnostic, ...input.startingStages }).some((stage) => !Number.isInteger(stage) || stage < 1 || stage > 5)) throw new Error("Enter valid practice minutes, estimate and stages.");

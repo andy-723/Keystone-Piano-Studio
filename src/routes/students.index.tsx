@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowRight, FileSpreadsheet, Search, Users } from "lucide-react";
+import { ArrowRight, FileSpreadsheet, Search, Users, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StudentRiskBadge } from "@/components/StudentRiskBadge";
 import { StudentCheckIn } from "@/components/StudentCheckIn";
@@ -22,7 +22,7 @@ function Students() {
   const shown = filterStudents(data, search, attention);
   const counts = { red: data.filter((student) => student.risk.band === "red").length, yellow: data.filter((student) => student.risk.band === "yellow").length };
   return <div className="mx-auto max-w-6xl">
-    <header><Button asChild variant="outline" className="mb-5"><Link to="/students/import"><FileSpreadsheet aria-hidden />Import students</Link></Button><h1 className="flex items-center gap-3 text-3xl font-semibold"><Users className="size-7 text-primary" aria-hidden /> Students</h1><p className="mt-2 text-muted-foreground">{data.length} students · {counts.red} red · {counts.yellow} yellow</p></header>
+    <header><Button asChild className="mb-5 mr-3"><Link to="/students/enrol"><UserPlus aria-hidden />Enrol student</Link></Button><Button asChild variant="outline" className="mb-5"><Link to="/students/import"><FileSpreadsheet aria-hidden />Import students</Link></Button><h1 className="flex items-center gap-3 text-3xl font-semibold"><Users className="size-7 text-primary" aria-hidden /> Students</h1><p className="mt-2 text-muted-foreground">{data.length} students · {counts.red} red · {counts.yellow} yellow</p></header>
     <div className="my-7 flex flex-wrap items-center gap-4 border-y border-border py-5">
       <label className="relative min-w-0 flex-1 basis-72"><span className="sr-only">Search students</span><Search className="absolute left-3 top-4 size-5 text-muted-foreground" aria-hidden /><input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search students or families" className="min-h-12 w-full rounded-md border border-input bg-card py-3 pl-11 pr-3 text-base" /></label>
       <div role="group" aria-label="Student filter" className="flex flex-wrap gap-2"><Button variant={attention ? "ghost" : "secondary"} aria-pressed={!attention} onClick={() => setAttention(false)}>All students</Button><Button variant={attention ? "secondary" : "ghost"} aria-pressed={attention} onClick={() => setAttention(true)}>Needs attention</Button></div>
