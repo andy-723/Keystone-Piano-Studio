@@ -27,6 +27,24 @@ function taxView(invoice: Invoice): Invoice {
 }
 
 export const getInvoices = (): Promise<Invoice[]> => respond(invoices.map(taxView));
+
+export type PaymentFlag = { invoice: Invoice; kind: "overdue" | "due_soon"; days: number };
+
+/** Flags unpaid invoices that are overdue or due within `soonDays` of `today`. */
+export function paymentFlags(list: Invoice[], today: string = PROTOTYPE_TODAY, soonDays = 7): PaymentFlag[] {
+  const dayMs = 86_400_000;
+  const diff = (date: string) => Math.round((Date.parse(date) - Date.parse(today)) / dayMs);
+  return list
+    .filter((invoice) => invoice.status !== "draft" && invoice.status !== "paid" && invoice.status !== "void" && (invoice.balanceCents ?? invoice.totalCents) > 0)
+    .map((invoice): PaymentFlag | null => {
+      const days = diff(invoice.dueDate);
+      if (invoice.status === "overdue" || days < 0) return { invoice, kind: "overdue", days: Math.max(1, -days) };
+      if (days <= soonDays) return { invoice, kind: "due_soon", days };
+      return null;
+    })
+    .filter((flag): flag is PaymentFlag => flag !== null)
+    .sort((a, b) => (a.kind === b.kind ? a.invoice.dueDate.localeCompare(b.invoice.dueDate) : a.kind === "overdue" ? -1 : 1));
+}
 export const getInvoice = (id: string): Promise<Invoice | null> => {
   const invoice = invoices.find((entry) => entry.id === id) ?? termInvoiceDrafts.get(id);
   return respond(invoice ? taxView(invoice) : null);
