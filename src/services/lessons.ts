@@ -1,8 +1,8 @@
 import { lessonNotes, type LessonNotes } from "@/mocks/lessons";
-import { readiness, weekPractice } from "@/lib/lesson-progress";
+import { weekPractice } from "@/lib/lesson-progress";
 import { formatShortDate } from "@/lib/format";
 import { getLessonOccurrence } from "./schedule";
-import { getPracticeLogs, getRequirements, getStudentProgress } from "./curriculum";
+import { getPracticeLogs, getRequirements, getStudentProgress, getStudentCourse, getCourseReminders } from "./curriculum";
 import { getMessages, getOrCreateFamilyConversation, sendMessage } from "./chat";
 import { getFamily, getTeacher } from "./roster";
 import { respond } from "./_delay";
@@ -17,7 +17,8 @@ export async function getLiveLesson(id: string) {
     getRequirements(lesson.gradeGoal.replace(/^AMEB /, "")), getStudentProgress(lesson.studentId),
     getPracticeLogs(lesson.studentId), getFamily(lesson.student.familyId),
   ]);
-  return { lesson, date: lesson.startsAt.slice(0, 10), requirements, progress, practice, family, draft: await respond(lessonNotes.get(id) ?? { notes: "", voiceSeconds: 0 }) };
+  const [course, reminders] = await Promise.all([getStudentCourse(lesson.studentId), getCourseReminders(lesson.studentId, lesson.startsAt.slice(0, 10))]);
+  return { lesson, date: lesson.startsAt.slice(0, 10), requirements, progress, practice, family, course, reminders, draft: await respond(lessonNotes.get(id) ?? { notes: "", voiceSeconds: 0 }) };
 }
 
 export async function saveLessonNotes(id: string, input: Pick<LessonNotes, "notes" | "voiceSeconds">) {
@@ -39,17 +40,17 @@ async function sendSummary(id: string) {
   const conversation = await getOrCreateFamilyConversation(data.lesson.student.familyId);
   const teacher = await getTeacher();
   const practice = weekPractice(data.practice, data.date);
-  const passed = data.requirements.filter((requirement) => data.progress.some((entry) => entry.requirementId === requirement.id && entry.status === "passed"));
+  const passed = data.course.items.filter((item) => item.stage === 5);
   const body = [
     `Lesson summary · ${data.lesson.student.firstName} ${data.lesson.student.lastName} · ${formatShortDate(data.date)}`,
-    `${data.lesson.gradeGoal} · ${readiness(data.requirements, data.progress)}% ready`,
-    `Passed: ${passed.length} of ${data.requirements.length} requirements${passed.length ? ` — ${passed.map((requirement) => requirement.title).join(", ")}` : ""}.`,
+    `${data.course.course.framework} ${data.course.course.grade} · ${data.course.readiness}% ready`,
+    `Exam ready: ${passed.length} of ${data.course.items.length} course items${passed.length ? ` — ${passed.map((item) => item.title).join(", ")}` : ""}.`,
     `Practice this week: ${practice.student} minutes logged by student; ${practice.teacher} minutes added by teacher.`,
     draft.notes.trim() ? `Notes: ${draft.notes.trim()}` : "",
     draft.voiceSeconds ? `Voice note: ${draft.voiceSeconds}-second simulated clip (no audio recorded).` : "",
   ].filter(Boolean).join("\n\n");
   const message = await sendMessage({ conversationId: conversation.id, authorName: teacher.name, authorRole: "teacher", kind: "text", body,
-    lessonSummary: { lessonId: id, studentName: `${data.lesson.student.firstName} ${data.lesson.student.lastName}`, gradeGoal: data.lesson.gradeGoal, readiness: readiness(data.requirements, data.progress), date: data.date, passedCount: passed.length, requirementCount: data.requirements.length, studentMinutes: practice.student, teacherMinutes: practice.teacher, notes: draft.notes.trim(), voiceSeconds: draft.voiceSeconds },
+    lessonSummary: { lessonId: id, studentName: `${data.lesson.student.firstName} ${data.lesson.student.lastName}`, gradeGoal: `${data.course.course.framework} ${data.course.course.grade}`, readiness: data.course.readiness, date: data.date, passedCount: passed.length, requirementCount: data.course.items.length, studentMinutes: practice.student, teacherMinutes: practice.teacher, notes: draft.notes.trim(), voiceSeconds: draft.voiceSeconds },
   });
   lessonNotes.set(id, { ...draft, summaryMessageId: message.id, conversationId: conversation.id });
   return message;

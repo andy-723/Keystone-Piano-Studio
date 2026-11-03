@@ -5,7 +5,7 @@ import { PROTOTYPE_TODAY, addDays } from "@/lib/calendar";
 import { respond } from "./_delay";
 import { getCredits, getDayLessons } from "./schedule";
 import { getInvoices, recordInvoicePayment } from "./billing";
-import { getRequirements, getStudentProgress, getPracticeLogs, addPractice } from "./curriculum";
+import { getRequirements, getStudentProgress, getPracticeLogs, addPractice, getStudentCourse } from "./curriculum";
 import { getChatThread, getOrCreateFamilyConversation, sendMessage, markThreadRead } from "./chat";
 import { parentMakeUpRequests } from "@/mocks/scheduling";
 import { getNotes } from "./notes";
@@ -61,7 +61,11 @@ export async function getParentProgress() {
   return Promise.all(children.map(async (student) => {
     const gradeGoal = weeklySlots.find((entry) => entry.studentId === student.id)?.gradeGoal ?? "AMEB Preliminary";
     const [requirements, progress, practice] = await Promise.all([getRequirements(gradeGoal.replace(/^AMEB /, "")), getStudentProgress(student.id), getPracticeLogs(student.id)]);
-    return { student, gradeGoal, requirements, progress, practice };
+    const course = await getStudentCourse(student.id);
+    return { student, gradeGoal, requirements, progress, practice, course: { framework: course.course.framework, grade: course.course.grade, readiness: course.readiness, stageNames: course.stageNames, sections: course.sections.map((section) => ({ id: section.id, name: section.name })), items: course.items.map((item) => {
+      const latest = course.feedback.filter((entry) => entry.courseItemId === item.id && entry.shared && entry.comment).at(-1);
+      return { id: item.id, sectionId: item.sectionId, title: item.title.replace(/\d+/g, "").replace(/\s+/g, " ").trim(), composer: item.composer, stage: item.stage, comment: latest?.comment };
+    }) } };
   }));
 }
 export async function logParentPractice(input: Pick<PracticeLog, "studentId" | "date" | "minutes">) {

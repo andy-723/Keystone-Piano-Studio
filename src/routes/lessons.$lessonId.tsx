@@ -8,19 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ProgressRing } from "@/components/ProgressRing";
 import { finishLesson, getLiveLesson, saveLessonNotes } from "@/services/lessons";
-import { addPractice, setProgress } from "@/services/curriculum";
-import { readiness, weekPractice } from "@/lib/lesson-progress";
+import { addPractice } from "@/services/curriculum";
+import { weekPractice } from "@/lib/lesson-progress";
 import { formatShortDate, formatTime } from "@/lib/format";
-import type { RequirementCategory, StudentProgress } from "@/mocks/types";
+import { StudentCourse } from "@/components/StudentCourse";
 
 const lessonQuery = (id: string) => queryOptions({ queryKey: ["live-lesson", id], queryFn: () => getLiveLesson(id) });
-const CATEGORIES: { id: RequirementCategory; label: string }[] = [
-  { id: "scales", label: "Scales" }, { id: "pieces", label: "Pieces" }, { id: "aural", label: "Aural" }, { id: "sight-reading", label: "Sight-reading" },
-];
-const STATUSES: { id: StudentProgress["status"]; label: string }[] = [
-  { id: "not_started", label: "Not started" }, { id: "learning", label: "Learning" }, { id: "passed", label: "Passed" },
-];
-
 export const Route = createFileRoute("/lessons/$lessonId")({
   loader: async ({ context, params }) => { if (!await context.queryClient.ensureQueryData(lessonQuery(params.lessonId))) throw notFound(); },
   errorComponent: () => <p role="alert">This lesson could not be opened. Please refresh to try again.</p>,
@@ -49,13 +42,9 @@ function LessonSession({ data }: { data: NonNullable<Awaited<ReturnType<typeof g
   const [minutes, setMinutes] = useState("15");
   const [sent, setSent] = useState<{ conversationId: string; body: string } | null>(null);
   const finished = Boolean(data.draft.summaryMessageId || sent);
-  const percent = readiness(data.requirements, data.progress);
+  const percent = data.course.readiness;
   const practice = weekPractice(data.practice, date);
   const refresh = () => qc.invalidateQueries({ queryKey: ["live-lesson", lesson.id] });
-  const progressMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: StudentProgress["status"] }) => setProgress(lesson.studentId, id, status),
-    onSuccess: async () => { await refresh(); }, onError: () => toast.error("Progress could not be saved. Please try again."),
-  });
   const practiceMutation = useMutation({
     mutationFn: () => addPractice({ studentId: lesson.studentId, date, minutes: Number(minutes), loggedBy: "teacher" }),
     onSuccess: async () => { await refresh(); setAddingMinutes(false); toast.success(`${minutes} practice minutes added`); },
@@ -79,29 +68,12 @@ function LessonSession({ data }: { data: NonNullable<Awaited<ReturnType<typeof g
     <header className="mt-5 flex flex-wrap items-center justify-between gap-6 border-b border-border pb-6">
       <div><p className="text-base font-semibold text-muted-foreground">Live Lesson · {formatShortDate(date)} · {formatTime(lesson.startsAt)}</p>
         <h1 className="mt-2 text-4xl font-semibold">{lesson.student.firstName} {lesson.student.lastName}</h1>
-        <p className="mt-2 text-xl">{lesson.gradeGoal}</p><p className="mt-1 text-base text-muted-foreground">{lesson.lessonType.name}</p>
+        <p className="mt-2 text-xl">{data.course.course.framework} · {data.course.course.grade}</p><p className="mt-1 text-base text-muted-foreground">{lesson.lessonType.name}</p>
       </div>
       <ProgressRing percent={percent} />
     </header>
 
-    <section aria-label="Grade requirements" className="py-6">
-      <h2 className="text-2xl font-semibold">Grade requirements</h2>
-      {CATEGORIES.map((category) => <section key={category.id} aria-label={category.label} className="mt-6">
-        <h3 className="border-b border-border pb-2 text-xl font-semibold">{category.label}</h3>
-        {data.requirements.filter((requirement) => requirement.category === category.id).map((requirement) => {
-          const current = data.progress.find((entry) => entry.requirementId === requirement.id)?.status ?? "not_started";
-          return <div key={requirement.id} className="grid items-center gap-3 border-b border-border py-4 xl:grid-cols-[minmax(0,1fr)_auto]">
-            <p className="text-lg">{requirement.title}</p>
-            <div role="group" aria-label={requirement.title} className="grid grid-cols-3 gap-2">
-              {STATUSES.map((status) => <Button key={status.id} variant={current === status.id ? "secondary" : "outline"}
-                className={`min-w-0 whitespace-normal px-2 text-base ${current === status.id ? "ring-2 ring-primary" : ""}`}
-                aria-pressed={current === status.id} disabled={locked || progressMutation.isPending}
-                onClick={() => progressMutation.mutate({ id: requirement.id, status: status.id })}>{status.label}</Button>)}
-            </div>
-          </div>;
-        })}
-      </section>)}
-    </section>
+    <StudentCourse data={data.course} occurrenceId={lesson.id} locked={locked} reminders={data.reminders} showHeader={false} />
 
     <section aria-label="Practice this week" className="border-y border-border py-6">
       <div className="flex flex-wrap items-center justify-between gap-4"><h2 className="text-2xl font-semibold">Practice this week</h2>
@@ -127,7 +99,7 @@ function LessonSession({ data }: { data: NonNullable<Awaited<ReturnType<typeof g
     <footer className="border-t border-border py-6">
       {finished ? <div role="status"><p className="flex items-center gap-2 text-lg font-semibold text-success"><Check aria-hidden /> Summary sent to {data.family?.displayName ?? "family"}</p>
         {conversationId && <Button className="mt-4" variant="outline" asChild><Link to="/chat/$conversationId" params={{ conversationId }}><MessageCircle aria-hidden /> View family summary</Link></Button>}
-      </div> : <Button className="w-full whitespace-normal" size="lg" disabled={finishMutation.isPending || progressMutation.isPending || practiceMutation.isPending} onClick={() => finishMutation.mutate()}><Send aria-hidden />{finishMutation.isPending ? "Sending summary…" : "Finish and send summary to family"}</Button>}
+      </div> : <Button className="w-full whitespace-normal" size="lg" disabled={finishMutation.isPending || practiceMutation.isPending} onClick={() => finishMutation.mutate()}><Send aria-hidden />{finishMutation.isPending ? "Sending summary…" : "Finish and send summary to family"}</Button>}
     </footer>
   </div>;
 }
