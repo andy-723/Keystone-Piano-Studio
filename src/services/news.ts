@@ -99,7 +99,7 @@ export async function getNewsForPerson(personId: string, scope: CommunityScope =
   if (!family) throw new Error('Family not found.');
   return respond(sorted(newsState[scope].posts.filter(p => isVisible(p,newsNow(scope)) && audienceFamilies(p,scope).includes(family.id)),scope).map(p => {
     const receipt = newsState[scope].receipts.find(r => r.announcementId === p.id && r.personId === personId);
-    return { id:p.id,title:p.title,body:p.body,authorName:p.authorName,tag:p.tag,publishAt:p.publishAt,eventDate:p.eventDate,editedAt:p.editedAt,pinnedUntil:p.pinnedUntil,pinned:isPinned(p,newsNow(scope)), attachments:p.attachments.map(a => ({id:a.id,kind:a.kind,fileName:a.fileName,url:a.url})),seen:Boolean(receipt?.seenAt),acknowledged:Boolean(receipt?.acknowledgedAt) };
+    return { id:p.id,title:p.title,body:p.body,authorName:p.authorName,tag:p.tag,publishAt:p.publishAt,...(p.eventDate ? {eventDate:p.eventDate} : {}),...(p.editedAt ? {editedAt:p.editedAt} : {}),...(p.pinnedUntil ? {pinnedUntil:p.pinnedUntil} : {}),pinned:isPinned(p,newsNow(scope)), attachments:p.attachments.map(a => ({id:a.id,kind:a.kind,fileName:a.fileName,...(a.url ? {url:a.url} : {})})),seen:Boolean(receipt?.seenAt),acknowledged:Boolean(receipt?.acknowledgedAt) };
   }));
 }
 export async function getParentNews() { const {guardian} = await getParentSession(); return getNewsForPerson(guardian.id); }
