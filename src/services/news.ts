@@ -10,13 +10,15 @@ import { respond } from './_delay';
 const clone = <T,>(value: T): T => structuredClone(value);
 function roster(scope: CommunityScope) { return scope === 'demo' ? { families, students } : newStudioRoster; }
 export function newsNow(scope: CommunityScope = 'demo') { return newsState[scope].now; }
+export async function getNewsClock(scope: CommunityScope = 'demo') { return respond(newsNow(scope)); }
 function ownedIds(scope: CommunityScope) { return scope === 'new-studio' ? roster(scope).students.map(s => s.id) : newsState[scope].membership.studentIds; }
 export function audienceFamilies(post: Announcement, scope: CommunityScope = 'demo') {
   const r = roster(scope);
   if (post.audience.kind === 'studio') return r.families.map(f => f.id);
   if (post.audience.kind === 'families') return r.families.filter(f => post.audience.familyIds?.includes(f.id)).map(f => f.id);
   const ids = post.audience.kind === 'my_students' ? ownedIds(scope) : newsState[scope].groups.filter(g => post.audience.groupIds?.includes(g.id)).flatMap(g => g.studentIds);
-  return [...new Set(r.students.filter(s => ids.includes(s.id)).map(s => s.familyId))];
+  const authorIds = post.audience.kind === 'my_students' ? post.audience.familyIds : undefined;
+  return authorIds ?? [...new Set(r.students.filter(s => ids.includes(s.id)).map(s => s.familyId))];
 }
 export function isVisible(post: Announcement, now: string) {
   return post.status === 'published' && Date.parse(post.publishAt) <= Date.parse(now) && (!post.expiresAt || Date.parse(post.expiresAt) > Date.parse(now));
@@ -27,6 +29,7 @@ function validateAttachment(attachment: NewsAttachment, scope: CommunityScope) {
   if (!['image','pdf'].includes(attachment.kind)) throw new Error('Choose a photo or PDF.');
   if (attachment.url && !attachment.url.startsWith('blob:')) throw new Error('Attachments must stay within this app.');
   if (attachment.kind === 'image' && !attachment.photoAnswered) throw new Error('Does this photo show a student? Please answer before posting.');
+  if (attachment.featuresStudentIds.includes('choose')) throw new Error('Pick the students shown in this photo.');
   for (const id of attachment.featuresStudentIds) {
     const student = roster(scope).students.find(s => s.id === id);
     if (!student) throw new Error('Student not found.');
@@ -70,6 +73,7 @@ export async function saveAnnouncement(input: AnnouncementInput, scope: Communit
   if (post.status !== 'draft' && Date.parse(post.publishAt) > Date.parse(newsNow(scope))) post.status = 'scheduled';
   if (post.status === 'scheduled' && Date.parse(post.publishAt) <= Date.parse(newsNow(scope))) post.status = 'published';
   validateAudience(post,scope);
+  if (post.audience.kind === 'my_students') post.audience.familyIds = [...new Set(roster(scope).students.filter(s=>ownedIds(scope).includes(s.id)).map(s=>s.familyId))];
   if (post.status !== 'draft') post.attachments.forEach(a => validateAttachment(a,scope));
   if (old?.status === 'published') post.editedAt = newsNow(scope);
   if (old) state.posts[state.posts.indexOf(old)] = post; else state.posts.push(post);
@@ -99,7 +103,7 @@ export async function getNewsForPerson(personId: string, scope: CommunityScope =
   if (!family) throw new Error('Family not found.');
   return respond(sorted(newsState[scope].posts.filter(p => isVisible(p,newsNow(scope)) && audienceFamilies(p,scope).includes(family.id)),scope).map(p => {
     const receipt = newsState[scope].receipts.find(r => r.announcementId === p.id && r.personId === personId);
-    return { id:p.id,title:p.title,body:p.body,authorName:p.authorName,tag:p.tag,publishAt:p.publishAt,eventDate:p.eventDate,editedAt:p.editedAt,pinnedUntil:p.pinnedUntil,pinned:isPinned(p,newsNow(scope)), attachments:p.attachments.map(a => ({id:a.id,kind:a.kind,fileName:a.fileName,url:a.url})),seen:Boolean(receipt?.seenAt),acknowledged:Boolean(receipt?.acknowledgedAt) };
+    return { id:p.id,title:p.title,body:p.body,authorName:p.authorName,tag:p.tag,publishAt:p.publishAt,...(p.eventDate ? {eventDate:p.eventDate} : {}),...(p.editedAt ? {editedAt:p.editedAt} : {}),...(p.pinnedUntil ? {pinnedUntil:p.pinnedUntil} : {}),pinned:isPinned(p,newsNow(scope)), attachments:p.attachments.map(a => ({id:a.id,kind:a.kind,fileName:a.fileName,...(a.url ? {url:a.url} : {})})),seen:Boolean(receipt?.seenAt),acknowledged:Boolean(receipt?.acknowledgedAt) };
   }));
 }
 export async function getParentNews() { const {guardian} = await getParentSession(); return getNewsForPerson(guardian.id); }

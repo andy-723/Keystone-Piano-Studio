@@ -10,7 +10,7 @@
 <!-- LOVABLE:END -->
 
 ## Architecture
-- Profile pictures and studio news use scope-keyed session mock services; family news is read-only and published to all families, while image data never leaves the app.
+- Profiles and targeted news use scoped mock services; news validates consent/audiences and returns family-safe fields plus receipts. Due schedules release on reads using a separate fixture clock, never background jobs.
 - Plans use a scope-keyed mock subscription service with legacy normalisation; Pro capabilities are checked without deleting data, and Opus subscription invoices stay separate from family invoices.
 - The teacher enrolment details form is a presentational question flow over the existing onboarding service; later intake, welcome and activation stages retain their service-owned validation.
 - Onboarding and libraries are scope-keyed session services; activation deep-copies template sections, items and milestones, while parent intake always derives family ownership and omits teacher diagnostics.
