@@ -29,6 +29,7 @@ function validateAttachment(attachment: NewsAttachment, scope: CommunityScope) {
   if (!['image','pdf'].includes(attachment.kind)) throw new Error('Choose a photo or PDF.');
   if (attachment.url && !attachment.url.startsWith('blob:')) throw new Error('Attachments must stay within this app.');
   if (attachment.kind === 'image' && !attachment.photoAnswered) throw new Error('Does this photo show a student? Please answer before posting.');
+  if (attachment.featuresStudentIds.includes('choose')) throw new Error('Pick the students shown in this photo.');
   for (const id of attachment.featuresStudentIds) {
     const student = roster(scope).students.find(s => s.id === id);
     if (!student) throw new Error('Student not found.');

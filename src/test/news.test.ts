@@ -5,7 +5,7 @@ import { getParentSession } from '@/services/parent';
 import { saveAnnouncement, getNewsForPerson, getParentNews, recordNewsReceipt, newsCounts, getNewsNotifications, archiveAnnouncement } from '@/services/news';
 const snapshot=structuredClone(newsState),plan=studio.plan;
 beforeEach(()=>{newsState.demo.posts=[];newsState.demo.receipts=[];newsState.demo.notifications=[];newsState.demo.now=NEWS_DEMO_NOW;});
-afterEach(()=>{Object.assign(newsState,structuredClone(snapshot));studio.plan=plan;});
+afterEach(()=>{Object.assign(newsState,structuredClone(snapshot));if(plan)studio.plan=plan;else delete studio.plan;});
 it('families and students see only their own targeted announcements without audience identities',async()=>{
  const family=families[0],other=families[1],student=students.find(s=>s.familyId===family?.id);if(!family||!other||!student||!family.guardians[0]||!other.guardians[0])throw Error('Missing fixtures');
  const post=await saveAnnouncement({title:'Private',body:'Family update',audience:{kind:'families',familyIds:[family.id]}});
