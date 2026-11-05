@@ -22,6 +22,7 @@ import { getStudio } from "@/services/roster";
 import { setupQuery } from "@/lib/setup-queries";
 import { planBillingQuery } from "@/lib/plan-queries";
 import { NewTeacherSetup } from "@/components/NewTeacherSetup";
+import { teacherProfileQuery } from '@/lib/community-queries';
 
 const studioQuery = queryOptions({ queryKey: ["studio"], queryFn: getStudio });
 
@@ -75,7 +76,7 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  loader: async ({ context }) => { await Promise.all([context.queryClient.ensureQueryData(planBillingQuery()), context.queryClient.ensureQueryData(planBillingQuery("new-studio")), context.queryClient.ensureQueryData(studioQuery), context.queryClient.ensureQueryData(parentSessionQuery), context.queryClient.ensureQueryData(parentHomeQuery), context.queryClient.ensureQueryData(parentChatQuery), context.queryClient.ensureQueryData(parentProgressQuery), context.queryClient.ensureQueryData(parentInvoicesQuery)]); },
+  loader: async ({ context }) => { await Promise.all([context.queryClient.ensureQueryData(teacherProfileQuery()),context.queryClient.ensureQueryData(teacherProfileQuery('new-studio')),context.queryClient.ensureQueryData(planBillingQuery()), context.queryClient.ensureQueryData(planBillingQuery("new-studio")), context.queryClient.ensureQueryData(studioQuery), context.queryClient.ensureQueryData(parentSessionQuery), context.queryClient.ensureQueryData(parentHomeQuery), context.queryClient.ensureQueryData(parentChatQuery), context.queryClient.ensureQueryData(parentProgressQuery), context.queryClient.ensureQueryData(parentInvoicesQuery)]); },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
