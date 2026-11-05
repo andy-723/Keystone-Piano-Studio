@@ -1,4 +1,5 @@
 import { ReviewQueue, VideoLessonButton } from "@/components/Assignments";
+import { LatestNews } from '@/components/StudioNews';
 import { Suspense, useState } from "react";
 import { WeekTimetable } from "@/components/WeekTimetable";
 import { BookingForm, LessonScheduling } from "@/components/LessonScheduling";
@@ -49,6 +50,7 @@ function Today() {
 
   return (
     <div className={`mx-auto ${view === "week" ? "max-w-7xl" : "max-w-4xl"}`}>
+      <Suspense fallback={null}><LatestNews/></Suspense>
       <Suspense fallback={<p>Opening reviews…</p>}><ReviewQueue/></Suspense><div className="mb-5 flex gap-2" role="group" aria-label="Timetable view"><Button variant={view === "day" ? "secondary" : "ghost"} aria-pressed={view === "day"} onClick={() => setView("day")}>Day-book</Button><Button variant={view === "week" ? "secondary" : "ghost"} aria-pressed={view === "week"} onClick={() => setView("week")}>Week</Button></div>
       <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-2 sm:flex sm:flex-wrap sm:justify-between sm:gap-3">
         <Button variant="outline" className="px-2 sm:px-3 md:px-5" asChild>

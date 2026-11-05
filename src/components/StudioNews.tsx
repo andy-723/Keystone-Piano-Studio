@@ -1,29 +1,36 @@
-import { useState } from "react";
-import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { Send, Trash2, Megaphone } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { newsQuery, familyNewsQuery } from "@/lib/community-queries";
-import { publishStudioNews, deleteStudioNews } from "@/services/community";
-import type { CommunityScope, NewsPost } from "@/mocks/community";
-import { useParentLanguage } from "@/i18n/parent";
-import { toast } from "sonner";
+import { useEffect, useState } from 'react';
+import { Link } from '@tanstack/react-router';
+import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
+import { Plus, Pencil, Archive, Megaphone } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { announcementsQuery, newsOptionsQuery, parentNewsQuery, newsNotificationsQuery, refreshNews } from '@/lib/news-queries';
+import { archiveAnnouncement, recordNewsReceipt } from '@/services/news';
+import type { Announcement } from '@/mocks/news';
+import type { CommunityScope } from '@/mocks/community';
+import { useParentLanguage } from '@/i18n/parent';
+import { newsText } from '@/i18n/news';
+import { NewsCard } from './NewsCard';
+import { NewsComposer } from './NewsComposer';
+import { toast } from 'sonner';
 
-function NewsList({ posts, remove, chinese = false }: { posts: NewsPost[]; remove?: (id: string) => void; chinese?: boolean }) {
-  return <div className="divide-y divide-border">{posts.length === 0 && <p className="py-7 text-muted-foreground">{chinese ? "暂无工作室动态。" : "No studio updates yet."}</p>}{posts.map(post => <article key={post.id} className="py-6"><h3 className="break-words text-2xl font-semibold">{post.title}</h3><p className="mt-2 text-base text-muted-foreground">{post.authorName} · {new Date(post.createdAt).toLocaleDateString(chinese ? "zh-CN" : "en-AU", { day: "numeric", month: "short", year: "numeric" })}</p><p className="mt-4 whitespace-pre-wrap break-words">{post.body}</p>{remove && <Button className="mt-4" variant="ghost" onClick={() => { if (window.confirm("Delete this studio update for all families?")) remove(post.id); }}><Trash2 aria-hidden/>Delete update</Button>}</article>)}</div>;
+export function StudioNews({scope='demo'}:{scope?:CommunityScope}) {
+ const {data:posts}=useSuspenseQuery(announcementsQuery(scope)),{data:options}=useSuspenseQuery(newsOptionsQuery(scope));
+ const [compose,setCompose]=useState(false),[editing,setEditing]=useState<Announcement|null>(null),[view,setView]=useState('published');
+ const client=useQueryClient();
+ const archive=useMutation({mutationFn:(id:string)=>archiveAnnouncement(id,scope),onSuccess:()=>refreshNews(client),onError:e=>toast.error(e.message)});
+ if(compose)return <NewsComposer scope={scope} {...(editing?{post:editing}:{})} close={()=>{setCompose(false);setEditing(null);}}/>;
+ const displayed=posts.filter(p=>view==='published'?p.status==='published'&&(!p.expiresAt||Date.parse(p.expiresAt)>Date.parse(options.now)):p.status===view);
+ function audience(p:Announcement){if(p.audience.kind==='studio')return 'All families';if(p.audience.kind==='my_students')return 'My students';if(p.audience.kind==='families')return 'Selected families';return options.groups.filter(g=>p.audience.groupIds?.includes(g.id)).map(g=>g.name).join(', ');}
+ return <div className="mx-auto max-w-3xl"><div className="flex flex-wrap items-center justify-between gap-4"><h1 className="flex items-center gap-3 text-3xl font-semibold"><Megaphone aria-hidden/>Studio news</h1><Button onClick={()=>setCompose(true)}><Plus aria-hidden/>New post</Button></div><div className="my-6 flex flex-wrap gap-2" role="group" aria-label="Post status">{['published','draft','scheduled','archived'].map(v=><Button key={v} variant={view===v?'secondary':'ghost'} aria-pressed={view===v} onClick={()=>setView(v)}>{v==='draft'?'Drafts':v[0]?.toUpperCase()}{v==='draft'?'':v.slice(1)}</Button>)}</div><div className="space-y-5">{!displayed.length&&<p className="py-8 text-muted-foreground">No {view} posts.</p>}{displayed.map(p=><NewsCard key={p.id} now={options.now} post={{...p,seen:true,acknowledged:false}} teacherMeta={`${audience(p)} · ${p.total} families · Seen by ${p.seen} of ${p.total} families · ${p.acknowledged} acknowledged`}>{p.own&&p.status!=='archived'&&<div className="mt-4 flex flex-wrap gap-2"><Button variant="ghost" onClick={()=>{setEditing(p);setCompose(true);}}><Pencil aria-hidden/>Edit</Button><Button variant="ghost" disabled={archive.isPending} onClick={()=>archive.mutate(p.id)}><Archive aria-hidden/>Archive</Button></div>}</NewsCard>)}</div></div>;
 }
-export function StudioNews({ scope = "demo" }: { scope?: CommunityScope }) {
-  const { data } = useSuspenseQuery(newsQuery(scope));
-  const client = useQueryClient();
-  const [title, setTitle] = useState(""), [body, setBody] = useState("");
-  async function refresh() { await Promise.all([client.invalidateQueries({ queryKey: ["studio-news", scope] }), client.invalidateQueries({ queryKey: ["family-news"] })]); }
-  const publish = useMutation({ mutationFn: () => publishStudioNews({ title, body }, scope), onSuccess: async () => { setTitle(""); setBody(""); await refresh(); toast.success("Update published to all families"); }, onError: error => toast.error(error.message) });
-  const remove = useMutation({ mutationFn: (id: string) => deleteStudioNews(id, scope), onSuccess: refresh, onError: error => toast.error(error.message) });
-  return <div className="mx-auto max-w-3xl"><h1 className="flex items-center gap-3 text-3xl font-semibold"><Megaphone aria-hidden/>Studio news</h1><form className="my-7 space-y-4 border-y border-border py-6" onSubmit={event => { event.preventDefault(); publish.mutate(); }}><h2 className="text-2xl font-semibold">Write an update</h2><label className="block font-semibold">Title<Input required value={title} onChange={event => setTitle(event.target.value)}/></label><label className="block font-semibold">Update<Textarea required className="min-h-40" value={body} onChange={event => setBody(event.target.value)}/></label><Button type="submit" disabled={publish.isPending}><Send aria-hidden/>Publish to all families</Button></form><h2 className="text-2xl font-semibold">Published updates</h2><NewsList posts={data} remove={id => remove.mutate(id)}/></div>;
+export function FamilyNews({onMessage,pinnedOnly=false}:{onMessage?:(title:string)=>void;pinnedOnly?:boolean}) {
+ const {data:posts}=useSuspenseQuery(parentNewsQuery),{data:options}=useSuspenseQuery(newsOptionsQuery());
+ const {lang}=useParentLanguage(),client=useQueryClient();
+ const receipt=useMutation({mutationFn:({id,ack}:{id:string;ack:boolean})=>recordNewsReceipt(id,ack),onSuccess:()=>refreshNews(client),onError:e=>toast.error(e.message)});
+ // Seeing a card requires it to enter the viewport, not merely loading the feed.
+ useEffect(()=>{const observer=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){const id=entry.target.getAttribute('data-news-id');if(id){void recordNewsReceipt(id).then(()=>refreshNews(client));observer.unobserve(entry.target);}}},{threshold:0.35});document.querySelectorAll('[data-news-id]').forEach(el=>observer.observe(el));return()=>observer.disconnect();},[posts,client]);
+ const visible=pinnedOnly?posts.filter(p=>p.pinned):posts;
+ return <section className="py-6"><h2 className="mb-5 flex items-center gap-2 text-2xl font-semibold"><Megaphone aria-hidden/>{newsText(lang,'news')}</h2><div className="space-y-5">{!visible.length&&!pinnedOnly&&<p>{newsText(lang,'empty')}</p>}{visible.map(p=><div key={p.id} data-news-id={p.seen?undefined:p.id}><NewsCard post={p} now={options.now} lang={lang} onSeen={()=>receipt.mutate({id:p.id,ack:false})} onAcknowledge={()=>receipt.mutate({id:p.id,ack:true})} {...(onMessage?{onMessage:()=>onMessage(p.title)}:{})}/></div>)}</div></section>;
 }
-export function FamilyNews() {
-  const { data } = useSuspenseQuery(familyNewsQuery);
-  const { lang } = useParentLanguage();
-  return <section className="border-b border-border py-6"><h2 className="flex items-center gap-2 text-2xl font-semibold"><Megaphone aria-hidden/>{lang === "zh-CN" ? "工作室动态" : "Studio news"}</h2><NewsList posts={data} chinese={lang === "zh-CN"}/></section>;
-}
+export function LatestNews(){const {data:posts}=useSuspenseQuery(announcementsQuery());const latest=posts.filter(p=>p.status==='published').sort((a,b)=>Date.parse(b.publishAt)-Date.parse(a.publishAt))[0];if(!latest)return null;return <section className="mb-6 border-y border-border py-5"><h2 className="text-xl font-semibold">Latest news</h2><Button variant="link" asChild className="mt-2 h-auto whitespace-normal px-0 text-left"><Link to="/news">{latest.title}</Link></Button><p className="text-base text-muted-foreground">Seen by {latest.seen} of {latest.total} families</p></section>;}
+export function NewsNotifications({scope='demo'}:{scope?:CommunityScope}){const {data}=useSuspenseQuery(newsNotificationsQuery(scope));return <section className="mt-8 border-t border-border py-6"><h2 className="text-2xl font-semibold">Developer tools</h2><h3 className="my-4 text-xl font-semibold">Sent notifications (simulated)</h3>{!data.length&&<p className="text-muted-foreground">No notifications sent.</p>}<div className="max-h-96 overflow-auto divide-y divide-border">{data.map(n=><div className="py-3" key={n.id}><p className="break-words">{n.title}</p><p className="mt-1 text-base text-muted-foreground">{n.kind==='push'?'Push':'Email'} · {n.personId} · {new Date(n.sentAt).toLocaleString('en-AU',{timeZone:'Australia/Melbourne'})}</p></div>)}</div></section>;}
