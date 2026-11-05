@@ -1,4 +1,5 @@
 # Teacher day-book
+- [ ] Explain how to sync the latest code to GitHub; repository connection and sync status require the user's Git settings.
 - [x] Add editable teacher/student pictures and teacher profile settings; verify session-only saves.
 - [x] Add studio news publishing and family feed; test visibility and studio isolation.
 - [x] Investigate reported Students import error and verify navigation; not reproduced in fresh browser or full teacher flow.
