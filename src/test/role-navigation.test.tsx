@@ -5,6 +5,7 @@ import { AppSettingsProvider } from "@/lib/app-settings";
 import { getStudio } from "@/services/roster";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { getPlanBilling } from "@/services/plans";
+import { getTeacherProfile } from '@/services/community';
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children }: { children: React.ReactNode }) => <a>{children}</a>,
@@ -17,6 +18,7 @@ describe("teacher navigation permissions", () => {
     const studio = await getStudio();
     const client = new QueryClient();
     client.setQueryData(["plan-billing", "demo"], await getPlanBilling());
+    client.setQueryData(['teacher-profile','demo'],await getTeacherProfile());
     render(<QueryClientProvider client={client}><AppSettingsProvider><AppShell studio={studio}><p>Day-book</p></AppShell></AppSettingsProvider></QueryClientProvider>);
     expect(screen.getAllByRole("navigation", { name: "Main" })).toHaveLength(2);
     fireEvent.change(screen.getByRole("combobox"), { target: { value: "parent" } });
