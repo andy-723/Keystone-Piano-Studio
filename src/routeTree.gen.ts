@@ -28,6 +28,13 @@ import { Route as StudentsIndexRouteImport } from './routes/students.index'
 import { Route as StudentsStudentIdRouteImport } from './routes/students.$studentId'
 import { Route as StudentsEnrolRouteImport } from './routes/students.enrol'
 import { Route as StudentsImportRouteImport } from './routes/students.import'
+import { Route as ApiIntegrationsStripeCallbackRouteImport } from './routes/api/integrations/stripe/callback'
+import { Route as ApiIntegrationsStripeCheckoutReturnRouteImport } from './routes/api/integrations/stripe/checkout-return'
+import { Route as ApiIntegrationsStripeRefreshRouteImport } from './routes/api/integrations/stripe/refresh'
+import { Route as ApiIntegrationsStripeStartRouteImport } from './routes/api/integrations/stripe/start'
+import { Route as ApiIntegrationsStripeWebhookRouteImport } from './routes/api/integrations/stripe/webhook'
+import { Route as ApiIntegrationsXeroCallbackRouteImport } from './routes/api/integrations/xero/callback'
+import { Route as ApiIntegrationsXeroStartRouteImport } from './routes/api/integrations/xero/start'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -124,6 +131,48 @@ const StudentsImportRoute = StudentsImportRouteImport.update({
   path: '/import',
   getParentRoute: () => StudentsRoute,
 } as any)
+const ApiIntegrationsStripeCallbackRoute =
+  ApiIntegrationsStripeCallbackRouteImport.update({
+    id: '/api/integrations/stripe/callback',
+    path: '/api/integrations/stripe/callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiIntegrationsStripeCheckoutReturnRoute =
+  ApiIntegrationsStripeCheckoutReturnRouteImport.update({
+    id: '/api/integrations/stripe/checkout-return',
+    path: '/api/integrations/stripe/checkout-return',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiIntegrationsStripeRefreshRoute =
+  ApiIntegrationsStripeRefreshRouteImport.update({
+    id: '/api/integrations/stripe/refresh',
+    path: '/api/integrations/stripe/refresh',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiIntegrationsStripeStartRoute =
+  ApiIntegrationsStripeStartRouteImport.update({
+    id: '/api/integrations/stripe/start',
+    path: '/api/integrations/stripe/start',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiIntegrationsStripeWebhookRoute =
+  ApiIntegrationsStripeWebhookRouteImport.update({
+    id: '/api/integrations/stripe/webhook',
+    path: '/api/integrations/stripe/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiIntegrationsXeroCallbackRoute =
+  ApiIntegrationsXeroCallbackRouteImport.update({
+    id: '/api/integrations/xero/callback',
+    path: '/api/integrations/xero/callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiIntegrationsXeroStartRoute =
+  ApiIntegrationsXeroStartRouteImport.update({
+    id: '/api/integrations/xero/start',
+    path: '/api/integrations/xero/start',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -145,6 +194,13 @@ export interface FileRoutesByFullPath {
   '/chat/': typeof ChatIndexRoute
   '/invoices/': typeof InvoicesIndexRoute
   '/students/': typeof StudentsIndexRoute
+  '/api/integrations/stripe/callback': typeof ApiIntegrationsStripeCallbackRoute
+  '/api/integrations/stripe/checkout-return': typeof ApiIntegrationsStripeCheckoutReturnRoute
+  '/api/integrations/stripe/refresh': typeof ApiIntegrationsStripeRefreshRoute
+  '/api/integrations/stripe/start': typeof ApiIntegrationsStripeStartRoute
+  '/api/integrations/stripe/webhook': typeof ApiIntegrationsStripeWebhookRoute
+  '/api/integrations/xero/callback': typeof ApiIntegrationsXeroCallbackRoute
+  '/api/integrations/xero/start': typeof ApiIntegrationsXeroStartRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -163,6 +219,13 @@ export interface FileRoutesByTo {
   '/chat': typeof ChatIndexRoute
   '/invoices': typeof InvoicesIndexRoute
   '/students': typeof StudentsIndexRoute
+  '/api/integrations/stripe/callback': typeof ApiIntegrationsStripeCallbackRoute
+  '/api/integrations/stripe/checkout-return': typeof ApiIntegrationsStripeCheckoutReturnRoute
+  '/api/integrations/stripe/refresh': typeof ApiIntegrationsStripeRefreshRoute
+  '/api/integrations/stripe/start': typeof ApiIntegrationsStripeStartRoute
+  '/api/integrations/stripe/webhook': typeof ApiIntegrationsStripeWebhookRoute
+  '/api/integrations/xero/callback': typeof ApiIntegrationsXeroCallbackRoute
+  '/api/integrations/xero/start': typeof ApiIntegrationsXeroStartRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -185,6 +248,13 @@ export interface FileRoutesById {
   '/chat/': typeof ChatIndexRoute
   '/invoices/': typeof InvoicesIndexRoute
   '/students/': typeof StudentsIndexRoute
+  '/api/integrations/stripe/callback': typeof ApiIntegrationsStripeCallbackRoute
+  '/api/integrations/stripe/checkout-return': typeof ApiIntegrationsStripeCheckoutReturnRoute
+  '/api/integrations/stripe/refresh': typeof ApiIntegrationsStripeRefreshRoute
+  '/api/integrations/stripe/start': typeof ApiIntegrationsStripeStartRoute
+  '/api/integrations/stripe/webhook': typeof ApiIntegrationsStripeWebhookRoute
+  '/api/integrations/xero/callback': typeof ApiIntegrationsXeroCallbackRoute
+  '/api/integrations/xero/start': typeof ApiIntegrationsXeroStartRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -208,6 +278,13 @@ export interface FileRouteTypes {
     | '/chat/'
     | '/invoices/'
     | '/students/'
+    | '/api/integrations/stripe/callback'
+    | '/api/integrations/stripe/checkout-return'
+    | '/api/integrations/stripe/refresh'
+    | '/api/integrations/stripe/start'
+    | '/api/integrations/stripe/webhook'
+    | '/api/integrations/xero/callback'
+    | '/api/integrations/xero/start'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -226,6 +303,13 @@ export interface FileRouteTypes {
     | '/chat'
     | '/invoices'
     | '/students'
+    | '/api/integrations/stripe/callback'
+    | '/api/integrations/stripe/checkout-return'
+    | '/api/integrations/stripe/refresh'
+    | '/api/integrations/stripe/start'
+    | '/api/integrations/stripe/webhook'
+    | '/api/integrations/xero/callback'
+    | '/api/integrations/xero/start'
   id:
     | '__root__'
     | '/'
@@ -247,6 +331,13 @@ export interface FileRouteTypes {
     | '/chat/'
     | '/invoices/'
     | '/students/'
+    | '/api/integrations/stripe/callback'
+    | '/api/integrations/stripe/checkout-return'
+    | '/api/integrations/stripe/refresh'
+    | '/api/integrations/stripe/start'
+    | '/api/integrations/stripe/webhook'
+    | '/api/integrations/xero/callback'
+    | '/api/integrations/xero/start'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -259,6 +350,13 @@ export interface RootRouteChildren {
   StudentsRoute: typeof StudentsRouteWithChildren
   IntakeRecordIdRoute: typeof IntakeRecordIdRoute
   LessonsLessonIdRoute: typeof LessonsLessonIdRoute
+  ApiIntegrationsStripeCallbackRoute: typeof ApiIntegrationsStripeCallbackRoute
+  ApiIntegrationsStripeCheckoutReturnRoute: typeof ApiIntegrationsStripeCheckoutReturnRoute
+  ApiIntegrationsStripeRefreshRoute: typeof ApiIntegrationsStripeRefreshRoute
+  ApiIntegrationsStripeStartRoute: typeof ApiIntegrationsStripeStartRoute
+  ApiIntegrationsStripeWebhookRoute: typeof ApiIntegrationsStripeWebhookRoute
+  ApiIntegrationsXeroCallbackRoute: typeof ApiIntegrationsXeroCallbackRoute
+  ApiIntegrationsXeroStartRoute: typeof ApiIntegrationsXeroStartRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -396,6 +494,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudentsImportRouteImport
       parentRoute: typeof StudentsRoute
     }
+    '/api/integrations/stripe/callback': {
+      id: '/api/integrations/stripe/callback'
+      path: '/api/integrations/stripe/callback'
+      fullPath: '/api/integrations/stripe/callback'
+      preLoaderRoute: typeof ApiIntegrationsStripeCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/integrations/stripe/checkout-return': {
+      id: '/api/integrations/stripe/checkout-return'
+      path: '/api/integrations/stripe/checkout-return'
+      fullPath: '/api/integrations/stripe/checkout-return'
+      preLoaderRoute: typeof ApiIntegrationsStripeCheckoutReturnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/integrations/stripe/refresh': {
+      id: '/api/integrations/stripe/refresh'
+      path: '/api/integrations/stripe/refresh'
+      fullPath: '/api/integrations/stripe/refresh'
+      preLoaderRoute: typeof ApiIntegrationsStripeRefreshRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/integrations/stripe/start': {
+      id: '/api/integrations/stripe/start'
+      path: '/api/integrations/stripe/start'
+      fullPath: '/api/integrations/stripe/start'
+      preLoaderRoute: typeof ApiIntegrationsStripeStartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/integrations/stripe/webhook': {
+      id: '/api/integrations/stripe/webhook'
+      path: '/api/integrations/stripe/webhook'
+      fullPath: '/api/integrations/stripe/webhook'
+      preLoaderRoute: typeof ApiIntegrationsStripeWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/integrations/xero/callback': {
+      id: '/api/integrations/xero/callback'
+      path: '/api/integrations/xero/callback'
+      fullPath: '/api/integrations/xero/callback'
+      preLoaderRoute: typeof ApiIntegrationsXeroCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/integrations/xero/start': {
+      id: '/api/integrations/xero/start'
+      path: '/api/integrations/xero/start'
+      fullPath: '/api/integrations/xero/start'
+      preLoaderRoute: typeof ApiIntegrationsXeroStartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -457,6 +604,14 @@ const rootRouteChildren: RootRouteChildren = {
   StudentsRoute: StudentsRouteWithChildren,
   IntakeRecordIdRoute: IntakeRecordIdRoute,
   LessonsLessonIdRoute: LessonsLessonIdRoute,
+  ApiIntegrationsStripeCallbackRoute: ApiIntegrationsStripeCallbackRoute,
+  ApiIntegrationsStripeCheckoutReturnRoute:
+    ApiIntegrationsStripeCheckoutReturnRoute,
+  ApiIntegrationsStripeRefreshRoute: ApiIntegrationsStripeRefreshRoute,
+  ApiIntegrationsStripeStartRoute: ApiIntegrationsStripeStartRoute,
+  ApiIntegrationsStripeWebhookRoute: ApiIntegrationsStripeWebhookRoute,
+  ApiIntegrationsXeroCallbackRoute: ApiIntegrationsXeroCallbackRoute,
+  ApiIntegrationsXeroStartRoute: ApiIntegrationsXeroStartRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
