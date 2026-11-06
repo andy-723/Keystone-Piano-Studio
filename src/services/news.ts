@@ -3,7 +3,8 @@ import { newStudioRoster } from '@/mocks/roster-import';
 import { setupSession } from '@/mocks/setup';
 import { newsState, type Announcement, type NewsAttachment } from '@/mocks/news';
 import type { CommunityScope } from '@/mocks/community';
-import { annotateGroups } from '@/lib/smart-groups';
+import { annotateGroups, computeSmartGroups } from '@/lib/smart-groups';
+import { activeManualGroups, resolveGroup } from './groups';
 import { readStudioPlan } from './plans';
 import { getParentSession } from './parent';
 import { respond } from './_delay';
@@ -17,7 +18,9 @@ export function audienceFamilies(post: Announcement, scope: CommunityScope = 'de
   const r = roster(scope);
   if (post.audience.kind === 'studio') return r.families.map(f => f.id);
   if (post.audience.kind === 'families') return r.families.filter(f => post.audience.familyIds?.includes(f.id)).map(f => f.id);
-  const ids = post.audience.kind === 'my_students' ? ownedIds(scope) : newsState[scope].groups.filter(g => post.audience.groupIds?.includes(g.id)).flatMap(g => g.studentIds);
+  const ids = post.audience.kind === 'my_students'
+    ? ownedIds(scope)
+    : (post.audience.groupIds ?? []).flatMap((id) => resolveGroup(id, scope)?.studentIds ?? []);
   const authorIds = post.audience.kind === 'my_students' ? post.audience.familyIds : undefined;
   return authorIds ?? [...new Set(r.students.filter(s => ids.includes(s.id)).map(s => s.familyId))];
 }
@@ -42,7 +45,18 @@ function validateAudience(post: Announcement, scope: CommunityScope) {
   const state = newsState[scope], r = roster(scope);
   const restricted = readStudioPlan(scope) === 'academy' && state.membership.role === 'teacher';
   if (restricted && post.audience.kind === 'studio') throw new Error('Only the studio owner or admin can post to all families.');
-  if (post.audience.kind === 'groups' && (!post.audience.groupIds?.length || post.audience.groupIds.some(id => !state.groups.some(g => g.id === id) || (restricted && !state.membership.groupIds.includes(id))))) throw new Error('Choose your student groups.');
+  if (post.audience.kind === 'groups') {
+    const ids = post.audience.groupIds ?? [];
+    if (!ids.length) throw new Error('Choose your student groups.');
+    for (const id of ids) {
+      const group = resolveGroup(id, scope);
+      if (!group || group.archived) throw new Error('Choose your student groups.');
+      if (group.kind === 'smart') continue;
+      if (restricted && group.ownerMembershipId !== state.membership.id && !state.membership.groupIds.includes(id)) {
+        throw new Error('Choose your student groups.');
+      }
+    }
+  }
   if (post.audience.kind === 'families') {
     if (!post.audience.familyIds?.length || post.audience.familyIds.some(id => !r.families.some(f => f.id === id) || (restricted && !r.students.some(s => s.familyId === id && ownedIds(scope).includes(s.id))))) throw new Error('Choose families from your own students.');
   }
@@ -95,13 +109,15 @@ export function newsCounts(post: Announcement, scope: CommunityScope = 'demo') {
 export async function getAnnouncements(scope: CommunityScope = 'demo') { releaseScheduled(scope); return respond(sorted(newsState[scope].posts,scope).map(p => ({ ...clone(p), ...newsCounts(p,scope), pinned:isPinned(p,newsNow(scope)), own:p.authorMembershipId === newsState[scope].membership.id }))); }
 export async function getNewsOptions(scope: CommunityScope = 'demo') {
   const state = newsState[scope], r = roster(scope), restricted = readStudioPlan(scope) === 'academy' && state.membership.role === 'teacher';
-  const groups = annotateGroups(state.groups.filter(g => !restricted || state.membership.groupIds.includes(g.id)));
+  const smartGroups = annotateGroups(computeSmartGroups(scope), scope);
+  const studioGroups = annotateGroups(activeManualGroups(scope), scope);
+  const groups = [...smartGroups, ...studioGroups];
   return respond({
     now: newsNow(scope),
     studioWide: !restricted,
     groups: clone(groups),
-    smartGroups: clone(groups.filter((group) => group.kind === 'smart')),
-    studioGroups: clone(groups.filter((group) => (group.kind ?? 'manual') === 'manual')),
+    smartGroups: clone(smartGroups),
+    studioGroups: clone(studioGroups),
     families: r.families.filter(f => !restricted || r.students.some(s => s.familyId === f.id && ownedIds(scope).includes(s.id))).map(f => ({id:f.id,name:f.displayName})),
     students: r.students.filter(s => !restricted || ownedIds(scope).includes(s.id)).map(s => ({id:s.id,name:`${s.firstName} ${s.lastName}`})),
   });

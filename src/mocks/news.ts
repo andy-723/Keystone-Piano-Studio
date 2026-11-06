@@ -1,6 +1,6 @@
 import { families, students, studio, teacher } from './data';
 import type { CommunityScope } from './community';
-import { buildDemoStudentGroups, type SmartGroupKey } from '@/lib/smart-groups';
+import { buildManualSeedGroups, computeSmartGroups, type SmartGroupKey } from '@/lib/smart-groups';
 
 export type NewsTag = 'news' | 'event' | 'concert' | 'exam' | 'holiday' | 'reminder';
 export interface NewsAttachment { id: string; kind: 'image' | 'pdf'; fileName: string; featuresStudentIds: string[]; url?: string; photoAnswered?: boolean }
@@ -18,14 +18,20 @@ export interface StudentGroup {
   kind?: 'manual' | 'smart';
   smartKey?: SmartGroupKey;
   description?: string;
+  /** Membership id of the teacher who owns this manual group (Academy scoping). */
+  ownerMembershipId?: string;
+  /** Soft-deleted when posts still reference the group. */
+  archived?: boolean;
 }
 export interface AnnouncementReceipt { announcementId: string; personId: string; seenAt?: string; acknowledgedAt?: string }
 export interface NewsMembership { id: string; role: 'owner' | 'admin' | 'teacher'; studentIds: string[]; groupIds: string[] }
 export interface NewsNotification { id: string; announcementId: string; personId: string; kind: 'push' | 'email'; title: string; sentAt: string }
 export const NEWS_DEMO_NOW = '2026-11-03T16:30:00+11:00';
-const groups: StudentGroup[] = buildDemoStudentGroups();
+
+const manualSeed = buildManualSeedGroups(teacher.id);
+const smartAtBoot = computeSmartGroups('demo');
 export function seedAnnouncements(): Announcement[] {
-  const grade3 = groups.find((group) => group.smartKey === 'grade' && /grade 3/i.test(group.name))?.id ?? 'saturday';
+  const grade3 = smartAtBoot.find((group) => group.smartKey === 'grade' && /grade 3/i.test(group.name))?.id ?? 'saturday';
   const entries: Array<Partial<Announcement> & Pick<Announcement, 'title' | 'body' | 'publishAt'>> = [
     { title: 'Studio closed Tue 3 Nov, Melbourne Cup', body: 'The studio is closed for Melbourne Cup Day. Enjoy the public holiday. Lessons return on Wednesday.', tag: 'holiday', pinnedUntil: '2026-11-04T23:59:00+11:00', publishAt: '2026-11-02T16:21:00+11:00', important: true },
     { title: 'End-of-year concert', body: 'Our end-of-year concert is on Sunday 6 December.\nBring your music and invite your family.\nPlease arrive fifteen minutes early.\nThe programme will follow soon.', tag: 'concert', eventDate: '2026-12-06T14:00:00+11:00', publishAt: '2026-11-01T11:00:00+11:00' },
@@ -40,6 +46,14 @@ export function seedAnnouncements(): Announcement[] {
 }
 type NewsState = { posts: Announcement[]; groups: StudentGroup[]; receipts: AnnouncementReceipt[]; notifications: NewsNotification[]; membership: NewsMembership; now: string };
 export const newsState: Record<CommunityScope, NewsState> = {
-  demo: { posts: seedAnnouncements(), groups, receipts: families.slice(0, 14).map(f => ({ announcementId: 'news-1', personId: f.guardians[0]?.id ?? '', seenAt: '2026-11-03T10:00:00+11:00' })), notifications: [], membership: { id: teacher.id, role: 'owner', studentIds: students.map(s => s.id), groupIds: groups.map(g => g.id) }, now: NEWS_DEMO_NOW },
+  demo: {
+    posts: seedAnnouncements(),
+    groups: manualSeed,
+    receipts: families.slice(0, 14).map(f => ({ announcementId: 'news-1', personId: f.guardians[0]?.id ?? '', seenAt: '2026-11-03T10:00:00+11:00' })),
+    notifications: [],
+    membership: { id: teacher.id, role: 'owner', studentIds: students.map(s => s.id), groupIds: manualSeed.map(g => g.id) },
+    now: NEWS_DEMO_NOW,
+  },
+  // New studios start with no manual groups; smart groups are computed from the roster.
   'new-studio': { posts: [], groups: [], receipts: [], notifications: [], membership: { id: 'new-teacher', role: 'owner', studentIds: [], groupIds: [] }, now: NEWS_DEMO_NOW },
 };

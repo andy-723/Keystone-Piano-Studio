@@ -91,3 +91,9 @@
 
 # Enrolment presentation
 - [x] Make teacher Enrol student details a Typeform-style one-question-at-a-time flow; preserve services and later onboarding steps, verify phone and submission.
+
+# Teacher-managed student groups
+- [x] Add list/create/rename/delete/setMembers/addStudentToGroups services for demo and new-studio with Academy ownership rules and archive-on-delete when posts target a group.
+- [x] Add Students → Groups page, profile Groups field, and News composer Manage groups / empty state.
+- [x] Compute smart grade and competition classifications from the roster; seed editable Saturday and Young beginners manuals; new studios start with no manuals.
+- [x] Cover service rules and news targeting of a newly created group with tests.
