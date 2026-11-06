@@ -42,13 +42,15 @@ it('Important simulates a push per member and email per guardian, title only',as
 it('offers smart classifications and studio groups for news audiences', async () => {
   const options = await getNewsOptions();
   expect(options.smartGroups.some((group) => group.smartKey === 'grade')).toBe(true);
-  expect(options.smartGroups.some((group) => group.smartKey === 'new_joiners')).toBe(true);
-  expect(options.smartGroups.some((group) => group.smartKey === 'recital')).toBe(true);
   expect(options.smartGroups.some((group) => group.smartKey === 'competition')).toBe(true);
+  expect(options.smartGroups.map((group) => group.smartKey).sort()).toEqual(
+    expect.arrayContaining(['competition', 'grade']),
+  );
   expect(options.studioGroups.some((group) => group.id === 'saturday')).toBe(true);
-  const recital = options.smartGroups.find((group) => group.smartKey === 'recital');
-  if (!recital) throw Error('Missing recital classification');
-  const post = await saveAnnouncement({ title: 'Recital call', body: 'Bring your music', audience: { kind: 'groups', groupIds: [recital.id] } });
+  expect(options.studioGroups.some((group) => group.id === 'beginners')).toBe(true);
+  const competition = options.smartGroups.find((group) => group.smartKey === 'competition');
+  if (!competition) throw Error('Missing competition classification');
+  const post = await saveAnnouncement({ title: 'Exam call', body: 'Bring your music', audience: { kind: 'groups', groupIds: [competition.id] } });
   expect(newsCounts(post).total).toBeGreaterThan(0);
-  expect(newsCounts(post).total).toBe(recital.familyCount);
+  expect(newsCounts(post).total).toBe(competition.familyCount);
 });

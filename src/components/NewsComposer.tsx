@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { Link } from '@tanstack/react-router';
 import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
 import { ArrowLeft, Eye, Send, Paperclip, X, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -183,9 +184,16 @@ export function NewsComposer({ scope, post, close }: { scope: CommunityScope; po
         </label>
         {kind === 'groups' && (
           <div className="space-y-4 rounded-md border border-border bg-card/40 p-4">
-            <p className="text-base text-muted-foreground">
-              Post to everyone in a smart classification (grades, new joiners, recital, competition) or a group you created. Select all within a section, or mix classifications.
-            </p>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-base text-muted-foreground">
+                Post to a smart classification (grades, competition &amp; exams) or a studio group you manage.
+              </p>
+              {scope === 'demo' ? (
+                <Button asChild type="button" variant="outline">
+                  <Link to="/students/groups">Manage groups</Link>
+                </Button>
+              ) : null}
+            </div>
             <div className="flex flex-wrap gap-2">
               <Button type="button" variant="outline" onClick={() => selectAll(options.groups.map((group) => group.id))}>
                 Select all groups
@@ -196,20 +204,32 @@ export function NewsComposer({ scope, post, close }: { scope: CommunityScope; po
             </div>
             <GroupPicker
               title="Smart classifications"
-              hint="Kept in sync from grades, new joiners, recital prep, and upcoming exams."
+              hint="Kept in sync from grades and upcoming exams."
               groups={smartGroups}
               selected={groups}
               onToggle={(id) => setGroups(toggle(groups, id))}
               onSelectAll={() => selectAll(smartGroups.map((group) => group.id))}
             />
-            <GroupPicker
-              title="Studio groups"
-              hint="Groups you assign yourself for day-to-day studio lists."
-              groups={studioGroups}
-              selected={groups}
-              onToggle={(id) => setGroups(toggle(groups, id))}
-              onSelectAll={() => selectAll(studioGroups.map((group) => group.id))}
-            />
+            {studioGroups.length ? (
+              <GroupPicker
+                title="Studio groups"
+                hint="Groups you assign yourself for day-to-day studio lists."
+                groups={studioGroups}
+                selected={groups}
+                onToggle={(id) => setGroups(toggle(groups, id))}
+                onSelectAll={() => selectAll(studioGroups.map((group) => group.id))}
+              />
+            ) : (
+              <div className="border-t border-border pt-4">
+                <p className="font-semibold">Studio groups</p>
+                <p className="mt-2 text-base text-muted-foreground">No groups yet, create one</p>
+                {scope === 'demo' ? (
+                  <Button asChild type="button" className="mt-3" variant="outline">
+                    <Link to="/students/groups">Create a group</Link>
+                  </Button>
+                ) : null}
+              </div>
+            )}
           </div>
         )}
         {kind === 'families' && (
