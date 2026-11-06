@@ -58,7 +58,7 @@ export async function inviteImportedFamilies(batchId: string) {
   for (const id of batch.familyIds) {
     if (batch.invitedFamilyIds.includes(id)) continue;
     const family = data.families.find((entry) => entry.id === id); if (!family) continue;
-    const body = family.guardians[0]?.preferredLanguage === 'zh-CN' ? '欢迎加入我们的钢琴工作室！您的家庭邀请已发送。请在此聊天中与老师联系。' : 'Welcome to our piano studio! Your family invitation has been sent. You can stay in touch with your teacher here in family chat.';
+    const body = family.guardians[0]?.preferredLanguage === 'zh-CN' ? '欢迎加入 Keystone Music HQ！您的家庭邀请已发送。请在此聊天中与老师联系。' : 'Welcome to Keystone Music HQ! Your family invitation has been sent. You can stay in touch with your teacher here in family chat.';
     if (batch.scope === 'demo') {
       const conversation = await getOrCreateFamilyConversation(id);
       await sendMessage({ conversationId: conversation.id, authorName: teacher.name, authorRole: 'teacher', kind: 'text', body });

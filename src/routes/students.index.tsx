@@ -13,7 +13,7 @@ import { filterStudents } from "@/lib/student-insights";
 
 export const Route = createFileRoute("/students/")({
   loader: ({ context }) => context.queryClient.ensureQueryData(studentsQuery),
-  head: () => ({ meta: [{ title: "Student roster — KeyStone Piano Studios" }, { name: "description", content: "Student grade goals, attention flags and friendly family check-ins at KeyStone Piano Studios." }, { property: "og:title", content: "Student roster — KeyStone Piano Studios" }, { property: "og:description", content: "Student grade goals, attention flags and friendly family check-ins at KeyStone Piano Studios." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
+  head: () => ({ meta: [{ title: "Student roster — Keystone Music HQ" }, { name: "description", content: "Student grade goals, attention flags and friendly family check-ins at Keystone Music HQ." }, { property: "og:title", content: "Student roster — Keystone Music HQ" }, { property: "og:description", content: "Student grade goals, attention flags and friendly family check-ins at Keystone Music HQ." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
   errorComponent: () => <p role="alert">Students could not be opened. Please refresh to try again.</p>,
   component: Students,
 });

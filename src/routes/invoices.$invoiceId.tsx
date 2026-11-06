@@ -9,7 +9,7 @@ import { setInvoiceStatus } from "@/services/billing";
 
 export const Route = createFileRoute("/invoices/$invoiceId")({
   loader: async ({ context, params }) => { if (!await context.queryClient.ensureQueryData(invoiceDetailQuery(params.invoiceId))) throw notFound(); },
-  head: () => ({ meta: [{ title: "Invoice detail — KeyStone Piano Studios" }, { name: "description", content: "Printable piano lesson invoice, payment methods and paid status." }, { property: "og:title", content: "Invoice detail — KeyStone Piano Studios" }, { property: "og:description", content: "Printable piano lesson invoice, payment methods and paid status." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
+  head: () => ({ meta: [{ title: "Invoice detail — Keystone Music HQ" }, { name: "description", content: "Printable piano lesson invoice, payment methods and paid status." }, { property: "og:title", content: "Invoice detail — Keystone Music HQ" }, { property: "og:description", content: "Printable piano lesson invoice, payment methods and paid status." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
   notFoundComponent: () => <p>Invoice not found.</p>, errorComponent: () => <p role="alert">Invoice could not be opened. Please refresh to try again.</p>, component: InvoiceDetail,
 });
 function InvoiceDetail() {
