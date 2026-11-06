@@ -48,7 +48,7 @@ it("keeps empty-studio connections separate from demo connections", async () => 
   expect(await getStripeStatus("new-studio")).toBe("connected");
 });
 it("connects and disconnects Xero without sending existing invoices", async () => {
-  await connectXero(); expect((await getIntegrations()).xero).toEqual({ status: "connected", organisationName: "Clarke Piano Studio", lastSyncedAt: null });
+  await connectXero(); expect((await getIntegrations()).xero).toEqual({ status: "connected", organisationName: "KeyStone Piano Studios", lastSyncedAt: null });
   expect((await getInvoice("inv-1"))?.xeroSyncedAt).toBeUndefined();
   await disconnectXero(); expect((await getIntegrations()).xero.status).toBe("not_connected");
 });

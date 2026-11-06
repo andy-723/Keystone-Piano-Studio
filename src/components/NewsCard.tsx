@@ -10,7 +10,7 @@ export function calendarFile(post: Pick<FamilyAnnouncement,'id'|'title'|'body'|'
  const escape = (s:string)=>s.replaceAll('\\','\\\\').replaceAll('\n','\\n').replaceAll(',','\\,').replaceAll(';','\\;');
  const date = (s:string)=>new Date(s).toISOString().replace(/[-:]/g,'').replace(/\.\d+Z$/,'Z');
  const text = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//KeyStone Piano Studios//Prototype events//EN','BEGIN:VEVENT',`UID:${post.id}@opus.prototype`,`DTSTAMP:${date(post.eventDate)}`,`DTSTART:${date(post.eventDate)}`,`SUMMARY:${escape(post.title)}`,`DESCRIPTION:${escape(post.body)}`,'END:VEVENT','END:VCALENDAR'].join('\r\n');
- const url=URL.createObjectURL(new Blob([text],{type:'text/calendar'})),a=document.createElement('a');a.href=url;a.download='opus-event.ics';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ const url=URL.createObjectURL(new Blob([text],{type:'text/calendar'})),a=document.createElement('a');a.href=url;a.download='keystone-event.ics';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 function MessageBody({body}:{body:string}) { return <>{body.split(/(https?:\/\/[^\s]+)/g).map((part,i)=>/^https?:\/\//.test(part)?<a key={i} href={part} target="_blank" rel="noopener noreferrer" className="break-all text-primary underline">{part}</a>:part)}</>; }
 export function NewsCard({post,lang='en',now,onSeen,onAcknowledge,onMessage,teacherMeta,children}:{post:FamilyAnnouncement;lang?:Lang;now:string;onSeen?:()=>void;onAcknowledge?:()=>void;onMessage?:()=>void;teacherMeta?:string;children?:React.ReactNode}) {
