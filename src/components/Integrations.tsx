@@ -13,7 +13,7 @@ import { integrationsQuery } from "@/lib/integration-queries";
 import { connectStripe, connectXero, disconnectStripe, disconnectXero } from "@/services/integrations";
 import type { IntegrationScope } from "@/mocks/integrations";
 
-export function Integrations({ scope = "demo", studioName = "KeyStone Piano Studios", stripeOnly = false }: { scope?: IntegrationScope; studioName?: string; stripeOnly?: boolean }) {
+export function Integrations({ scope = "demo", studioName = "Keystone Music HQ", stripeOnly = false }: { scope?: IntegrationScope; studioName?: string; stripeOnly?: boolean }) {
   const { data } = useSuspenseQuery(integrationsQuery(scope));
   const { data: subscription } = useSuspenseQuery(planBillingQuery(scope));
   const [proOpen, setProOpen] = useState(false);
@@ -21,7 +21,7 @@ export function Integrations({ scope = "demo", studioName = "KeyStone Piano Stud
   const [stripeOpen, setStripeOpen] = useState(false);
   const [xeroOpen, setXeroOpen] = useState(false);
   const [step, setStep] = useState(1);
-  const [businessName, setBusinessName] = useState(studioName || "Your piano studio");
+  const [businessName, setBusinessName] = useState(studioName || "Your music studio");
   const refresh = () => client.invalidateQueries({ queryKey: ["integrations", scope] });
   const action = useMutation({ mutationFn: (operation: () => Promise<unknown>) => operation(), onSuccess: refresh, onError: () => toast.error("Connection could not be updated. Please try again.") });
   const begin = () => { setStep(1); setStripeOpen(true); action.mutate(() => connectStripe({ stage: "start" }, scope)); };
@@ -52,7 +52,7 @@ export function Integrations({ scope = "demo", studioName = "KeyStone Piano Stud
       <SheetDescription className="mt-3 text-base">Demo connection only. No real account or bank details are needed.</SheetDescription>
       <div className="mt-7">{step === 1 ? <form onSubmit={(event) => { event.preventDefault(); setStep(2); }}><label className="block text-lg font-semibold">Business name<Input required value={businessName} onChange={(event) => setBusinessName(event.target.value)} className="mt-2 min-h-14 text-lg md:text-lg" /></label><label className="mt-5 block text-lg font-semibold">Business type<Input value="Piano teaching studio" readOnly className="mt-2 min-h-14 text-lg md:text-lg" /></label><Button type="submit" className="mt-7" disabled={action.isPending || !businessName.trim()}>Continue<ArrowRight aria-hidden /></Button></form> : step === 2 ? <><dl className="space-y-5 border-y border-border py-5"><div><dt className="text-base text-muted-foreground">Account name</dt><dd className="mt-1 break-words text-lg">{businessName}</dd></div><div><dt className="text-base text-muted-foreground">Demo BSB</dt><dd className="mt-1 text-lg">000-000</dd></div><div><dt className="text-base text-muted-foreground">Demo account</dt><dd className="mt-1 text-lg">•••• 1234</dd></div></dl><div className="mt-7 flex flex-wrap gap-3"><Button variant="outline" disabled={action.isPending} onClick={() => setStep(1)}><ArrowLeft aria-hidden />Back</Button><Button disabled={action.isPending} onClick={finishStripe}><Check aria-hidden />{action.isPending ? "Connecting…" : "Use demo bank account"}</Button></div></> : <><Check aria-hidden className="size-12 text-success" /><p role="status" className="mt-5 text-xl font-semibold">Connected – payouts to bank ending 1234</p><Button className="mt-7" onClick={() => setStripeOpen(false)}><Check aria-hidden />Done</Button></>}</div>
     </SheetContent></Sheet>
-    <Dialog open={xeroOpen} onOpenChange={setXeroOpen}><DialogContent className="max-w-lg [&>button:last-child]:hidden"><DialogTitle className="text-2xl">Connect to Xero</DialogTitle><DialogDescription className="text-base">Demo consent only. Nothing is sent to Xero.</DialogDescription><p className="text-lg font-semibold">{studioName || "Your piano studio"}</p><p className="text-lg">Allow KeyStone Piano Studios to send invoices and payment records to this Xero organisation?</p><div className="flex flex-wrap gap-3"><Button variant="outline" disabled={action.isPending} onClick={() => setXeroOpen(false)}><X aria-hidden />Cancel</Button><Button disabled={action.isPending} onClick={() => action.mutate(() => connectXero(scope), { onSuccess: () => setXeroOpen(false) })}><Check aria-hidden />Allow demo connection</Button></div></DialogContent></Dialog>
+    <Dialog open={xeroOpen} onOpenChange={setXeroOpen}><DialogContent className="max-w-lg [&>button:last-child]:hidden"><DialogTitle className="text-2xl">Connect to Xero</DialogTitle><DialogDescription className="text-base">Demo consent only. Nothing is sent to Xero.</DialogDescription><p className="text-lg font-semibold">{studioName || "Your music studio"}</p><p className="text-lg">Allow Keystone Music HQ to send invoices and payment records to this Xero organisation?</p><div className="flex flex-wrap gap-3"><Button variant="outline" disabled={action.isPending} onClick={() => setXeroOpen(false)}><X aria-hidden />Cancel</Button><Button disabled={action.isPending} onClick={() => action.mutate(() => connectXero(scope), { onSuccess: () => setXeroOpen(false) })}><Check aria-hidden />Allow demo connection</Button></div></DialogContent></Dialog>
     <ProSheet open={proOpen} close={() => setProOpen(false)}/>
   </section>;
 }

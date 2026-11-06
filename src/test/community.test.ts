@@ -29,8 +29,8 @@ it("isolates new-studio news and pictures from demo families", async () => {
   expect(await getStudioNews("new-studio")).toHaveLength(1);
 });
 it("saves teacher settings and rejects empty news", async () => {
-  await saveTeacherProfile({ name: "Andrew", studioName: "Piano Studio" });
-  expect(teacher.name).toBe("Andrew"); expect(studio.name).toBe("Piano Studio");
+  await saveTeacherProfile({ name: "Andrew", studioName: "Harbour Music" });
+  expect(teacher.name).toBe("Andrew"); expect(studio.name).toBe("Harbour Music");
   await expect(publishStudioNews({ title: " ", body: " " })).rejects.toThrow();
   expect(await getStudioNews()).toEqual([]);
 });

@@ -11,7 +11,7 @@ import { renewalsQuery } from "@/lib/renewal-queries";
 
 export const Route = createFileRoute("/invoices/prepare")({
   loader: ({ context }) => Promise.all([context.queryClient.ensureQueryData(term2Query), context.queryClient.ensureQueryData(term2DraftsQuery), context.queryClient.ensureQueryData(renewalsQuery)]),
-  head: () => ({ meta: [{ title: "Prepare Term 2 invoices — KeyStone Piano Studios" }, { name: "description", content: "Review Term 2 2027 piano lessons and prepare one invoice per family." }, { property: "og:title", content: "Prepare Term 2 invoices — KeyStone Piano Studios" }, { property: "og:description", content: "Review Term 2 2027 piano lessons and prepare one invoice per family." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
+  head: () => ({ meta: [{ title: "Prepare Term 2 invoices — Keystone Music HQ" }, { name: "description", content: "Review Term 2 2027 piano lessons and prepare one invoice per family." }, { property: "og:title", content: "Prepare Term 2 invoices — Keystone Music HQ" }, { property: "og:description", content: "Review Term 2 2027 piano lessons and prepare one invoice per family." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
   errorComponent: () => <p role="alert">Term invoices could not be opened. Please refresh to try again.</p>, component: PrepareInvoices,
 });
 function PrepareInvoices() {

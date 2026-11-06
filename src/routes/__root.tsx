@@ -81,10 +81,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "KeyStone Piano Studios — Piano studio day-book" },
-      { name: "description", content: "Studio management for independent piano teachers." },
-      { property: "og:title", content: "KeyStone Piano Studios — Piano studio day-book" },
-      { property: "og:description", content: "Studio management for independent piano teachers." },
+      { title: "Keystone Music HQ — Studio OS & LMS management platform" },
+      { name: "description", content: "Keystone Music HQ — studio OS & LMS management platform for music teachers." },
+      { property: "og:title", content: "Keystone Music HQ — Studio OS & LMS management platform" },
+      { property: "og:description", content: "Keystone Music HQ — studio OS & LMS management platform for music teachers." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -153,5 +153,5 @@ function RoleGate() {
 
 function NewTeacherGate() {
   const { data } = useSuspenseQuery(setupQuery);
-  return <AppShell studio={{ id: "new-studio", name: data.studio.name || "KeyStone Piano Studios · New studio", gstRegistered: data.tax.registration === "yes", abn: data.tax.abn, timezone: "Australia/Melbourne" }}><NewTeacherSetup /></AppShell>;
+  return <AppShell studio={{ id: "new-studio", name: data.studio.name || "Keystone Music HQ · New studio", gstRegistered: data.tax.registration === "yes", abn: data.tax.abn, timezone: "Australia/Melbourne" }}><NewTeacherSetup /></AppShell>;
 }

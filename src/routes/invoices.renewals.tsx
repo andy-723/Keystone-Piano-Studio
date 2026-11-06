@@ -13,7 +13,7 @@ import type { RenewalStatus, RenewalTerm } from "@/mocks/renewals";
 
 export const Route = createFileRoute("/invoices/renewals")({
   loader: ({ context }) => context.queryClient.ensureQueryData(renewalsQuery),
-  head: () => ({ meta: [{ title: "Term renewal communications — KeyStone Piano Studios" }, { name: "description", content: "Family renewal invitations, confirmations, reminders and approved term invoices for KeyStone Piano Studios." }, { property: "og:title", content: "Term renewal communications — KeyStone Piano Studios" }, { property: "og:description", content: "Family renewal invitations, confirmations, reminders and approved term invoices for KeyStone Piano Studios." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
+  head: () => ({ meta: [{ title: "Term renewal communications — Keystone Music HQ" }, { name: "description", content: "Family renewal invitations, confirmations, reminders and approved term invoices for Keystone Music HQ." }, { property: "og:title", content: "Term renewal communications — Keystone Music HQ" }, { property: "og:description", content: "Family renewal invitations, confirmations, reminders and approved term invoices for Keystone Music HQ." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
   errorComponent: () => <p role="alert">Renewals could not be opened. Please refresh to try again.</p>,
   component: Renewals,
 });

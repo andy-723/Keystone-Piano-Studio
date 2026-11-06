@@ -24,8 +24,8 @@ afterEach(() => {
 it("transitions Stripe from not connected to setting up to connected and disconnects", async () => {
   expect(await getStripeStatus()).toBe("not_connected");
   await connectStripe({ stage: "start" }); expect(await getStripeStatus()).toBe("setting_up");
-  await connectStripe({ stage: "complete", businessName: "Clarke Piano Studio" });
-  expect((await getIntegrations()).stripe).toEqual({ status: "connected", businessName: "Clarke Piano Studio", bankLast4: "1234" });
+  await connectStripe({ stage: "complete", businessName: "Clarke Music Studio" });
+  expect((await getIntegrations()).stripe).toEqual({ status: "connected", businessName: "Clarke Music Studio", bankLast4: "1234" });
   await disconnectStripe(); expect(await getStripeStatus()).toBe("not_connected");
 });
 it.each(["not_connected", "setting_up"] as const)("blocks parent online payment while Stripe is %s without changing money", async (status) => {
@@ -48,7 +48,7 @@ it("keeps empty-studio connections separate from demo connections", async () => 
   expect(await getStripeStatus("new-studio")).toBe("connected");
 });
 it("connects and disconnects Xero without sending existing invoices", async () => {
-  await connectXero(); expect((await getIntegrations()).xero).toEqual({ status: "connected", organisationName: "KeyStone Piano Studios", lastSyncedAt: null });
+  await connectXero(); expect((await getIntegrations()).xero).toEqual({ status: "connected", organisationName: "Keystone Music HQ", lastSyncedAt: null });
   expect((await getInvoice("inv-1"))?.xeroSyncedAt).toBeUndefined();
   await disconnectXero(); expect((await getIntegrations()).xero.status).toBe("not_connected");
 });
