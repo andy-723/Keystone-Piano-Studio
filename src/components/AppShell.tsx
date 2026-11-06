@@ -44,7 +44,7 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
     <div className="min-h-dvh md:flex">
       {/* Left rail on tablet and up (teacher only) */}
       {isTeacher && <nav aria-label="Main" className="hidden md:flex md:w-32 lg:w-40 shrink-0 flex-col gap-2 border-r border-sidebar-border bg-sidebar p-3 sticky top-0 h-screen">
-        <div className="px-2 py-3 font-display text-2xl font-semibold text-sidebar-primary">Opus</div>
+        <div className="px-2 py-3 font-display text-2xl font-semibold text-sidebar-primary">KeyStone Piano Studios</div>
         <div className="mb-3 flex flex-col items-start gap-3 px-1"><p className="break-words text-base font-semibold">{profile?.studioName || studio.name}</p>{planBadge}</div>
         {NAV.map(({ to, label, icon: Icon }) => (
           <Link

@@ -18,7 +18,7 @@ export const Route = createFileRoute("/students/$studentId")({
     if (!data) throw notFound();
     return { name: `${data.student.firstName} ${data.student.lastName}` };
   },
-  head: ({ loaderData }) => ({ meta: [{ title: `${loaderData?.name ?? "Student profile"} — Opus` }, { name: "description", content: "Student details, family contacts, attendance, four-week practice, progress and invoices." }, { property: "og:title", content: `${loaderData?.name ?? "Student profile"} — Opus` }, { property: "og:description", content: "Student details, family contacts, attendance, four-week practice, progress and invoices." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
+  head: ({ loaderData }) => ({ meta: [{ title: `${loaderData?.name ?? "Student profile"} — KeyStone Piano Studios` }, { name: "description", content: "Student details, family contacts, attendance, four-week practice, progress and invoices." }, { property: "og:title", content: `${loaderData?.name ?? "Student profile"} — KeyStone Piano Studios` }, { property: "og:description", content: "Student details, family contacts, attendance, four-week practice, progress and invoices." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
   notFoundComponent: () => <p>Student not found.</p>,
   errorComponent: () => <p role="alert">This student profile could not be opened. Please refresh to try again.</p>,
   component: StudentProfile,

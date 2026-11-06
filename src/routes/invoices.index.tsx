@@ -11,7 +11,7 @@ import type { InvoiceStatus } from "@/mocks/types";
 
 export const Route = createFileRoute("/invoices/")({
   loader: ({ context }) => context.queryClient.ensureQueryData(invoiceListQuery),
-  head: () => ({ meta: [{ title: "Family invoices — Opus" }, { name: "description", content: "Clarke Piano Studio term invoices, balances and payment status." }, { property: "og:title", content: "Family invoices — Opus" }, { property: "og:description", content: "Clarke Piano Studio term invoices, balances and payment status." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
+  head: () => ({ meta: [{ title: "Family invoices — KeyStone Piano Studios" }, { name: "description", content: "KeyStone Piano Studios term invoices, balances and payment status." }, { property: "og:title", content: "Family invoices — KeyStone Piano Studios" }, { property: "og:description", content: "KeyStone Piano Studios term invoices, balances and payment status." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
   errorComponent: () => <p role="alert">Invoices could not be opened. Please refresh to try again.</p>,
   component: Invoices,
 });
