@@ -10,6 +10,7 @@ import type { Message } from "@/mocks/types";
 import type { Lang } from "@/mocks/types";
 import { translate } from "@/i18n/parent";
 import { sendParentMessage } from "@/services/parent";
+import { PHONE_MEDIA_ACCEPT, describeUnsupportedMedia, mediaKindFromFile } from "@/lib/media-accept";
 
 type Attachment = { kind: "image" | "video" | "voice"; media: NonNullable<Message["media"]> };
 export function ChatComposer({ conversationId, parentLang, initialText = "", onSent }: { conversationId: string; parentLang?: Lang; initialText?: string; onSent?: () => void }) {
@@ -30,9 +31,9 @@ export function ChatComposer({ conversationId, parentLang, initialText = "", onS
   }, onError: () => toast.error(t("messageError")) });
   async function attach(file?: File) {
     if (!file) return;
-    if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) { toast.error(t("chooseMedia")); return; }
+    const kind = mediaKindFromFile(file);
+    if (!kind) { toast.error(describeUnsupportedMedia(file, parentLang === "zh-CN")); return; }
     const url = URL.createObjectURL(file);
-    const kind = file.type.startsWith("image/") ? "image" : "video";
     let durationSeconds: number | undefined;
     let thumbnailUrl: string | undefined;
     if (kind === "video") {
@@ -53,7 +54,7 @@ export function ChatComposer({ conversationId, parentLang, initialText = "", onS
     </div>}
     <label htmlFor="chat-message" className="sr-only">{parentLang ? t("messageLabel") : "Message to family"}</label>
     <textarea id="chat-message" value={text} onChange={(event) => setText(event.target.value)} disabled={sending.isPending} placeholder={t("messagePlaceholder")} rows={2} className="w-full resize-y rounded-md border-2 border-input bg-card p-3 text-lg" />
-    <input ref={fileInput} type="file" accept="image/*,video/*" aria-label={t("attachLabel")} className="hidden" onChange={(event) => { void attach(event.target.files?.[0]); event.target.value = ""; }} />
+    <input ref={fileInput} type="file" accept={PHONE_MEDIA_ACCEPT} capture="environment" aria-label={t("attachLabel")} className="hidden" onChange={(event) => { void attach(event.target.files?.[0]); event.target.value = ""; }} />
     <div className="mt-2 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-stretch gap-2 sm:flex sm:flex-wrap sm:items-center">
       <Button type="button" variant="ghost" disabled={sending.isPending} onClick={() => fileInput.current?.click()} className="whitespace-normal px-2 sm:px-5"><ImagePlus aria-hidden /> {t("attach")}</Button>
       <Button type="button" variant="ghost" disabled={sending.isPending} onClick={() => setAttachment({ kind: "voice", media: { durationSeconds: 10 } })} className="whitespace-normal px-2 sm:px-5"><Mic aria-hidden /> {t("record")}</Button>

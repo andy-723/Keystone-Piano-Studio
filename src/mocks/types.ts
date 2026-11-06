@@ -106,4 +106,20 @@ export interface LessonTemplate { id: string; name: string; isWelcomeDefault: bo
 export interface CourseTemplate { id: string; name: string; framework: Framework; grade: string; sections: { name: string; weightPct: number; items: string[] }[]; defaultMilestones: { termOffset: number; targetStage: CourseStage }[]; supplied?: boolean }
 export interface AssignmentTask { id: string; courseItemId?: string; text: string; minutesPerDay: number; daysPerWeek: number; submissionRequested: "none" | "audio" | "video"; done: boolean }
 export interface Assignment { id: string; studentId: string; occurrenceId: string; dueDate: string; tasks: AssignmentTask[]; demoClip?: boolean }
-export interface Submission { id: string; assignmentTaskId: string; kind: "audio" | "video"; durationSec: number; submittedBy: "student" | "guardian"; guardianApproved: boolean; status: "waiting_review" | "reviewed"; createdAt: string; comment?: string; replyKind?: "voice" | "video"; outcome?: Feedback["outcome"] }
+export interface Submission {
+  id: string;
+  assignmentTaskId: string;
+  kind: "audio" | "video";
+  durationSec: number;
+  submittedBy: "student" | "guardian";
+  guardianApproved: boolean;
+  status: "waiting_review" | "reviewed";
+  createdAt: string;
+  comment?: string;
+  replyKind?: "voice" | "video";
+  outcome?: Feedback["outcome"];
+  /** Optional phone gallery upload (HEIC/MOV/MP4 etc. kept as session object URL in the prototype). */
+  fileName?: string;
+  mediaUrl?: string;
+  mimeType?: string;
+}

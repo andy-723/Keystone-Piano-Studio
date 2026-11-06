@@ -3,6 +3,7 @@ import { newStudioRoster } from '@/mocks/roster-import';
 import { setupSession } from '@/mocks/setup';
 import { newsState, type Announcement, type NewsAttachment } from '@/mocks/news';
 import type { CommunityScope } from '@/mocks/community';
+import { annotateGroups } from '@/lib/smart-groups';
 import { readStudioPlan } from './plans';
 import { getParentSession } from './parent';
 import { respond } from './_delay';
@@ -94,7 +95,16 @@ export function newsCounts(post: Announcement, scope: CommunityScope = 'demo') {
 export async function getAnnouncements(scope: CommunityScope = 'demo') { releaseScheduled(scope); return respond(sorted(newsState[scope].posts,scope).map(p => ({ ...clone(p), ...newsCounts(p,scope), pinned:isPinned(p,newsNow(scope)), own:p.authorMembershipId === newsState[scope].membership.id }))); }
 export async function getNewsOptions(scope: CommunityScope = 'demo') {
   const state = newsState[scope], r = roster(scope), restricted = readStudioPlan(scope) === 'academy' && state.membership.role === 'teacher';
-  return respond({ now:newsNow(scope), studioWide:!restricted, groups:clone(state.groups.filter(g => !restricted || state.membership.groupIds.includes(g.id))), families:r.families.filter(f => !restricted || r.students.some(s => s.familyId === f.id && ownedIds(scope).includes(s.id))).map(f => ({id:f.id,name:f.displayName})), students:r.students.filter(s => !restricted || ownedIds(scope).includes(s.id)).map(s => ({id:s.id,name:`${s.firstName} ${s.lastName}`})) });
+  const groups = annotateGroups(state.groups.filter(g => !restricted || state.membership.groupIds.includes(g.id)));
+  return respond({
+    now: newsNow(scope),
+    studioWide: !restricted,
+    groups: clone(groups),
+    smartGroups: clone(groups.filter((group) => group.kind === 'smart')),
+    studioGroups: clone(groups.filter((group) => (group.kind ?? 'manual') === 'manual')),
+    families: r.families.filter(f => !restricted || r.students.some(s => s.familyId === f.id && ownedIds(scope).includes(s.id))).map(f => ({id:f.id,name:f.displayName})),
+    students: r.students.filter(s => !restricted || ownedIds(scope).includes(s.id)).map(s => ({id:s.id,name:`${s.firstName} ${s.lastName}`})),
+  });
 }
 export type FamilyAnnouncement = Pick<Announcement,'id'|'title'|'body'|'authorName'|'tag'|'publishAt'|'eventDate'|'editedAt'|'pinnedUntil'> & { attachments: Array<Pick<NewsAttachment,'id'|'kind'|'fileName'|'url'>>; seen: boolean; acknowledged: boolean; pinned: boolean };
 export async function getNewsForPerson(personId: string, scope: CommunityScope = 'demo'): Promise<FamilyAnnouncement[]> {

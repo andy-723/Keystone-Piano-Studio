@@ -41,7 +41,44 @@ export async function getParentAssignments() { const {family,children}=await get
 async function parentTask(taskId: string) { const {family,children}=await getParentSession(); const assignment=assignments.find(entry=>children.some(child=>child.id===entry.studentId)&&entry.tasks.some(task=>task.id===taskId)); const task=assignment?.tasks.find(entry=>entry.id===taskId); const child=children.find(entry=>entry.id===assignment?.studentId); if(!assignment||!task||!child) throw new Error("Task does not belong to this family."); return {assignment,task,child,family}; }
 export async function completeParentTask(taskId: string,minutes: number) { const {task,child}=await parentTask(taskId); if(!Number.isInteger(minutes)||minutes<1||minutes>1440) throw new Error("Enter positive whole practice minutes."); if(task.done) return getParentAssignments(); practiceLogs.push({id:crypto.randomUUID(),studentId:child.id,date:PROTOTYPE_TODAY,minutes,loggedBy:"student",assignmentTaskId:task.id}); task.done=true; return getParentAssignments(); }
 export async function setParentMediaConsent(consent: boolean) { const {family}=await getParentSession(); const original=families.find(entry=>entry.id===family.id); if(!original) throw new Error("Family not found."); original.mediaConsent=consent; return getParentAssignments(); }
-export async function submitRecording(taskId: string,submittedBy: "guardian"|"student") { requirePro(); const {task,child,family}=await parentTask(taskId); if(family.mediaConsent!==true) throw new Error("Guardian media consent is required before recording."); if(task.submissionRequested==="none") throw new Error("No recording requested for this task."); if(!["guardian","student"].includes(submittedBy)) throw new Error("Choose who is submitting."); const previous=submissions.find(entry=>entry.assignmentTaskId===taskId&&entry.status==="waiting_review"); if(previous) return respond(structuredClone(previous)); const submission:Submission={id:crypto.randomUUID(),assignmentTaskId:taskId,kind:task.submissionRequested,durationSec:20,submittedBy,guardianApproved:submittedBy==="guardian"||2027-child.birthYear>=13,status:"waiting_review",createdAt:`${PROTOTYPE_TODAY}T13:30:00+11:00`}; submissions.push(submission); return respond(structuredClone(submission)); }
+export async function submitRecording(
+  taskId: string,
+  submittedBy: "guardian" | "student",
+  media?: { fileName: string; mediaUrl: string; mimeType?: string; durationSec?: number; kind?: "audio" | "video" },
+) {
+  requirePro();
+  const { task, child, family } = await parentTask(taskId);
+  if (family.mediaConsent !== true) throw new Error("Guardian media consent is required before recording.");
+  if (task.submissionRequested === "none") throw new Error("No recording requested for this task.");
+  if (!["guardian", "student"].includes(submittedBy)) throw new Error("Choose who is submitting.");
+  if (media) {
+    if (!media.fileName.trim() || !media.mediaUrl.startsWith("blob:")) throw new Error("Choose a photo or video from the phone gallery.");
+    if (media.kind && media.kind !== task.submissionRequested && task.submissionRequested === "audio" && media.kind === "video") {
+      /* Allow a video upload when the task asked for audio — phones often only expose camera roll video. */
+    }
+  }
+  const previous = submissions.find((entry) => entry.assignmentTaskId === taskId && entry.status === "waiting_review");
+  if (previous) return respond(structuredClone(previous));
+  const submission: Submission = {
+    id: crypto.randomUUID(),
+    assignmentTaskId: taskId,
+    kind: media?.kind === "audio" || media?.kind === "video" ? media.kind : task.submissionRequested,
+    durationSec: media?.durationSec ?? 20,
+    submittedBy,
+    guardianApproved: submittedBy === "guardian" || 2027 - child.birthYear >= 13,
+    status: "waiting_review",
+    createdAt: `${PROTOTYPE_TODAY}T13:30:00+11:00`,
+    ...(media
+      ? {
+          fileName: media.fileName,
+          mediaUrl: media.mediaUrl,
+          ...(media.mimeType ? { mimeType: media.mimeType } : {}),
+        }
+      : {}),
+  };
+  submissions.push(submission);
+  return respond(structuredClone(submission));
+}
 export async function approveSubmission(id: string) { const submission=submissions.find(entry=>entry.id===id); if(!submission) throw new Error("Submission not found."); await parentTask(submission.assignmentTaskId); submission.guardianApproved=true; return getParentAssignments(); }
 export async function getReviewQueue() { requirePro(); return respond(submissions.filter(entry=>entry.guardianApproved&&entry.status==="waiting_review").sort((a,b)=>a.createdAt.localeCompare(b.createdAt)).map(entry=>{const assignment=assignments.find(assignment=>assignment.tasks.some(task=>task.id===entry.assignmentTaskId));const task=assignment?.tasks.find(task=>task.id===entry.assignmentTaskId); const student=students.find(student=>student.id===assignment?.studentId); return {...structuredClone(entry),studentName:student?.firstName??"Student",studentId:student?.id,task:structuredClone(task),daysWaiting:Math.max(0,Math.floor((Date.parse(`${PROTOTYPE_TODAY}T23:59:00+11:00`)-Date.parse(entry.createdAt))/86400000))};})); }
 export async function reviewSubmission(id:string,input:{outcome:Feedback["outcome"];newStage?:1|2|3|4|5;comment:string;replyKind?:"voice"|"video"}) { requirePro(); const submission=submissions.find(entry=>entry.id===id); if(!submission||!submission.guardianApproved) throw new Error("Wait for guardian approval."); if(submission.status==="reviewed") return respond(structuredClone(submission)); const assignment=assignments.find(entry=>entry.tasks.some(task=>task.id===submission.assignmentTaskId)); const task=assignment?.tasks.find(task=>task.id===submission.assignmentTaskId); const student=students.find(entry=>entry.id===assignment?.studentId); if(!assignment||!task||!student) throw new Error("Assignment not found."); if(!["pass","stage_move","carry_over","needs_work"].includes(input.outcome)) throw new Error("Choose a checkpoint outcome."); if(task.courseItemId) await recordCourseFeedback({studentId:student.id,courseItemId:task.courseItemId,submissionId:id,...input,shared:true}); const conv=await getOrCreateFamilyConversation(student.familyId); await sendMessage({conversationId:conv.id,authorName:teacher.name,authorRole:"teacher",kind:input.replyKind==="voice"?"voice":input.replyKind==="video"?"video":"text",body:`Feedback ready · ${task.text}\n${input.outcome.replaceAll("_"," ")}\n${input.comment}`,...(input.replyKind?{media:{durationSeconds:20,fileName:"Teacher reply placeholder"}}:{}),assignmentCard:{assignmentId:assignment.id,label:"Feedback ready"}});Object.assign(submission,{status:"reviewed",...input});return respond(structuredClone(submission)); }

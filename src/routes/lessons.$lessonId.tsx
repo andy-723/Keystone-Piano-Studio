@@ -71,7 +71,10 @@ function LessonSession({ data }: { data: NonNullable<Awaited<ReturnType<typeof g
         <h1 className="mt-2 text-4xl font-semibold">{lesson.student.firstName} {lesson.student.lastName}</h1>
         <p className="mt-2 text-xl">{data.course.course.framework} · {data.course.course.grade}</p><p className="mt-1 text-base text-muted-foreground">{lesson.lessonType.name}</p>
       </div>
-      <ProgressRing percent={percent} />
+      <div className="space-y-2 text-center">
+        <ProgressRing percent={percent} />
+        <p className="max-w-[11rem] text-sm text-muted-foreground">Course readiness from stages 1–5</p>
+      </div>
     </header>
 
     <StudentCourse data={data.course} occurrenceId={lesson.id} locked={locked} reminders={data.reminders} showHeader={false} />

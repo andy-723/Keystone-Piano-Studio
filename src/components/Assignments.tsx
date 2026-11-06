@@ -1,11 +1,13 @@
 import { ProSheet } from './ProSheet';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { queryOptions, useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
 import { Check, Plus, Video, Play, Mic, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { getAssignmentEditor, saveAssignment, makeAsyncLesson, getParentAssignments, completeParentTask, setParentMediaConsent, submitRecording, approveSubmission, getReviewQueue, reviewSubmission, getAssignmentSettings, setAssignmentSettings, requestParentVideoLesson } from '@/services/assignments';
+import { PHONE_MEDIA_ACCEPT, describeUnsupportedMedia, isPhoneMediaFile, mediaKindFromFile } from '@/lib/media-accept';
+import { toast } from 'sonner';
 import type { AssignmentTask, Feedback } from '@/mocks/types';
 import { intakeField } from './StudentIntake';
 import { useParentLanguage } from '@/i18n/parent';
@@ -30,12 +32,126 @@ function TaskEditor({data,videoMode}:{data:Awaited<ReturnType<typeof getAssignme
  <p className="mt-5 text-xl font-semibold">{sameDays?`${tasks[0]?.daysPerWeek} days × ${tasks.reduce((sum,task)=>sum+task.minutesPerDay,0)} min = `:''}{total} min · Practice goal {data.course.course.weeklyPracticeGoalMin} min</p><label className="mt-4 block">Due date<Input className={intakeField} type="date" value={dueDate} onChange={event=>setDueDate(event.target.value)}/></label>{videoMode&&<label className="mt-4 flex min-h-12 items-center gap-3"><input className="size-6 accent-primary" type="checkbox" checked={demoClip} onChange={event=>setDemoClip(event.target.checked)}/>Attach demo clip placeholder</label>}<Button className="mt-5 w-full" disabled={save.isPending||!tasks.length} onClick={()=>save.mutate()}>{videoMode?'Confirm video lesson':'Send assignment'}</Button>{save.isSuccess&&<p role="status" className="mt-3 text-success">{videoMode?'Video lesson saved — family notified.':'Assignment sent to family chat.'}</p>}{save.error&&<p role="alert" className="mt-3 text-destructive">{save.error.message}</p>}<ProSheet open={pro} close={()=>setPro(false)}/></section>;
 }
 export function VideoLessonButton({occurrenceId,async=false}:{occurrenceId:string;async?:boolean}){const {data}=useSuspenseQuery(assignmentSettingsQuery);const [open,setOpen]=useState(false);const [pro,setPro]=useState(false);return <><Button className="mt-4" variant="outline" onClick={()=>data.plan==='base'?setPro(true):setOpen(true)}><Video aria-hidden/>{async?'Video lesson':'Make this a video lesson'}{data.plan==='base'&&' · Pro'}</Button><Dialog open={open} onOpenChange={setOpen}><DialogContent><DialogHeader><DialogTitle>Video lesson</DialogTitle></DialogHeader><AssignmentEditor occurrenceId={occurrenceId} videoMode/></DialogContent></Dialog><ProSheet open={pro} close={()=>setPro(false)}/></>;}
-export function ParentAssignments(){const {data}=useSuspenseQuery(parentTasksQuery);const {lang}=useParentLanguage();const zh=lang==='zh-CN';const refresh=useRefreshAssignments();const [minutesTask,setMinutesTask]=useState<string|null>(null);const [minutes,setMinutes]=useState(15);const [recordTask,setRecordTask]=useState<string|null>(null);const [studentAuthor,setStudentAuthor]=useState(false);const [tipRead,setTipRead]=useState(false);const [pro,setPro]=useState(false);const [consentChecked,setConsentChecked]=useState(false);
- const mark=useMutation({mutationFn:()=>{if(!minutesTask)throw new Error('Choose a task.');return completeParentTask(minutesTask,minutes);},onSuccess:async()=>{setMinutesTask(null);await refresh();}});
- const record=useMutation({mutationFn:()=>{if(!recordTask)throw new Error('Choose a task.');return submitRecording(recordTask,studentAuthor?'student':'guardian');},onSuccess:refresh});const consent=useMutation({mutationFn:()=>setParentMediaConsent(true),onSuccess:refresh});const approve=useMutation({mutationFn:approveSubmission,onSuccess:refresh});const sick=useMutation({mutationFn:requestParentVideoLesson,onSuccess:refresh});
- return <section className="mt-6 border-y border-border py-6"><h2 className="text-2xl font-semibold">{zh?'本周':'This week'}</h2>{data.assignments.length===0&&<p className="mt-3">{zh?'暂无作业':'No assignments yet.'}</p>}{data.assignments.map(assignment=><div className="mt-5 border-b border-border pb-5" key={assignment.id}><h3 className="text-xl font-semibold">{data.children.find(child=>child.id===assignment.studentId)?.firstName} · {zh?'截止':'Due'} {assignment.dueDate}</h3>{assignment.tasks.map(task=><div key={task.id} className="mt-4"><label className="flex min-h-12 cursor-pointer items-center gap-3"><input className="size-7 shrink-0 accent-primary" type="checkbox" checked={task.done} disabled={task.done} onChange={()=>{setMinutesTask(task.id);mark.reset();}}/><span className="break-words font-semibold">{task.text}</span></label><p className="ml-10 text-muted-foreground">{task.daysPerWeek} × {task.minutesPerDay} {zh?'分钟':'min'}</p>{task.submissionRequested!=='none'&&<Button className="mt-2" variant="outline" onClick={()=>{if(!data.pro){setPro(true);return;}record.reset();setRecordTask(task.id);}}><Video aria-hidden/>{zh?'录制':'Record'} {task.submissionRequested}{!data.pro&&' · Pro'}</Button>}{data.submissions.filter(entry=>entry.assignmentTaskId===task.id).map(entry=><div className="mt-3 border-l-2 border-border pl-4" key={entry.id}><p>0:20 · {entry.kind} · {entry.status==='reviewed'?(zh?'反馈已就绪':'Feedback ready'):entry.guardianApproved?(zh?'等待老师审核':'Waiting for teacher review'):(zh?'等待家长批准':'Waiting for guardian approval')}</p>{!entry.guardianApproved&&<Button className="mt-2" variant="outline" onClick={()=>approve.mutate(entry.id)}>{zh?'家长批准':'Approve as guardian'}</Button>}{entry.comment&&<p className="mt-2">{entry.comment}</p>}</div>)}</div>)}{assignment.demoClip&&<p className="mt-3">▶ 0:20 · Teacher demo clip placeholder</p>}<Button className="mt-4" variant="ghost" onClick={()=>data.pro?sick.mutate(assignment.studentId):setPro(true)}>{zh?'生病了？发送视频代替':'Child sick? Send a video instead'}{!data.pro&&' · Pro'}</Button></div>)}{sick.isSuccess&&<p className="mt-3 text-success">{zh?'请求已发送给老师':'Request sent to your teacher.'}</p>}
+export function ParentAssignments() {
+  const { data } = useSuspenseQuery(parentTasksQuery);
+  const { lang } = useParentLanguage();
+  const zh = lang === "zh-CN";
+  const refresh = useRefreshAssignments();
+  const [minutesTask, setMinutesTask] = useState<string | null>(null);
+  const [minutes, setMinutes] = useState(15);
+  const [recordTask, setRecordTask] = useState<string | null>(null);
+  const [studentAuthor, setStudentAuthor] = useState(false);
+  const [tipRead, setTipRead] = useState(false);
+  const [pro, setPro] = useState(false);
+  const [consentChecked, setConsentChecked] = useState(false);
+  const [upload, setUpload] = useState<{
+    fileName: string;
+    mediaUrl: string;
+    mimeType?: string;
+    durationSec?: number;
+    kind: "audio" | "video";
+    previewKind: "image" | "video";
+  } | null>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const mark = useMutation({
+    mutationFn: () => {
+      if (!minutesTask) throw new Error("Choose a task.");
+      return completeParentTask(minutesTask, minutes);
+    },
+    onSuccess: async () => {
+      setMinutesTask(null);
+      await refresh();
+    },
+  });
+  const record = useMutation({
+    mutationFn: () => {
+      if (!recordTask) throw new Error("Choose a task.");
+      if (!upload) throw new Error(zh ? "请从手机相册选择视频或照片。" : "Choose a video or photo from the phone gallery.");
+      const { previewKind: _previewKind, ...media } = upload;
+      void _previewKind;
+      return submitRecording(recordTask, studentAuthor ? "student" : "guardian", media);
+    },
+    onSuccess: async () => {
+      setUpload(null);
+      await refresh();
+    },
+  });
+  const consent = useMutation({ mutationFn: () => setParentMediaConsent(true), onSuccess: refresh });
+  const approve = useMutation({ mutationFn: approveSubmission, onSuccess: refresh });
+  const sick = useMutation({ mutationFn: requestParentVideoLesson, onSuccess: refresh });
+
+  async function onPickMedia(file?: File) {
+    if (!file) return;
+    if (!isPhoneMediaFile(file)) {
+      toast.error(describeUnsupportedMedia(file, zh));
+      return;
+    }
+    const kind = mediaKindFromFile(file);
+    if (!kind) {
+      toast.error(describeUnsupportedMedia(file, zh));
+      return;
+    }
+    const mediaUrl = URL.createObjectURL(file);
+    let durationSec: number | undefined;
+    if (kind === "video") {
+      durationSec = await new Promise<number | undefined>((resolve) => {
+        const video = document.createElement("video");
+        video.preload = "metadata";
+        video.src = mediaUrl;
+        const timer = window.setTimeout(() => resolve(20), 3000);
+        video.onloadedmetadata = () => {
+          window.clearTimeout(timer);
+          resolve(Number.isFinite(video.duration) ? Math.round(video.duration) : 20);
+        };
+        video.onerror = () => {
+          window.clearTimeout(timer);
+          resolve(20);
+        };
+      });
+    }
+    setUpload({
+      fileName: file.name,
+      mediaUrl,
+      ...(file.type ? { mimeType: file.type } : {}),
+      // Assignment submissions are audio/video; phone photos (HEIC etc.) are stored as video-kind media with the original file.
+      kind: kind === "image" ? "video" : kind,
+      durationSec: kind === "image" ? 0 : durationSec ?? 20,
+      previewKind: kind,
+    });
+  }
+
+  return <section className="mt-6 border-y border-border py-6"><h2 className="text-2xl font-semibold">{zh?'本周':'This week'}</h2>{data.assignments.length===0&&<p className="mt-3">{zh?'暂无作业':'No assignments yet.'}</p>}{data.assignments.map(assignment=><div className="mt-5 border-b border-border pb-5" key={assignment.id}><h3 className="text-xl font-semibold">{data.children.find(child=>child.id===assignment.studentId)?.firstName} · {zh?'截止':'Due'} {assignment.dueDate}</h3>{assignment.tasks.map(task=><div key={task.id} className="mt-4"><label className="flex min-h-12 cursor-pointer items-center gap-3"><input className="size-7 shrink-0 accent-primary" type="checkbox" checked={task.done} disabled={task.done} onChange={()=>{setMinutesTask(task.id);mark.reset();}}/><span className="break-words font-semibold">{task.text}</span></label><p className="ml-10 text-muted-foreground">{task.daysPerWeek} × {task.minutesPerDay} {zh?'分钟':'min'}</p>{task.submissionRequested!=='none'&&<Button className="mt-2" variant="outline" onClick={()=>{if(!data.pro){setPro(true);return;}record.reset();setRecordTask(task.id);}}><Video aria-hidden/>{zh?'录制':'Record'} {task.submissionRequested}{!data.pro&&' · Pro'}</Button>}{data.submissions.filter(entry=>entry.assignmentTaskId===task.id).map(entry=><div className="mt-3 border-l-2 border-border pl-4" key={entry.id}><p>0:20 · {entry.kind} · {entry.status==='reviewed'?(zh?'反馈已就绪':'Feedback ready'):entry.guardianApproved?(zh?'等待老师审核':'Waiting for teacher review'):(zh?'等待家长批准':'Waiting for guardian approval')}</p>{!entry.guardianApproved&&<Button className="mt-2" variant="outline" onClick={()=>approve.mutate(entry.id)}>{zh?'家长批准':'Approve as guardian'}</Button>}{entry.comment&&<p className="mt-2">{entry.comment}</p>}</div>)}</div>)}{assignment.demoClip&&<p className="mt-3">▶ 0:20 · Teacher demo clip placeholder</p>}<Button className="mt-4" variant="ghost" onClick={()=>data.pro?sick.mutate(assignment.studentId):setPro(true)}>{zh?'生病了？发送视频代替':'Child sick? Send a video instead'}{!data.pro&&' · Pro'}</Button></div>)}{sick.isSuccess&&<p className="mt-3 text-success">{zh?'请求已发送给老师':'Request sent to your teacher.'}</p>}
  <Dialog open={Boolean(minutesTask)} onOpenChange={()=>setMinutesTask(null)}><DialogContent><DialogHeader><DialogTitle>{zh?'练习分钟数':'Practice minutes'}</DialogTitle></DialogHeader><label>{zh?'分钟':'Minutes'}<Input className={intakeField} type="number" min={1} value={minutes} onChange={event=>setMinutes(Number(event.target.value))}/></label><Button disabled={mark.isPending} onClick={()=>mark.mutate()}><Check aria-hidden/>{zh?'保存练习':'Save practice'}</Button>{mark.error&&<p role="alert">{mark.error.message}</p>}</DialogContent></Dialog>
- <Dialog open={Boolean(recordTask)} onOpenChange={()=>setRecordTask(null)}><DialogContent><DialogHeader><DialogTitle>{zh?'提交录制':'Submit recording'}</DialogTitle></DialogHeader>{!data.mediaConsent?<><p>{zh?'家长同意后才能录制。只拍手和琴键，不需要脸部或校服。':'Guardian consent is needed before recording. Film hands and keys only; faces and school uniforms aren’t needed.'}</p><label className="flex min-h-12 items-center gap-3"><input className="size-6 accent-primary" type="checkbox" checked={consentChecked} onChange={event=>setConsentChecked(event.target.checked)}/>{zh?'我是家长，同意分享练习媒体':'I am the guardian and consent to sharing practice media'}</label><Button disabled={!consentChecked||consent.isPending} onClick={()=>consent.mutate()}>{zh?'同意':'Give consent'}</Button></>:!tipRead?<><p>{zh?'只拍手和琴键，不需要脸部或校服。':'Film hands and keys only. Faces and school uniforms aren’t needed.'}</p><Button onClick={()=>setTipRead(true)}>{zh?'知道了':'Got it'}</Button></>:<><div className="flex min-h-40 flex-col items-center justify-center border border-border bg-muted"><Video aria-hidden className="size-10 text-primary"/><p className="mt-3">0:20 · {zh?'模拟录制':'Recorder placeholder'}</p></div><label className="flex min-h-12 items-center gap-3"><input className="size-6 accent-primary" type="checkbox" checked={studentAuthor} onChange={event=>setStudentAuthor(event.target.checked)}/>{zh?'以学生身份提交':'Submit as student'}</label><Button disabled={record.isPending||record.isSuccess} onClick={()=>record.mutate()}>{zh?'录制并提交20秒':'Record and submit 20 seconds'}</Button>{record.isSuccess&&<p role="status" className="text-success">{record.data.guardianApproved?(zh?'已提交审核':'Submitted for review'):(zh?'等待家长批准':'Waiting for guardian approval')}</p>}</>}{record.error&&<p role="alert">{record.error.message}</p>}</DialogContent></Dialog><ProSheet open={pro} close={()=>setPro(false)}/></section>;
+ <Dialog open={Boolean(recordTask)} onOpenChange={(open) => { if (!open) { setRecordTask(null); setUpload(null); setTipRead(false); } }}>
+ <DialogContent>
+ <DialogHeader><DialogTitle>{zh ? '提交录制' : 'Submit recording'}</DialogTitle></DialogHeader>
+ {!data.mediaConsent ? <>
+   <p>{zh ? '家长同意后才能录制。只拍手和琴键，不需要脸部或校服。' : 'Guardian consent is needed before recording. Film hands and keys only; faces and school uniforms aren’t needed.'}</p>
+   <label className="flex min-h-12 items-center gap-3"><input className="size-6 accent-primary" type="checkbox" checked={consentChecked} onChange={(event) => setConsentChecked(event.target.checked)} />{zh ? '我是家长，同意分享练习媒体' : 'I am the guardian and consent to sharing practice media'}</label>
+   <Button disabled={!consentChecked || consent.isPending} onClick={() => consent.mutate()}>{zh ? '同意' : 'Give consent'}</Button>
+ </> : !tipRead ? <>
+   <p>{zh ? '只拍手和琴键，不需要脸部或校服。' : 'Film hands and keys only. Faces and school uniforms aren’t needed.'}</p>
+   <Button onClick={() => setTipRead(true)}>{zh ? '知道了' : 'Got it'}</Button>
+ </> : <div className="space-y-4">
+   <div className="flex min-h-40 flex-col items-center justify-center border border-border bg-muted p-4 text-center">
+     {upload ? (upload.previewKind === 'video' ? <video src={upload.mediaUrl} controls playsInline className="max-h-48 max-w-full" /> : <img src={upload.mediaUrl} alt={upload.fileName} className="max-h-48 max-w-full object-contain" />) : <>
+       <Video aria-hidden className="size-10 text-primary" />
+       <p className="mt-3">{zh ? '从手机相册上传视频或照片（含 HEIC / MOV）' : 'Upload a phone video or photo (HEIC, MOV, MP4)'}</p>
+     </>}
+   </div>
+   <input ref={fileInput} type="file" accept={PHONE_MEDIA_ACCEPT} capture="environment" className="hidden" aria-label={zh ? '选择手机媒体' : 'Choose phone media'} onChange={(event) => { void onPickMedia(event.target.files?.[0]); event.target.value = ''; }} />
+   <div className="flex flex-wrap gap-2">
+     <Button type="button" variant="outline" onClick={() => fileInput.current?.click()}>{zh ? '从相册选择' : 'Choose from gallery'}</Button>
+     {upload && <Button type="button" variant="ghost" onClick={() => { URL.revokeObjectURL(upload.mediaUrl); setUpload(null); }}>{zh ? '清除' : 'Clear'}</Button>}
+   </div>
+   {upload && <p className="break-all text-base text-muted-foreground">{upload.fileName}</p>}
+   <label className="flex min-h-12 items-center gap-3"><input className="size-6 accent-primary" type="checkbox" checked={studentAuthor} onChange={(event) => setStudentAuthor(event.target.checked)} />{zh ? '以学生身份提交' : 'Submit as student'}</label>
+   <Button disabled={!upload || record.isPending || record.isSuccess} onClick={() => record.mutate()}>{zh ? '提交媒体' : 'Submit media'}</Button>
+   {record.isSuccess && <p role="status" className="text-success">{record.data.guardianApproved ? (zh ? '已提交审核' : 'Submitted for review') : (zh ? '等待家长批准' : 'Waiting for guardian approval')}</p>}
+ </div>}
+ {record.error && <p role="alert">{record.error.message}</p>}
+ </DialogContent>
+ </Dialog><ProSheet open={pro} close={()=>setPro(false)}/></section>;
 }
 export function ReviewQueue(){const {data}=useSuspenseQuery(assignmentSettingsQuery);const [open,setOpen]=useState(false);const [pro,setPro]=useState(false);return <><div className="mb-6 border-y border-border py-4">{data.plan==='base'?<Button variant="outline" onClick={()=>setPro(true)}>To review · Pro</Button>:<ReviewCount open={()=>setOpen(true)}/>}</div><Dialog open={open} onOpenChange={setOpen}><DialogContent className="max-w-3xl"><DialogHeader><DialogTitle>To review</DialogTitle></DialogHeader>{open&&<ReviewList/>}</DialogContent></Dialog><ProSheet open={pro} close={()=>setPro(false)}/></>;}
 function ReviewCount({open}:{open:()=>void}){const {data}=useSuspenseQuery(reviewQuery);return <Button variant="outline" onClick={open}>To review · {data.length}</Button>;}
