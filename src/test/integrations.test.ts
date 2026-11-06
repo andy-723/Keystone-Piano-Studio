@@ -24,8 +24,8 @@ afterEach(() => {
 it("transitions Stripe from not connected to setting up to connected and disconnects", async () => {
   expect(await getStripeStatus()).toBe("not_connected");
   await connectStripe({ stage: "start" }); expect(await getStripeStatus()).toBe("setting_up");
-  await connectStripe({ stage: "complete", businessName: "Clarke Piano Studio" });
-  expect((await getIntegrations()).stripe).toEqual({ status: "connected", businessName: "Clarke Piano Studio", bankLast4: "1234" });
+  await connectStripe({ stage: "complete", businessName: "Clarke Music Studio" });
+  expect((await getIntegrations()).stripe).toEqual({ status: "connected", businessName: "Clarke Music Studio", bankLast4: "1234" });
   await disconnectStripe(); expect(await getStripeStatus()).toBe("not_connected");
 });
 it.each(["not_connected", "setting_up"] as const)("blocks parent online payment while Stripe is %s without changing money", async (status) => {
