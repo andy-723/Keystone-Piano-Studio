@@ -13,7 +13,7 @@ export async function connectStripe(input: { stage?: "start" | "complete"; busin
   if (input.stage === "start") stripe.status = "setting_up";
   else {
     stripe.status = "connected";
-    stripe.businessName = input.businessName?.trim() || (scope === "demo" ? studio.name : setupSession.studio.name) || "Your piano studio";
+    stripe.businessName = input.businessName?.trim() || (scope === "demo" ? studio.name : setupSession.studio.name) || "Your music studio";
     stripe.bankLast4 = "1234";
   }
   return respond(stripe);
@@ -26,7 +26,7 @@ export async function connectXero(scope: IntegrationScope = "demo") {
   if (!proFeaturesEnabled(scope)) throw new Error("Available on Pro. Pro is A$49 a month + GST.");
   const xero = integrationState[scope].xero;
   xero.status = "connected";
-  xero.organisationName = (scope === "demo" ? studio.name : setupSession.studio.name) || "Your piano studio";
+  xero.organisationName = (scope === "demo" ? studio.name : setupSession.studio.name) || "Your music studio";
   return respond(xero);
 }
 export async function disconnectXero(scope: IntegrationScope = "demo") {
