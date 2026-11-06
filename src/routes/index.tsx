@@ -30,9 +30,9 @@ export const Route = createFileRoute("/")({
   notFoundComponent: () => <p>No day-book page found.</p>,
   head: () => ({
     meta: [
-      { title: "Today — Opus day-book" },
+      { title: "Today — KeyStone Piano Studios day-book" },
       { name: "description", content: "Today's piano lessons, listed by time like a paper day-book." },
-      { property: "og:title", content: "Today — Opus day-book" },
+      { property: "og:title", content: "Today — KeyStone Piano Studios day-book" },
       { property: "og:description", content: "Today's piano lessons, listed by time like a paper day-book." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

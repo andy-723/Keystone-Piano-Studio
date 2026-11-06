@@ -19,10 +19,10 @@ export const Route = createFileRoute("/settings")({
   loader: ({ context }) => Promise.all([context.queryClient.ensureQueryData(teacherProfileQuery()), context.queryClient.ensureQueryData(planBillingQuery()), context.queryClient.ensureQueryData(settingsQuery), context.queryClient.ensureQueryData(integrationsQuery())]),
   head: () => ({
     meta: [
-      { title: "Settings — Opus" },
-      { name: "description", content: "Manage Opus plans and simulated subscription billing, studio GST, payments and accounting connections." },
-      { property: "og:title", content: "Settings — Opus" },
-      { property: "og:description", content: "Manage Opus plans and simulated subscription billing, studio GST, payments and accounting connections." },
+      { title: "Settings — KeyStone Piano Studios" },
+      { name: "description", content: "Manage KeyStone Piano Studios plans and simulated subscription billing, studio GST, payments and accounting connections." },
+      { property: "og:title", content: "Settings — KeyStone Piano Studios" },
+      { property: "og:description", content: "Manage KeyStone Piano Studios plans and simulated subscription billing, studio GST, payments and accounting connections." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],

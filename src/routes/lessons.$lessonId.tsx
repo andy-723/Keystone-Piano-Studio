@@ -20,8 +20,8 @@ export const Route = createFileRoute("/lessons/$lessonId")({
   errorComponent: () => <p role="alert">This lesson could not be opened. Please refresh to try again.</p>,
   notFoundComponent: () => <div><h1 className="text-3xl">Lesson not found</h1><Button asChild className="mt-4"><Link to="/">Back to Today</Link></Button></div>,
   head: () => ({ meta: [
-    { title: "Live Lesson — Opus" }, { name: "description", content: "Record piano lesson progress, practice and notes, and send a summary to the family." },
-    { property: "og:title", content: "Live Lesson — Opus" }, { property: "og:description", content: "Piano lesson progress, practice and family summaries." },
+    { title: "Live Lesson — KeyStone Piano Studios" }, { name: "description", content: "Record piano lesson progress, practice and notes, and send a summary to the family." },
+    { property: "og:title", content: "Live Lesson — KeyStone Piano Studios" }, { property: "og:description", content: "Piano lesson progress, practice and family summaries." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" },
   ] }),
   component: LiveLesson,

@@ -13,7 +13,7 @@ import { filterStudents } from "@/lib/student-insights";
 
 export const Route = createFileRoute("/students/")({
   loader: ({ context }) => context.queryClient.ensureQueryData(studentsQuery),
-  head: () => ({ meta: [{ title: "Student roster — Opus" }, { name: "description", content: "Student grade goals, attention flags and friendly family check-ins at Clarke Piano Studio." }, { property: "og:title", content: "Student roster — Opus" }, { property: "og:description", content: "Student grade goals, attention flags and friendly family check-ins at Clarke Piano Studio." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
+  head: () => ({ meta: [{ title: "Student roster — KeyStone Piano Studios" }, { name: "description", content: "Student grade goals, attention flags and friendly family check-ins at KeyStone Piano Studios." }, { property: "og:title", content: "Student roster — KeyStone Piano Studios" }, { property: "og:description", content: "Student grade goals, attention flags and friendly family check-ins at KeyStone Piano Studios." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
   errorComponent: () => <p role="alert">Students could not be opened. Please refresh to try again.</p>,
   component: Students,
 });

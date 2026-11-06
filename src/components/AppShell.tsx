@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { useAppSettings, type Role } from "@/lib/app-settings";
 import type { Studio } from "@/mocks/types";
 import { translate } from "@/i18n/parent";
+import logo from '@/assets/keystone-brand.jpg.asset.json';
 
 const NAV = [
   { to: "/", label: "Today", icon: BookOpen },
@@ -28,7 +29,7 @@ const NAV = [
 export function AppShell({ children, studio }: { children: ReactNode; studio: Studio }) {
   const { role, setRole, largeText, setLargeText } = useAppSettings();
   const { data: subscription } = useSuspenseQuery(planBillingQuery(role === "new-teacher" ? "new-studio" : "demo"));
-  const { data: profile } = useQuery(teacherProfileQuery(role === "new-teacher" ? "new-studio" : "demo"));
+  const { data: profile } = useSuspenseQuery(teacherProfileQuery(role === "new-teacher" ? "new-studio" : "demo"));
   const [newNewsOpen, setNewNewsOpen] = useState(false);
   const [newPlanOpen, setNewPlanOpen] = useState(false);
   const planLabel = subscription.plan === "base" ? "Base plan" : subscription.plan === "academy" ? "Academy plan" : "Pro plan";
@@ -44,7 +45,7 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
     <div className="min-h-dvh md:flex">
       {/* Left rail on tablet and up (teacher only) */}
       {isTeacher && <nav aria-label="Main" className="hidden md:flex md:w-32 lg:w-40 shrink-0 flex-col gap-2 border-r border-sidebar-border bg-sidebar p-3 sticky top-0 h-screen">
-        <div className="px-2 py-3 font-display text-2xl font-semibold text-sidebar-primary">Opus</div>
+        <div className="px-1 py-3"><img src={logo.url} alt="KeyStone Piano Studios logo" className="mx-auto size-16 object-contain"/><p className="mt-2 break-words text-center font-display text-base font-semibold text-sidebar-primary">KeyStone<br/>Piano Studios</p></div>
         <div className="mb-3 flex flex-col items-start gap-3 px-1"><p className="break-words text-base font-semibold">{profile?.studioName || studio.name}</p>{planBadge}</div>
         {NAV.map(({ to, label, icon: Icon }) => (
           <Link
@@ -62,7 +63,7 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
 
       <div className={`flex min-w-0 flex-1 flex-col ${isTeacher ? "pb-[calc(9rem+env(safe-area-inset-bottom))] sm:pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0" : ""}`}>
         <header className="grid min-w-0 gap-2 border-b border-border bg-background/95 px-4 py-3 lg:flex lg:items-center lg:justify-between md:px-8">
-          <div className="flex min-w-0 flex-wrap items-center gap-3">{role !== "parent" && <ProfilePicture id="teacher" name={profile?.name || "Teacher"} scope={role === "new-teacher" ? "new-studio" : "demo"}/>}<div className="min-w-0 break-words font-display text-xl font-semibold">{profile?.studioName || studio.name}</div>{role !== "parent" && <div className={isTeacher ? "md:hidden" : ""}>{planBadge}</div>}</div>
+          <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-3 sm:flex sm:flex-wrap"><img src={logo.url} alt="KeyStone Piano Studios logo" className="size-14 shrink-0 object-contain"/><div className="min-w-0 break-words font-display text-xl font-semibold sm:flex-1">{profile.studioName || studio.name}</div>{role !== "parent" && <ProfilePicture id="teacher" name={profile.name || "Teacher"} scope={role === "new-teacher" ? "new-studio" : "demo"}/>} {role !== "parent" && <div className={isTeacher ? "md:hidden" : ""}>{planBadge}</div>}</div>
           <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-3 sm:flex sm:flex-wrap sm:gap-4">
             <div className="relative flex min-h-12 shrink-0 items-center gap-2">
               <Switch id="larger-text" className="relative z-10" checked={largeText} onCheckedChange={setLargeText} />

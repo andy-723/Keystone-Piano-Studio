@@ -3,9 +3,9 @@ import { conversations, families, invoices, messages, practiceLogs, requirements
 import { addDays, PROTOTYPE_TODAY } from "@/lib/calendar";
 import { getStudent, getStudents } from "@/services/roster";
 
-describe("Opus project-knowledge fixtures", () => {
-  it("provides Clarke Piano Studio, GST-registered, and one teacher", () => {
-    expect(studio.name).toBe("Clarke Piano Studio");
+describe("KeyStone Piano Studios fixtures", () => {
+  it("provides KeyStone Piano Studios, GST-registered, and one teacher", () => {
+    expect(studio.name).toBe("KeyStone Piano Studios");
     expect(studio.gstRegistered).toBe(true);
     expect(teacher.name).toBe("Ms Margaret Clarke");
   });
