@@ -2,7 +2,7 @@ import { beforeEach, afterEach, expect, it } from 'vitest';
 import { newsState, NEWS_DEMO_NOW } from '@/mocks/news';
 import { families, students, studio } from '@/mocks/data';
 import { getParentSession } from '@/services/parent';
-import { saveAnnouncement, getNewsForPerson, getParentNews, recordNewsReceipt, newsCounts, getNewsNotifications, archiveAnnouncement } from '@/services/news';
+import { saveAnnouncement, getNewsForPerson, getParentNews, recordNewsReceipt, newsCounts, getNewsNotifications, archiveAnnouncement, getNewsOptions } from '@/services/news';
 const snapshot=structuredClone(newsState),plan=studio.plan;
 beforeEach(()=>{newsState.demo.posts=[];newsState.demo.receipts=[];newsState.demo.notifications=[];newsState.demo.now=NEWS_DEMO_NOW;});
 afterEach(()=>{Object.assign(newsState,structuredClone(snapshot));if(plan)studio.plan=plan;else delete studio.plan;});
@@ -38,4 +38,17 @@ it('Academy teachers cannot publish studio-wide or to unrelated families',async(
 it('Important simulates a push per member and email per guardian, title only',async()=>{
  const family=families[0];if(!family)throw Error('Missing family');const post=await saveAnnouncement({title:'Concert',body:'Private body must never appear',important:true,audience:{kind:'families',familyIds:[family.id]}});
  const sent=await getNewsNotifications();expect(sent.filter(n=>n.kind==='email')).toHaveLength(family.guardians.length);expect(sent.filter(n=>n.kind==='push')).toHaveLength(family.guardians.length+students.filter(s=>s.familyId===family.id).length);expect(sent.every(n=>n.title===`New post from ${post.authorName}: Concert`)).toBe(true);
+});
+it('offers smart classifications and studio groups for news audiences', async () => {
+  const options = await getNewsOptions();
+  expect(options.smartGroups.some((group) => group.smartKey === 'grade')).toBe(true);
+  expect(options.smartGroups.some((group) => group.smartKey === 'new_joiners')).toBe(true);
+  expect(options.smartGroups.some((group) => group.smartKey === 'recital')).toBe(true);
+  expect(options.smartGroups.some((group) => group.smartKey === 'competition')).toBe(true);
+  expect(options.studioGroups.some((group) => group.id === 'saturday')).toBe(true);
+  const recital = options.smartGroups.find((group) => group.smartKey === 'recital');
+  if (!recital) throw Error('Missing recital classification');
+  const post = await saveAnnouncement({ title: 'Recital call', body: 'Bring your music', audience: { kind: 'groups', groupIds: [recital.id] } });
+  expect(newsCounts(post).total).toBeGreaterThan(0);
+  expect(newsCounts(post).total).toBe(recital.familyCount);
 });
