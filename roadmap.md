@@ -1,5 +1,5 @@
 # Teacher day-book
-- [ ] Rename visible Opus branding to KeyStone Piano Studios, apply uploaded logo and matching favicon, verify layouts.
+- [x] Rename visible Opus branding to KeyStone Piano Studios, apply uploaded logo and matching favicon, verify layouts.
 - [x] Explain how to sync the latest code to GitHub; repository connection and sync status require the user's Git settings.
 - [x] Add editable teacher/student pictures and teacher profile settings; verify session-only saves.
 - [x] Add studio news publishing and family feed; test visibility and studio isolation.
@@ -62,8 +62,8 @@
 - [x] Add week/day lesson controls, profile history and parent Home balances; verify tests and full flows.
 
 # Mobile layouts
-- [ ] Recheck reported mobile failure and keep six bottom navigation labels readable on narrow phones and with larger text.
-- [ ] Expand News with targeted audiences, drafts/schedules, consent checks, receipts, family actions and simulated notifications; verify privacy rules and phone flows.
+- [x] Recheck reported mobile failure and keep six bottom navigation labels readable on narrow phones and with larger text.
+- [x] Expand News with targeted audiences, drafts/schedules, consent checks, receipts, family actions and simulated notifications; verify privacy rules and phone flows.
 - [x] Adapt shell, lesson controls, weekly timetable and dialogs to narrow phone screens.
 - [x] Verify teacher, parent, chat and setup views at 320/390/440px and larger text; complete a phone lesson move and chat send/readback.
 
