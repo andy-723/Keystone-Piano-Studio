@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { completeCheckoutReturn } from "@/integrations/live";
+import { completeCheckoutReturn } from "@/integrations/live-server";
 
 export const Route = createFileRoute("/api/integrations/stripe/checkout-return")({
   server: {
