@@ -5,6 +5,7 @@ import { addDays, dayKind, TERMS_2027, weekday, PUBLIC_HOLIDAYS_2027, PROTOTYPE_
 import type { Invoice, InvoiceStatus, Payment } from "@/mocks/types";
 import { respond } from "./_delay";
 import { pushInvoiceToXero } from "./integrations";
+import { maybeSyncLiveXero } from "@/lib/live-xero-sync";
 
 /** GST-inclusive pricing: GST is one eleventh of the total, in whole cents. */
 export function gstFromInclusive(totalCents: number): number {
@@ -94,6 +95,7 @@ export async function sendTerm2Invoices() {
     const invoice = { ...taxView(draft), status: "sent" as const };
     invoices.push(invoice);
     await pushInvoiceToXero(invoice.id);
+    await maybeSyncLiveXero(invoice.id);
     sent.push(taxView(invoice));
   }
   termInvoiceDrafts.clear();
@@ -106,7 +108,13 @@ export async function setInvoiceStatus(id: string, status: InvoiceStatus): Promi
     if (status === "draft" && inv.status !== "draft") throw new Error("An issued invoice cannot return to draft");
     if (inv.status === "draft" && status !== "draft") Object.assign(inv, taxView(inv));
     if (status === "paid") await recordInvoicePayment(id, "card");
-    else { inv.status = status; if (status === "sent") await pushInvoiceToXero(id); }
+    else {
+      inv.status = status;
+      if (status === "sent") {
+        await pushInvoiceToXero(id);
+        await maybeSyncLiveXero(id);
+      }
+    }
   }
   return respond(inv ? taxView(inv) : null);
 }
@@ -120,6 +128,10 @@ export async function recordInvoicePayment(id: string, method: "payto" | "becs" 
   const payment: Payment | null = balance > 0 ? { id: `payment-${crypto.randomUUID()}`, invoiceId: id, method, amountCents: balance, date: PROTOTYPE_TODAY } : null;
   if (payment) payments.push(payment);
   invoice.status = "paid";
-  if (payment) { const sync = await pushInvoiceToXero(id); if (sync.synced && "syncedAt" in sync && typeof sync.syncedAt === "string") payment.xeroSyncedAt = sync.syncedAt; }
+  if (payment) {
+    const sync = await pushInvoiceToXero(id);
+    if (sync.synced && "syncedAt" in sync && typeof sync.syncedAt === "string") payment.xeroSyncedAt = sync.syncedAt;
+    await maybeSyncLiveXero(id);
+  }
   return respond(taxView(invoice));
 }

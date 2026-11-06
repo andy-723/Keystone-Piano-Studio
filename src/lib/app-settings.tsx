@@ -14,7 +14,14 @@ type Settings = {
 
 const Ctx = createContext<Settings | null>(null);
 
+function roleFromSearch(): Role | null {
+  if (typeof window === "undefined") return null;
+  const view = new URLSearchParams(window.location.search).get("view");
+  return view === "parent" || view === "teacher" || view === "new-teacher" ? view : null;
+}
+
 export function AppSettingsProvider({ children }: { children: ReactNode }) {
+  // Always start as teacher so SSR/client hydrate match; ?view= applies in the effect below.
   const [role, setRole] = useState<Role>("teacher");
   const [largeText, setLargeText] = useState(false);
   const [parentLang, setParentLang] = useState<Lang>("zh-CN");
@@ -22,6 +29,16 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     document.documentElement.classList.toggle("text-large", largeText);
   }, [largeText]);
+
+  useEffect(() => {
+    const sync = () => {
+      const next = roleFromSearch();
+      if (next) setRole(next);
+    };
+    sync();
+    window.addEventListener("popstate", sync);
+    return () => window.removeEventListener("popstate", sync);
+  }, []);
 
   return <Ctx.Provider value={{ role, setRole, largeText, setLargeText, parentLang, setParentLang }}>{children}</Ctx.Provider>;
 }
