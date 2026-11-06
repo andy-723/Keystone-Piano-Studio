@@ -15,7 +15,7 @@ const titles = ['Intake', 'Welcome lesson', 'Goal and pace', 'Activate'];
 export function EnrolStudent({ scope = 'demo', onClose }: { scope?: ImportScope; onClose: () => void }) {
  const { data } = useSuspenseQuery(enrolmentsQuery(scope)); const { data: library } = useSuspenseQuery(libraryQuery(scope));
  const client = useQueryClient(); const [draft, setDraft] = useState<EnrolmentDraft | null>(null); const [familyPreview, setFamilyPreview] = useState(false);
- const [form, setForm] = useState({ firstName: '', lastName: '', birthYear: 2018, guardianName: '', guardianEmail: '', guardianMobile: '', language: 'en' as 'en' | 'zh-CN' });
+ const [form, setForm] = useState({ firstName: '', lastName: '', birthYear: 2018, guardianName: '', guardianEmail: '', guardianMobile: '', studentEmail: '', studentMobile: '', language: 'en' as 'en' | 'zh-CN' });
  const refresh = () => Promise.all(['enrolments', 'students', 'new-studio', 'parent', 'chat-threads', 'messages'].map(key => client.invalidateQueries({queryKey:[key]})));
  const start = useMutation({ mutationFn: () => startEnrolment(form, scope), onSuccess: async value => { setDraft(value); await refresh(); } });
  const save = useMutation({ mutationFn: ({ value, activate = false }: { value: EnrolmentDraft; activate?: boolean }) => activate ? activateEnrolment(value.id, scope) : saveEnrolment(value.id, value, scope), onSuccess: async value => { setDraft(value); await refresh(); } });

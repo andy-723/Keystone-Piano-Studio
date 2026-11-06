@@ -11,18 +11,25 @@ import { getParentSession, sendParentMessage } from "./parent";
 import { respond } from "./_delay";
 import { PROTOTYPE_TODAY } from "@/lib/calendar";
 import { targetWeeks, termName } from "@/lib/onboarding";
+import { enrolmentYear, isAdultStudent } from "@/lib/enrolment";
 const store = (scope: ImportScope) => scope === "demo" ? { families, students } : newStudioRoster;
 function draftFor(id: string, scope: ImportScope) { const draft = enrolmentDrafts.find((entry) => entry.id === id && entry.scope === scope); if (!draft) throw new Error("Enrolment not found in this studio."); return draft; }
 export async function getEnrolments(scope: ImportScope = "demo") { const data = store(scope); return respond({ drafts: structuredClone(enrolmentDrafts.filter((entry) => entry.scope === scope)), students: structuredClone(data.students), families: structuredClone(data.families) }); }
-export async function startEnrolment(input: { firstName: string; lastName: string; birthYear: number; guardianName: string; guardianEmail: string; guardianMobile: string; language: "en" | "zh-CN"; existingStudentId?: string }, scope: ImportScope = "demo") {
+export async function startEnrolment(input: { firstName: string; lastName: string; birthYear: number; guardianName: string; guardianEmail: string; guardianMobile: string; studentEmail?: string; studentMobile?: string; language: "en" | "zh-CN"; existingStudentId?: string }, scope: ImportScope = "demo") {
   const data = store(scope); let student = input.existingStudentId ? data.students.find((entry) => entry.id === input.existingStudentId) : undefined;
   if (input.existingStudentId && !student) throw new Error("Student not found in this studio.");
   if (student) { const existing = enrolmentDrafts.find((entry) => entry.studentId === student?.id && entry.scope === scope); if (existing) return respond(structuredClone(existing)); }
   if (!student) {
-    if (!input.firstName.trim() || !input.lastName.trim() || !input.guardianName.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.guardianEmail) || !Number.isInteger(input.birthYear) || input.birthYear < 1900 || input.birthYear > 2027) throw new Error("Enter the student’s name, birth year and a guardian name and valid email.");
-    const email = input.guardianEmail.trim().toLowerCase();
+    const adult = isAdultStudent(input.birthYear);
+    const hasGuardian = Boolean(input.guardianName.trim() || input.guardianEmail.trim());
+    const selfContact = adult && !hasGuardian;
+    const contactName = selfContact ? `${input.firstName.trim()} ${input.lastName.trim()}` : input.guardianName.trim();
+    const email = (selfContact ? input.studentEmail ?? '' : input.guardianEmail).trim().toLowerCase();
+    const mobile = selfContact ? input.studentMobile ?? '' : input.guardianMobile;
+    if (!input.firstName.trim() || !input.lastName.trim() || !Number.isInteger(input.birthYear) || input.birthYear < 1900 || input.birthYear > enrolmentYear) throw new Error("Enter the student’s name and a valid birth year.");
+    if (!contactName || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error(selfContact ? "Enter a valid student email." : "Enter a guardian name and valid email.");
     let family = data.families.find((entry) => entry.guardians.some((guardian) => guardian.email.toLowerCase() === email));
-    if (!family) { family = { id: crypto.randomUUID(), displayName: `${input.lastName.trim()} family`, guardians: [{ id: crypto.randomUUID(), name: input.guardianName.trim(), email, mobile: input.guardianMobile, preferredLanguage: input.language }] }; data.families.push(family); }
+    if (!family) { family = { id: crypto.randomUUID(), displayName: selfContact ? contactName : `${input.lastName.trim()} family`, guardians: [{ id: crypto.randomUUID(), name: contactName, email, mobile, preferredLanguage: input.language }] }; data.families.push(family); }
     student = { id: crypto.randomUUID(), familyId: family.id, firstName: input.firstName.trim(), lastName: input.lastName.trim(), birthYear: input.birthYear }; data.students.push(student);
   }
   const draft: EnrolmentDraft = { id: crypto.randomUUID(), studentId: student.id, scope, intake: null, diagnostic: {}, startingStages: {}, welcomeChecks: [], practiceGoal: 75, status: "intake_sent", step: 1, templateId: "opus-beginner", targetTerm: "2027-T3", gradeHours: 40, lessonMinutes: 30, strengths: "", workOn: "" };
