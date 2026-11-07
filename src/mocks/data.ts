@@ -12,9 +12,53 @@ export const studio: Studio = {
   gstRegistered: true,
   timezone: "Australia/Melbourne",
   plan: "pro",
+  legalName: "Margaret Clarke Piano Studio",
+  address: "12 Music Lane, Hawthorn",
+  state: "VIC",
+  email: "studio@keystone.example",
+  phone: "03 9000 0000",
+  privacyEmail: "privacy@keystone.example",
+  entityType: "sole_trader",
+  billing: {
+    cycle: "per_term",
+    invoiceLeadDays: 14,
+    dueRule: "days_after_issue",
+    lateFeeAfterDays: 7,
+    lateFee: 15,
+    suspendAfterDays: 14,
+    feeNoticeDays: 30,
+    withdrawalNoticeWeeks: 4,
+    paymentDiscount: { enabled: false },
+  },
+  policies: {
+    cancelNoticeHours: 24,
+    makeUpQuota: 1,
+    makeUpPeriod: "term",
+    makeUpExpiry: "same term",
+    onlinePlatform: "Zoom",
+    publicHolidays: "skip",
+    tuningFrequency: "once a year",
+    inactiveRetentionMonths: 24,
+  },
+  services: {
+    online: true,
+    inHome: false,
+    exams: true,
+    premises: true,
+  },
+  additionalTerms: "",
 };
 
-export const teacher: Teacher = { id: "teacher-1", name: "Ms Margaret Clarke" };
+export const teacher: Teacher = {
+  id: "teacher-1",
+  name: "Ms Margaret Clarke",
+  childSafety: {
+    state: "VIC",
+    type: "Working with Children Check",
+    number: "WWC-DEMO-001234",
+    expiry: "2028-06-30",
+  },
+};
 
 // Session-only attendance state; reloading restores the sample timetable.
 export const attendanceMarks = new Map<string, LessonStatus>();

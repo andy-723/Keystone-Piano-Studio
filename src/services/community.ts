@@ -17,13 +17,37 @@ export async function setProfilePicture(id: string, image: string | null, scope:
   return getProfilePictures(scope);
 }
 export async function getTeacherProfile(scope: CommunityScope = "demo") {
-  return respond(scope === "demo" ? { name: teacher.name, studioName: studio.name } : { name: setupSession.studio.teacherName, studioName: setupSession.studio.name });
+  return respond(
+    scope === "demo"
+      ? { name: teacher.name, studioName: studio.name, childSafety: teacher.childSafety ? { ...teacher.childSafety } : undefined }
+      : { name: setupSession.studio.teacherName, studioName: setupSession.studio.name, childSafety: undefined },
+  );
 }
-export async function saveTeacherProfile(input: { name: string; studioName: string }, scope: CommunityScope = "demo") {
+export async function saveTeacherProfile(
+  input: {
+    name: string;
+    studioName: string;
+    childSafety?: { state: string; type: string; number: string; expiry: string };
+  },
+  scope: CommunityScope = "demo",
+) {
   const name = input.name.trim(), studioName = input.studioName.trim();
   if (!name || !studioName) throw new Error("Enter your name and studio name.");
-  if (scope === "demo") { teacher.name = name; studio.name = studioName; }
-  else { setupSession.studio.teacherName = name; setupSession.studio.name = studioName; }
+  if (scope === "demo") {
+    teacher.name = name;
+    studio.name = studioName;
+    if (input.childSafety) {
+      teacher.childSafety = {
+        state: input.childSafety.state.trim(),
+        type: input.childSafety.type.trim(),
+        number: input.childSafety.number.trim(),
+        expiry: input.childSafety.expiry.trim(),
+      };
+    }
+  } else {
+    setupSession.studio.teacherName = name;
+    setupSession.studio.name = studioName;
+  }
   return getTeacherProfile(scope);
 }
 export async function getStudioNews(scope: CommunityScope = "demo") { return respond(communityState[scope].posts.map(post => ({ ...post }))); }

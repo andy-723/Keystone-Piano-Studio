@@ -9,6 +9,7 @@ import { ParentMakeUps } from "@/components/ParentMakeUps";
 import { ParentRenewal } from "@/components/ParentRenewal";
 import { ParentAssignments } from "@/components/Assignments";
 import { ParentIntakes } from "@/components/StudentIntake";
+import { FamilyConsents } from "@/components/terms/FamilyConsents";
 import { FamilyNews } from "./StudioNews";
 import { ProfilePicture } from "./ProfilePicture";
 export function ParentHome({ openChat, openInvoice, openNewsChat }: { openChat: () => void; openInvoice: (id: string) => void; openNewsChat?: (title:string)=>void }) {
@@ -18,6 +19,7 @@ export function ParentHome({ openChat, openInvoice, openNewsChat }: { openChat: 
     <div className="mt-4 flex flex-wrap gap-4">{data.children.map(child => <ProfilePicture key={child.id} id={child.id} name={`${child.firstName} ${child.lastName}`}/>)}</div>
     <FamilyNews pinnedOnly {...(openNewsChat?{onMessage:openNewsChat}:{})}/>
     <ParentIntakes />
+    <FamilyConsents />
     <ParentAssignments />
     <ParentRenewal />
     <ParentMakeUps />

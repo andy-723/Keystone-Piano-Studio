@@ -1,6 +1,51 @@
 // Data shapes match the future REST API names. Money is always integer cents.
 export type Lang = "en" | "zh-CN";
 export type StudioPlan = "base" | "pro" | "academy";
+export type StudioEntityType = "sole_trader" | "partnership" | "company" | "trust";
+export type MakeUpPeriod = "term" | "month";
+export type MakeUpExpiry = "same term" | "next term" | "30 days";
+export type PublicHolidayPolicy = "skip" | "make_up" | "charge";
+export type BillingCycle = "per_term" | "monthly" | "per_lesson";
+export type DueRule = "on_issue" | "days_after_issue" | "before_term_start";
+
+export interface StudioBillingSettings {
+  cycle: BillingCycle;
+  invoiceLeadDays: number;
+  dueRule: DueRule;
+  lateFeeAfterDays: number;
+  /** Dollars; applied fee is min(setting, 15, 5% of invoice). */
+  lateFee: number;
+  suspendAfterDays: number;
+  feeNoticeDays: number;
+  withdrawalNoticeWeeks: number;
+  paymentDiscount: { enabled: boolean; method?: string; amount?: number };
+}
+
+export interface StudioLessonPolicies {
+  cancelNoticeHours: number;
+  makeUpQuota: number;
+  makeUpPeriod: MakeUpPeriod;
+  makeUpExpiry: MakeUpExpiry;
+  onlinePlatform: string;
+  publicHolidays: PublicHolidayPolicy;
+  tuningFrequency: string;
+  inactiveRetentionMonths: number;
+}
+
+export interface StudioServiceSwitches {
+  online: boolean;
+  inHome: boolean;
+  inHomeTravelFee?: string;
+  exams: boolean;
+  premises: boolean;
+}
+
+export interface ChildSafetyCheck {
+  state: string;
+  type: string;
+  number: string;
+  expiry: string;
+}
 
 export interface Studio {
   id: string;
@@ -10,8 +55,25 @@ export interface Studio {
   timezone: "Australia/Melbourne";
   plan?: StudioPlan;
   asyncLessonPolicy?: "makeup_credit" | "counts_as_lesson";
+  legalName?: string;
+  address?: string;
+  state?: string;
+  email?: string;
+  phone?: string;
+  privacyEmail?: string;
+  entityType?: StudioEntityType;
+  billing?: StudioBillingSettings;
+  policies?: StudioLessonPolicies;
+  services?: StudioServiceSwitches;
+  additionalTerms?: string;
+  /** Pending billing values applied on next material version effectiveAt. */
+  pendingBilling?: Partial<StudioBillingSettings> & { effectiveAt?: string };
 }
-export interface Teacher { id: string; name: string }
+export interface Teacher {
+  id: string;
+  name: string;
+  childSafety?: ChildSafetyCheck;
+}
 export interface Guardian { id: string; name: string; email: string; preferredLanguage: Lang; mobile?: string }
 export interface Family { id: string; displayName: string; guardians: Guardian[]; mediaConsent?: boolean; newsPhotoConsent?: boolean }
 export interface Student { id: string; familyId: string; firstName: string; lastName: string; birthYear: number; examDate?: string; targetTerm?: string }
@@ -99,7 +161,17 @@ export interface RiskScore { studentId: string; score: number; band: "green" | "
 /** Prototype-only: the weekly slot that generates each student's lessons. */
 export interface WeeklySlot { studentId: string; weekday: number; time: string; lessonTypeId: string; gradeGoal: string }
 
-export interface Intake { experience: "beginner" | "transferring"; previousGrades: string; theoryExams: string; instrument: "acoustic" | "digital" | "keyboard"; goal: string; daysPerWeek: number; minutesPerDay: number; policiesRead: boolean }
+export interface Intake {
+  experience: "beginner" | "transferring";
+  previousGrades: string;
+  theoryExams: string;
+  instrument: "acoustic" | "digital" | "keyboard";
+  goal: string;
+  daysPerWeek: number;
+  minutesPerDay: number;
+  /** Optional medical / learning notes collected before health-notes consent. */
+  healthNotes?: string;
+}
 export interface OnboardingRecord { id: string; studentId: string; intake: Intake | null; diagnostic: Record<string, CourseStage>; practiceGoal: number; status: "intake_sent" | "intake_done" | "welcome_done" | "active"; completedAt?: string }
 export interface ContentItem { id: string; kind: "text" | "link" | "file" | "video" | "audio" | "checklist"; title: string; body?: string; url?: string; mediaPlaceholder?: string; supplied?: boolean }
 export interface LessonTemplate { id: string; name: string; isWelcomeDefault: boolean; steps: { contentItemId: string; note?: string }[]; supplied?: boolean; audience: "beginner" | "transferring" }

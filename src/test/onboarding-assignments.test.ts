@@ -11,14 +11,38 @@ import { completeParentTask, submitRecording, setParentMediaConsent, approveSubm
 import { getStudentCourse } from '@/services/curriculum';
 import { enrolmentDrafts } from '@/mocks/onboarding';
 import { newStudioRoster } from '@/mocks/roster-import';
-const intake={experience:'beginner' as const,previousGrades:'',theoryExams:'',instrument:'digital' as const,goal:'Enjoy playing',daysPerWeek:5,minutesPerDay:15,policiesRead:true};
+const intake={experience:'beginner' as const,previousGrades:'',theoryExams:'',instrument:'digital' as const,goal:'Enjoy playing',daysPerWeek:5,minutesPerDay:15};
 const enrol={firstName:'New',lastName:'Chen',birthYear:2018,guardianName:'Wei Chen',guardianEmail:'',guardianMobile:'0400000000',language:'en' as const};
+async function acceptCurrentTerms(studentId:string,scope:'demo'|'new-studio'='demo'){
+  const {ensureTermsState}=await import('@/mocks/terms');
+  const {getPublishedStudioTerms,acceptStudioTerms}=await import('@/services/terms');
+  const state=await ensureTermsState();
+  if(scope==='new-studio'){
+    const published=await getPublishedStudioTerms('new-studio');
+    if(!published.current){
+      const doc=state.documents.find(entry=>entry.scope==='new-studio'&&entry.kind==='studio_agreement')!;
+      const demo=state.versions.find(entry=>entry.id==='tv-demo-1')!;
+      state.versions.push({...structuredClone(demo),id:`tv-new-${studentId}`,documentId:doc.id,effectiveAt:'2027-01-01',changeType:'initial',versionNo:1});
+      if(!state.versions.some(entry=>entry.id==='tv-app-new-1')){
+        state.versions.push({...structuredClone(state.versions.find(entry=>entry.id==='tv-app-1')!),id:'tv-app-new-1',documentId:'doc-app-new'});
+      }
+    }
+    const again=await getPublishedStudioTerms('new-studio');
+    const version=again.pending??again.current;
+    const appId=state.versions.find(entry=>entry.documentId==='doc-app-new')?.id??'tv-app-new-1';
+    await acceptStudioTerms({versionId:version!.id,appTermsVersionId:appId,typedName:'Wei Chen',capacity:'guardian',relationship:'parent',guardianDeclaration:true,studentIds:[studentId],consents:[],scope:'new-studio'});
+    return;
+  }
+  const published=await getPublishedStudioTerms('demo');
+  const version=published.pending??published.current;
+  await acceptStudioTerms({versionId:version!.id,appTermsVersionId:'tv-app-1',typedName:'Wei Chen',capacity:'guardian',relationship:'parent',guardianDeclaration:true,studentIds:[studentId],consents:[]});
+}
 describe('onboarding and library',()=>{
  it('calculates the requested pace formula with concrete minute totals',()=>{expect(practicePace(120,48,25)).toBe(125);expect(practicePace(120,72,25)).toBe(75);expect(practicePace(1,10,30)).toBe(0);expect(()=>practicePace(120,0,30)).toThrow();});
  it('copies templates without editing supplied originals',async()=>{const original=(await getLibrary()).lessons[0];if(!original)throw new Error();await expect(saveLessonTemplate({...original,name:'Changed'})).rejects.toThrow();const library=await copyTemplate('lessons',original.id);const copy=library.lessons.find(entry=>!entry.supplied);if(!copy)throw new Error();await saveLessonTemplate({...copy,name:'Studio welcome',isWelcomeDefault:true});expect((await getLibrary()).lessons.find(entry=>entry.id===original.id)?.name).toBe(original.name);});
- it('template edits never change activated courses, milestones or first assignments',async()=>{const session=await getParentSession();const email=session.guardian.email;const library=await copyTemplate('courses','opus-beginner');const template=library.courses.find(entry=>!entry.supplied);if(!template)throw new Error();const draft=await startEnrolment({...enrol,guardianEmail:email});await submitParentIntake(draft.id,intake);const current=enrolmentDrafts.find(entry=>entry.id===draft.id);if(!current?.welcomeTemplate)throw new Error();await saveEnrolment(draft.id,{...current,step:4,templateId:template.id,welcomeChecks:current.welcomeTemplate.steps.map(step=>step.contentItemId),strengths:'Steady beat',workOn:'Relaxed hands'});await activateEnrolment(draft.id);const before=await getStudentCourse(draft.studentId);const taskBefore=structuredClone(assignments.find(entry=>entry.studentId===draft.studentId));await saveCourseTemplate({...template,name:'Changed template',sections:template.sections.map(section=>({...section,items:['Different task']}))});const after=await getStudentCourse(draft.studentId);expect(after).toEqual(before);expect(assignments.find(entry=>entry.studentId===draft.studentId)).toEqual(taskBefore);expect((await activateEnrolment(draft.id)).status).toBe('active');expect(messages.filter(entry=>entry.welcomeSummary?.studentName==='New')).toHaveLength(1);});
+ it('template edits never change activated courses, milestones or first assignments',async()=>{const session=await getParentSession();const email=session.guardian.email;const library=await copyTemplate('courses','opus-beginner');const template=library.courses.find(entry=>!entry.supplied);if(!template)throw new Error();const draft=await startEnrolment({...enrol,guardianEmail:email});await acceptCurrentTerms(draft.studentId);await submitParentIntake(draft.id,intake);const current=enrolmentDrafts.find(entry=>entry.id===draft.id);if(!current?.welcomeTemplate)throw new Error();await saveEnrolment(draft.id,{...current,step:4,templateId:template.id,welcomeChecks:current.welcomeTemplate.steps.map(step=>step.contentItemId),strengths:'Steady beat',workOn:'Relaxed hands'});await activateEnrolment(draft.id);const before=await getStudentCourse(draft.studentId);const taskBefore=structuredClone(assignments.find(entry=>entry.studentId===draft.studentId));await saveCourseTemplate({...template,name:'Changed template',sections:template.sections.map(section=>({...section,items:['Different task']}))});const after=await getStudentCourse(draft.studentId);expect(after).toEqual(before);expect(assignments.find(entry=>entry.studentId===draft.studentId)).toEqual(taskBefore);expect((await activateEnrolment(draft.id)).status).toBe('active');expect(messages.filter(entry=>entry.welcomeSummary?.studentName==='New')).toHaveLength(1);});
  it('parent intake is scoped to their family and strips private contact and diagnostics',async()=>{const draft=await startEnrolment({...enrol,guardianEmail:'other@example.com',firstName:'Other'});await expect(submitParentIntake(draft.id,intake)).rejects.toThrow('family');const response=await getParentIntakes();expect(response.some(entry=>entry.id===draft.id)).toBe(false);expect(JSON.stringify(response)).not.toMatch(/guardianMobile|diagnostic|startingStages/);});
- it('keeps empty studio activation entirely isolated',async()=>{const before=students.length;const draft=await startEnrolment({...enrol,guardianEmail:'new-studio@example.com'},'new-studio');const done=await submitNewStudioIntake(draft.id,intake);if(!done.welcomeTemplate)throw new Error();await saveEnrolment(draft.id,{...done,step:4,welcomeChecks:done.welcomeTemplate.steps.map(step=>step.contentItemId),strengths:'Curiosity',workOn:'Beat'},'new-studio');const active=await activateEnrolment(draft.id,'new-studio');expect(active.courseSnapshot?.course.status).toBe('active');expect(students.length).toBe(before);expect(newStudioRoster.students.some(entry=>entry.id===draft.studentId)).toBe(true);});
+ it('keeps empty studio activation entirely isolated',async()=>{const before=students.length;const draft=await startEnrolment({...enrol,guardianEmail:'new-studio@example.com'},'new-studio');await acceptCurrentTerms(draft.studentId,'new-studio');const done=await submitNewStudioIntake(draft.id,intake);if(!done.welcomeTemplate)throw new Error();await saveEnrolment(draft.id,{...done,step:4,welcomeChecks:done.welcomeTemplate.steps.map(step=>step.contentItemId),strengths:'Curiosity',workOn:'Beat'},'new-studio');const active=await activateEnrolment(draft.id,'new-studio');expect(active.courseSnapshot?.course.status).toBe('active');expect(students.length).toBe(before);expect(newStudioRoster.students.some(entry=>entry.id===draft.studentId)).toBe(true);});
 });
 describe('weekly assignments and recordings',()=>{
  beforeEach(()=>{studio.plan='pro';studio.asyncLessonPolicy='makeup_credit';});
