@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
   type ErrorComponentProps,
@@ -137,6 +138,15 @@ function RootComponent() {
 function RoleGate() {
   const { role } = useAppSettings();
   const { data: studio } = useSuspenseQuery(studioQuery);
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const focusFlow = pathname.startsWith("/join/") || pathname.startsWith("/intake/") || pathname.startsWith("/auth/");
+  if (focusFlow) {
+    return (
+      <Suspense fallback={<p className="p-6">Opening enrolment…</p>}>
+        <Outlet />
+      </Suspense>
+    );
+  }
   if (role === "new-teacher") return <Suspense fallback={<p className="p-6">Opening your new studio…</p>}><NewTeacherGate /></Suspense>;
   return (
     <AppShell studio={studio}>
