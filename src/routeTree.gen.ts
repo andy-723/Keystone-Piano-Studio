@@ -25,6 +25,8 @@ import { Route as InvoicesInvoiceIdRouteImport } from './routes/invoices.$invoic
 import { Route as InvoicesPrepareRouteImport } from './routes/invoices.prepare'
 import { Route as InvoicesRenewalsRouteImport } from './routes/invoices.renewals'
 import { Route as LessonsLessonIdRouteImport } from './routes/lessons.$lessonId'
+import { Route as SettingsIndexRouteImport } from './routes/settings.index'
+import { Route as SettingsTermsRouteImport } from './routes/settings.terms'
 import { Route as StudentsIndexRouteImport } from './routes/students.index'
 import { Route as StudentsStudentIdRouteImport } from './routes/students.$studentId'
 import { Route as StudentsEnrolRouteImport } from './routes/students.enrol'
@@ -111,6 +113,16 @@ const LessonsLessonIdRoute = LessonsLessonIdRouteImport.update({
   path: '/lessons/$lessonId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsIndexRoute = SettingsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SettingsRoute,
+} as any)
+const SettingsTermsRoute = SettingsTermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => SettingsRoute,
+} as any)
 const StudentsIndexRoute = StudentsIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -143,7 +155,7 @@ export interface FileRoutesByFullPath {
   '/invoices': typeof InvoicesRouteWithChildren
   '/library': typeof LibraryRoute
   '/news': typeof NewsRoute
-  '/settings': typeof SettingsRoute
+  '/settings': typeof SettingsRouteWithChildren
   '/students': typeof StudentsRouteWithChildren
   '/api/health': typeof ApiHealthRoute
   '/chat/$conversationId': typeof ChatConversationIdRoute
@@ -152,19 +164,20 @@ export interface FileRoutesByFullPath {
   '/invoices/prepare': typeof InvoicesPrepareRoute
   '/invoices/renewals': typeof InvoicesRenewalsRoute
   '/lessons/$lessonId': typeof LessonsLessonIdRoute
+  '/settings/terms': typeof SettingsTermsRoute
   '/students/$studentId': typeof StudentsStudentIdRoute
   '/students/enrol': typeof StudentsEnrolRoute
   '/students/groups': typeof StudentsGroupsRoute
   '/students/import': typeof StudentsImportRoute
   '/chat/': typeof ChatIndexRoute
   '/invoices/': typeof InvoicesIndexRoute
+  '/settings/': typeof SettingsIndexRoute
   '/students/': typeof StudentsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/library': typeof LibraryRoute
   '/news': typeof NewsRoute
-  '/settings': typeof SettingsRoute
   '/api/health': typeof ApiHealthRoute
   '/chat/$conversationId': typeof ChatConversationIdRoute
   '/intake/$recordId': typeof IntakeRecordIdRoute
@@ -172,12 +185,14 @@ export interface FileRoutesByTo {
   '/invoices/prepare': typeof InvoicesPrepareRoute
   '/invoices/renewals': typeof InvoicesRenewalsRoute
   '/lessons/$lessonId': typeof LessonsLessonIdRoute
+  '/settings/terms': typeof SettingsTermsRoute
   '/students/$studentId': typeof StudentsStudentIdRoute
   '/students/enrol': typeof StudentsEnrolRoute
   '/students/groups': typeof StudentsGroupsRoute
   '/students/import': typeof StudentsImportRoute
   '/chat': typeof ChatIndexRoute
   '/invoices': typeof InvoicesIndexRoute
+  '/settings': typeof SettingsIndexRoute
   '/students': typeof StudentsIndexRoute
 }
 export interface FileRoutesById {
@@ -187,7 +202,7 @@ export interface FileRoutesById {
   '/invoices': typeof InvoicesRouteWithChildren
   '/library': typeof LibraryRoute
   '/news': typeof NewsRoute
-  '/settings': typeof SettingsRoute
+  '/settings': typeof SettingsRouteWithChildren
   '/students': typeof StudentsRouteWithChildren
   '/api/health': typeof ApiHealthRoute
   '/chat/$conversationId': typeof ChatConversationIdRoute
@@ -196,12 +211,14 @@ export interface FileRoutesById {
   '/invoices/prepare': typeof InvoicesPrepareRoute
   '/invoices/renewals': typeof InvoicesRenewalsRoute
   '/lessons/$lessonId': typeof LessonsLessonIdRoute
+  '/settings/terms': typeof SettingsTermsRoute
   '/students/$studentId': typeof StudentsStudentIdRoute
   '/students/enrol': typeof StudentsEnrolRoute
   '/students/groups': typeof StudentsGroupsRoute
   '/students/import': typeof StudentsImportRoute
   '/chat/': typeof ChatIndexRoute
   '/invoices/': typeof InvoicesIndexRoute
+  '/settings/': typeof SettingsIndexRoute
   '/students/': typeof StudentsIndexRoute
 }
 export interface FileRouteTypes {
@@ -221,19 +238,20 @@ export interface FileRouteTypes {
     | '/invoices/prepare'
     | '/invoices/renewals'
     | '/lessons/$lessonId'
+    | '/settings/terms'
     | '/students/$studentId'
     | '/students/enrol'
     | '/students/groups'
     | '/students/import'
     | '/chat/'
     | '/invoices/'
+    | '/settings/'
     | '/students/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/library'
     | '/news'
-    | '/settings'
     | '/api/health'
     | '/chat/$conversationId'
     | '/intake/$recordId'
@@ -241,12 +259,14 @@ export interface FileRouteTypes {
     | '/invoices/prepare'
     | '/invoices/renewals'
     | '/lessons/$lessonId'
+    | '/settings/terms'
     | '/students/$studentId'
     | '/students/enrol'
     | '/students/groups'
     | '/students/import'
     | '/chat'
     | '/invoices'
+    | '/settings'
     | '/students'
   id:
     | '__root__'
@@ -264,12 +284,14 @@ export interface FileRouteTypes {
     | '/invoices/prepare'
     | '/invoices/renewals'
     | '/lessons/$lessonId'
+    | '/settings/terms'
     | '/students/$studentId'
     | '/students/enrol'
     | '/students/groups'
     | '/students/import'
     | '/chat/'
     | '/invoices/'
+    | '/settings/'
     | '/students/'
   fileRoutesById: FileRoutesById
 }
@@ -279,7 +301,7 @@ export interface RootRouteChildren {
   InvoicesRoute: typeof InvoicesRouteWithChildren
   LibraryRoute: typeof LibraryRoute
   NewsRoute: typeof NewsRoute
-  SettingsRoute: typeof SettingsRoute
+  SettingsRoute: typeof SettingsRouteWithChildren
   StudentsRoute: typeof StudentsRouteWithChildren
   ApiHealthRoute: typeof ApiHealthRoute
   IntakeRecordIdRoute: typeof IntakeRecordIdRoute
@@ -400,6 +422,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LessonsLessonIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings/': {
+      id: '/settings/'
+      path: '/'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof SettingsIndexRouteImport
+      parentRoute: typeof SettingsRoute
+    }
+    '/settings/terms': {
+      id: '/settings/terms'
+      path: '/terms'
+      fullPath: '/settings/terms'
+      preLoaderRoute: typeof SettingsTermsRouteImport
+      parentRoute: typeof SettingsRoute
+    }
     '/students/': {
       id: '/students/'
       path: '/'
@@ -468,6 +504,20 @@ const InvoicesRouteWithChildren = InvoicesRoute._addFileChildren(
   InvoicesRouteChildren,
 )
 
+interface SettingsRouteChildren {
+  SettingsTermsRoute: typeof SettingsTermsRoute
+  SettingsIndexRoute: typeof SettingsIndexRoute
+}
+
+const SettingsRouteChildren: SettingsRouteChildren = {
+  SettingsTermsRoute: SettingsTermsRoute,
+  SettingsIndexRoute: SettingsIndexRoute,
+}
+
+const SettingsRouteWithChildren = SettingsRoute._addFileChildren(
+  SettingsRouteChildren,
+)
+
 interface StudentsRouteChildren {
   StudentsStudentIdRoute: typeof StudentsStudentIdRoute
   StudentsEnrolRoute: typeof StudentsEnrolRoute
@@ -494,7 +544,7 @@ const rootRouteChildren: RootRouteChildren = {
   InvoicesRoute: InvoicesRouteWithChildren,
   LibraryRoute: LibraryRoute,
   NewsRoute: NewsRoute,
-  SettingsRoute: SettingsRoute,
+  SettingsRoute: SettingsRouteWithChildren,
   StudentsRoute: StudentsRouteWithChildren,
   ApiHealthRoute: ApiHealthRoute,
   IntakeRecordIdRoute: IntakeRecordIdRoute,
@@ -503,13 +553,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

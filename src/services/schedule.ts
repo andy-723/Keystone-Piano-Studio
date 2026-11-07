@@ -40,7 +40,29 @@ export const getLessonOccurrence = (id: string) => respond(occurrence(id) ?? nul
 export const getDayLessons = (date: string): Promise<DayPlan> => respond(buildDay(date));
 export const getTodayLessons = (): Promise<DayPlan> => getDayLessons(PROTOTYPE_TODAY);
 export const getWeekLessons = (date: string) => respond(Array.from({ length: 6 }, (_, index) => buildDay(addDays(weekMonday(date), index))));
-export const getCredits = (studentId: string) => respond({ balance: balance(studentId), history: creditLedger.filter((entry) => entry.studentId === studentId).map((entry) => ({ ...entry })), requested: parentMakeUpRequests.has(studentId) });
+/** Extend expired on-time make-up credits when no slot was offered (S-04). Append-only. */
+export function extendExpiredMakeUpCredits(studentId: string, today = PROTOTYPE_TODAY) {
+  const extensions: typeof creditLedger = [];
+  for (const entry of creditLedger.filter((item) => item.studentId === studentId && item.amount === 1 && item.expiresAt && item.expiresAt < today && !item.slotOffered)) {
+    const already = creditLedger.some((item) => item.occurrenceId === entry.occurrenceId && item.reason.startsWith('Extended:'));
+    if (already) continue;
+    extensions.push({
+      id: crypto.randomUUID(),
+      studentId,
+      occurrenceId: entry.occurrenceId,
+      amount: 0,
+      date: today,
+      reason: 'Extended: no make-up time was available',
+      expiresAt: addDays(today, 90),
+    });
+  }
+  creditLedger.push(...extensions);
+  return extensions;
+}
+export const getCredits = (studentId: string) => {
+  extendExpiredMakeUpCredits(studentId);
+  return respond({ balance: balance(studentId), history: creditLedger.filter((entry) => entry.studentId === studentId).map((entry) => ({ ...entry })), requested: parentMakeUpRequests.has(studentId) });
+};
 export async function markAttendance(id: string, status: LessonStatus): Promise<LessonStatus> {
   const lesson = occurrence(id); if (!lesson) throw new Error('Lesson not found');
   if (lesson.deliveryMode === 'async' && ['cancelled_by_studio','cancelled_late'].includes(status)) throw new Error('A video lesson is not a cancellation.');

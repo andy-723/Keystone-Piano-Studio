@@ -12,7 +12,23 @@ import { respond } from "./_delay";
 import { PROTOTYPE_TODAY } from "@/lib/calendar";
 import { targetWeeks, termName } from "@/lib/onboarding";
 import { enrolmentYear, isAdultStudent } from "@/lib/enrolment";
+import { ensureTermsState, type TermsScope } from "@/mocks/terms";
+import { getPublishedStudioTerms } from "./terms";
 const store = (scope: ImportScope) => scope === "demo" ? { families, students } : newStudioRoster;
+
+async function requireTermsAcceptance(studentId: string, scope: TermsScope) {
+  const state = await ensureTermsState();
+  const published = await getPublishedStudioTerms(scope);
+  const target = published.pending ?? published.current;
+  if (!target) throw new Error("Accept the studio terms to finish enrolment.");
+  const accepted = state.acceptances.some(
+    (entry) =>
+      entry.documentKind === "studio_agreement" &&
+      entry.versionId === target.id &&
+      entry.studentIds.includes(studentId),
+  );
+  if (!accepted) throw new Error("Accept the studio terms to finish enrolment.");
+}
 function draftFor(id: string, scope: ImportScope) { const draft = enrolmentDrafts.find((entry) => entry.id === id && entry.scope === scope); if (!draft) throw new Error("Enrolment not found in this studio."); return draft; }
 export async function getEnrolments(scope: ImportScope = "demo") { const data = store(scope); return respond({ drafts: structuredClone(enrolmentDrafts.filter((entry) => entry.scope === scope)), students: structuredClone(data.students), families: structuredClone(data.families) }); }
 export async function startEnrolment(input: { firstName: string; lastName: string; birthYear: number; guardianName: string; guardianEmail: string; guardianMobile: string; studentEmail?: string; studentMobile?: string; language: "en" | "zh-CN"; existingStudentId?: string }, scope: ImportScope = "demo") {
@@ -45,12 +61,28 @@ export async function getParentIntakes() {
   const { children } = await getParentSession();
   return respond(enrolmentDrafts.filter((entry) => entry.scope === "demo" && children.some((child) => child.id === entry.studentId)).map((entry) => ({ id: entry.id, studentId: entry.studentId, studentName: children.find((child) => child.id === entry.studentId)?.firstName, intake: structuredClone(entry.intake), status: entry.status, practiceGoal: entry.practiceGoal, assignment: entry.assignment })));
 }
-function validateIntake(intake: Intake) { if (!["beginner", "transferring"].includes(intake.experience) || !["acoustic", "digital", "keyboard"].includes(intake.instrument) || !intake.goal.trim() || !Number.isInteger(intake.daysPerWeek) || intake.daysPerWeek < 1 || intake.daysPerWeek > 7 || !Number.isInteger(intake.minutesPerDay) || intake.minutesPerDay < 1 || intake.minutesPerDay > 240 || !intake.policiesRead) throw new Error("Complete the intake and acknowledge the studio policies."); }
+function validateIntake(intake: Intake) {
+  if (
+    !["beginner", "transferring"].includes(intake.experience) ||
+    !["acoustic", "digital", "keyboard"].includes(intake.instrument) ||
+    !intake.goal.trim() ||
+    !Number.isInteger(intake.daysPerWeek) ||
+    intake.daysPerWeek < 1 ||
+    intake.daysPerWeek > 7 ||
+    !Number.isInteger(intake.minutesPerDay) ||
+    intake.minutesPerDay < 1 ||
+    intake.minutesPerDay > 240
+  ) {
+    throw new Error("Complete the intake form.");
+  }
+}
 export async function submitParentIntake(id: string, intake: Intake) {
   const { children } = await getParentSession(); const draft = draftFor(id, "demo");
   if (!children.some((child) => child.id === draft.studentId)) throw new Error("Intake does not belong to this family.");
   if (draft.status !== "intake_sent") throw new Error("This intake has already been submitted.");
-  validateIntake(intake); await sendParentMessage({ kind: "text", body: "Intake form completed. / 入学表已填写。" });
+  validateIntake(intake);
+  await requireTermsAcceptance(draft.studentId, "demo");
+  await sendParentMessage({ kind: "text", body: "Intake form completed. / 入学表已填写。" });
   draft.intake = structuredClone(intake); draft.status = "intake_done"; draft.practiceGoal = intake.daysPerWeek * intake.minutesPerDay;
   const welcome = libraryState.demo.lessons.find((entry) => entry.audience === intake.experience && entry.isWelcomeDefault); if (welcome) draft.welcomeTemplate = structuredClone(welcome);
   return getParentIntakes();
@@ -59,10 +91,21 @@ export async function submitParentIntake(id: string, intake: Intake) {
 export async function submitNewStudioIntake(id: string, intake: Intake) {
   const draft = draftFor(id, "new-studio");
   if (draft.status !== "intake_sent") throw new Error("This intake has already been submitted.");
-  validateIntake(intake); draft.intake = structuredClone(intake); draft.status = "intake_done"; draft.practiceGoal = intake.daysPerWeek * intake.minutesPerDay;
+  validateIntake(intake);
+  await requireTermsAcceptance(draft.studentId, "new-studio");
+  draft.intake = structuredClone(intake); draft.status = "intake_done"; draft.practiceGoal = intake.daysPerWeek * intake.minutesPerDay;
   const welcome = libraryState["new-studio"].lessons.find((entry) => entry.audience === intake.experience && entry.isWelcomeDefault);
   if (welcome) draft.welcomeTemplate = structuredClone(welcome);
   return respond(structuredClone(draft));
+}
+
+export async function hasStudentTermsAcceptance(studentId: string, scope: ImportScope = "demo") {
+  try {
+    await requireTermsAcceptance(studentId, scope);
+    return true;
+  } catch {
+    return false;
+  }
 }
 export async function saveEnrolment(id: string, input: Pick<EnrolmentDraft, "step" | "diagnostic" | "startingStages" | "welcomeChecks" | "practiceGoal" | "templateId" | "targetTerm" | "gradeHours" | "lessonMinutes" | "strengths" | "workOn">, scope: ImportScope = "demo") {
   const draft = draftFor(id, scope); if (draft.status === "active") throw new Error("This student is already active.");
