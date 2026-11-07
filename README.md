@@ -21,6 +21,25 @@ bun run build
 bun run lint
 ```
 
+Copy `.env.example` for local overrides. `ONBOARDING_BACKEND` defaults to `mock`, so previews and tests work without Supabase or Resend keys.
+
+## Family onboarding (first live backend slice)
+
+When you switch `ONBOARDING_BACKEND=supabase`, set the variables in `.env.example` (never put `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, `CRON_SECRET`, or `TURNSTILE_SECRET_KEY` in `VITE_*`).
+
+### Supabase Auth email via Resend (manual dashboard steps)
+
+Do **not** automate this — configure in the Supabase dashboard:
+
+1. **Authentication → SMTP**: host `smtp.resend.com`, port `465`, user `resend`, password = your `RESEND_API_KEY`, sender = `EMAIL_FROM`.
+2. Magic-link email templates in English and Chinese.
+3. **Site URL** = `APP_URL`, redirect URL = `APP_URL/auth/callback`.
+4. Enable Supabase Auth captcha protection with the same Cloudflare Turnstile secret used by the app (`TURNSTILE_SECRET_KEY` / `VITE_TURNSTILE_SITE_KEY`).
+
+Project region: Sydney (`ap-southeast-2`). Apply `supabase/migrations/0001_family_onboarding.sql` then `supabase/seed.sql`.
+
+Invite reminders run daily via Vercel Cron (`vercel.json`) at 09:00 Sydney against `/api/cron/invite-reminders` with `Authorization: Bearer CRON_SECRET`.
+
 ## Deploy
 
 `main` deploys to Vercel (Nitro preset `vercel`). Pull requests get Vercel preview deployments.

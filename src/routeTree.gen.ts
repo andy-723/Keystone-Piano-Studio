@@ -17,6 +17,7 @@ import { Route as NewsRouteImport } from './routes/news'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as StudentsRouteImport } from './routes/students'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as ChatIndexRouteImport } from './routes/chat.index'
 import { Route as ChatConversationIdRouteImport } from './routes/chat.$conversationId'
 import { Route as IntakeRecordIdRouteImport } from './routes/intake.$recordId'
@@ -24,14 +25,17 @@ import { Route as InvoicesIndexRouteImport } from './routes/invoices.index'
 import { Route as InvoicesInvoiceIdRouteImport } from './routes/invoices.$invoiceId'
 import { Route as InvoicesPrepareRouteImport } from './routes/invoices.prepare'
 import { Route as InvoicesRenewalsRouteImport } from './routes/invoices.renewals'
+import { Route as JoinTokenRouteImport } from './routes/join.$token'
 import { Route as LessonsLessonIdRouteImport } from './routes/lessons.$lessonId'
 import { Route as SettingsIndexRouteImport } from './routes/settings.index'
+import { Route as SettingsEmailPreviewRouteImport } from './routes/settings.email-preview'
 import { Route as SettingsTermsRouteImport } from './routes/settings.terms'
 import { Route as StudentsIndexRouteImport } from './routes/students.index'
 import { Route as StudentsStudentIdRouteImport } from './routes/students.$studentId'
 import { Route as StudentsEnrolRouteImport } from './routes/students.enrol'
 import { Route as StudentsGroupsRouteImport } from './routes/students.groups'
 import { Route as StudentsImportRouteImport } from './routes/students.import'
+import { Route as ApiCronInviteRemindersRouteImport } from './routes/api/cron/invite-reminders'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -73,6 +77,11 @@ const ApiHealthRoute = ApiHealthRouteImport.update({
   path: '/api/health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ChatIndexRoute = ChatIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -108,6 +117,11 @@ const InvoicesRenewalsRoute = InvoicesRenewalsRouteImport.update({
   path: '/renewals',
   getParentRoute: () => InvoicesRoute,
 } as any)
+const JoinTokenRoute = JoinTokenRouteImport.update({
+  id: '/join/$token',
+  path: '/join/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LessonsLessonIdRoute = LessonsLessonIdRouteImport.update({
   id: '/lessons/$lessonId',
   path: '/lessons/$lessonId',
@@ -116,6 +130,11 @@ const LessonsLessonIdRoute = LessonsLessonIdRouteImport.update({
 const SettingsIndexRoute = SettingsIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => SettingsRoute,
+} as any)
+const SettingsEmailPreviewRoute = SettingsEmailPreviewRouteImport.update({
+  id: '/email-preview',
+  path: '/email-preview',
   getParentRoute: () => SettingsRoute,
 } as any)
 const SettingsTermsRoute = SettingsTermsRouteImport.update({
@@ -148,6 +167,11 @@ const StudentsImportRoute = StudentsImportRouteImport.update({
   path: '/import',
   getParentRoute: () => StudentsRoute,
 } as any)
+const ApiCronInviteRemindersRoute = ApiCronInviteRemindersRouteImport.update({
+  id: '/api/cron/invite-reminders',
+  path: '/api/cron/invite-reminders',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -158,12 +182,15 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRouteWithChildren
   '/students': typeof StudentsRouteWithChildren
   '/api/health': typeof ApiHealthRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/chat/$conversationId': typeof ChatConversationIdRoute
   '/intake/$recordId': typeof IntakeRecordIdRoute
   '/invoices/$invoiceId': typeof InvoicesInvoiceIdRoute
   '/invoices/prepare': typeof InvoicesPrepareRoute
   '/invoices/renewals': typeof InvoicesRenewalsRoute
+  '/join/$token': typeof JoinTokenRoute
   '/lessons/$lessonId': typeof LessonsLessonIdRoute
+  '/settings/email-preview': typeof SettingsEmailPreviewRoute
   '/settings/terms': typeof SettingsTermsRoute
   '/students/$studentId': typeof StudentsStudentIdRoute
   '/students/enrol': typeof StudentsEnrolRoute
@@ -173,18 +200,22 @@ export interface FileRoutesByFullPath {
   '/invoices/': typeof InvoicesIndexRoute
   '/settings/': typeof SettingsIndexRoute
   '/students/': typeof StudentsIndexRoute
+  '/api/cron/invite-reminders': typeof ApiCronInviteRemindersRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/library': typeof LibraryRoute
   '/news': typeof NewsRoute
   '/api/health': typeof ApiHealthRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/chat/$conversationId': typeof ChatConversationIdRoute
   '/intake/$recordId': typeof IntakeRecordIdRoute
   '/invoices/$invoiceId': typeof InvoicesInvoiceIdRoute
   '/invoices/prepare': typeof InvoicesPrepareRoute
   '/invoices/renewals': typeof InvoicesRenewalsRoute
+  '/join/$token': typeof JoinTokenRoute
   '/lessons/$lessonId': typeof LessonsLessonIdRoute
+  '/settings/email-preview': typeof SettingsEmailPreviewRoute
   '/settings/terms': typeof SettingsTermsRoute
   '/students/$studentId': typeof StudentsStudentIdRoute
   '/students/enrol': typeof StudentsEnrolRoute
@@ -194,6 +225,7 @@ export interface FileRoutesByTo {
   '/invoices': typeof InvoicesIndexRoute
   '/settings': typeof SettingsIndexRoute
   '/students': typeof StudentsIndexRoute
+  '/api/cron/invite-reminders': typeof ApiCronInviteRemindersRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -205,12 +237,15 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRouteWithChildren
   '/students': typeof StudentsRouteWithChildren
   '/api/health': typeof ApiHealthRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/chat/$conversationId': typeof ChatConversationIdRoute
   '/intake/$recordId': typeof IntakeRecordIdRoute
   '/invoices/$invoiceId': typeof InvoicesInvoiceIdRoute
   '/invoices/prepare': typeof InvoicesPrepareRoute
   '/invoices/renewals': typeof InvoicesRenewalsRoute
+  '/join/$token': typeof JoinTokenRoute
   '/lessons/$lessonId': typeof LessonsLessonIdRoute
+  '/settings/email-preview': typeof SettingsEmailPreviewRoute
   '/settings/terms': typeof SettingsTermsRoute
   '/students/$studentId': typeof StudentsStudentIdRoute
   '/students/enrol': typeof StudentsEnrolRoute
@@ -220,6 +255,7 @@ export interface FileRoutesById {
   '/invoices/': typeof InvoicesIndexRoute
   '/settings/': typeof SettingsIndexRoute
   '/students/': typeof StudentsIndexRoute
+  '/api/cron/invite-reminders': typeof ApiCronInviteRemindersRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -232,12 +268,15 @@ export interface FileRouteTypes {
     | '/settings'
     | '/students'
     | '/api/health'
+    | '/auth/callback'
     | '/chat/$conversationId'
     | '/intake/$recordId'
     | '/invoices/$invoiceId'
     | '/invoices/prepare'
     | '/invoices/renewals'
+    | '/join/$token'
     | '/lessons/$lessonId'
+    | '/settings/email-preview'
     | '/settings/terms'
     | '/students/$studentId'
     | '/students/enrol'
@@ -247,18 +286,22 @@ export interface FileRouteTypes {
     | '/invoices/'
     | '/settings/'
     | '/students/'
+    | '/api/cron/invite-reminders'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/library'
     | '/news'
     | '/api/health'
+    | '/auth/callback'
     | '/chat/$conversationId'
     | '/intake/$recordId'
     | '/invoices/$invoiceId'
     | '/invoices/prepare'
     | '/invoices/renewals'
+    | '/join/$token'
     | '/lessons/$lessonId'
+    | '/settings/email-preview'
     | '/settings/terms'
     | '/students/$studentId'
     | '/students/enrol'
@@ -268,6 +311,7 @@ export interface FileRouteTypes {
     | '/invoices'
     | '/settings'
     | '/students'
+    | '/api/cron/invite-reminders'
   id:
     | '__root__'
     | '/'
@@ -278,12 +322,15 @@ export interface FileRouteTypes {
     | '/settings'
     | '/students'
     | '/api/health'
+    | '/auth/callback'
     | '/chat/$conversationId'
     | '/intake/$recordId'
     | '/invoices/$invoiceId'
     | '/invoices/prepare'
     | '/invoices/renewals'
+    | '/join/$token'
     | '/lessons/$lessonId'
+    | '/settings/email-preview'
     | '/settings/terms'
     | '/students/$studentId'
     | '/students/enrol'
@@ -293,6 +340,7 @@ export interface FileRouteTypes {
     | '/invoices/'
     | '/settings/'
     | '/students/'
+    | '/api/cron/invite-reminders'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -304,8 +352,11 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRouteWithChildren
   StudentsRoute: typeof StudentsRouteWithChildren
   ApiHealthRoute: typeof ApiHealthRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
   IntakeRecordIdRoute: typeof IntakeRecordIdRoute
+  JoinTokenRoute: typeof JoinTokenRoute
   LessonsLessonIdRoute: typeof LessonsLessonIdRoute
+  ApiCronInviteRemindersRoute: typeof ApiCronInviteRemindersRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -366,6 +417,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/chat/': {
       id: '/chat/'
       path: '/'
@@ -415,6 +473,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InvoicesRenewalsRouteImport
       parentRoute: typeof InvoicesRoute
     }
+    '/join/$token': {
+      id: '/join/$token'
+      path: '/join/$token'
+      fullPath: '/join/$token'
+      preLoaderRoute: typeof JoinTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lessons/$lessonId': {
       id: '/lessons/$lessonId'
       path: '/lessons/$lessonId'
@@ -427,6 +492,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/settings/'
       preLoaderRoute: typeof SettingsIndexRouteImport
+      parentRoute: typeof SettingsRoute
+    }
+    '/settings/email-preview': {
+      id: '/settings/email-preview'
+      path: '/email-preview'
+      fullPath: '/settings/email-preview'
+      preLoaderRoute: typeof SettingsEmailPreviewRouteImport
       parentRoute: typeof SettingsRoute
     }
     '/settings/terms': {
@@ -471,6 +543,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudentsImportRouteImport
       parentRoute: typeof StudentsRoute
     }
+    '/api/cron/invite-reminders': {
+      id: '/api/cron/invite-reminders'
+      path: '/api/cron/invite-reminders'
+      fullPath: '/api/cron/invite-reminders'
+      preLoaderRoute: typeof ApiCronInviteRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -505,11 +584,13 @@ const InvoicesRouteWithChildren = InvoicesRoute._addFileChildren(
 )
 
 interface SettingsRouteChildren {
+  SettingsEmailPreviewRoute: typeof SettingsEmailPreviewRoute
   SettingsTermsRoute: typeof SettingsTermsRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
 }
 
 const SettingsRouteChildren: SettingsRouteChildren = {
+  SettingsEmailPreviewRoute: SettingsEmailPreviewRoute,
   SettingsTermsRoute: SettingsTermsRoute,
   SettingsIndexRoute: SettingsIndexRoute,
 }
@@ -547,9 +628,22 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRouteWithChildren,
   StudentsRoute: StudentsRouteWithChildren,
   ApiHealthRoute: ApiHealthRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
   IntakeRecordIdRoute: IntakeRecordIdRoute,
+  JoinTokenRoute: JoinTokenRoute,
   LessonsLessonIdRoute: LessonsLessonIdRoute,
+  ApiCronInviteRemindersRoute: ApiCronInviteRemindersRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

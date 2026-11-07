@@ -14,6 +14,7 @@ import { targetWeeks, termName } from "@/lib/onboarding";
 import { enrolmentYear, isAdultStudent } from "@/lib/enrolment";
 import { ensureTermsState, type TermsScope } from "@/mocks/terms";
 import { getPublishedStudioTerms } from "./terms";
+import { createInvitation } from "./invitations";
 const store = (scope: ImportScope) => scope === "demo" ? { families, students } : newStudioRoster;
 
 async function requireTermsAcceptance(studentId: string, scope: TermsScope) {
@@ -49,7 +50,17 @@ export async function startEnrolment(input: { firstName: string; lastName: strin
     student = { id: crypto.randomUUID(), familyId: family.id, firstName: input.firstName.trim(), lastName: input.lastName.trim(), birthYear: input.birthYear }; data.students.push(student);
   }
   const draft: EnrolmentDraft = { id: crypto.randomUUID(), studentId: student.id, scope, intake: null, diagnostic: {}, startingStages: {}, welcomeChecks: [], practiceGoal: 75, status: "intake_sent", step: 1, templateId: "opus-beginner", targetTerm: "2027-T3", gradeHours: 40, lessonMinutes: 30, strengths: "", workOn: "" };
-  enrolmentDrafts.push(draft); await postFamily(draft, `Please complete ${student.firstName}’s intake form in your family portal. / 请在家庭页面填写入学表。\n/intake/${draft.id}`, { intakeRecordId: draft.id });
+  enrolmentDrafts.push(draft);
+  if (scope === "demo") {
+    await createInvitation({
+      familyId: student.familyId,
+      studentIds: [student.id],
+      enrolmentDraftIds: [draft.id],
+      language: input.language,
+    });
+  } else {
+    await postFamily(draft, `Please complete ${student.firstName}’s intake form in your family portal. / 请在家庭页面填写入学表。\n/intake/${draft.id}`, { intakeRecordId: draft.id });
+  }
   return respond(structuredClone(draft));
 }
 async function postFamily(draft: EnrolmentDraft, body: string, metadata: Partial<Message> = {}) {
