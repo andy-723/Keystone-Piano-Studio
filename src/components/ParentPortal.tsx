@@ -11,7 +11,8 @@ import { ParentProgress } from "@/components/ParentProgress";
 import { ParentInvoices } from "@/components/ParentInvoices";
 import { parentSessionQuery } from "@/lib/parent-queries";
 import { ReacceptanceCard } from "@/components/terms/ReacceptanceCard";
-import logoWordmark from "@/assets/keystone-logo.jpg";
+import { BrandLogo } from "@/components/BrandLogo";
+import { teacherProfileQuery } from "@/lib/community-queries";
 
 export function ParentPortal() {
   const { data } = useSuspenseQuery(parentSessionQuery);
@@ -20,6 +21,7 @@ export function ParentPortal() {
 
 function ParentViews() {
   const { t, lang, setLang } = useParentLanguage();
+  const { data: profile } = useSuspenseQuery(teacherProfileQuery());
   const [view, setView] = useState<"news" | "home" | "chat" | "progress" | "invoices">("news");
   const [quote, setQuote] = useState('');
   const [deferReaccept, setDeferReaccept] = useState(false);
@@ -30,8 +32,9 @@ function ParentViews() {
     <div className="mx-auto max-w-xl pb-24">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
         <div className="min-w-0">
-          <img src={logoWordmark} alt="Keystone Music HQ" className="h-14 w-auto max-w-[18rem] rounded-md object-contain" style={{ backgroundColor: "#f5f1e6" }} />
-          <p className="mt-2 font-display text-lg font-semibold">{t("family")}</p>
+          <BrandLogo variant="horizontal" alt="Keystone Music HQ" />
+          <h1 className="mt-3 font-display text-2xl font-semibold">{profile.studioName}</h1>
+          <p className="mt-1 text-base text-muted-foreground">{t("family")}</p>
         </div>
         <div role="group" aria-label={t("language")} className="flex gap-1">
           <Button variant={lang === "en" ? "secondary" : "ghost"} aria-pressed={lang === "en"} onClick={() => setLang("en")}>EN</Button>

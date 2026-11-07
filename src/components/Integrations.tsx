@@ -13,7 +13,7 @@ import { integrationsQuery } from "@/lib/integration-queries";
 import { connectStripe, connectXero, disconnectStripe, disconnectXero } from "@/services/integrations";
 import type { IntegrationScope } from "@/mocks/integrations";
 
-export function Integrations({ scope = "demo", studioName = "Keystone Music HQ", stripeOnly = false }: { scope?: IntegrationScope; studioName?: string; stripeOnly?: boolean }) {
+export function Integrations({ scope = "demo", studioName = "", stripeOnly = false }: { scope?: IntegrationScope; studioName?: string; stripeOnly?: boolean }) {
   const { data } = useSuspenseQuery(integrationsQuery(scope));
   const { data: subscription } = useSuspenseQuery(planBillingQuery(scope));
   const [proOpen, setProOpen] = useState(false);

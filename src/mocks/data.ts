@@ -7,7 +7,7 @@ import { PROTOTYPE_TODAY, addDays, melbourneIso } from "@/lib/calendar";
 // All names are made up.
 export const studio: Studio = {
   id: "studio-1",
-  name: "Keystone Music HQ",
+  name: "Clarke Piano Studio",
   abn: "51 824 753 556",
   gstRegistered: true,
   timezone: "Australia/Melbourne",

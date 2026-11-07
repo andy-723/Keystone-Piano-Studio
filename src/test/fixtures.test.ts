@@ -4,8 +4,8 @@ import { addDays, PROTOTYPE_TODAY } from "@/lib/calendar";
 import { getStudent, getStudents } from "@/services/roster";
 
 describe("Keystone Music HQ fixtures", () => {
-  it("provides Keystone Music HQ, GST-registered, and one teacher", () => {
-    expect(studio.name).toBe("Keystone Music HQ");
+  it("provides Clarke Piano Studio, GST-registered, and one teacher", () => {
+    expect(studio.name).toBe("Clarke Piano Studio");
     expect(studio.gstRegistered).toBe(true);
     expect(teacher.name).toBe("Ms Margaret Clarke");
   });
