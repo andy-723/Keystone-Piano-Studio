@@ -1,24 +1,26 @@
-# Build Something Great
+# Keystone Music HQ
 
-lets start building this
-
-This project was built with [Lovable](https://lovable.dev).
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/bf1b19bf-b52a-46d7-b089-6e44e33402d8).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+Studio operations prototype for teachers and families.
 
 ## Development
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+Requires [Bun](https://bun.sh).
 
 ```sh
 git clone <this-repository-url>
 cd <repository-name>
-npm i
-npm run dev
+bun install
+bun run dev
 ```
+
+Other scripts:
+
+```sh
+bun run test
+bun run build
+bun run lint
+```
+
+## Deploy
+
+`main` deploys to Vercel (Nitro preset `vercel`). Pull requests get Vercel preview deployments.

@@ -11,7 +11,6 @@ import {
 import { Suspense, useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AppSettingsProvider, useAppSettings } from "@/lib/app-settings";
 import { AppShell } from "@/components/AppShell";
 import { ParentPortal } from "@/components/ParentPortal";
@@ -47,7 +46,7 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
+    console.error(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
 
   return (
