@@ -1,4 +1,5 @@
 import { Suspense, useState } from "react";
+import { AppShell } from "@/components/AppShell";
 import { EnrolStudent } from "@/components/EnrolStudent";
 import { Library } from "@/components/Library";
 import { Integrations } from "@/components/Integrations";
@@ -6,6 +7,7 @@ import { ImportStudents } from "@/components/ImportStudents";
 import { NewStudioStudents } from "@/components/NewStudioStudents";
 import { StudioTermsOnboarding } from "@/components/StudioTermsOnboarding";
 import { StudioTermsSettings } from "@/components/StudioTermsSettings";
+import { BrandLogo } from "@/components/BrandLogo";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, BookOpen, Check, Clock, FileSpreadsheet, ListChecks, Plus, Send, Trash2, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,11 +19,12 @@ import { PROTOTYPE_TODAY } from "@/lib/calendar";
 import { STUDIO_STATES, type SetupStep, type SetupSession } from "@/mocks/setup";
 import { completeSetup, resumeSetup, saveSetupStep, type SetupStepInput } from "@/services/setup";
 import { getStudioTermsDraft } from "@/services/terms";
-import { BrandLogo } from "@/components/BrandLogo";
+import type { Studio } from "@/mocks/types";
 
 const fieldClass = "mt-2 h-14 min-h-14 text-lg md:text-lg";
 const titles = ["Tell us about your studio", "Are you registered for GST?", "Your lessons and prices", "Your cancellation policies", "How would you like to add students?"];
-export function NewTeacherSetup() {
+
+export function NewTeacherSetup({ shellStudio }: { shellStudio: Studio }) {
   const { data } = useSuspenseQuery(setupQuery);
   const termsDraft = useQuery({ queryKey: ["terms-draft", "new-studio"], queryFn: () => getStudioTermsDraft("new-studio"), enabled: data.completed || data.paused });
   const [enrolling, setEnrolling] = useState(false);
@@ -32,10 +35,8 @@ export function NewTeacherSetup() {
   const client = useQueryClient();
   const refresh = () => client.invalidateQueries({ queryKey: ["new-studio"] });
   const resume = useMutation({ mutationFn: (step: SetupStep) => resumeSetup(step), onSuccess: refresh });
-  if (enrolling) return <Suspense fallback={<p>Opening enrolment…</p>}><EnrolStudent scope="new-studio" onClose={()=>setEnrolling(false)}/></Suspense>;
-  if (libraryOpen) return <><Button variant="ghost" onClick={()=>setLibraryOpen(false)}><ArrowLeft aria-hidden/>Back to your studio</Button><Suspense fallback={<p>Opening library…</p>}><Library scope="new-studio"/></Suspense></>;
-  if (paymentsOpen) return <div className="mx-auto max-w-3xl"><Button variant="ghost" onClick={() => setPaymentsOpen(false)}><ArrowLeft aria-hidden />Back to your studio</Button><Suspense fallback={<p>Opening payments…</p>}><Integrations scope="new-studio" studioName={data.studio.name} stripeOnly /></Suspense></div>;
-  if (importing) return <Suspense fallback={<p>Opening student import…</p>}><ImportStudents scope="new-studio" onClose={() => setImporting(false)} /></Suspense>;
+
+  // Focus-mode onboarding (no app shell), matching family /join.
   if (data.completed && termsDraft.data?.needsOnboarding) {
     return (
       <StudioTermsOnboarding
@@ -47,6 +48,12 @@ export function NewTeacherSetup() {
       />
     );
   }
+
+  const body = (() => {
+  if (enrolling) return <Suspense fallback={<p>Opening enrolment…</p>}><EnrolStudent scope="new-studio" onClose={()=>setEnrolling(false)}/></Suspense>;
+  if (libraryOpen) return <><Button variant="ghost" onClick={()=>setLibraryOpen(false)}><ArrowLeft aria-hidden/>Back to your studio</Button><Suspense fallback={<p>Opening library…</p>}><Library scope="new-studio"/></Suspense></>;
+  if (paymentsOpen) return <div className="mx-auto max-w-3xl"><Button variant="ghost" onClick={() => setPaymentsOpen(false)}><ArrowLeft aria-hidden />Back to your studio</Button><Suspense fallback={<p>Opening payments…</p>}><Integrations scope="new-studio" studioName={data.studio.name} stripeOnly /></Suspense></div>;
+  if (importing) return <Suspense fallback={<p>Opening student import…</p>}><ImportStudents scope="new-studio" onClose={() => setImporting(false)} /></Suspense>;
   if (termsOpen) {
     return (
       <div>
@@ -57,8 +64,10 @@ export function NewTeacherSetup() {
   }
   if (data.paused || data.completed) return <div className="mx-auto max-w-3xl"><p className="text-base text-muted-foreground">{data.studio.teacherName ? `Hello, ${data.studio.teacherName}` : "Your new studio"}</p><h1 className="mt-3 text-3xl font-semibold">{formatShortDate(PROTOTYPE_TODAY)}</h1><div className="my-6 border-y border-border py-6"><p className="flex items-center gap-3 text-xl"><BookOpen aria-hidden />{data.lessonCount ? `${data.lessonCount} weekly lesson times saved` : "No lessons yet"}</p></div><section className="rounded-md border border-border bg-card p-5 md:p-7" aria-label="Studio checklist"><h2 className="flex items-center gap-3 text-2xl font-semibold"><ListChecks aria-hidden />A fresh start</h2>{!data.completed && <Button className="mt-5 w-full whitespace-normal" disabled={resume.isPending} onClick={() => resume.mutate(data.step)}>Continue setup · Step {data.step} of 5 <ArrowRight aria-hidden /></Button>}<div className="mt-5 divide-y divide-border">{[{ title: "Add students", icon: UserPlus, step: 5 as const }, { title: "Set lesson times", icon: Clock }, { title: "Connect payments", icon: Check }, { title: "Invite families", icon: Send }].map(({ title, icon: Icon, step }) => <div key={title} className="flex flex-wrap items-center justify-between gap-3 py-4"><span className="flex items-center gap-3 text-lg"><Icon aria-hidden className="size-5" />{title}</span>{step ? <Button variant="outline" onClick={() => setImporting(true)} disabled={resume.isPending}>Import students <ArrowRight aria-hidden /></Button> : title === "Connect payments" ? <Button variant="outline" onClick={() => setPaymentsOpen(true)}>Connect payments <ArrowRight aria-hidden /></Button> : <span className="text-base text-muted-foreground">{title === "Connect payments" ? "Coming soon" : data.studentCount ? title === "Set lesson times" ? "Saved from import" : "See family chat below" : "Add students first"}</span>}</div>)}</div>{data.completed && <><Button className="mt-5 w-full" variant="outline" onClick={() => setTermsOpen(true)}>Studio terms &amp; publish <ArrowRight aria-hidden /></Button><Button variant="link" className="mt-3 min-h-12 px-0 text-base" onClick={() => resume.mutate(1)}>Review studio setup</Button></>}</section><Suspense fallback={<p>Opening students…</p>}><div className="mt-5 flex flex-wrap gap-3"><Button onClick={()=>setEnrolling(true)}><UserPlus aria-hidden/>Enrol student</Button><Button variant="outline" onClick={()=>setLibraryOpen(true)}><BookOpen aria-hidden/>Library</Button></div><NewStudioStudents onImport={() => setImporting(true)} /></Suspense><section className="mt-7 border-y border-border py-5"><h2 className="text-xl font-semibold">{data.studio.state} school terms · 2027</h2>{data.calendar.terms.map((term) => <p key={term.name} className="mt-3 text-base">{term.name} · {formatShortDate(term.start)} – {formatShortDate(term.end)}</p>)}{data.calendar.note && <p className="mt-3 text-base text-muted-foreground">{data.calendar.note}</p>}</section></div>;
   return <SetupWizard key={data.step} data={data} />;
-}
-function SetupWizard({ data }: { data: SetupSession }) {
+  })();
+
+  return <AppShell studio={shellStudio}>{body}</AppShell>;
+}function SetupWizard({ data }: { data: SetupSession }) {
   const [form, setForm] = useState(data);
   const [error, setError] = useState("");
   const [studentNotice, setStudentNotice] = useState(false);

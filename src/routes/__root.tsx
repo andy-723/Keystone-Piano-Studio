@@ -166,5 +166,5 @@ function RoleGate() {
 
 function NewTeacherGate() {
   const { data } = useSuspenseQuery(setupQuery);
-  return <AppShell studio={{ id: "new-studio", name: data.studio.name || "Keystone Music HQ · New studio", gstRegistered: data.tax.registration === "yes", abn: data.tax.abn, timezone: "Australia/Melbourne" }}><NewTeacherSetup /></AppShell>;
+  return <NewTeacherSetup shellStudio={{ id: "new-studio", name: data.studio.name || "Keystone Music HQ · New studio", gstRegistered: data.tax.registration === "yes", abn: data.tax.abn, timezone: "Australia/Melbourne" }} />;
 }
