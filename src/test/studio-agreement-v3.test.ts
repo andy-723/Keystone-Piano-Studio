@@ -76,6 +76,7 @@ describe("studio agreement AU v3", () => {
       asyncPro: true,
       inHome: true,
       paymentDiscount: false,
+      onlinePayments: true,
     });
     expect(full.missingRequired).toEqual([]);
     expect(full.markdown).toContain("Margaret Clarke Piano Studio");
@@ -83,11 +84,14 @@ describe("studio agreement AU v3", () => {
     expect(full.markdown).toContain("Zoom");
     expect(full.markdown).toContain("VIC Working with Children Check (current)");
     expect(full.markdown).toContain("Stripe");
+    expect(full.markdown).toContain("1a. Online payments");
     expect(full.markdown).not.toContain("WWC-DEMO");
     expect(full.markdown).not.toMatch(/\{\{[^}]+\}\}/);
     expect(full.markdown).toContain("4.1 Online lessons");
     const withoutOnline = renderTerms(LEGAL_TEMPLATE_AU, values, { online: false, premises: true });
     expect(withoutOnline.markdown).not.toContain("4.1 Online lessons");
+    const withoutOnlinePay = renderTerms(LEGAL_TEMPLATE_AU, values, { onlinePayments: false });
+    expect(withoutOnlinePay.markdown).not.toContain("1a. Online payments");
   });
 
   it("persists Typeform onboarding answers into the shared terms draft", async () => {

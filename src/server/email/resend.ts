@@ -16,6 +16,18 @@ export function createResendEmailProvider(): EmailProvider {
         text: input.text,
         ...(input.replyTo ? { replyTo: input.replyTo } : {}),
         ...(input.tags ? { tags: input.tags } : {}),
+        ...(input.attachments?.length
+          ? {
+              attachments: input.attachments.map((attachment) => ({
+                filename: attachment.filename,
+                content:
+                  typeof attachment.content === "string"
+                    ? attachment.content
+                    : Buffer.from(attachment.content),
+                ...(attachment.contentType ? { contentType: attachment.contentType } : {}),
+              })),
+            }
+          : {}),
       });
       if (result.error) throw new Error(result.error.message);
       return { id: result.data?.id ?? crypto.randomUUID() } satisfies SendEmailResult;

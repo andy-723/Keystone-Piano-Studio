@@ -4,6 +4,7 @@ import { LEGAL_TEMPLATE_AU, type TermsOptionalSwitch } from "@/mocks/legal-templ
 import { FAMILY_APP_TERMS_EFFECTIVE_AT, FAMILY_APP_TERMS_MARKDOWN, FAMILY_APP_TERMS_VERSION, KEYSTONE_ENTITY, KEYSTONE_PRIVACY_EMAIL } from "@/mocks/keystone-app-terms";
 import { KEYSTONE_STORAGE_STATEMENT, OVERSEAS_COUNTRIES_LABEL } from "@/mocks/keystone-suppliers";
 import { families, studio, students, teacher } from "@/mocks/data";
+import { integrationState } from "@/mocks/integrations";
 import type { ImportScope } from "@/mocks/roster-import";
 import type { ChildSafetyCheck, StudioBillingSettings, StudioEntityType, StudioLessonPolicies, StudioServiceSwitches } from "@/mocks/types";
 
@@ -140,6 +141,7 @@ export function defaultStudioSwitches(services?: StudioServiceSwitches, plan?: s
     exams: services?.exams ?? false,
     premises: services?.premises ?? false,
     paymentDiscount: studio.billing?.paymentDiscount.enabled ?? false,
+    onlinePayments: integrationState.demo.stripe.status === "connected",
     additional: Boolean(studio.additionalTerms?.trim()),
   };
 }

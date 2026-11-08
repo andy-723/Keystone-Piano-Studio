@@ -11,6 +11,7 @@ export type TermsOptionalSwitch =
   | "exams"
   | "premises"
   | "paymentDiscount"
+  | "onlinePayments"
   | "additional";
 
 export interface LegalClause {
@@ -308,7 +309,16 @@ export const LEGAL_TEMPLATE_AU: LegalClause[] = [
     part: 3,
     heading: "1. What we collect",
     body:
-      "We collect only what we need to teach and run the studio:\n\n- **Contact and identity:** the student's name, birth year and school year level; parent or guardian names, address, email and mobile; emergency contacts.\n- **Learning records:** lesson notes, practice logs, assignments, progress and exam results.\n- **Health and learning needs** (only if you choose to tell us): medical conditions, allergies, physical conditions, or learning or developmental needs that help us teach safely and well. This is sensitive information, and we collect it only with your consent.\n- **Recordings and photos:** audio, video and photos made in or for lessons, for teaching feedback, exam entries, or the student's profile. Public promotional use needs your separate consent.\n- **Payment records:** invoices and payments. Card details are handled by our payment provider, {{privacy.paymentProvider}}. We never see or store full card numbers.\n\nMost information comes from you. If you give us information about another person, such as an emergency contact, please tell them you have done so and point them to this policy.",
+      "We collect only what we need to teach and run the studio:\n\n- **Contact and identity:** the student's name, birth year and school year level; parent or guardian names, address, email and mobile; emergency contacts.\n- **Learning records:** lesson notes, practice logs, assignments, progress and exam results.\n- **Health and learning needs** (only if you choose to tell us): medical conditions, allergies, physical conditions, or learning or developmental needs that help us teach safely and well. This is sensitive information, and we collect it only with your consent.\n- **Recordings and photos:** audio, video and photos made in or for lessons, for teaching feedback, exam entries, or the student's profile. Public promotional use needs your separate consent.\n- **Payment records:** invoices and payments.\n\nMost information comes from you. If you give us information about another person, such as an emergency contact, please tell them you have done so and point them to this policy.",
+    material: true,
+  },
+  {
+    id: "p3-online-payments",
+    part: 3,
+    heading: "1a. Online payments",
+    body:
+      "When you pay online, card and bank account details are handled by our payment provider, {{privacy.paymentProvider}}. We never see or store full card or bank account numbers.",
+    optional: "onlinePayments",
     material: true,
   },
   {

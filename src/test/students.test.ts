@@ -36,7 +36,7 @@ describe("Teacher Students", () => {
   it("profiles scope invoices and guardians to the student family and use weighted course readiness", async () => {
     const profile = await getStudentProfile("stu-1");
     expect(profile?.family?.guardians[0]?.name).toBe("Wei Chen");
-    expect(profile?.invoices.map((invoice) => invoice.id)).toEqual(["inv-1"]);
+    expect(profile?.invoices.map((invoice) => invoice.id)).toEqual(["inv-1", "inv-exam-draft"]);
     expect(profile?.readiness).toBe(53);
     expect(await getStudentProfile("missing")).toBeNull();
   });

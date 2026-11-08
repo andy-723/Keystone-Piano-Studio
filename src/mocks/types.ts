@@ -90,13 +90,69 @@ export interface LessonOccurrence {
   status: LessonStatus;
 }
 
-export type InvoiceStatus = "draft" | "sent" | "partially_paid" | "paid" | "overdue" | "void";
-export interface InvoiceLine { description: string; qty: number; unitCents: number; taxCents: number; lineTotalCents: number }
+export type InvoiceStatus = "draft" | "sent" | "partially_paid" | "paid" | "void";
+export type InvoiceKind = "standard" | "late_fee";
+export type InvoiceTaxCode = "taxable" | "gst_free";
+export type PaymentMethod =
+  | "bank_transfer"
+  | "payid"
+  | "cash"
+  | "card_in_person"
+  | "stripe_card"
+  | "stripe_becs"
+  | "stripe_payto"
+  | "credit";
+/** @deprecated Map legacy fixtures to stripe_* methods. */
+export type LegacyPaymentMethod = "payto" | "becs" | "card";
+
+export interface InvoiceLine {
+  description: string;
+  qty: number;
+  unitCents: number;
+  taxCents: number;
+  lineTotalCents: number;
+  studentId?: string;
+  lessonTypeId?: string;
+  taxCode?: InvoiceTaxCode;
+  creditNoteId?: string;
+}
+
+export interface InvoiceSnapshot {
+  seller: {
+    legalName: string;
+    tradingName: string;
+    abn?: string;
+    address?: string;
+    email?: string;
+  };
+  buyer: { name: string; email: string };
+  payTo: StudioPayTo;
+  lines: InvoiceLine[];
+  totals: { subtotalCents: number; taxCents: number; totalCents: number };
+  title: "Tax invoice" | "Invoice";
+  gstRegistered: boolean;
+}
+
 export interface Invoice {
   id: string;
-  number: string;
+  /** Null while draft. */
+  number: string | null;
   familyId: string;
   status: InvoiceStatus;
+  kind?: InvoiceKind;
+  relatedInvoiceId?: string;
+  billToGuardianId?: string;
+  ccGuardianIds?: string[];
+  billingPeriod?: { start: string; end: string };
+  termsVersionId?: string;
+  snapshot?: InvoiceSnapshot;
+  pdf?: { path: string; sha256: string };
+  collection?: "manual" | "stripe";
+  queriedAt?: string;
+  queryResolvedAt?: string;
+  voidedAt?: string;
+  voidReason?: string;
+  sentAt?: string;
   issueDate: string;
   dueDate: string;
   lines: InvoiceLine[];
@@ -109,11 +165,107 @@ export interface Invoice {
   termKey?: string;
   paidCents?: number;
   balanceCents?: number;
+  /** Derived on every read — not stored. */
+  isOverdue?: boolean;
+  /** Derived on every read — not stored. */
+  daysOverdue?: number;
   payments?: Payment[];
   xeroSyncedAt?: string;
+  reviewedAt?: string;
 }
 
-export interface Payment { id: string; invoiceId: string; method: "payto" | "becs" | "card"; amountCents: number; date: string; xeroSyncedAt?: string }
+export interface Payment {
+  id: string;
+  invoiceId: string;
+  familyId: string;
+  /** Negative = refund or reversal. */
+  amountCents: number;
+  method: PaymentMethod;
+  receivedOn: string;
+  reference?: string;
+  recordedBy: string;
+  reversesPaymentId?: string;
+  stripePaymentIntentId?: string;
+  xeroSyncedAt?: string;
+  /** @deprecated Prefer receivedOn. Kept for older call sites during migration. */
+  date?: string;
+}
+
+export type CreditNoteStatus = "open" | "applied" | "refunded";
+export interface CreditNote {
+  id: string;
+  number: string;
+  familyId: string;
+  invoiceId?: string;
+  reason: string;
+  amountCents: number;
+  taxCents: number;
+  status: CreditNoteStatus;
+  issuedOn: string;
+  pdf?: { path: string; sha256: string };
+}
+
+export type InvoiceEventKind =
+  | "created"
+  | "sent"
+  | "emailed"
+  | "email_bounced"
+  | "reminder_pre_due"
+  | "reminder_overdue"
+  | "late_fee_proposed"
+  | "late_fee_applied"
+  | "late_fee_waived"
+  | "pause_notice_proposed"
+  | "pause_notice_sent"
+  | "queried"
+  | "query_resolved"
+  | "due_date_changed"
+  | "payment_recorded"
+  | "payment_reversed"
+  | "voided"
+  | "credit_note_issued"
+  | "xero_pushed"
+  | "scheduled_send";
+
+export interface InvoiceEvent {
+  id: string;
+  invoiceId: string;
+  kind: InvoiceEventKind;
+  actor: "system" | string;
+  at: string;
+  data?: Record<string, unknown>;
+}
+
+export interface StudioPayTo {
+  accountName?: string;
+  bsb?: string;
+  accountNumber?: string;
+  payId?: string;
+  payIdType?: "email" | "mobile" | "abn";
+  cashNote?: string;
+}
+
+export interface StudioBillingProfile {
+  legalName: string;
+  tradingName: string;
+  abn?: string;
+  gstRegistered: boolean;
+  gstRegisteredFrom?: string;
+  invoicePrefix: string;
+  nextInvoiceNumber: number;
+  creditNotePrefix: string;
+  nextCreditNoteNumber: number;
+  numberingLockedAt?: string;
+  payTo: StudioPayTo;
+  attachPdf: boolean;
+  /** Days before due for pre-due reminder; null = off. */
+  preDueReminderDays: number | null;
+  receiptEmails: boolean;
+  /** Pro: send reviewed term drafts on lead date. */
+  autoSendTermInvoices?: boolean;
+  tailoredPreDueDays?: number;
+  tailoredPreDueNote?: string;
+}
 export interface ClientNote {
   id: string;
   subjectType: "student" | "family";
