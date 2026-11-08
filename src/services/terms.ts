@@ -471,12 +471,14 @@ export async function getFamilyAppTerms() {
   });
   const merge = await liveMergeValues("demo");
   const privacy = merge["privacy"] as Record<string, unknown>;
+  const fillPrivacy = (markdown: string) =>
+    markdown
+      .replaceAll("{{privacy.overseasCountriesLabel}}", String(privacy["overseasCountriesLabel"] ?? ""))
+      .replaceAll("{{privacy.keystoneStorageStatement}}", String(privacy["keystoneStorageStatement"] ?? ""));
   return respond(freeze({
     version: version ? freeze(version) : null,
-    appTermsMarkdown: FAMILY_APP_TERMS_MARKDOWN,
-    privacyNoticeMarkdown: PRIVACY_NOTICE_MARKDOWN
-      .replaceAll("{{privacy.overseasCountriesLabel}}", String(privacy["overseasCountriesLabel"] ?? ""))
-      .replaceAll("{{privacy.keystoneStorageStatement}}", String(privacy["keystoneStorageStatement"] ?? "")),
+    appTermsMarkdown: fillPrivacy(FAMILY_APP_TERMS_MARKDOWN),
+    privacyNoticeMarkdown: fillPrivacy(PRIVACY_NOTICE_MARKDOWN),
     keystoneEntity: KEYSTONE_ENTITY,
     reviewed,
   }));
@@ -686,7 +688,8 @@ export async function acceptStudioTerms(input: {
   const studioVersion = state.versions.find((version) => version.id === input.versionId)!;
 
   const consentChoices = input.consents.map((consent) => ({ type: consent.type, granted: consent.granted }));
-  // Never include health note text in receipts
+  const appTermsLive = await getFamilyAppTerms();
+  // Full accepted text of both documents; never include health-note contents
   const receiptBody = [
     `Accepted studio agreement version ${studioVersion.versionNo} (${studioVersion.sha256.slice(0, 8)}…)`,
     `Accepted Keystone app terms version ${appVersion.versionNo}`,
@@ -695,6 +698,15 @@ export async function acceptStudioTerms(input: {
     `Students: ${selected.map((student) => student.firstName).join(", ")}`,
     `Consents: ${consentChoices.map((choice) => `${choice.type}=${choice.granted ? "yes" : "no"}`).join(", ")}`,
     `Time: ${acceptedAt}`,
+    "",
+    "===== STUDIO AGREEMENT (FULL ACCEPTED TEXT) =====",
+    studioVersion.renderedMarkdown,
+    "",
+    "===== KEYSTONE FAMILY APP TERMS PARTS A–D (FULL ACCEPTED TEXT) =====",
+    appTermsLive.appTermsMarkdown,
+    "",
+    "===== KEYSTONE PRIVACY NOTICE / PART C (FULL ACCEPTED TEXT) =====",
+    appTermsLive.privacyNoticeMarkdown,
   ].join("\n");
 
   const studioReceiptId = crypto.randomUUID();

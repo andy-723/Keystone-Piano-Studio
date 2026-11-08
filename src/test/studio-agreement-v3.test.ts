@@ -5,10 +5,16 @@ import { buildTermsPdf } from "@/lib/terms-pdf";
 import { applyLateFeeCents, renderTerms } from "@/lib/terms-render";
 import { visibleOnboardingSteps } from "@/lib/studio-terms-onboarding-steps";
 import { LEGAL_TEMPLATE_AU, LEGAL_TEMPLATE_VERSION } from "@/mocks/legal-template-au";
-import { reviewed } from "@/mocks/keystone-app-terms";
+import {
+  FAMILY_APP_TERMS_MARKDOWN,
+  KEYSTONE_ENTITY,
+  PRIVACY_NOTICE_MARKDOWN,
+  reviewed,
+} from "@/mocks/keystone-app-terms";
 import { buildMergeValues, resetTermsStateForTests, termsState } from "@/mocks/terms";
 import { studio, teacher } from "@/mocks/data";
 import {
+  getFamilyAppTerms,
   getStudioTermsDraft,
   getTermsDocumentForPdf,
   saveStudioTermsDraft,
@@ -24,6 +30,21 @@ describe("studio agreement AU v3", () => {
     expect(reviewed).toBe(true);
     expect(LEGAL_TEMPLATE_VERSION).toBe("AU-v3");
     expect(LEGAL_TEMPLATE_AU.some((clause) => /Draft AU clause/i.test(clause.body))).toBe(false);
+  });
+
+  it("uses Synoratech KEYSTONE_ENTITY and family app Parts A–D only", async () => {
+    expect(KEYSTONE_ENTITY).toBe("Synoratech Pty Ltd, ACN [ ], ABN [ ]");
+    expect(FAMILY_APP_TERMS_MARKDOWN).toMatch(/## Part A/);
+    expect(FAMILY_APP_TERMS_MARKDOWN).toMatch(/## Part B/);
+    expect(FAMILY_APP_TERMS_MARKDOWN).toMatch(/## Part C/);
+    expect(FAMILY_APP_TERMS_MARKDOWN).toMatch(/## Part D/);
+    expect(FAMILY_APP_TERMS_MARKDOWN).not.toMatch(/## Part E|appendix E1|E1–E3|solicitor appendix/i);
+    expect(PRIVACY_NOTICE_MARKDOWN).toMatch(/## Part C/);
+    const app = await getFamilyAppTerms();
+    expect(app.keystoneEntity).toBe(KEYSTONE_ENTITY);
+    expect(app.appTermsMarkdown).toContain("Synoratech Pty Ltd");
+    expect(app.privacyNoticeMarkdown).toContain("Synoratech Pty Ltd");
+    expect(app.appTermsMarkdown).not.toContain("{{privacy.");
   });
 
   it("fills v3 merge fields and never exposes child-safety numbers", () => {

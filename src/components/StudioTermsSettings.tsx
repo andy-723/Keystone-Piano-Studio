@@ -114,6 +114,7 @@ export function StudioTermsSettings({ scope = "demo" }: { scope?: TermsScope }) 
         {scope === "demo" && <Button asChild variant="ghost"><Link to="/settings"><ArrowLeft aria-hidden />Settings</Link></Button>}
         <h1 className="mt-4 text-3xl font-semibold">Studio terms</h1>
         <p className="mt-3 text-base text-muted-foreground">Australian template for Keystone Music HQ studios (AU v3).</p>
+        <p className="mt-1 text-sm text-muted-foreground">Prepared for AU studios.</p>
         <div className="mt-4 flex flex-wrap gap-2">
           <Button variant="outline" disabled={pdf.isPending} onClick={() => pdf.mutate("studio_agreement")}><FileText aria-hidden />Download agreement PDF</Button>
           <Button variant="outline" disabled={pdf.isPending} onClick={() => pdf.mutate("privacy")}><FileText aria-hidden />Download privacy PDF</Button>

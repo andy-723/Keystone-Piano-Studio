@@ -187,6 +187,34 @@ describe("studio terms service", () => {
     expect(blob).toContain("health_notes=yes");
   });
 
+  it("receipts and outbox include the full accepted text of both documents", async () => {
+    const child = students.find((student) => student.familyId === "fam-1")!;
+    const published = await getPublishedStudioTerms("demo");
+    const version = published.pending!;
+    await acceptStudioTerms({
+      versionId: version.id,
+      appTermsVersionId: "tv-app-1",
+      typedName: "Wei Chen",
+      capacity: "guardian",
+      relationship: "parent",
+      guardianDeclaration: true,
+      studentIds: [child.id],
+      consents: [],
+    });
+    const receipt = termsState!.receipts.at(-1)!;
+    const outbox = termsState!.outbox.at(-1)!;
+    for (const body of [receipt.renderedText, outbox.body]) {
+      expect(body).toContain("===== STUDIO AGREEMENT (FULL ACCEPTED TEXT) =====");
+      expect(body).toContain(version.renderedMarkdown.slice(0, 80));
+      expect(body).toContain("===== KEYSTONE FAMILY APP TERMS PARTS A–D (FULL ACCEPTED TEXT) =====");
+      expect(body).toMatch(/## Part A/);
+      expect(body).toMatch(/## Part D/);
+      expect(body).toContain("===== KEYSTONE PRIVACY NOTICE / PART C (FULL ACCEPTED TEXT) =====");
+      expect(body).toContain("Synoratech Pty Ltd");
+      expect(body).not.toMatch(/asthma|allergy|diagnosis|secret-health/i);
+    }
+  });
+
   it("renderTerms never outputs a teacher check number", () => {
     teacher.childSafety = { state: "VIC", type: "WWCC", number: "SECRET-999", expiry: "2028-01-01" };
     const markdown = renderTerms(
