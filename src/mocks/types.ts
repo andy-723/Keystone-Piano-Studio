@@ -173,7 +173,7 @@ export interface Intake {
   healthNotes?: string;
 }
 export interface OnboardingRecord { id: string; studentId: string; intake: Intake | null; diagnostic: Record<string, CourseStage>; practiceGoal: number; status: "intake_sent" | "intake_done" | "welcome_done" | "active"; completedAt?: string }
-export interface ContentItem { id: string; kind: "text" | "link" | "file" | "video" | "audio" | "checklist"; title: string; body?: string; url?: string; mediaPlaceholder?: string; supplied?: boolean }
+export interface ContentItem { id: string; kind: "text" | "link" | "file" | "video" | "video_link" | "audio" | "checklist"; title: string; body?: string; url?: string; mediaPlaceholder?: string; supplied?: boolean }
 export interface LessonTemplate { id: string; name: string; isWelcomeDefault: boolean; steps: { contentItemId: string; note?: string }[]; supplied?: boolean; audience: "beginner" | "transferring" }
 export interface CourseTemplate { id: string; name: string; framework: Framework; grade: string; sections: { name: string; weightPct: number; items: string[] }[]; defaultMilestones: { termOffset: number; targetStage: CourseStage }[]; supplied?: boolean }
 export interface AssignmentTask { id: string; courseItemId?: string; text: string; minutesPerDay: number; daysPerWeek: number; submissionRequested: "none" | "audio" | "video"; done: boolean }

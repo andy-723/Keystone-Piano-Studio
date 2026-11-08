@@ -1,4 +1,9 @@
-import { QueryClient, QueryClientProvider, queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import {
+  QueryClient,
+  QueryClientProvider,
+  queryOptions,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import {
   Outlet,
   Link,
@@ -15,14 +20,20 @@ import appCss from "../styles.css?url";
 import { AppSettingsProvider, useAppSettings } from "@/lib/app-settings";
 import { AppShell } from "@/components/AppShell";
 import { ParentPortal } from "@/components/ParentPortal";
-import { parentSessionQuery, parentHomeQuery, parentChatQuery, parentProgressQuery, parentInvoicesQuery } from "@/lib/parent-queries";
+import {
+  parentSessionQuery,
+  parentHomeQuery,
+  parentChatQuery,
+  parentProgressQuery,
+  parentInvoicesQuery,
+} from "@/lib/parent-queries";
 import { Toaster } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
 import { getStudio } from "@/services/roster";
 import { setupQuery } from "@/lib/setup-queries";
 import { planBillingQuery } from "@/lib/plan-queries";
 import { NewTeacherSetup } from "@/components/NewTeacherSetup";
-import { teacherProfileQuery } from '@/lib/community-queries';
+import { teacherProfileQuery } from "@/lib/community-queries";
 
 const studioQuery = queryOptions({ queryKey: ["studio"], queryFn: getStudio });
 
@@ -36,7 +47,9 @@ function NotFoundComponent() {
           The page you're looking for doesn't exist or has been moved.
         </p>
         <div className="mt-6">
-          <Button asChild><Link to="/">Go home</Link></Button>
+          <Button asChild>
+            <Link to="/">Go home</Link>
+          </Button>
         </div>
       </div>
     </div>
@@ -53,9 +66,7 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold text-foreground">
-          This page didn't load
-        </h1>
+        <h1 className="text-xl font-semibold text-foreground">This page didn't load</h1>
         <p className="mt-2 text-base text-muted-foreground">
           Something went wrong on our end. You can try refreshing or head back home.
         </p>
@@ -68,7 +79,9 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
           >
             Try again
           </Button>
-          <Button variant="outline" asChild><Link to="/">Go home</Link></Button>
+          <Button variant="outline" asChild>
+            <Link to="/">Go home</Link>
+          </Button>
         </div>
       </div>
     </div>
@@ -76,18 +89,38 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  loader: async ({ context }) => { await Promise.all([context.queryClient.ensureQueryData(teacherProfileQuery()),context.queryClient.ensureQueryData(teacherProfileQuery('new-studio')),context.queryClient.ensureQueryData(planBillingQuery()), context.queryClient.ensureQueryData(planBillingQuery("new-studio")), context.queryClient.ensureQueryData(studioQuery), context.queryClient.ensureQueryData(parentSessionQuery), context.queryClient.ensureQueryData(parentHomeQuery), context.queryClient.ensureQueryData(parentChatQuery), context.queryClient.ensureQueryData(parentProgressQuery), context.queryClient.ensureQueryData(parentInvoicesQuery)]); },
+  loader: async ({ context }) => {
+    await Promise.all([
+      context.queryClient.ensureQueryData(teacherProfileQuery()),
+      context.queryClient.ensureQueryData(teacherProfileQuery("new-studio")),
+      context.queryClient.ensureQueryData(planBillingQuery()),
+      context.queryClient.ensureQueryData(planBillingQuery("new-studio")),
+      context.queryClient.ensureQueryData(studioQuery),
+      context.queryClient.ensureQueryData(parentSessionQuery),
+      context.queryClient.ensureQueryData(parentHomeQuery),
+      context.queryClient.ensureQueryData(parentChatQuery),
+      context.queryClient.ensureQueryData(parentProgressQuery),
+      context.queryClient.ensureQueryData(parentInvoicesQuery),
+    ]);
+  },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Keystone Music HQ — Studio OS & LMS management platform" },
-      { name: "description", content: "Keystone Music HQ — studio OS & LMS management platform for music teachers." },
+      {
+        name: "description",
+        content: "Keystone Music HQ — studio OS & LMS management platform for music teachers.",
+      },
       { property: "og:title", content: "Keystone Music HQ — Studio OS & LMS management platform" },
-      { property: "og:description", content: "Keystone Music HQ — studio OS & LMS management platform for music teachers." },
+      {
+        property: "og:description",
+        content: "Keystone Music HQ — studio OS & LMS management platform for music teachers.",
+      },
       { property: "og:type", content: "website" },
       { property: "og:image", content: "/og-image.png" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "theme-color", content: "#15100D" },
     ],
     links: [
       {
@@ -104,6 +137,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "icon", href: "/favicon-32.png", type: "image/png", sizes: "32x32" },
       { rel: "icon", href: "/favicon-16.png", type: "image/png", sizes: "16x16" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
     ],
   }),
   shellComponent: RootShell,
@@ -143,7 +177,10 @@ function RoleGate() {
   const { role } = useAppSettings();
   const { data: studio } = useSuspenseQuery(studioQuery);
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const focusFlow = pathname.startsWith("/join/") || pathname.startsWith("/intake/") || pathname.startsWith("/auth/");
+  const focusFlow =
+    pathname.startsWith("/join/") ||
+    pathname.startsWith("/intake/") ||
+    pathname.startsWith("/auth/");
   if (focusFlow) {
     return (
       <Suspense fallback={<p className="p-6">Opening enrolment…</p>}>
@@ -151,11 +188,18 @@ function RoleGate() {
       </Suspense>
     );
   }
-  if (role === "new-teacher") return <Suspense fallback={<p className="p-6">Opening your new studio…</p>}><NewTeacherGate /></Suspense>;
+  if (role === "new-teacher")
+    return (
+      <Suspense fallback={<p className="p-6">Opening your new studio…</p>}>
+        <NewTeacherGate />
+      </Suspense>
+    );
   return (
     <AppShell studio={studio}>
       {role === "parent" ? (
-        <Suspense fallback={<p>Opening your family portal…</p>}><ParentPortal /></Suspense>
+        <Suspense fallback={<p>Opening your family portal…</p>}>
+          <ParentPortal />
+        </Suspense>
       ) : (
         /* Required: nested routes render here. */
         <Outlet />
@@ -166,5 +210,15 @@ function RoleGate() {
 
 function NewTeacherGate() {
   const { data } = useSuspenseQuery(setupQuery);
-  return <NewTeacherSetup shellStudio={{ id: "new-studio", name: data.studio.name || "Keystone Music HQ · New studio", gstRegistered: data.tax.registration === "yes", abn: data.tax.abn, timezone: "Australia/Melbourne" }} />;
+  return (
+    <NewTeacherSetup
+      shellStudio={{
+        id: "new-studio",
+        name: data.studio.name || "Keystone Music HQ · New studio",
+        gstRegistered: data.tax.registration === "yes",
+        abn: data.tax.abn,
+        timezone: "Australia/Melbourne",
+      }}
+    />
+  );
 }

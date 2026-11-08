@@ -3,6 +3,9 @@ import type { Lang } from "@/mocks/types";
 
 export type Role = "teacher" | "parent" | "new-teacher";
 
+/** Teacher Library YouTube/Vimeo links — off until reviewed (K8). Not for student recordings. */
+export const videoLinksEnabled = false;
+
 type Settings = {
   role: Role;
   setRole: (r: Role) => void;
@@ -10,6 +13,7 @@ type Settings = {
   setLargeText: (v: boolean) => void;
   parentLang: Lang;
   setParentLang: (lang: Lang) => void;
+  videoLinksEnabled: boolean;
 };
 
 const Ctx = createContext<Settings | null>(null);
@@ -23,7 +27,21 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
     document.documentElement.classList.toggle("text-large", largeText);
   }, [largeText]);
 
-  return <Ctx.Provider value={{ role, setRole, largeText, setLargeText, parentLang, setParentLang }}>{children}</Ctx.Provider>;
+  return (
+    <Ctx.Provider
+      value={{
+        role,
+        setRole,
+        largeText,
+        setLargeText,
+        parentLang,
+        setParentLang,
+        videoLinksEnabled,
+      }}
+    >
+      {children}
+    </Ctx.Provider>
+  );
 }
 
 export function useAppSettings() {

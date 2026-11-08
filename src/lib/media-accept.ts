@@ -1,4 +1,8 @@
-/** Accept strings and helpers for phone camera rolls (incl. iPhone HEIC/HEIF). */
+/**
+ * Accept strings and helpers for phone camera rolls (incl. iPhone HEIC/HEIF).
+ * Convenience only — not enforcement. Server/Storage limits live in
+ * src/lib/media-limits.ts and src/services/providers/media-storage.ts.
+ */
 
 export const PHONE_IMAGE_ACCEPT =
   "image/*,image/heic,image/heif,image/heic-sequence,image/heif-sequence,.heic,.heif";
@@ -8,15 +12,25 @@ export const PHONE_VIDEO_ACCEPT =
 
 export const PHONE_MEDIA_ACCEPT = `${PHONE_IMAGE_ACCEPT},${PHONE_VIDEO_ACCEPT}`;
 
-export const NEWS_ATTACHMENT_ACCEPT =
-  `${PHONE_IMAGE_ACCEPT},application/pdf,.pdf`;
+export const NEWS_ATTACHMENT_ACCEPT = `${PHONE_IMAGE_ACCEPT},application/pdf,.pdf`;
 
-const IMAGE_EXT = new Set(["jpg", "jpeg", "png", "webp", "gif", "heic", "heif", "bmp", "tif", "tiff"]);
+const IMAGE_EXT = new Set([
+  "jpg",
+  "jpeg",
+  "png",
+  "webp",
+  "gif",
+  "heic",
+  "heif",
+  "bmp",
+  "tif",
+  "tiff",
+]);
 const VIDEO_EXT = new Set(["mp4", "mov", "m4v", "webm", "3gp", "3gpp", "avi", "mkv"]);
 
 function extension(name: string) {
   const parts = name.toLowerCase().split(".");
-  return parts.length > 1 ? parts.at(-1) ?? "" : "";
+  return parts.length > 1 ? (parts.at(-1) ?? "") : "";
 }
 
 export function isPhoneImageFile(file: File): boolean {
