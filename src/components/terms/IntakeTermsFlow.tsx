@@ -119,6 +119,9 @@ export function IntakeTermsFlow({
           versionNo={version.versionNo}
           effectiveAt={version.effectiveAt}
           agreementMarkdown={version.renderedMarkdown}
+          appTermsMarkdown={appTerms.data?.appTermsMarkdown}
+          privacyNoticeMarkdown={appTerms.data?.privacyNoticeMarkdown}
+          appVersionNo={appTerms.data?.version?.versionNo}
           requiresGuardian={requiresGuardian}
           onOpenAppTerms={() => setDialog("app")}
           onOpenPrivacyNotice={() => setDialog("privacy")}

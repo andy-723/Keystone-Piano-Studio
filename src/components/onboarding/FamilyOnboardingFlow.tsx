@@ -23,7 +23,6 @@ import {
   unlockJoinSession,
 } from "@/services/invitations";
 import { getFamilyAppTerms, getPublishedStudioTerms } from "@/services/terms";
-import { PRIVACY_NOTICE_MARKDOWN, FAMILY_APP_TERMS_MARKDOWN } from "@/mocks/keystone-app-terms";
 import { useAppSettings } from "@/lib/app-settings";
 
 type ActiveSession = Extract<JoinSession, { state: "active" }>;
@@ -149,6 +148,9 @@ function ActiveFlow({
     versionNo: number;
     effectiveAt: string;
     markdown: string;
+    appTermsMarkdown: string;
+    privacyNoticeMarkdown: string;
+    appVersionNo: number;
     moneyRules: {
       billingCycle: string;
       lateFee: string;
@@ -191,6 +193,9 @@ function ActiveFlow({
         versionNo: version.versionNo,
         effectiveAt: version.effectiveAt.slice(0, 10),
         markdown: version.renderedMarkdown,
+        appTermsMarkdown: app.appTermsMarkdown,
+        privacyNoticeMarkdown: app.privacyNoticeMarkdown,
+        appVersionNo: app.version.versionNo,
         moneyRules: {
           billingCycle: `Billing: ${billing?.cycle ?? "per_term"}`,
           lateFee: `Late fee: $${billing?.lateFee ?? 15} after ${billing?.lateFeeAfterDays ?? 7} days`,
@@ -702,6 +707,9 @@ function ActiveFlow({
         effectiveAt={termsMeta.effectiveAt}
         moneyRules={termsMeta.moneyRules}
         agreementMarkdown={termsMeta.markdown}
+        appTermsMarkdown={termsMeta.appTermsMarkdown}
+        privacyNoticeMarkdown={termsMeta.privacyNoticeMarkdown}
+        appVersionNo={termsMeta.appVersionNo}
         requiresGuardian={requiresGuardian}
         value={{
           studioAgreed: Boolean(answers.terms?.studioAgreed),
@@ -716,8 +724,6 @@ function ActiveFlow({
         }
         onBack={() => go(-1)}
         onNext={() => go(1)}
-        onOpenAppTerms={() => window.alert(FAMILY_APP_TERMS_MARKDOWN.slice(0, 500))}
-        onOpenPrivacyNotice={() => window.alert(PRIVACY_NOTICE_MARKDOWN.slice(0, 500))}
       />
     );
   } else if (step.id === "review") {
