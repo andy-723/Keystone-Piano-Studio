@@ -13,14 +13,23 @@ export function CollectionNoticeScreen({
   onBack,
   lang = "en",
   onOpenPrivacy,
-}: TermsScreenProps<CollectionNoticeValue> & { lang?: Lang; onOpenPrivacy?: () => void }) {
-  const title = lang === "zh-CN" ? "在我们收集资料之前" : PART4_COLLECTION_NOTICE.title;
+  studioName = "the Studio",
+  studentName = "the student",
+}: TermsScreenProps<CollectionNoticeValue> & {
+  lang?: Lang;
+  onOpenPrivacy?: () => void;
+  studioName?: string;
+  studentName?: string;
+}) {
+  const title = lang === "zh-CN" ? "收集说明" : PART4_COLLECTION_NOTICE.title;
   const body =
     lang === "zh-CN"
-      ? `您的琴行与 Keystone Music HQ 会收集报名、联系方式、课程安排，以及您选择提供的健康或学习备注，以便安全教学并管理账户。可能有有限支持访问的海外地区：${OVERSEAS_COUNTRIES_LABEL}。您可在条款步骤阅读琴行隐私政策。`
-      : PART4_COLLECTION_NOTICE.body.replace("{{privacy.overseasCountriesLabel}}", OVERSEAS_COUNTRIES_LABEL);
-  const privacy = lang === "zh-CN" ? "琴行隐私政策" : PART4_COLLECTION_NOTICE.privacyLinkLabel;
-  const next = lang === "zh-CN" ? "继续" : "Continue";
+      ? `${studioName} 会收集这些页面上的资料，以便为 ${studentName} 报名、教学、账单与安全保障。资料保存在 Keystone Music HQ。部分服务提供商在海外：${OVERSEAS_COUNTRIES_LABEL}。若不提供必填资料，将无法完成报名。`
+      : PART4_COLLECTION_NOTICE.body
+          .replaceAll("{{studio.tradingName}}", studioName)
+          .replaceAll("{{student.firstName}}", studentName)
+          .replaceAll("{{privacy.overseasCountriesLabel}}", OVERSEAS_COUNTRIES_LABEL);
+  const privacy = lang === "zh-CN" ? "阅读隐私政策" : PART4_COLLECTION_NOTICE.privacyLinkLabel;  const next = lang === "zh-CN" ? "继续" : "Continue";
   const back = lang === "zh-CN" ? "返回" : "Back";
   const ack = lang === "zh-CN" ? "我已阅读此收集说明" : "I have read this collection notice";
   return (

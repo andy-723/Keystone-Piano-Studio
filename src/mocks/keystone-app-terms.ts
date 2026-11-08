@@ -1,19 +1,18 @@
 /**
  * Keystone Music HQ family app terms and privacy notice.
- * DRAFT wording — the Claude artifact source was unreachable at implementation time;
- * replace after solicitor review. Entity name is not final.
+ * Product-final alongside Studio Agreement AU v3 (owner decision 2026-11-08).
  */
-export const KEYSTONE_ENTITY = "[Keystone legal entity]";
+export const KEYSTONE_ENTITY = "Keystone Music HQ";
 
-/** When false, the owner Studio terms screen shows a draft note. */
-export const reviewed = false;
+/** When false, the owner Studio terms screen shows a draft-blocking note. Product-final: true. */
+export const reviewed = true;
 
 export const FAMILY_APP_TERMS_VERSION = 1;
-export const FAMILY_APP_TERMS_EFFECTIVE_AT = "2027-01-01";
+export const FAMILY_APP_TERMS_EFFECTIVE_AT = "2026-11-08";
+
+export const KEYSTONE_PRIVACY_EMAIL = "privacy@keystone.example";
 
 export const FAMILY_APP_TERMS_MARKDOWN = `# Keystone Music HQ — App terms of use
-
-**Draft wording, pending legal review.**
 
 These App terms are between you and ${KEYSTONE_ENTITY} ("Keystone") for your use of the Keystone Music HQ family app. Your studio's lesson agreement is separate and is with your studio, not with Keystone.
 
@@ -41,8 +40,6 @@ Contact ${KEYSTONE_ENTITY} via the in-app help channel or the privacy email publ
 
 export const PRIVACY_NOTICE_MARKDOWN = `# Keystone Music HQ — Privacy notice
 
-**Draft wording, pending legal review.**
-
 ${KEYSTONE_ENTITY} ("Keystone") operates Keystone Music HQ. This notice covers personal information we handle as the app provider. Your studio is separately responsible for information it collects about your family.
 
 ## What we collect
@@ -61,5 +58,5 @@ To provide the app to your studio and family, keep accounts secure, support bill
 You may ask to access or correct personal information, or raise a privacy complaint with Keystone and, if unresolved, the Office of the Australian Information Commissioner (OAIC).
 
 ## Contact
-privacy@keystone.example (placeholder until the legal entity is final).
+${KEYSTONE_PRIVACY_EMAIL}
 `;

@@ -17,11 +17,11 @@ export function PublicMediaConsentScreen({
   const title = lang === "zh-CN" ? "公开媒体同意" : PART4_PUBLIC_MEDIA.title;
   const prompt =
     lang === "zh-CN"
-      ? "是否允许琴行在新闻通讯、布告栏或公开社交媒体中使用该学生的照片或短视频？作业用的私人课程录音是单独的选择。"
-      : PART4_PUBLIC_MEDIA.prompt;
-  const yes = lang === "zh-CN" ? "可以用于公开媒体" : PART4_PUBLIC_MEDIA.yes;
-  const no = lang === "zh-CN" ? "不用于公开媒体" : PART4_PUBLIC_MEDIA.no;
-  const talk = lang === "zh-CN" ? `请先与 ${studentName} 商量。` : PART4_PUBLIC_MEDIA.talkFirst.replace("{{student.firstName}}", studentName);
+      ? `是否允许琴行在网站、社交媒体或宣传材料中使用 ${studentName} 的照片、音频或视频？仅使用名，不使用姓或联系方式。课程反馈与考试录音不需要此同意。`
+      : PART4_PUBLIC_MEDIA.prompt.replaceAll("{{student.firstName}}", studentName);
+  const yes = lang === "zh-CN" ? "是，我同意" : PART4_PUBLIC_MEDIA.yes;
+  const no = lang === "zh-CN" ? "否，我不同意" : PART4_PUBLIC_MEDIA.no;
+  const talk = lang === "zh-CN" ? `请先与 ${studentName} 商量。我们发布前也会再征询他们。` : PART4_PUBLIC_MEDIA.talkFirst.replaceAll("{{student.firstName}}", studentName);
   return (
     <section className="space-y-5" aria-label={title}>
       <h2 className="text-2xl font-semibold">{title}</h2>

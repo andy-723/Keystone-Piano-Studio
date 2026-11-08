@@ -11,14 +11,15 @@ export function EmergencyMedicalScreen({
   onNext,
   onBack,
   lang = "en",
-}: TermsScreenProps<EmergencyMedicalValue> & { lang?: Lang }) {
+  studentName = "the student",
+}: TermsScreenProps<EmergencyMedicalValue> & { lang?: Lang; studentName?: string }) {
   const title = lang === "zh-CN" ? "紧急医疗授权" : PART4_EMERGENCY_MEDICAL.title;
   const prompt =
     lang === "zh-CN"
-      ? "若课程中出现医疗紧急情况，您是否授权琴行寻求紧急救助，并向急救人员提供相关健康信息？医疗费用由家庭承担，但因琴行疏忽造成的除外。"
-      : PART4_EMERGENCY_MEDICAL.prompt;
-  const yes = lang === "zh-CN" ? "是，我授权紧急救助并分享相关健康信息" : PART4_EMERGENCY_MEDICAL.yes;
-  const no = lang === "zh-CN" ? "否，我不授权" : PART4_EMERGENCY_MEDICAL.no;
+      ? `若 ${studentName} 需要紧急医疗帮助且我们无法立刻联系到您或紧急联系人，我授权琴行呼叫救护车或寻求紧急医疗帮助，并向救治人员提供健康信息。救护车与医疗费用由我承担，但因琴行疏忽造成的除外。`
+      : PART4_EMERGENCY_MEDICAL.prompt.replaceAll("{{student.firstName}}", studentName);
+  const yes = lang === "zh-CN" ? "我同意" : PART4_EMERGENCY_MEDICAL.yes;
+  const no = lang === "zh-CN" ? "我不同意" : PART4_EMERGENCY_MEDICAL.no;
   return (
     <section className="space-y-5" aria-label={title}>
       <h2 className="text-2xl font-semibold">{title}</h2>
