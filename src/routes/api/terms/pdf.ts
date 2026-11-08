@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { buildTermsPdf } from "@/lib/terms-pdf";
+import { readJsonWithLimit } from "@/server/body-limit";
 
 type PdfBody = {
   title?: string;
@@ -8,11 +9,19 @@ type PdfBody = {
   footer?: string;
 };
 
+/** Terms PDF bodies can be large; still capped (512 KiB JSON envelope). */
+const TERMS_PDF_BODY_LIMIT = 512 * 1024;
+
 export const Route = createFileRoute("/api/terms/pdf")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const payload = (await request.json().catch(() => ({}))) as PdfBody;
+        let payload: PdfBody;
+        try {
+          payload = await readJsonWithLimit<PdfBody>(request, TERMS_PDF_BODY_LIMIT);
+        } catch {
+          return Response.json({ error: "Request body too large" }, { status: 413 });
+        }
         const title = String(payload.title ?? "Document").slice(0, 200);
         const body = String(payload.body ?? "").slice(0, 200_000);
         if (!body.trim()) {

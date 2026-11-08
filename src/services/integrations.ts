@@ -5,16 +5,25 @@ import { PROTOTYPE_TODAY, melbourneIso } from "@/lib/calendar";
 import { proFeaturesEnabled } from "./plans";
 import { respond } from "./_delay";
 
-export const getIntegrations = (scope: IntegrationScope = "demo") => respond(integrationState[scope]);
-export const getStripeStatus = (scope: IntegrationScope = "demo"): Promise<StripeStatus> => respond(integrationState[scope].stripe.status);
-export async function connectStripe(input: { stage?: "start" | "complete"; businessName?: string } = {}, scope: IntegrationScope = "demo") {
+export const getIntegrations = (scope: IntegrationScope = "demo") =>
+  respond(integrationState[scope]);
+export const getStripeStatus = (scope: IntegrationScope = "demo"): Promise<StripeStatus> =>
+  respond(integrationState[scope].stripe.status);
+export async function connectStripe(
+  input: { stage?: "start" | "complete"; businessName?: string } = {},
+  scope: IntegrationScope = "demo",
+) {
   const stripe = integrationState[scope].stripe;
   if (stripe.status === "connected") return respond(stripe);
   if (input.stage === "start") stripe.status = "setting_up";
   else {
     stripe.status = "connected";
-    stripe.businessName = input.businessName?.trim() || (scope === "demo" ? studio.name : setupSession.studio.name) || "Your music studio";
-    stripe.bankLast4 = "1234";
+    stripe.businessName =
+      input.businessName?.trim() ||
+      (scope === "demo" ? studio.name : setupSession.studio.name) ||
+      "Your music studio";
+    // bankLast4 removed — Stripe Connect does not expose a fake last4 in this mock.
+    stripe.bankLast4 = null;
   }
   return respond(stripe);
 }
@@ -26,11 +35,16 @@ export async function connectXero(scope: IntegrationScope = "demo") {
   if (!proFeaturesEnabled(scope)) throw new Error("Available on Pro. Pro is A$49 a month + GST.");
   const xero = integrationState[scope].xero;
   xero.status = "connected";
-  xero.organisationName = (scope === "demo" ? studio.name : setupSession.studio.name) || "Your music studio";
+  xero.organisationName =
+    (scope === "demo" ? studio.name : setupSession.studio.name) || "Your music studio";
   return respond(xero);
 }
 export async function disconnectXero(scope: IntegrationScope = "demo") {
-  integrationState[scope].xero = { status: "not_connected", organisationName: null, lastSyncedAt: null };
+  integrationState[scope].xero = {
+    status: "not_connected",
+    organisationName: null,
+    lastSyncedAt: null,
+  };
   return respond(integrationState[scope].xero);
 }
 export async function pushInvoiceToXero(invoiceId: string) {
