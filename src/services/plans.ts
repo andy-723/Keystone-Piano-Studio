@@ -9,6 +9,14 @@ export function readStudioPlan(scope: IntegrationScope = "demo") {
   return normalisePlan(scope === "demo" ? studio.plan : newStudioSubscription.plan);
 }
 export function proFeaturesEnabled(scope: IntegrationScope = "demo") { return readStudioPlan(scope) !== "base"; }
+
+export type PlanFeature = "billing_automation";
+
+/** Feature gates beyond the coarse Base/Pro split. */
+export function hasFeature(feature: PlanFeature, scope: IntegrationScope = "demo"): boolean {
+  if (feature === "billing_automation") return proFeaturesEnabled(scope);
+  return false;
+}
 export async function getPlanBilling(scope: IntegrationScope = "demo") {
   const plan = readStudioPlan(scope);
   return respond({ plan, renewal: scope === "demo" ? "1 Dec 2026" : null, card: scope === "demo" ? "Visa ending 4242" : null, invoices: scope === "demo" ? opusInvoices : [] });

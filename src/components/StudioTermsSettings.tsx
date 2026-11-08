@@ -197,7 +197,7 @@ export function StudioTermsSettings({ scope = "demo" }: { scope?: TermsScope }) 
 
       <section className="space-y-4 border-b border-border pb-6">
         <h2 className="text-2xl font-semibold">Services</h2>
-        {([["online", "Online lessons"], ["inHome", "In-home lessons"], ["exams", "Exams"], ["premises", "Studio premises"], ["paymentDiscount", "Payment-method discount"], ["asyncPro", "Video lessons (Pro)"]] as const).map(([key, label]) => (
+        {([["online", "Online lessons"], ["inHome", "In-home lessons"], ["exams", "Exams"], ["premises", "Studio premises"], ["paymentDiscount", "Payment-method discount"], ["onlinePayments", "Online payments (Stripe)"], ["asyncPro", "Video lessons (Pro)"]] as const).map(([key, label]) => (
           <label key={key} className="flex items-center justify-between gap-5 py-2">
             <span className="font-semibold">{label}</span>
             <Switch checked={Boolean(draft.switches[key])} onCheckedChange={(value) => save.mutate({ switches: { [key]: value } })} />

@@ -3,7 +3,7 @@ import type { EmailProvider } from "./provider";
 import { outboxEmailProvider } from "./outbox";
 import { createResendEmailProvider } from "./resend";
 
-export type { EmailProvider, SendEmailInput, SendEmailResult } from "./provider";
+export type { EmailAttachment, EmailProvider, SendEmailInput, SendEmailResult } from "./provider";
 export { getEmailOutbox, clearEmailOutbox } from "./outbox";
 
 export function getEmailProvider(): EmailProvider {

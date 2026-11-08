@@ -20,7 +20,8 @@ describe("Keystone Music HQ fixtures", () => {
     expect([...new Set(weeklySlots.map((slot) => slot.weekday))]).toEqual([1, 2, 3, 4, 5, 6]);
   });
   it("provides invoices in every status", () => {
-    expect([...new Set(invoices.map((invoice) => invoice.status))].sort()).toEqual(["draft", "overdue", "paid", "partially_paid", "sent", "void"]);
+    expect([...new Set(invoices.map((invoice) => invoice.status))].sort()).toEqual(["draft", "paid", "partially_paid", "sent", "void"]);
+    expect(invoices.some((invoice) => invoice.status === "sent" && invoice.dueDate < "2027-03-15")).toBe(true);
   });
   it("provides fifteen chat threads, three containing Chinese messages", () => {
     expect(conversations).toHaveLength(15);

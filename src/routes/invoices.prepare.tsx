@@ -5,13 +5,14 @@ import { ArrowLeft, ArrowRight, Check, Send, MessageCircle } from "lucide-react"
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { term2Query, term2DraftsQuery } from "@/lib/billing-queries";
-import { prepareTerm2Invoices, sendTerm2Invoices } from "@/services/billing";
+import { sendTerm2Invoices } from "@/services/billing";
+import { billNextTerm } from "@/services/billing-automation";
 import { formatAUD, formatShortDate } from "@/lib/format";
 import { renewalsQuery } from "@/lib/renewal-queries";
 
 export const Route = createFileRoute("/invoices/prepare")({
   loader: ({ context }) => Promise.all([context.queryClient.ensureQueryData(term2Query), context.queryClient.ensureQueryData(term2DraftsQuery), context.queryClient.ensureQueryData(renewalsQuery)]),
-  head: () => ({ meta: [{ title: "Prepare Term 2 invoices — Keystone Music HQ" }, { name: "description", content: "Review Term 2 2027 piano lessons and prepare one invoice per family." }, { property: "og:title", content: "Prepare Term 2 invoices — Keystone Music HQ" }, { property: "og:description", content: "Review Term 2 2027 piano lessons and prepare one invoice per family." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
+  head: () => ({ meta: [{ title: "Bill next term — Keystone Music HQ" }, { name: "description", content: "Review Term 2 2027 piano lessons and prepare one invoice per family." }, { property: "og:title", content: "Bill next term — Keystone Music HQ" }, { property: "og:description", content: "Review Term 2 2027 piano lessons and prepare one invoice per family." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
   errorComponent: () => <p role="alert">Term invoices could not be opened. Please refresh to try again.</p>, component: PrepareInvoices,
 });
 function PrepareInvoices() {
@@ -22,12 +23,23 @@ function PrepareInvoices() {
   const [step, setStep] = useState(1);
   const [sent, setSent] = useState<number | null>(null);
   const client = useQueryClient();
-  const preparing = useMutation({ mutationFn: prepareTerm2Invoices, onSuccess: async () => { await client.invalidateQueries({ queryKey: ["term2-drafts"] }); setStep(2); }, onError: () => toast.error("Drafts could not be prepared. Please try again.") });
+  const preparing = useMutation({
+    mutationFn: () => billNextTerm("demo"),
+    onSuccess: async (result) => {
+      if (!result.ran) {
+        toast.error("Billing automation needs a Pro plan.");
+        return;
+      }
+      await client.invalidateQueries({ queryKey: ["term2-drafts"] });
+      setStep(2);
+    },
+    onError: () => toast.error("Drafts could not be prepared. Please try again."),
+  });
   const sending = useMutation({ mutationFn: sendTerm2Invoices, onSuccess: async (invoices) => { setSent(invoices.length); await Promise.all([client.invalidateQueries({ queryKey: ["invoices"] }), client.invalidateQueries({ queryKey: ["term2-drafts"] }), client.invalidateQueries({ queryKey: ["parent"] }), client.invalidateQueries({ queryKey: ["integrations"] })]); }, onError: () => toast.error("Invoices could not be sent. Please try again.") });
   const total = drafts.invoices.reduce((amount, invoice) => amount + invoice.totalCents, 0);
   return <div className="mx-auto max-w-5xl">
     <Button asChild variant="ghost"><Link to="/invoices"><ArrowLeft aria-hidden /> All invoices</Link></Button>
-    <h1 className="mt-5 text-3xl font-semibold">Prepare Term 2 invoices</h1><p className="mt-2 text-lg">{formatShortDate(preview.term.start)} – {formatShortDate(preview.term.end)} 2027</p>
+    <h1 className="mt-5 text-3xl font-semibold">Bill next term</h1><p className="mt-2 text-lg">{formatShortDate(preview.term.start)} – {formatShortDate(preview.term.end)} 2027</p>
     <section className="mt-5 flex flex-wrap items-center justify-between gap-4 border-y border-border py-5" aria-label="Family renewal communications"><div><h2 className="text-xl font-semibold">Term 2 family renewals</h2><p className="mt-2 text-base text-muted-foreground">{renewals.active ? `${renewals.rows.filter((row) => row.status === "confirmed").length} confirmed · ${renewals.rows.filter((row) => row.status === "awaiting").length} awaiting reply` : "Invitations not sent"}</p></div><Button asChild variant="outline" className="max-w-full whitespace-normal"><Link to="/invoices/renewals"><MessageCircle aria-hidden /> Invitations & reminders</Link></Button></section>
     {renewals.active && <p className="mt-4 border-l-4 border-success pl-4 text-base">Confirmed renewals only · {renewals.rows.filter((row) => row.status === "confirmed").length} families</p>}
     <ol className="my-6 grid grid-cols-3 border-y border-border py-4" aria-label="Invoice steps">{["Lessons", "Drafts", "Review"].map((label, index) => <li key={label} aria-current={step === index + 1 ? "step" : undefined} className={`text-base ${step === index + 1 ? "font-semibold text-primary" : "text-muted-foreground"}`}>{index + 1}. {label}</li>)}</ol>

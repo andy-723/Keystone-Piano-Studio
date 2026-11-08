@@ -29,6 +29,7 @@ import type { ChildSafetyCheck, StudioBillingSettings, StudioLessonPolicies, Stu
 import { respond } from "./_delay";
 import { getOrCreateFamilyConversation, sendMessage } from "./chat";
 import { getParentSession } from "./parent";
+import { paymentMethodsLabel } from "./billing-profile";
 
 async function draftPatch(scope: TermsScope): Promise<StudioTermsStudioPatch> {
   const state = await ensureTermsState();
@@ -188,8 +189,8 @@ async function liveMergeValues(scope: TermsScope) {
   const patch = await draftPatch(scope);
   const data = store(scope, patch);
   const integrations = integrationState[scope];
-  const methods = patch.paymentMethods
-    ?? (integrations.stripe.status === "connected" ? "PayTo, BECS direct debit and card" : "bank transfer");
+  const billingScope = scope === "new-studio" ? "new-studio" : "demo";
+  const methods = patch.paymentMethods ?? paymentMethodsLabel(billingScope);
   const accountingLabel = integrations.xero.status === "connected"
     ? ` · Accounting: ${integrations.xero.organisationName ?? "Xero"}`
     : "";

@@ -226,8 +226,8 @@ export const riskScores: RiskScore[] = students.map((s) => {
   return { studentId: s.id, score: 80 + Math.round(rand() * 20), band: "green" as const, reasons: [] };
 });
 
-// Invoices: Term 1 2027, one per family, covering every status.
-const STATUSES: InvoiceStatus[] = ["paid", "paid", "sent", "overdue", "partially_paid", "draft", "void"];
+// Invoices: Term 1 2027, one per family. "overdue" is derived (sent + past due), never stored.
+const STATUSES: InvoiceStatus[] = ["paid", "paid", "sent", "sent", "partially_paid", "draft", "void"];
 export const invoices: Invoice[] = families.map((f, i) => {
   const kids = students.filter((s) => s.familyId === f.id);
   const lines: InvoiceLine[] = kids.map((k) => {
@@ -241,34 +241,97 @@ export const invoices: Invoice[] = families.map((f, i) => {
       qty, unitCents: lt.priceCents,
       taxCents: Math.round(lineTotalCents / 11),
       lineTotalCents,
+      taxCode: "taxable" as const,
+      studentId: k.id,
+      lessonTypeId: lt.id,
     };
   });
   const totalCents = lines.reduce((a, l) => a + l.lineTotalCents, 0);
   const taxCents = Math.round(totalCents / 11);
   const lastLine = lines.at(-1);
   if (lastLine) lastLine.taxCents += taxCents - lines.reduce((sum, line) => sum + line.taxCents, 0);
+  const status: InvoiceStatus =
+    f.id === "fam-10" ? "sent" : STATUSES[i % STATUSES.length] ?? "draft";
+  const pastDue =
+    f.id === "fam-10"
+      ? addDays(PROTOTYPE_TODAY, -9)
+      : status === "sent" && i % STATUSES.length === 3
+        ? addDays(PROTOTYPE_TODAY, -(14 + (i % 32)))
+        : "2027-02-01";
+  const isDraft = status === "draft";
   return {
     id: `inv-${i + 1}`,
-    number: `INV-2027-${String(i + 1).padStart(3, "0")}`,
+    number: isDraft ? null : `INV-${String(i + 1).padStart(6, "0")}`,
     familyId: f.id,
-    status: f.id === "fam-10" ? "overdue" : STATUSES[i % STATUSES.length] ?? "draft",
+    status,
+    kind: "standard" as const,
+    billToGuardianId: f.guardians[0]?.id,
+    ccGuardianIds: f.guardians.slice(1).map((g) => g.id),
+    collection: "manual" as const,
     issueDate: "2027-01-18",
-    dueDate: f.id === "fam-10" ? addDays(PROTOTYPE_TODAY, -21) : STATUSES[i % STATUSES.length] === "overdue" ? addDays(PROTOTYPE_TODAY, -(14 + i % 32)) : "2027-02-01",
+    dueDate: pastDue,
     lines,
     subtotalCents: totalCents - taxCents,
     taxCents,
     totalCents,
     isTaxInvoice: true,
     gstRegistered: true,
-    title: "Tax invoice",
+    title: "Tax invoice" as const,
+    sentAt: isDraft || status === "void" ? undefined : "2027-01-18T10:00:00+11:00",
+    voidedAt: status === "void" ? "2027-02-10T10:00:00+11:00" : undefined,
+    voidReason: status === "void" ? "Issued in error" : undefined,
+    queriedAt: f.id === "fam-19" ? "2027-03-10T09:00:00+11:00" : undefined,
   };
 });
 
 export const payments: Payment[] = [];
 invoices.forEach((invoice, index) => {
   if (invoice.status !== "paid" && invoice.status !== "partially_paid") return;
-  payments.push({ id: `payment-${payments.length + 1}`, invoiceId: invoice.id, method: index % 3 === 0 ? "payto" : index % 3 === 1 ? "becs" : "card", amountCents: invoice.status === "paid" ? invoice.totalCents : Math.round(invoice.totalCents / 2), date: "2027-02-05" });
+  const method = index % 3 === 0 ? "stripe_payto" : index % 3 === 1 ? "stripe_becs" : "stripe_card";
+  const amountCents = invoice.status === "paid" ? invoice.totalCents : Math.round(invoice.totalCents / 2);
+  payments.push({
+    id: `payment-${payments.length + 1}`,
+    invoiceId: invoice.id,
+    familyId: invoice.familyId,
+    method,
+    amountCents,
+    receivedOn: "2027-02-05",
+    date: "2027-02-05",
+    recordedBy: "teacher-1",
+  });
 });
+
+// Demo extras: draft exam fee (gst_free), cash-paid already covered by cycle, bank transfer partial.
+{
+  const draftExam: Invoice = {
+    id: "inv-exam-draft",
+    number: null,
+    familyId: "fam-1",
+    status: "draft",
+    kind: "standard",
+    billToGuardianId: families.find((f) => f.id === "fam-1")?.guardians[0]?.id,
+    collection: "manual",
+    issueDate: PROTOTYPE_TODAY,
+    dueDate: addDays(PROTOTYPE_TODAY, 14),
+    lines: [
+      {
+        description: "AMEB exam entry fee",
+        qty: 1,
+        unitCents: 9500,
+        lineTotalCents: 9500,
+        taxCents: 0,
+        taxCode: "gst_free",
+      },
+    ],
+    subtotalCents: 9500,
+    taxCents: 0,
+    totalCents: 9500,
+    isTaxInvoice: false,
+    gstRegistered: false,
+    title: "Invoice",
+  };
+  invoices.push(draftExam);
+}
 
 // Keep initial conversation IDs stable while expanding to fifteen realistic family threads.
 const t = (daysAgo: number, hm: string) => melbourneIso(addDays(PROTOTYPE_TODAY, -daysAgo), hm);

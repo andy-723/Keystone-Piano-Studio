@@ -23,6 +23,7 @@ import { Route as ChatConversationIdRouteImport } from './routes/chat.$conversat
 import { Route as IntakeRecordIdRouteImport } from './routes/intake.$recordId'
 import { Route as InvoicesIndexRouteImport } from './routes/invoices.index'
 import { Route as InvoicesInvoiceIdRouteImport } from './routes/invoices.$invoiceId'
+import { Route as InvoicesNewRouteImport } from './routes/invoices.new'
 import { Route as InvoicesPrepareRouteImport } from './routes/invoices.prepare'
 import { Route as InvoicesRenewalsRouteImport } from './routes/invoices.renewals'
 import { Route as JoinTokenRouteImport } from './routes/join.$token'
@@ -35,6 +36,7 @@ import { Route as StudentsStudentIdRouteImport } from './routes/students.$studen
 import { Route as StudentsEnrolRouteImport } from './routes/students.enrol'
 import { Route as StudentsGroupsRouteImport } from './routes/students.groups'
 import { Route as StudentsImportRouteImport } from './routes/students.import'
+import { Route as ApiCronBillingRemindersRouteImport } from './routes/api/cron/billing-reminders'
 import { Route as ApiCronInviteRemindersRouteImport } from './routes/api/cron/invite-reminders'
 import { Route as ApiTermsPdfRouteImport } from './routes/api/terms/pdf'
 
@@ -108,6 +110,11 @@ const InvoicesInvoiceIdRoute = InvoicesInvoiceIdRouteImport.update({
   path: '/$invoiceId',
   getParentRoute: () => InvoicesRoute,
 } as any)
+const InvoicesNewRoute = InvoicesNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => InvoicesRoute,
+} as any)
 const InvoicesPrepareRoute = InvoicesPrepareRouteImport.update({
   id: '/prepare',
   path: '/prepare',
@@ -168,6 +175,11 @@ const StudentsImportRoute = StudentsImportRouteImport.update({
   path: '/import',
   getParentRoute: () => StudentsRoute,
 } as any)
+const ApiCronBillingRemindersRoute = ApiCronBillingRemindersRouteImport.update({
+  id: '/api/cron/billing-reminders',
+  path: '/api/cron/billing-reminders',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiCronInviteRemindersRoute = ApiCronInviteRemindersRouteImport.update({
   id: '/api/cron/invite-reminders',
   path: '/api/cron/invite-reminders',
@@ -192,6 +204,7 @@ export interface FileRoutesByFullPath {
   '/chat/$conversationId': typeof ChatConversationIdRoute
   '/intake/$recordId': typeof IntakeRecordIdRoute
   '/invoices/$invoiceId': typeof InvoicesInvoiceIdRoute
+  '/invoices/new': typeof InvoicesNewRoute
   '/invoices/prepare': typeof InvoicesPrepareRoute
   '/invoices/renewals': typeof InvoicesRenewalsRoute
   '/join/$token': typeof JoinTokenRoute
@@ -206,6 +219,7 @@ export interface FileRoutesByFullPath {
   '/invoices/': typeof InvoicesIndexRoute
   '/settings/': typeof SettingsIndexRoute
   '/students/': typeof StudentsIndexRoute
+  '/api/cron/billing-reminders': typeof ApiCronBillingRemindersRoute
   '/api/cron/invite-reminders': typeof ApiCronInviteRemindersRoute
   '/api/terms/pdf': typeof ApiTermsPdfRoute
 }
@@ -218,6 +232,7 @@ export interface FileRoutesByTo {
   '/chat/$conversationId': typeof ChatConversationIdRoute
   '/intake/$recordId': typeof IntakeRecordIdRoute
   '/invoices/$invoiceId': typeof InvoicesInvoiceIdRoute
+  '/invoices/new': typeof InvoicesNewRoute
   '/invoices/prepare': typeof InvoicesPrepareRoute
   '/invoices/renewals': typeof InvoicesRenewalsRoute
   '/join/$token': typeof JoinTokenRoute
@@ -232,6 +247,7 @@ export interface FileRoutesByTo {
   '/invoices': typeof InvoicesIndexRoute
   '/settings': typeof SettingsIndexRoute
   '/students': typeof StudentsIndexRoute
+  '/api/cron/billing-reminders': typeof ApiCronBillingRemindersRoute
   '/api/cron/invite-reminders': typeof ApiCronInviteRemindersRoute
   '/api/terms/pdf': typeof ApiTermsPdfRoute
 }
@@ -249,6 +265,7 @@ export interface FileRoutesById {
   '/chat/$conversationId': typeof ChatConversationIdRoute
   '/intake/$recordId': typeof IntakeRecordIdRoute
   '/invoices/$invoiceId': typeof InvoicesInvoiceIdRoute
+  '/invoices/new': typeof InvoicesNewRoute
   '/invoices/prepare': typeof InvoicesPrepareRoute
   '/invoices/renewals': typeof InvoicesRenewalsRoute
   '/join/$token': typeof JoinTokenRoute
@@ -263,6 +280,7 @@ export interface FileRoutesById {
   '/invoices/': typeof InvoicesIndexRoute
   '/settings/': typeof SettingsIndexRoute
   '/students/': typeof StudentsIndexRoute
+  '/api/cron/billing-reminders': typeof ApiCronBillingRemindersRoute
   '/api/cron/invite-reminders': typeof ApiCronInviteRemindersRoute
   '/api/terms/pdf': typeof ApiTermsPdfRoute
 }
@@ -281,6 +299,7 @@ export interface FileRouteTypes {
     | '/chat/$conversationId'
     | '/intake/$recordId'
     | '/invoices/$invoiceId'
+    | '/invoices/new'
     | '/invoices/prepare'
     | '/invoices/renewals'
     | '/join/$token'
@@ -295,6 +314,7 @@ export interface FileRouteTypes {
     | '/invoices/'
     | '/settings/'
     | '/students/'
+    | '/api/cron/billing-reminders'
     | '/api/cron/invite-reminders'
     | '/api/terms/pdf'
   fileRoutesByTo: FileRoutesByTo
@@ -307,6 +327,7 @@ export interface FileRouteTypes {
     | '/chat/$conversationId'
     | '/intake/$recordId'
     | '/invoices/$invoiceId'
+    | '/invoices/new'
     | '/invoices/prepare'
     | '/invoices/renewals'
     | '/join/$token'
@@ -321,6 +342,7 @@ export interface FileRouteTypes {
     | '/invoices'
     | '/settings'
     | '/students'
+    | '/api/cron/billing-reminders'
     | '/api/cron/invite-reminders'
     | '/api/terms/pdf'
   id:
@@ -337,6 +359,7 @@ export interface FileRouteTypes {
     | '/chat/$conversationId'
     | '/intake/$recordId'
     | '/invoices/$invoiceId'
+    | '/invoices/new'
     | '/invoices/prepare'
     | '/invoices/renewals'
     | '/join/$token'
@@ -351,6 +374,7 @@ export interface FileRouteTypes {
     | '/invoices/'
     | '/settings/'
     | '/students/'
+    | '/api/cron/billing-reminders'
     | '/api/cron/invite-reminders'
     | '/api/terms/pdf'
   fileRoutesById: FileRoutesById
@@ -368,6 +392,7 @@ export interface RootRouteChildren {
   IntakeRecordIdRoute: typeof IntakeRecordIdRoute
   JoinTokenRoute: typeof JoinTokenRoute
   LessonsLessonIdRoute: typeof LessonsLessonIdRoute
+  ApiCronBillingRemindersRoute: typeof ApiCronBillingRemindersRoute
   ApiCronInviteRemindersRoute: typeof ApiCronInviteRemindersRoute
   ApiTermsPdfRoute: typeof ApiTermsPdfRoute
 }
@@ -472,6 +497,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InvoicesInvoiceIdRouteImport
       parentRoute: typeof InvoicesRoute
     }
+    '/invoices/new': {
+      id: '/invoices/new'
+      path: '/new'
+      fullPath: '/invoices/new'
+      preLoaderRoute: typeof InvoicesNewRouteImport
+      parentRoute: typeof InvoicesRoute
+    }
     '/invoices/prepare': {
       id: '/invoices/prepare'
       path: '/prepare'
@@ -556,6 +588,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudentsImportRouteImport
       parentRoute: typeof StudentsRoute
     }
+    '/api/cron/billing-reminders': {
+      id: '/api/cron/billing-reminders'
+      path: '/api/cron/billing-reminders'
+      fullPath: '/api/cron/billing-reminders'
+      preLoaderRoute: typeof ApiCronBillingRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/cron/invite-reminders': {
       id: '/api/cron/invite-reminders'
       path: '/api/cron/invite-reminders'
@@ -587,6 +626,7 @@ const ChatRouteWithChildren = ChatRoute._addFileChildren(ChatRouteChildren)
 
 interface InvoicesRouteChildren {
   InvoicesInvoiceIdRoute: typeof InvoicesInvoiceIdRoute
+  InvoicesNewRoute: typeof InvoicesNewRoute
   InvoicesPrepareRoute: typeof InvoicesPrepareRoute
   InvoicesRenewalsRoute: typeof InvoicesRenewalsRoute
   InvoicesIndexRoute: typeof InvoicesIndexRoute
@@ -594,6 +634,7 @@ interface InvoicesRouteChildren {
 
 const InvoicesRouteChildren: InvoicesRouteChildren = {
   InvoicesInvoiceIdRoute: InvoicesInvoiceIdRoute,
+  InvoicesNewRoute: InvoicesNewRoute,
   InvoicesPrepareRoute: InvoicesPrepareRoute,
   InvoicesRenewalsRoute: InvoicesRenewalsRoute,
   InvoicesIndexRoute: InvoicesIndexRoute,
@@ -652,19 +693,10 @@ const rootRouteChildren: RootRouteChildren = {
   IntakeRecordIdRoute: IntakeRecordIdRoute,
   JoinTokenRoute: JoinTokenRoute,
   LessonsLessonIdRoute: LessonsLessonIdRoute,
+  ApiCronBillingRemindersRoute: ApiCronBillingRemindersRoute,
   ApiCronInviteRemindersRoute: ApiCronInviteRemindersRoute,
   ApiTermsPdfRoute: ApiTermsPdfRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

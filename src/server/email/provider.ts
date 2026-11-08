@@ -1,3 +1,10 @@
+export type EmailAttachment = {
+  filename: string;
+  /** Raw bytes or base64 string. */
+  content: Uint8Array | string;
+  contentType?: string;
+};
+
 export type SendEmailInput = {
   to: string;
   from: string;
@@ -6,6 +13,7 @@ export type SendEmailInput = {
   html: string;
   text: string;
   tags?: { name: string; value: string }[];
+  attachments?: EmailAttachment[];
 };
 
 export type SendEmailResult = { id: string };

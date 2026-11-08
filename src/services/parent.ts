@@ -49,7 +49,7 @@ export async function getParentHome() {
     nextLesson = day.lessons.find((lesson) => lesson.student.familyId === session.family.id && lesson.status === "scheduled");
   }
   const latestTeacher = thread?.messages.filter((message) => message.authorRole === "teacher").at(-1);
-  return { ...session, nextLesson: nextLesson ?? null, unpaid: invoices.filter((invoice) => ["sent", "overdue", "partially_paid"].includes(invoice.status)), latestTeacher: latestTeacher ?? null, makeUps: await Promise.all(session.children.map(async (child) => ({ studentId: child.id, name: child.firstName, ...await getCredits(child.id) }))), sharedNotes: await getParentSharedNotes() };
+  return { ...session, nextLesson: nextLesson ?? null, unpaid: invoices.filter((invoice) => ["sent", "partially_paid"].includes(invoice.status) && (invoice.balanceCents ?? invoice.totalCents) > 0), latestTeacher: latestTeacher ?? null, makeUps: await Promise.all(session.children.map(async (child) => ({ studentId: child.id, name: child.firstName, ...await getCredits(child.id) }))), sharedNotes: await getParentSharedNotes() };
 }
 export async function getParentSharedNotes() {
   const { family, children } = await getParentSession();
@@ -75,13 +75,28 @@ export async function logParentPractice(input: Pick<PracticeLog, "studentId" | "
   if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date) || Number.isNaN(Date.parse(input.date)) || input.date > PROTOTYPE_TODAY) throw new Error("Choose a valid practice date");
   return addPractice({ ...input, loggedBy: "student" });
 }
-export async function payParentInvoice(id: string, method: "payto" | "becs" | "card") {
+export async function payParentInvoice(id: string, method: "payto" | "becs" | "card" | "stripe_payto" | "stripe_becs" | "stripe_card") {
   const invoice = await getParentInvoice(id);
-  if (!invoice || !["sent", "overdue", "partially_paid"].includes(invoice.status)) throw new Error("Unpaid family invoice not found");
-  if (await getStripeStatus() !== "connected") throw new Error("Your teacher will send bank details");
-  if (!["payto", "becs", "card"].includes(method)) throw new Error("Payment method not found");
+  if (!invoice || !["sent", "partially_paid"].includes(invoice.status)) {
+    throw new Error("Unpaid family invoice not found");
+  }
+  if ((await getStripeStatus()) !== "connected") throw new Error("Your teacher will send bank details");
+  const allowed = ["payto", "becs", "card", "stripe_payto", "stripe_becs", "stripe_card"];
+  if (!allowed.includes(method)) throw new Error("Payment method not found");
   parentPayments.push({ invoiceId: id, method });
   return recordInvoicePayment(id, method);
+}
+
+/** Family queries an invoice — pauses reminders until a teacher marks resolved. */
+export async function queryParentInvoice(id: string, messageBody: string) {
+  const invoice = await getParentInvoice(id);
+  if (!invoice || invoice.status === "draft") throw new Error("Invoice not found");
+  const number = invoice.number ?? id;
+  const body = messageBody.trim() || `I have a question about invoice ${number}.`;
+  await sendParentMessage({ kind: "text", body });
+  const { markInvoiceQueried } = await import("./billing");
+  await markInvoiceQueried(id);
+  return getParentInvoice(id);
 }
 export async function requestParentMakeUp(studentId: string, lang: "en" | "zh-CN") {
   const { children } = await getParentSession(); const child = children.find((entry) => entry.id === studentId);

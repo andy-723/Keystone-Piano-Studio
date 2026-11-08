@@ -45,13 +45,13 @@ describe("Realistic mock history", () => {
       const view = await getInvoice(invoice.id);
       if (invoice.status === "paid") { expect(view?.payments?.length).toBeGreaterThan(0); expect(view?.balanceCents).toBe(0); }
       if (invoice.status === "partially_paid") { expect(view?.paidCents).toBeGreaterThan(0); expect(view?.balanceCents).toBeGreaterThan(0); expect((view?.paidCents ?? 0) + (view?.balanceCents ?? 0)).toBe(invoice.totalCents); }
-      if (invoice.status === "overdue") { const days = (Date.parse(PROTOTYPE_TODAY) - Date.parse(invoice.dueDate)) / 86400000; expect(days).toBeGreaterThanOrEqual(14); expect(days).toBeLessThanOrEqual(45); }
+      if (view?.isOverdue) { const days = view.daysOverdue ?? 0; expect(days).toBeGreaterThanOrEqual(9); expect(days).toBeLessThanOrEqual(45); }
     }
     const partial = await getInvoice("inv-5");
     const paid = await recordInvoicePayment("inv-5", "becs");
     expect(paid.payments?.at(-1)?.amountCents).toBe(partial?.balanceCents);
     expect(paid.balanceCents).toBe(0);
-    expect(paid.payments?.at(-1)?.method).toBe("becs");
+    expect(paid.payments?.at(-1)?.method).toBe("stripe_becs");
   });
 });
 
