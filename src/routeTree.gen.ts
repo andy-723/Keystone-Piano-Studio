@@ -36,6 +36,7 @@ import { Route as StudentsEnrolRouteImport } from './routes/students.enrol'
 import { Route as StudentsGroupsRouteImport } from './routes/students.groups'
 import { Route as StudentsImportRouteImport } from './routes/students.import'
 import { Route as ApiCronInviteRemindersRouteImport } from './routes/api/cron/invite-reminders'
+import { Route as ApiTermsPdfRouteImport } from './routes/api/terms/pdf'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -172,6 +173,11 @@ const ApiCronInviteRemindersRoute = ApiCronInviteRemindersRouteImport.update({
   path: '/api/cron/invite-reminders',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiTermsPdfRoute = ApiTermsPdfRouteImport.update({
+  id: '/api/terms/pdf',
+  path: '/api/terms/pdf',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -201,6 +207,7 @@ export interface FileRoutesByFullPath {
   '/settings/': typeof SettingsIndexRoute
   '/students/': typeof StudentsIndexRoute
   '/api/cron/invite-reminders': typeof ApiCronInviteRemindersRoute
+  '/api/terms/pdf': typeof ApiTermsPdfRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -226,6 +233,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsIndexRoute
   '/students': typeof StudentsIndexRoute
   '/api/cron/invite-reminders': typeof ApiCronInviteRemindersRoute
+  '/api/terms/pdf': typeof ApiTermsPdfRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -256,6 +264,7 @@ export interface FileRoutesById {
   '/settings/': typeof SettingsIndexRoute
   '/students/': typeof StudentsIndexRoute
   '/api/cron/invite-reminders': typeof ApiCronInviteRemindersRoute
+  '/api/terms/pdf': typeof ApiTermsPdfRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -287,6 +296,7 @@ export interface FileRouteTypes {
     | '/settings/'
     | '/students/'
     | '/api/cron/invite-reminders'
+    | '/api/terms/pdf'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -312,6 +322,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/students'
     | '/api/cron/invite-reminders'
+    | '/api/terms/pdf'
   id:
     | '__root__'
     | '/'
@@ -341,6 +352,7 @@ export interface FileRouteTypes {
     | '/settings/'
     | '/students/'
     | '/api/cron/invite-reminders'
+    | '/api/terms/pdf'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -357,6 +369,7 @@ export interface RootRouteChildren {
   JoinTokenRoute: typeof JoinTokenRoute
   LessonsLessonIdRoute: typeof LessonsLessonIdRoute
   ApiCronInviteRemindersRoute: typeof ApiCronInviteRemindersRoute
+  ApiTermsPdfRoute: typeof ApiTermsPdfRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -550,6 +563,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiCronInviteRemindersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/terms/pdf': {
+      id: '/api/terms/pdf'
+      path: '/api/terms/pdf'
+      fullPath: '/api/terms/pdf'
+      preLoaderRoute: typeof ApiTermsPdfRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -633,6 +653,7 @@ const rootRouteChildren: RootRouteChildren = {
   JoinTokenRoute: JoinTokenRoute,
   LessonsLessonIdRoute: LessonsLessonIdRoute,
   ApiCronInviteRemindersRoute: ApiCronInviteRemindersRoute,
+  ApiTermsPdfRoute: ApiTermsPdfRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

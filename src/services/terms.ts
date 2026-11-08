@@ -18,51 +18,116 @@ import {
   type AcceptanceRelationship,
   type ConsentRecord,
   type ConsentType,
+  type StudioTermsStudioPatch,
   type TermsAcceptance,
   type TermsChangeType,
   type TermsScope,
   type TermsVersion,
 } from "@/mocks/terms";
 import { newStudioRoster } from "@/mocks/roster-import";
+import type { ChildSafetyCheck, StudioBillingSettings, StudioLessonPolicies, StudioServiceSwitches } from "@/mocks/types";
 import { respond } from "./_delay";
 import { getOrCreateFamilyConversation, sendMessage } from "./chat";
 import { getParentSession } from "./parent";
 
-function store(scope: TermsScope) {
-  return scope === "demo" ? { families, students, studio, teacher } : {
+async function draftPatch(scope: TermsScope): Promise<StudioTermsStudioPatch> {
+  const state = await ensureTermsState();
+  return state.drafts[scope]?.studioPatch ?? {};
+}
+
+function store(scope: TermsScope, patch: StudioTermsStudioPatch = {}) {
+  if (scope === "demo") {
+    return {
+      families,
+      students,
+      studio: {
+        ...studio,
+        ...(patch.name ? { name: patch.name } : {}),
+        ...(patch.legalName !== undefined ? { legalName: patch.legalName } : {}),
+        ...(patch.abn !== undefined ? { abn: patch.abn } : {}),
+        ...(patch.address !== undefined ? { address: patch.address } : {}),
+        ...(patch.state !== undefined ? { state: patch.state } : {}),
+        ...(patch.email !== undefined ? { email: patch.email } : {}),
+        ...(patch.phone !== undefined ? { phone: patch.phone } : {}),
+        ...(patch.privacyEmail !== undefined ? { privacyEmail: patch.privacyEmail } : {}),
+        ...(patch.entityType !== undefined ? { entityType: patch.entityType } : {}),
+        ...(patch.additionalTerms !== undefined ? { additionalTerms: patch.additionalTerms } : {}),
+        ...(patch.asyncLessonPolicy !== undefined ? { asyncLessonPolicy: patch.asyncLessonPolicy } : {}),
+        ...(patch.billing ? { billing: { ...studio.billing!, ...patch.billing, paymentDiscount: { ...studio.billing!.paymentDiscount, ...patch.billing.paymentDiscount } } } : {}),
+        ...(patch.policies ? { policies: { ...studio.policies!, ...patch.policies } } : {}),
+        ...(patch.services ? { services: { ...studio.services!, ...patch.services } } : {}),
+      },
+      teacher: {
+        ...teacher,
+        ...(patch.teacherName ? { name: patch.teacherName } : {}),
+        ...(patch.childSafety ? { childSafety: patch.childSafety } : {}),
+      },
+    };
+  }
+  const defaultBilling: StudioBillingSettings = {
+    cycle: "per_term",
+    invoiceLeadDays: 14,
+    dueRule: "days_after_issue",
+    lateFeeAfterDays: 7,
+    lateFee: 15,
+    suspendAfterDays: 14,
+    feeNoticeDays: 30,
+    withdrawalNoticeWeeks: 4,
+    paymentDiscount: { enabled: false },
+  };
+  const baseBilling: StudioBillingSettings = {
+    ...defaultBilling,
+    ...patch.billing,
+    paymentDiscount: {
+      ...defaultBilling.paymentDiscount,
+      ...patch.billing?.paymentDiscount,
+    },
+  };
+  const defaultPolicies: StudioLessonPolicies = {
+    cancelNoticeHours: setupSession.policies.lateCancellationHours,
+    makeUpQuota: 1,
+    makeUpPeriod: "term",
+    makeUpExpiry: "same term",
+    onlinePlatform: "Zoom",
+    publicHolidays: "skip",
+    tuningFrequency: "once a year",
+    inactiveRetentionMonths: 24,
+  };
+  const basePolicies: StudioLessonPolicies = { ...defaultPolicies, ...patch.policies };
+  const defaultServices: StudioServiceSwitches = {
+    online: false,
+    inHome: false,
+    exams: false,
+    premises: true,
+  };
+  const baseServices: StudioServiceSwitches = { ...defaultServices, ...patch.services };
+  return {
     families: newStudioRoster.families,
     students: newStudioRoster.students,
     studio: {
-      name: setupSession.studio.name,
-      abn: setupSession.tax.abn || undefined,
-      legalName: setupSession.studio.name,
-      address: setupSession.studio.suburb,
-      state: setupSession.studio.state,
-      email: "",
-      phone: "",
-      privacyEmail: "",
-      entityType: "sole_trader" as const,
-      billing: studio.billing,
-      policies: {
-        cancelNoticeHours: setupSession.policies.lateCancellationHours,
-        makeUpQuota: 1,
-        makeUpPeriod: "term" as const,
-        makeUpExpiry: "same term" as const,
-        onlinePlatform: "Zoom",
-        publicHolidays: "skip" as const,
-        tuningFrequency: "once a year",
-        inactiveRetentionMonths: 24,
-      },
-      services: { online: false, inHome: false, exams: false, premises: true },
-      additionalTerms: "",
+      name: patch.name ?? setupSession.studio.name,
+      abn: patch.abn ?? (setupSession.tax.abn || undefined),
+      legalName: patch.legalName ?? setupSession.studio.name,
+      address: patch.address ?? setupSession.studio.suburb,
+      state: patch.state ?? setupSession.studio.state,
+      email: patch.email ?? "",
+      phone: patch.phone ?? "",
+      privacyEmail: patch.privacyEmail ?? "",
+      entityType: patch.entityType ?? ("sole_trader" as const),
+      billing: baseBilling,
+      policies: basePolicies,
+      services: baseServices,
+      additionalTerms: patch.additionalTerms ?? "",
       plan: "base" as const,
-      asyncLessonPolicy: "makeup_credit" as const,
+      asyncLessonPolicy: patch.asyncLessonPolicy ?? ("makeup_credit" as const),
       gstRegistered: setupSession.tax.registration === "yes",
     },
-    teacher: { name: setupSession.studio.teacherName, childSafety: undefined as undefined },
+    teacher: {
+      name: patch.teacherName ?? setupSession.studio.teacherName,
+      childSafety: patch.childSafety as ChildSafetyCheck | undefined,
+    },
   };
 }
-
 function freeze<T>(value: T): T {
   return structuredClone(value);
 }
@@ -110,8 +175,7 @@ export function classifyChange(
 }
 
 export function lateFeeForInvoice(invoiceTotalCents: number, scope: TermsScope = "demo"): number {
-  const data = store(scope);
-  const setting = data.studio.billing?.lateFee ?? 15;
+  const setting = studio.billing?.lateFee ?? 15;
   // Pending billing only applies on/after effectiveAt
   const pending = scope === "demo" ? studio.pendingBilling : undefined;
   const effectiveLate = pending?.effectiveAt && pending.effectiveAt <= PROTOTYPE_TODAY && pending.lateFee !== undefined
@@ -120,15 +184,19 @@ export function lateFeeForInvoice(invoiceTotalCents: number, scope: TermsScope =
   return applyLateFeeCents(effectiveLate, invoiceTotalCents);
 }
 
-function liveMergeValues(scope: TermsScope) {
-  const data = store(scope);
+async function liveMergeValues(scope: TermsScope) {
+  const patch = await draftPatch(scope);
+  const data = store(scope, patch);
   const integrations = integrationState[scope];
-  const methods = integrations.stripe.status === "connected"
-    ? "PayTo, BECS direct debit and card"
-    : "bank transfer";
+  const methods = patch.paymentMethods
+    ?? (integrations.stripe.status === "connected" ? "PayTo, BECS direct debit and card" : "bank transfer");
   const accountingLabel = integrations.xero.status === "connected"
     ? ` · Accounting: ${integrations.xero.organisationName ?? "Xero"}`
     : "";
+  const paymentProvider = integrations.stripe.status === "connected" ? "Stripe" : "the studio's payment provider";
+  const accountingSoftware = integrations.xero.status === "connected"
+    ? (integrations.xero.organisationName ?? "Xero")
+    : "the studio's accounting software";
   return buildMergeValues({
     studioName: data.studio.name,
     ...(data.studio.legalName ? { legalName: data.studio.legalName } : {}),
@@ -147,17 +215,19 @@ function liveMergeValues(scope: TermsScope) {
     teacherName: data.teacher.name,
     ...(data.teacher.childSafety ? { childSafety: data.teacher.childSafety } : {}),
     paymentMethods: methods,
-    boards: "AMEB, Trinity, ABRSM",
+    boards: patch.boards ?? "AMEB, Trinity, ABRSM",
     ...(accountingLabel ? { accountingLabel } : {}),
+    paymentProvider,
+    accountingSoftware,
   });
 }
-
 function applyClauseEdits(template: LegalClause[], edits: Record<string, string>): LegalClause[] {
   return template.map((clause) => (edits[clause.id] ? { ...clause, body: edits[clause.id]! } : clause));
 }
 
-function missingPublishMessages(scope: TermsScope, missingRequired: string[]): string[] {
-  const data = store(scope);
+async function missingPublishMessages(scope: TermsScope, missingRequired: string[]): Promise<string[]> {
+  const patch = await draftPatch(scope);
+  const data = store(scope, patch);
   const messages: string[] = [];
   if (!data.studio.abn?.trim() || missingRequired.includes("studio.abn")) messages.push("Add your ABN");
   if (!data.studio.legalName?.trim() || missingRequired.includes("studio.legalName")) messages.push("Add your legal name");
@@ -171,7 +241,7 @@ function missingPublishMessages(scope: TermsScope, missingRequired: string[]): s
       const label = `Complete ${path}`;
       if (!messages.includes(label) && !messages.some((entry) => entry.toLowerCase().includes(path.split(".").at(-1) ?? ""))) {
         // Prefer human messages above; skip generic duplicates for covered fields
-        if (!["studio.abn", "studio.legalName", "teacher.childSafetyState", "teacher.childSafetyType", "teacher.childSafetyStatus"].includes(path)) {
+        if (!["studio.abn", "studio.legalName", "teacher.childSafetyState", "teacher.childSafetyType", "teacher.childSafetyStatus", "teacher.childSafetyChecks"].includes(path)) {
           messages.push(label);
         }
       }
@@ -183,12 +253,18 @@ function missingPublishMessages(scope: TermsScope, missingRequired: string[]): s
 export async function getStudioTermsDraft(scope: TermsScope = "demo") {
   const state = await ensureTermsState();
   const draft = state.drafts[scope];
-  const mergeValues = liveMergeValues(scope);
+  const patch = draft.studioPatch ?? {};
+  const data = store(scope, patch);
+  const mergeValues = await liveMergeValues(scope);
   draft.mergeValues = mergeValues;
   const template = applyClauseEdits(LEGAL_TEMPLATE_AU, draft.clauseEdits);
-  const switches = { ...defaultStudioSwitches(store(scope).studio.services, store(scope).studio.plan), ...draft.switches };
+  const switches = { ...defaultStudioSwitches(data.studio.services, data.studio.plan), ...draft.switches };
   const rendered = renderTerms(template, mergeValues, switches);
-  const warnings = additionalTermsWarnings(String(store(scope).studio.additionalTerms ?? ""));
+  const warnings = additionalTermsWarnings(String(data.studio.additionalTerms ?? ""));
+  const published = state.versions.some((version) => {
+    const doc = state.documents.find((entry) => entry.id === version.documentId);
+    return doc?.scope === scope && doc.kind === "studio_agreement";
+  });
   return respond(freeze({
     ...draft,
     switches,
@@ -197,16 +273,18 @@ export async function getStudioTermsDraft(scope: TermsScope = "demo") {
     warnings,
     reviewed,
     keystoneEntity: KEYSTONE_ENTITY,
+    needsOnboarding: (!published && rendered.missingRequired.length > 0) || (scope === "new-studio" && !patch.onboardingCompleted),
+    onboardingCompleted: Boolean(patch.onboardingCompleted) || (scope === "demo" && published),
     template: LEGAL_TEMPLATE_AU.map((clause) => ({
       ...clause,
       body: draft.clauseEdits[clause.id] ?? clause.body,
       edited: Boolean(draft.clauseEdits[clause.id]),
     })),
-    studio: freeze(store(scope).studio),
-      teacher: freeze({
-      name: store(scope).teacher.name,
+    studio: freeze(data.studio),
+    teacher: freeze({
+      name: data.teacher.name,
       childSafety: (() => {
-        const safety = store(scope).teacher.childSafety;
+        const safety = data.teacher.childSafety;
         if (!safety) return null;
         return {
           state: safety.state,
@@ -218,7 +296,7 @@ export async function getStudioTermsDraft(scope: TermsScope = "demo") {
       })(),
     }),
     noticeChannel: "the Keystone Music HQ app or email",
-    financialRetentionYears: financialRetentionYears(store(scope).studio.entityType),
+    financialRetentionYears: financialRetentionYears(data.studio.entityType),
     privacy: {
       keystoneStorageStatement: KEYSTONE_STORAGE_STATEMENT.replace("[Keystone legal entity]", KEYSTONE_ENTITY),
       overseasCountriesLabel: OVERSEAS_COUNTRIES_LABEL,
@@ -231,53 +309,96 @@ export async function saveStudioTermsDraft(
   input: {
     switches?: Partial<Record<TermsOptionalSwitch, boolean>>;
     clauseEdits?: Record<string, string>;
-    studio?: Partial<{
-      legalName: string;
-      address: string;
-      state: string;
-      email: string;
-      phone: string;
-      privacyEmail: string;
-      entityType: typeof studio.entityType;
-      additionalTerms: string;
-      billing: NonNullable<typeof studio.billing>;
-      policies: NonNullable<typeof studio.policies>;
-      services: NonNullable<typeof studio.services>;
-    }>;
+    studio?: StudioTermsStudioPatch;
+    onboardingStep?: string;
+    onboardingCompleted?: boolean;
   },
 ) {
   const state = await ensureTermsState();
   const draft = state.drafts[scope];
   if (input.switches) draft.switches = { ...draft.switches, ...input.switches };
   if (input.clauseEdits) draft.clauseEdits = { ...draft.clauseEdits, ...input.clauseEdits };
-  if (scope === "demo" && input.studio) {
-    const published = state.versions.filter((version) => version.documentId === "doc-studio-demo");
-    const hasPublished = published.length > 0;
-    if (input.studio.billing && hasPublished) {
-      // Terms-linked billing after first publish becomes pending until next version effectiveAt
-      const pending: NonNullable<typeof studio.pendingBilling> = {
-        ...studio.pendingBilling,
-        ...input.studio.billing,
-      };
-      if (studio.pendingBilling?.effectiveAt) pending.effectiveAt = studio.pendingBilling.effectiveAt;
-      studio.pendingBilling = pending;
-    } else if (input.studio.billing) {
-      studio.billing = { ...studio.billing!, ...input.studio.billing };
+  if (input.studio || input.onboardingStep !== undefined || input.onboardingCompleted !== undefined) {
+    const nextPatch: StudioTermsStudioPatch = { ...draft.studioPatch };
+    if (input.studio) {
+      if (input.studio.name !== undefined) nextPatch.name = input.studio.name;
+      if (input.studio.legalName !== undefined) nextPatch.legalName = input.studio.legalName;
+      if (input.studio.abn !== undefined) nextPatch.abn = input.studio.abn;
+      if (input.studio.address !== undefined) nextPatch.address = input.studio.address;
+      if (input.studio.state !== undefined) nextPatch.state = input.studio.state;
+      if (input.studio.email !== undefined) nextPatch.email = input.studio.email;
+      if (input.studio.phone !== undefined) nextPatch.phone = input.studio.phone;
+      if (input.studio.privacyEmail !== undefined) nextPatch.privacyEmail = input.studio.privacyEmail;
+      if (input.studio.entityType !== undefined) nextPatch.entityType = input.studio.entityType;
+      if (input.studio.additionalTerms !== undefined) nextPatch.additionalTerms = input.studio.additionalTerms;
+      if (input.studio.asyncLessonPolicy !== undefined) nextPatch.asyncLessonPolicy = input.studio.asyncLessonPolicy;
+      if (input.studio.paymentMethods !== undefined) nextPatch.paymentMethods = input.studio.paymentMethods;
+      if (input.studio.boards !== undefined) nextPatch.boards = input.studio.boards;
+      if (input.studio.teacherName !== undefined) nextPatch.teacherName = input.studio.teacherName;
+      if (input.studio.childSafety !== undefined) nextPatch.childSafety = input.studio.childSafety;
+      if (input.studio.billing) {
+        nextPatch.billing = {
+          ...(nextPatch.billing ?? (scope === "demo" ? studio.billing! : {
+            cycle: "per_term",
+            invoiceLeadDays: 14,
+            dueRule: "days_after_issue",
+            lateFeeAfterDays: 7,
+            lateFee: 15,
+            suspendAfterDays: 14,
+            feeNoticeDays: 30,
+            withdrawalNoticeWeeks: 4,
+            paymentDiscount: { enabled: false },
+          })),
+          ...input.studio.billing,
+          paymentDiscount: {
+            ...(nextPatch.billing?.paymentDiscount ?? { enabled: false }),
+            ...input.studio.billing.paymentDiscount,
+          },
+        };
+      }
+      if (input.studio.policies) {
+        nextPatch.policies = { ...(nextPatch.policies ?? {}), ...input.studio.policies } as StudioLessonPolicies;
+      }
+      if (input.studio.services) {
+        nextPatch.services = { ...(nextPatch.services ?? {}), ...input.studio.services } as StudioServiceSwitches;
+      }
     }
-    if (input.studio.legalName !== undefined) studio.legalName = input.studio.legalName;
-    if (input.studio.address !== undefined) studio.address = input.studio.address;
-    if (input.studio.state !== undefined) studio.state = input.studio.state;
-    if (input.studio.email !== undefined) studio.email = input.studio.email;
-    if (input.studio.phone !== undefined) studio.phone = input.studio.phone;
-    if (input.studio.privacyEmail !== undefined) studio.privacyEmail = input.studio.privacyEmail;
-    if (input.studio.entityType !== undefined) studio.entityType = input.studio.entityType;
-    if (input.studio.additionalTerms !== undefined) studio.additionalTerms = input.studio.additionalTerms;
-    if (input.studio.policies) studio.policies = { ...studio.policies!, ...input.studio.policies };
-    if (input.studio.services) studio.services = { ...studio.services!, ...input.studio.services };
+    if (input.onboardingStep !== undefined) nextPatch.onboardingStep = input.onboardingStep;
+    if (input.onboardingCompleted !== undefined) nextPatch.onboardingCompleted = input.onboardingCompleted;
+    draft.studioPatch = nextPatch;
+
+    if (scope === "demo" && input.studio) {
+      const published = state.versions.filter((version) => version.documentId === "doc-studio-demo");
+      const hasPublished = published.length > 0;
+      if (input.studio.billing && hasPublished) {
+        const pending: NonNullable<typeof studio.pendingBilling> = {
+          ...studio.pendingBilling,
+          ...input.studio.billing,
+        };
+        if (studio.pendingBilling?.effectiveAt) pending.effectiveAt = studio.pendingBilling.effectiveAt;
+        studio.pendingBilling = pending;
+      } else if (input.studio.billing) {
+        studio.billing = { ...studio.billing!, ...input.studio.billing, paymentDiscount: { ...studio.billing!.paymentDiscount, ...input.studio.billing.paymentDiscount } };
+      }
+      if (input.studio.name !== undefined) studio.name = input.studio.name;
+      if (input.studio.legalName !== undefined) studio.legalName = input.studio.legalName;
+      if (input.studio.abn !== undefined) studio.abn = input.studio.abn;
+      if (input.studio.address !== undefined) studio.address = input.studio.address;
+      if (input.studio.state !== undefined) studio.state = input.studio.state;
+      if (input.studio.email !== undefined) studio.email = input.studio.email;
+      if (input.studio.phone !== undefined) studio.phone = input.studio.phone;
+      if (input.studio.privacyEmail !== undefined) studio.privacyEmail = input.studio.privacyEmail;
+      if (input.studio.entityType !== undefined) studio.entityType = input.studio.entityType;
+      if (input.studio.additionalTerms !== undefined) studio.additionalTerms = input.studio.additionalTerms;
+      if (input.studio.asyncLessonPolicy !== undefined) studio.asyncLessonPolicy = input.studio.asyncLessonPolicy;
+      if (input.studio.policies) studio.policies = { ...studio.policies!, ...input.studio.policies };
+      if (input.studio.services) studio.services = { ...studio.services!, ...input.studio.services };
+      if (input.studio.teacherName !== undefined) teacher.name = input.studio.teacherName;
+      if (input.studio.childSafety !== undefined) teacher.childSafety = input.studio.childSafety;
+    }
   }
   return getStudioTermsDraft(scope);
 }
-
 export async function publishStudioTerms(
   scope: TermsScope,
   input: { changeSummary: string; effectiveAt: string; forceMaterial?: boolean },
@@ -285,12 +406,13 @@ export async function publishStudioTerms(
   const state = await ensureTermsState();
   const draft = await getStudioTermsDraft(scope);
   if (draft.rendered.missingRequired.length) {
-    throw new Error(missingPublishMessages(scope, draft.rendered.missingRequired).join(". ") || "Complete required fields before publishing.");
+    throw new Error((await missingPublishMessages(scope, draft.rendered.missingRequired)).join(". ") || "Complete required fields before publishing.");
   }
   const doc = state.documents.find((entry) => entry.scope === scope && entry.kind === "studio_agreement");
   if (!doc) throw new Error("Studio agreement document missing.");
   const previous = [...state.versions].filter((version) => version.documentId === doc.id).sort((a, b) => b.versionNo - a.versionNo)[0];
-  const template = applyClauseEdits(LEGAL_TEMPLATE_AU, state.drafts[scope].clauseEdits);
+  const patch = await draftPatch(scope);
+  const data = store(scope, patch);
   const markdown = draft.rendered.markdown;
   let changeType = previous
     ? classifyChange(previous, {
@@ -301,7 +423,7 @@ export async function publishStudioTerms(
     : "initial";
   if (input.forceMaterial && changeType === "minor") changeType = "material";
   if (changeType === "material") {
-    const noticeDays = store(scope).studio.billing?.feeNoticeDays ?? 30;
+    const noticeDays = data.studio.billing?.feeNoticeDays ?? 30;
     const earliest = addDays(PROTOTYPE_TODAY, noticeDays);
     if (input.effectiveAt < earliest) {
       throw new Error(`Material changes need at least ${noticeDays} days’ notice. Choose ${earliest} or later.`);
@@ -319,16 +441,16 @@ export async function publishStudioTerms(
     changeSummary: input.changeSummary.trim() || (changeType === "initial" ? "Initial version" : "Updated studio terms"),
     effectiveAt: input.effectiveAt,
     publishedAt: `${PROTOTYPE_TODAY}T12:00:00+11:00`,
-    publishedBy: store(scope).teacher.name || "Teacher",
+    publishedBy: data.teacher.name || "Teacher",
     editedClauseIds: Object.keys(state.drafts[scope].clauseEdits),
   };
   state.versions.push(version);
+  state.drafts[scope].studioPatch = { ...state.drafts[scope].studioPatch, onboardingCompleted: true };
   if (scope === "demo" && studio.pendingBilling) {
     studio.pendingBilling.effectiveAt = input.effectiveAt;
   }
   return respond(freeze(version));
 }
-
 export async function getPublishedStudioTerms(scope: TermsScope = "demo") {
   const state = await ensureTermsState();
   const doc = state.documents.find((entry) => entry.scope === scope && entry.kind === "studio_agreement");
@@ -347,20 +469,23 @@ export async function getFamilyAppTerms() {
     const doc = state.documents.find((document) => document.id === entry.documentId);
     return doc?.kind === "family_app_terms";
   });
+  const merge = await liveMergeValues("demo");
+  const privacy = merge["privacy"] as Record<string, unknown>;
   return respond(freeze({
     version: version ? freeze(version) : null,
     appTermsMarkdown: FAMILY_APP_TERMS_MARKDOWN,
-    privacyNoticeMarkdown: PRIVACY_NOTICE_MARKDOWN.replaceAll("{{privacy.overseasCountriesLabel}}", String((liveMergeValues("demo")["privacy"] as Record<string, unknown>)["overseasCountriesLabel"] ?? "")).replaceAll("{{privacy.keystoneStorageStatement}}", String((liveMergeValues("demo")["privacy"] as Record<string, unknown>)["keystoneStorageStatement"] ?? "")),
+    privacyNoticeMarkdown: PRIVACY_NOTICE_MARKDOWN
+      .replaceAll("{{privacy.overseasCountriesLabel}}", String(privacy["overseasCountriesLabel"] ?? ""))
+      .replaceAll("{{privacy.keystoneStorageStatement}}", String(privacy["keystoneStorageStatement"] ?? "")),
     keystoneEntity: KEYSTONE_ENTITY,
     reviewed,
   }));
 }
-
 export async function getAcceptanceTracker(scope: TermsScope = "demo") {
   const state = await ensureTermsState();
   const published = await getPublishedStudioTerms(scope);
   const target = published.pending ?? published.current;
-  const data = store(scope);
+  const data = store(scope, await draftPatch(scope));
   const rows = data.families.map((family) => {
     const kids = data.students.filter((student) => student.familyId === family.id);
     const latest = state.acceptances
@@ -385,7 +510,7 @@ export async function getAcceptanceTracker(scope: TermsScope = "demo") {
 }
 
 export async function remindFamilyTerms(familyId: string, scope: TermsScope = "demo") {
-  const data = store(scope);
+  const data = store(scope, await draftPatch(scope));
   const family = data.families.find((entry) => entry.id === familyId);
   if (!family) throw new Error("Family not found.");
   const published = await getPublishedStudioTerms(scope);
@@ -409,7 +534,7 @@ export async function recordPaperAcceptance(input: {
   const published = await getPublishedStudioTerms(scope);
   const version = published.pending ?? published.current;
   if (!version) throw new Error("Publish studio terms before recording acceptance.");
-  const data = store(scope);
+  const data = store(scope, await draftPatch(scope));
   const family = data.families.find((entry) => entry.id === input.familyId);
   const guardian = family?.guardians[0];
   if (!family || !guardian) throw new Error("Family not found.");
@@ -438,11 +563,61 @@ export async function recordPaperAcceptance(input: {
 
 export async function downloadAcceptanceRecords(scope: TermsScope = "demo") {
   const state = await ensureTermsState();
-  const data = store(scope);
+  const data = store(scope, await draftPatch(scope));
   const studentIds = new Set(data.students.map((student) => student.id));
   const acceptances = state.acceptances.filter((entry) => entry.studentIds.some((id) => studentIds.has(id)));
   const consents = state.consents.filter((entry) => entry.scope === scope);
   return respond(freeze({ exportedAt: `${PROTOTYPE_TODAY}T12:00:00+11:00`, acceptances, consents, paperFiles: state.paperFiles }));
+}
+
+export async function getTermsDocumentForPdf(
+  kind: "studio_agreement" | "privacy" | "family_app_terms" | "receipt",
+  scope: TermsScope = "demo",
+  receiptId?: string,
+) {
+  const state = await ensureTermsState();
+  if (kind === "family_app_terms") {
+    const app = await getFamilyAppTerms();
+    return respond({
+      title: "Keystone Music HQ — App terms of use",
+      body: app.appTermsMarkdown,
+      filename: "keystone-app-terms.pdf",
+    });
+  }
+  if (kind === "privacy") {
+    const draft = await getStudioTermsDraft(scope);
+    const privacyClauses = LEGAL_TEMPLATE_AU.filter((clause) => clause.part === 3);
+    const rendered = renderTerms(privacyClauses, draft.mergeValues, draft.switches);
+    return respond({
+      title: `${draft.studio.name || "Studio"} — Privacy policy`,
+      body: rendered.markdown,
+      filename: "studio-privacy-policy.pdf",
+    });
+  }
+  if (kind === "receipt") {
+    const receipt = state.receipts.find((entry) => entry.id === receiptId) ?? state.receipts.at(-1);
+    if (!receipt) throw new Error("Receipt not found.");
+    return respond({
+      title: "Terms acceptance receipt",
+      body: receipt.renderedText,
+      filename: `acceptance-receipt-${receipt.id.slice(0, 8)}.pdf`,
+    });
+  }
+  const published = await getPublishedStudioTerms(scope);
+  const version = published.pending ?? published.current;
+  if (!version) {
+    const draft = await getStudioTermsDraft(scope);
+    return respond({
+      title: `${draft.studio.name || "Studio"} — Studio agreement`,
+      body: draft.rendered.markdown,
+      filename: "studio-agreement.pdf",
+    });
+  }
+  return respond({
+    title: `Studio agreement · version ${version.versionNo}`,
+    body: version.renderedMarkdown,
+    filename: `studio-agreement-v${version.versionNo}.pdf`,
+  });
 }
 
 export async function acceptStudioTerms(input: {
@@ -459,7 +634,7 @@ export async function acceptStudioTerms(input: {
 }) {
   const scope = input.scope ?? "demo";
   const state = await ensureTermsState();
-  const data = store(scope);
+  const data = store(scope, await draftPatch(scope));
   const words = input.typedName.trim().split(/\s+/).filter(Boolean);
   if (words.length < 2) throw new Error("Type your full name (at least two words).");
 
@@ -574,7 +749,7 @@ export async function acceptStudioTerms(input: {
   state.outbox.push({
     id: crypto.randomUUID(),
     to: accountEmail,
-    subject: `${store(scope).studio.name || "Studio"} terms acceptance receipt`,
+    subject: `${data.studio.name || "Studio"} terms acceptance receipt`,
     body: receiptBody,
     createdAt: acceptedAt,
     receiptId: studioReceiptId,
@@ -592,7 +767,7 @@ export async function recordConsent(input: {
   wordingVersion?: string;
 }) {
   const state = await ensureTermsState();
-  const data = store(input.scope);
+  const data = store(input.scope, await draftPatch(input.scope));
   if (!data.students.some((student) => student.id === input.studentId)) throw new Error("Student not found.");
   const existing = state.consents.filter((entry) => entry.scope === input.scope && entry.studentId === input.studentId && entry.type === input.type && !entry.withdrawnAt);
   if (!input.granted) {

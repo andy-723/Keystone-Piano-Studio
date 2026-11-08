@@ -1,11 +1,11 @@
 import { addDays, PROTOTYPE_TODAY } from "@/lib/calendar";
 import { hashTerms, renderTerms } from "@/lib/terms-render";
 import { LEGAL_TEMPLATE_AU, type TermsOptionalSwitch } from "@/mocks/legal-template-au";
-import { FAMILY_APP_TERMS_EFFECTIVE_AT, FAMILY_APP_TERMS_MARKDOWN, FAMILY_APP_TERMS_VERSION, KEYSTONE_ENTITY } from "@/mocks/keystone-app-terms";
+import { FAMILY_APP_TERMS_EFFECTIVE_AT, FAMILY_APP_TERMS_MARKDOWN, FAMILY_APP_TERMS_VERSION, KEYSTONE_ENTITY, KEYSTONE_PRIVACY_EMAIL } from "@/mocks/keystone-app-terms";
 import { KEYSTONE_STORAGE_STATEMENT, OVERSEAS_COUNTRIES_LABEL } from "@/mocks/keystone-suppliers";
 import { families, studio, students, teacher } from "@/mocks/data";
 import type { ImportScope } from "@/mocks/roster-import";
-import type { StudioBillingSettings, StudioLessonPolicies, StudioServiceSwitches } from "@/mocks/types";
+import type { ChildSafetyCheck, StudioBillingSettings, StudioEntityType, StudioLessonPolicies, StudioServiceSwitches } from "@/mocks/types";
 
 export type TermsScope = ImportScope;
 export type TermsDocumentKind = "studio_agreement" | "platform_terms" | "family_app_terms";
@@ -88,11 +88,36 @@ export interface TermsOutboxEntry {
   receiptId: string;
 }
 
+/** Mutable fill-ins for a scope (especially new-studio) that Settings and Typeform onboarding share. */
+export interface StudioTermsStudioPatch {
+  name?: string;
+  legalName?: string;
+  abn?: string;
+  address?: string;
+  state?: string;
+  email?: string;
+  phone?: string;
+  privacyEmail?: string;
+  entityType?: StudioEntityType;
+  additionalTerms?: string;
+  asyncLessonPolicy?: "makeup_credit" | "counts_as_lesson";
+  billing?: StudioBillingSettings;
+  policies?: StudioLessonPolicies;
+  services?: StudioServiceSwitches;
+  paymentMethods?: string;
+  boards?: string;
+  teacherName?: string;
+  childSafety?: ChildSafetyCheck;
+  onboardingStep?: string;
+  onboardingCompleted?: boolean;
+}
+
 export interface StudioTermsDraft {
   scope: TermsScope;
   switches: Partial<Record<TermsOptionalSwitch, boolean>>;
   clauseEdits: Record<string, string>;
   mergeValues: Record<string, unknown>;
+  studioPatch: StudioTermsStudioPatch;
 }
 
 export interface TermsState {
@@ -128,6 +153,18 @@ export function childSafetyStatus(expiry: string | undefined, today = PROTOTYPE_
   return expiry >= today ? "current" : "expired";
 }
 
+function publicHolidayRule(policy: string | undefined): string {
+  switch (policy) {
+    case "make_up":
+      return "are offered as a make-up lesson";
+    case "charge":
+      return "are still charged as scheduled lessons";
+    case "skip":
+    default:
+      return "are skipped with no charge";
+  }
+}
+
 export function buildMergeValues(input: {
   studioName: string;
   legalName?: string;
@@ -148,14 +185,24 @@ export function buildMergeValues(input: {
   paymentMethods?: string;
   boards?: string;
   accountingLabel?: string;
+  paymentProvider?: string;
+  accountingSoftware?: string;
 }): Record<string, unknown> {
   const billing = input.billing;
   const policies = input.policies;
   const safety = input.childSafety;
   const status = childSafetyStatus(safety?.expiry);
+  const weeks = billing?.withdrawalNoticeWeeks ?? "";
+  const lateFee = billing?.lateFee;
+  const discountAmount = billing?.paymentDiscount.amount;
+  const childSafetyChecks =
+    safety?.state && safety.type && status !== "missing"
+      ? `${safety.state} ${safety.type} (${status})`
+      : "";
   return {
     studio: {
       name: input.studioName,
+      tradingName: input.studioName,
       legalName: input.legalName ?? "",
       abn: input.abn ?? "",
       address: input.address ?? "",
@@ -166,8 +213,8 @@ export function buildMergeValues(input: {
       entityTypeLabel: (input.entityType ?? "sole_trader").replaceAll("_", " "),
       asyncLessonPolicyLabel:
         input.asyncLessonPolicy === "counts_as_lesson"
-          ? "a video lesson counts as the scheduled lesson (no make-up credit)"
-          : "a video lesson earns a make-up credit",
+          ? "A video lesson counts as the scheduled lesson (no make-up credit)"
+          : "A video lesson earns a make-up credit",
       additionalTerms: input.additionalTerms ?? "",
     },
     teacher: {
@@ -175,23 +222,27 @@ export function buildMergeValues(input: {
       childSafetyState: safety?.state ?? "",
       childSafetyType: safety?.type ?? "",
       childSafetyStatus: status === "missing" ? "" : status,
+      childSafetyChecks,
       // number intentionally omitted from merge values so it can never render
     },
     billing: {
-      cycle: billing?.cycle === "per_term" ? "each school term" : billing?.cycle === "monthly" ? "monthly" : "per lesson",
+      cycle: billing?.cycle === "per_term" ? "each school term" : billing?.cycle === "monthly" ? "monthly" : billing?.cycle === "per_lesson" ? "per lesson" : "",
       invoiceLeadDays: billing?.invoiceLeadDays ?? "",
-      dueRule: billing?.dueRule === "on_issue" ? "on issue" : billing?.dueRule === "before_term_start" ? "before term start" : "14 days after issue",
+      dueRule: billing?.dueRule === "on_issue" ? "on issue" : billing?.dueRule === "before_term_start" ? "before term start" : billing?.dueRule === "days_after_issue" ? "14 days after issue" : "",
       lateFeeAfterDays: billing?.lateFeeAfterDays ?? "",
-      lateFee: billing?.lateFee ?? "",
+      lateFee: lateFee ?? "",
+      lateFeeLabel: lateFee !== undefined && lateFee !== null && String(lateFee) !== "" ? `A$${lateFee}` : "",
       suspendAfterDays: billing?.suspendAfterDays ?? "",
       feeNoticeDays: billing?.feeNoticeDays ?? "",
-      withdrawalNoticeWeeks: billing?.withdrawalNoticeWeeks ?? "",
+      withdrawalNoticeWeeks: weeks,
+      noticePeriod: weeks !== "" ? `${weeks} week${weeks === 1 ? "" : "s"}` : "",
       paymentMethods: input.paymentMethods ?? "bank transfer",
       // Space when Xero is disconnected so the optional suffix tag is not "missing".
       accountingLabel: input.accountingLabel?.trim() ? ` ${input.accountingLabel.trim()}` : " ",
       paymentDiscount: {
         method: billing?.paymentDiscount.method ?? "",
-        amount: billing?.paymentDiscount.amount ?? "",
+        amount: discountAmount ?? "",
+        amountLabel: discountAmount !== undefined && discountAmount !== null && String(discountAmount) !== "" ? `A$${discountAmount}` : "",
       },
     },
     policies: {
@@ -201,6 +252,7 @@ export function buildMergeValues(input: {
       makeUpExpiry: policies?.makeUpExpiry ?? "",
       onlinePlatform: policies?.onlinePlatform ?? "",
       publicHolidays: policies?.publicHolidays ?? "",
+      publicHolidayRule: publicHolidayRule(policies?.publicHolidays),
       tuningFrequency: policies?.tuningFrequency ?? "",
       inactiveRetentionMonths: policies?.inactiveRetentionMonths ?? "",
     },
@@ -213,6 +265,9 @@ export function buildMergeValues(input: {
       keystoneStorageStatement: KEYSTONE_STORAGE_STATEMENT.replace("[Keystone legal entity]", KEYSTONE_ENTITY),
       overseasCountriesLabel: OVERSEAS_COUNTRIES_LABEL,
       financialRetentionYears: financialRetentionYears(input.entityType),
+      paymentProvider: input.paymentProvider ?? "the studio's payment provider",
+      accountingSoftware: input.accountingSoftware ?? "the studio's accounting software",
+      keystonePrivacyEmail: KEYSTONE_PRIVACY_EMAIL,
     },
   };
 }
@@ -284,9 +339,9 @@ function emptyDraft(scope: TermsScope): StudioTermsDraft {
       studioName: "",
       teacherName: "",
     }),
+    studioPatch: scope === "demo" ? { onboardingCompleted: true } : {},
   };
 }
-
 export async function createInitialTermsState(): Promise<TermsState> {
   const studioDoc: TermsDocument = { id: "doc-studio-demo", scope: "demo", kind: "studio_agreement" };
   const appDoc: TermsDocument = { id: "doc-app-demo", scope: "demo", kind: "family_app_terms" };

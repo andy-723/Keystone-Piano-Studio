@@ -53,14 +53,14 @@ async function acceptForStudents(studentIds: string[], opts: { capacity?: "self"
 describe("studio terms render and classify", () => {
   it("renderTerms fills tags, reports missing required fields, and drops switched-off clauses", () => {
     const values = {
-      studio: { legalName: "Demo Studio", abn: "11 111 111 111", address: "1 Street", state: "VIC", email: "a@b.c", phone: "00", privacyEmail: "p@b.c", entityTypeLabel: "sole trader", asyncLessonPolicyLabel: "credit", additionalTerms: "", name: "Demo" },
-      teacher: { name: "Ms Clarke", childSafetyState: "VIC", childSafetyType: "Working with Children Check", childSafetyStatus: "current" },
-      billing: { cycle: "each school term", invoiceLeadDays: 14, dueRule: "14 days after issue", lateFeeAfterDays: 7, lateFee: 15, suspendAfterDays: 14, feeNoticeDays: 30, withdrawalNoticeWeeks: 4, paymentMethods: "card", accountingLabel: " ", paymentDiscount: { method: "", amount: "" } },
-      policies: { cancelNoticeHours: 24, makeUpQuota: 1, makeUpPeriod: "term", makeUpExpiry: "same term", onlinePlatform: "Zoom", publicHolidays: "skip", tuningFrequency: "once a year", inactiveRetentionMonths: 24 },
+      studio: { legalName: "Demo Studio", tradingName: "Demo", abn: "11 111 111 111", address: "1 Street", state: "VIC", email: "a@b.c", phone: "00", privacyEmail: "p@b.c", entityTypeLabel: "sole trader", asyncLessonPolicyLabel: "A video lesson earns a make-up credit", additionalTerms: "", name: "Demo" },
+      teacher: { name: "Ms Clarke", childSafetyState: "VIC", childSafetyType: "Working with Children Check", childSafetyStatus: "current", childSafetyChecks: "VIC Working with Children Check (current)" },
+      billing: { cycle: "each school term", invoiceLeadDays: 14, dueRule: "14 days after issue", lateFeeAfterDays: 7, lateFee: 15, lateFeeLabel: "A$15", suspendAfterDays: 14, feeNoticeDays: 30, withdrawalNoticeWeeks: 4, noticePeriod: "4 weeks", paymentMethods: "card", accountingLabel: " ", paymentDiscount: { method: "", amount: "", amountLabel: "" } },
+      policies: { cancelNoticeHours: 24, makeUpQuota: 1, makeUpPeriod: "term", makeUpExpiry: "same term", onlinePlatform: "Zoom", publicHolidays: "skip", publicHolidayRule: "are skipped with no charge", tuningFrequency: "once a year", inactiveRetentionMonths: 24 },
       services: { inHomeTravelFee: "A$10" },
       curriculum: { boards: "AMEB" },
       notice: { channel: "the Keystone Music HQ app or email" },
-      privacy: { keystoneStorageStatement: "stored in AU", overseasCountriesLabel: "AU/NZ/US", financialRetentionYears: 5 },
+      privacy: { keystoneStorageStatement: "stored in AU", overseasCountriesLabel: "AU/NZ/US", financialRetentionYears: 5, paymentProvider: "Stripe", accountingSoftware: "Xero", keystonePrivacyEmail: "privacy@keystone.example" },
     };
     const full = renderTerms(LEGAL_TEMPLATE_AU, values, { online: true, premises: true, exams: true, asyncPro: true });
     expect(full.missingRequired).toEqual([]);
@@ -70,7 +70,7 @@ describe("studio terms render and classify", () => {
     expect(full.markdown).not.toMatch(/\{\{[^}]+\}\}/);
     expect(LEGAL_TEMPLATE_AU.some((clause) => /surcharge/i.test(clause.body) && clause.id.includes("surcharge"))).toBe(false);
     const dropped = renderTerms(LEGAL_TEMPLATE_AU, values, { online: false });
-    expect(dropped.markdown).not.toContain("Online lessons");
+    expect(dropped.markdown).not.toContain("4.1 Online lessons");
     const missing = renderTerms(LEGAL_TEMPLATE_AU, { ...values, studio: { ...values.studio, abn: "" } }, { premises: true });
     expect(missing.missingRequired).toContain("studio.abn");
     expect(missing.markdown).toContain("{{studio.abn}}");
@@ -88,7 +88,7 @@ describe("studio terms render and classify", () => {
       classifyChange(base, {
         mergeValues: base.mergeValues,
         renderedMarkdown: "## Late payment\n\nedited material clause\n\n## Parties\n\nhello",
-        editedClauseIds: ["p2-late-fee"],
+        editedClauseIds: ["p1-late-fee"],
         editedMaterialClause: true,
       }),
     ).toBe("material");
@@ -192,14 +192,14 @@ describe("studio terms service", () => {
     const markdown = renderTerms(
       LEGAL_TEMPLATE_AU,
       {
-        teacher: { name: teacher.name, childSafetyState: "VIC", childSafetyType: "WWCC", childSafetyStatus: "current" },
-        studio: { legalName: "X", abn: "1", address: "a", state: "VIC", email: "e", phone: "p", privacyEmail: "p", entityTypeLabel: "sole trader", asyncLessonPolicyLabel: "x", additionalTerms: "", name: "X" },
-        billing: { cycle: "c", invoiceLeadDays: 14, dueRule: "d", lateFeeAfterDays: 7, lateFee: 15, suspendAfterDays: 14, feeNoticeDays: 30, withdrawalNoticeWeeks: 4, paymentMethods: "m", accountingLabel: "", paymentDiscount: { method: "", amount: "" } },
-        policies: { cancelNoticeHours: 24, makeUpQuota: 1, makeUpPeriod: "term", makeUpExpiry: "same term", onlinePlatform: "Zoom", publicHolidays: "skip", tuningFrequency: "once a year", inactiveRetentionMonths: 24 },
+        teacher: { name: teacher.name, childSafetyState: "VIC", childSafetyType: "WWCC", childSafetyStatus: "current", childSafetyChecks: "VIC WWCC (current)" },
+        studio: { legalName: "X", tradingName: "X", abn: "1", address: "a", state: "VIC", email: "e", phone: "p", privacyEmail: "p", entityTypeLabel: "sole trader", asyncLessonPolicyLabel: "x", additionalTerms: "", name: "X" },
+        billing: { cycle: "c", invoiceLeadDays: 14, dueRule: "d", lateFeeAfterDays: 7, lateFee: 15, lateFeeLabel: "A$15", suspendAfterDays: 14, feeNoticeDays: 30, withdrawalNoticeWeeks: 4, noticePeriod: "4 weeks", paymentMethods: "m", accountingLabel: "", paymentDiscount: { method: "", amount: "", amountLabel: "" } },
+        policies: { cancelNoticeHours: 24, makeUpQuota: 1, makeUpPeriod: "term", makeUpExpiry: "same term", onlinePlatform: "Zoom", publicHolidays: "skip", publicHolidayRule: "are skipped with no charge", tuningFrequency: "once a year", inactiveRetentionMonths: 24 },
         services: { inHomeTravelFee: "A$0" },
         curriculum: { boards: "AMEB" },
         notice: { channel: "the Keystone Music HQ app or email" },
-        privacy: { keystoneStorageStatement: "s", overseasCountriesLabel: "o", financialRetentionYears: 5 },
+        privacy: { keystoneStorageStatement: "s", overseasCountriesLabel: "o", financialRetentionYears: 5, paymentProvider: "Stripe", accountingSoftware: "Xero", keystonePrivacyEmail: "privacy@keystone.example" },
       },
       { premises: true },
     ).markdown;

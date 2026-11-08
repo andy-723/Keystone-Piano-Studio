@@ -305,6 +305,8 @@ function ActiveFlow({
         </div>
         <CollectionNoticeScreen
           lang={lang}
+          studioName={session.studioName}
+          studentName={session.students[0]?.firstName ?? "the student"}
           value={{ acknowledged: Boolean(answers.collectionAcknowledged) }}
           onChange={(value) => patchFamily({ collectionAcknowledged: value.acknowledged })}
           onNext={async () => {

@@ -11,14 +11,15 @@ export function HealthNotesConsentScreen({
   onNext,
   onBack,
   lang = "en",
-}: TermsScreenProps<HealthNotesConsentValue> & { lang?: Lang }) {
+  studentName = "the student",
+}: TermsScreenProps<HealthNotesConsentValue> & { lang?: Lang; studentName?: string }) {
   const title = lang === "zh-CN" ? "健康与学习备注" : PART4_HEALTH_NOTES.title;
   const prompt =
     lang === "zh-CN"
-      ? "您填写了医疗或学习备注。是否允许琴行将备注保存在学生档案中，并与授课老师分享以便备课？"
-      : PART4_HEALTH_NOTES.prompt;
-  const yes = lang === "zh-CN" ? "是，保存并与老师分享这些备注" : PART4_HEALTH_NOTES.yes;
-  const no = lang === "zh-CN" ? "否，从报名中删除这些备注" : PART4_HEALTH_NOTES.no;
+      ? `我同意琴行收集我所填写的健康与学习信息，以便安全地教导 ${studentName}。琴行内仅其老师与管理者可见。我可随时更改或删除。`
+      : PART4_HEALTH_NOTES.prompt.replaceAll("{{student.firstName}}", studentName);
+  const yes = lang === "zh-CN" ? "我同意" : PART4_HEALTH_NOTES.yes;
+  const no = lang === "zh-CN" ? "请不要保存这些信息" : PART4_HEALTH_NOTES.no;
   return (
     <section className="space-y-5" aria-label={title}>
       <h2 className="text-2xl font-semibold">{title}</h2>

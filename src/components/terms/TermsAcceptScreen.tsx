@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { downloadDocumentPdf } from "@/lib/download-terms-pdf";
 import { PART4_TERMS_ACCEPT } from "@/mocks/legal-template-au";
 import type { AcceptanceRelationship } from "@/mocks/terms";
 import type { Lang } from "@/mocks/types";
@@ -43,9 +44,10 @@ export function TermsAcceptScreen({
   const studioTick = (lang === "zh-CN"
     ? `我同意 ${studioName} 的条款与免责声明（第 ${versionNo} 版，生效于 ${effectiveAt}），并已阅读其隐私政策。`
     : PART4_TERMS_ACCEPT.studioTick
-        .replace("{{studio.name}}", studioName)
-        .replace("{{terms.versionNo}}", String(versionNo))
-        .replace("{{terms.effectiveAt}}", effectiveAt));
+        .replaceAll("{{studio.tradingName}}", studioName)
+        .replaceAll("{{studio.name}}", studioName)
+        .replaceAll("{{terms.versionNo}}", String(versionNo))
+        .replaceAll("{{terms.effectiveAt}}", effectiveAt));
   const canSubmit =
     value.studioAgreed &&
     value.keystoneAgreed &&
@@ -69,7 +71,19 @@ export function TermsAcceptScreen({
         <summary className="min-h-12 cursor-pointer text-lg font-semibold">{lang === "zh-CN" ? "完整协议" : "Full agreement"}</summary>
         <pre className="mt-3 max-h-80 overflow-auto whitespace-pre-wrap font-sans text-base">{agreementMarkdown}</pre>
       </details>
-      <Button type="button" variant="outline" onClick={() => window.print()}>{lang === "zh-CN" ? "下载 PDF（打印）" : "Download PDF"}</Button>
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => {
+          void downloadDocumentPdf({
+            title: `${studioName} — Studio agreement v${versionNo}`,
+            body: agreementMarkdown,
+            filename: `studio-agreement-v${versionNo}.pdf`,
+          });
+        }}
+      >
+        {lang === "zh-CN" ? "下载 PDF" : "Download PDF"}
+      </Button>
       <label className="flex min-h-12 cursor-pointer items-start gap-3">
         <input className="mt-1 size-6 shrink-0 accent-primary" type="checkbox" checked={value.studioAgreed} onChange={(event) => onChange({ ...value, studioAgreed: event.target.checked })} />
         <span>{studioTick}</span>
