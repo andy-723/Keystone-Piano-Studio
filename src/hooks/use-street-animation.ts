@@ -1,89 +1,79 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
+  LOGIN_ANIM_CYCLE_MS,
   LOGIN_ANIM_DURATION_MS,
-  markAnimPlayed,
+  LOGIN_ANIM_ENDING_LEAD_MS,
   prefersReducedMotion,
-  shouldAutoplayAnim,
 } from "@/lib/login-animation";
 
+type Phase = "idle" | "playing" | "ending";
+
 /**
- * Drives the street-scene play-on / ending classes. Never blocks form focus.
- * Autoplay once per calendar day; pauses while the tab is hidden.
+ * Drives the street-scene play-on / ending classes in a continuous loop: a 13 s colour reveal,
+ * a short grey pause, then the reveal again. Pauses while the tab is hidden and restarts from
+ * the top when it is shown again. Under prefers-reduced-motion the reveal runs once (colour fade
+ * only; movement CSS is disabled) and does not loop. Never blocks form focus.
  */
 export function useStreetAnimation() {
-  const [playing, setPlaying] = useState(false);
-  const [ending, setEnding] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const remainingRef = useRef(LOGIN_ANIM_DURATION_MS);
-  const startedAtRef = useRef<number | null>(null);
-  const reduced = prefersReducedMotion();
-
-  const clearTimer = () => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-  };
-
-  const finish = useCallback(() => {
-    clearTimer();
-    setPlaying(false);
-    setEnding(false);
-    startedAtRef.current = null;
-    remainingRef.current = LOGIN_ANIM_DURATION_MS;
-    markAnimPlayed();
-  }, []);
-
-  const scheduleFinish = useCallback(
-    (ms: number) => {
-      clearTimer();
-      startedAtRef.current = Date.now();
-      timerRef.current = setTimeout(() => finish(), ms);
-    },
-    [finish],
-  );
-
-  const play = useCallback(() => {
-    clearTimer();
-    remainingRef.current = LOGIN_ANIM_DURATION_MS;
-    setEnding(false);
-    setPlaying(true);
-    // Colour fade still runs under reduced motion; movement CSS is disabled.
-    scheduleFinish(LOGIN_ANIM_DURATION_MS);
-    // Mark ending shortly before finish so floating notes stop looping.
-    window.setTimeout(() => setEnding(true), Math.max(0, LOGIN_ANIM_DURATION_MS - 1500));
-    void reduced;
-  }, [reduced, scheduleFinish]);
+  const [phase, setPhase] = useState<Phase>("idle");
+  const timers = useRef<Array<ReturnType<typeof setTimeout>>>([]);
+  const frame = useRef<number | null>(null);
 
   useEffect(() => {
-    if (shouldAutoplayAnim()) play();
-    return () => clearTimer();
-  }, [play]);
+    const reduced = prefersReducedMotion();
 
-  useEffect(() => {
+    const clearAll = () => {
+      for (const t of timers.current) clearTimeout(t);
+      timers.current = [];
+      if (frame.current != null) cancelAnimationFrame(frame.current);
+      frame.current = null;
+    };
+
+    const runCycle = () => {
+      clearAll();
+      // Drop play-on for two frames so the browser restarts every CSS animation from 0.
+      setPhase("idle");
+      frame.current = requestAnimationFrame(() => {
+        frame.current = requestAnimationFrame(() => {
+          frame.current = null;
+          setPhase("playing");
+          timers.current.push(
+            setTimeout(
+              () => setPhase("ending"),
+              LOGIN_ANIM_DURATION_MS - LOGIN_ANIM_ENDING_LEAD_MS,
+            ),
+          );
+          if (reduced) {
+            timers.current.push(setTimeout(() => setPhase("idle"), LOGIN_ANIM_DURATION_MS));
+          } else {
+            timers.current.push(setTimeout(runCycle, LOGIN_ANIM_CYCLE_MS));
+          }
+        });
+      });
+    };
+
     const onVisibility = () => {
       if (document.hidden) {
-        if (playing && startedAtRef.current != null) {
-          const elapsed = Date.now() - startedAtRef.current;
-          remainingRef.current = Math.max(0, remainingRef.current - elapsed);
-          clearTimer();
-        }
-        return;
-      }
-      if (playing && remainingRef.current > 0) {
-        scheduleFinish(remainingRef.current);
+        clearAll();
+        setPhase("idle");
+      } else if (!reduced) {
+        runCycle();
       }
     };
+
+    if (!document.hidden) runCycle();
     document.addEventListener("visibilitychange", onVisibility);
-    return () => document.removeEventListener("visibilitychange", onVisibility);
-  }, [playing, scheduleFinish]);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      clearAll();
+    };
+  }, []);
 
   return {
-    playing,
-    ending,
-    className: ["ks-street", playing ? "play-on" : "", ending ? "ending" : ""]
+    playing: phase !== "idle",
+    ending: phase === "ending",
+    className: ["ks-street", phase !== "idle" ? "play-on" : "", phase === "ending" ? "ending" : ""]
       .filter(Boolean)
       .join(" "),
-    replay: play,
   };
 }
