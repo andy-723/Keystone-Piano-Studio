@@ -56,7 +56,10 @@ function AuthCallbackPage() {
         if (error) {
           if (!cancelled) {
             setFailed(true);
-            setMessage("This sign-in link could not be completed. Request a new one from /login.");
+            console.error("[auth] code exchange failed", error);
+            setMessage(
+              "This sign-in link has expired, was already used, or was opened in a different browser from the one you requested it in. Request a new link, then open it on the same device and browser (on a phone, open it in Safari or Chrome rather than inside your email app).",
+            );
           }
           return;
         }
