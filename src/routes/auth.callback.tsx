@@ -35,6 +35,21 @@ function AuthCallbackPage() {
       }
 
       const url = new URL(window.location.href);
+      // Provider / Supabase errors come back as ?error=…&error_description=… (or in the hash).
+      const hash = new URLSearchParams(url.hash.replace(/^#/, ""));
+      const providerError =
+        url.searchParams.get("error_description") ??
+        hash.get("error_description") ??
+        url.searchParams.get("error") ??
+        hash.get("error");
+      if (providerError) {
+        console.error("[auth] sign-in returned an error", providerError);
+        if (!cancelled) {
+          setFailed(true);
+          setMessage(`Sign-in didn't finish: ${providerError.slice(0, 200)}`);
+        }
+        return;
+      }
       const code = url.searchParams.get("code");
       if (code) {
         const { error } = await client.auth.exchangeCodeForSession(code);

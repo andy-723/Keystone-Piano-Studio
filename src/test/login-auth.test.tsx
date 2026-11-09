@@ -15,7 +15,8 @@ import { LOGIN_ANIM_STORAGE_KEY, shouldAutoplayAnim, todayKey } from "@/lib/logi
 import { decideMfaGate, NO_ACCOUNT_MESSAGE } from "@/lib/post-login";
 import { requirePlatformAdmin, resetMockPlatformStaff, ProblemError } from "@/server/authz";
 import { bootstrapPlatformAdmin, maskEmailForLog } from "@/lib/bootstrap-platform-admin";
-import { resetAuthClientForTests } from "@/lib/auth-client";
+import { isDemoModeAllowed, resetAuthClientForTests } from "@/lib/auth-client";
+import { LiveAuthGuard } from "@/components/LiveAuthGuard";
 
 afterEach(() => {
   cleanup();
@@ -95,6 +96,60 @@ describe("route guard helpers", () => {
     expect(isAuthExemptPath("/studio-enquiry")).toBe(true);
     expect(isAuthExemptPath("/api/health")).toBe(true);
     expect(isAuthExemptPath("/students")).toBe(false);
+  });
+
+  it("treats Help, Privacy and Terms as public pages, but not in-app settings", () => {
+    expect(isAuthExemptPath("/help")).toBe(true);
+    expect(isAuthExemptPath("/privacy")).toBe(true);
+    expect(isAuthExemptPath("/terms")).toBe(true);
+    expect(isAuthExemptPath("/settings/terms")).toBe(false);
+    expect(isAuthExemptPath("/")).toBe(false);
+  });
+});
+
+describe("login page footer and demo fallback", () => {
+  it("links Help, Privacy and Terms to public pages, never into the app", async () => {
+    renderLoginCard();
+    await screen.findByText("Welcome back");
+    expect(screen.getByText("Help").closest("a")?.getAttribute("href")).toBe("/help");
+    expect(screen.getByText("Privacy").closest("a")?.getAttribute("href")).toBe("/privacy");
+    expect(screen.getByText("Terms").closest("a")?.getAttribute("href")).toBe("/terms");
+  });
+
+  it("does not allow the demo in a production build without Supabase keys", () => {
+    vi.stubEnv("DEV", false);
+    vi.stubEnv("VITE_ALLOW_DEMO", "");
+    try {
+      expect(isDemoModeAllowed()).toBe(false);
+      vi.stubEnv("VITE_ALLOW_DEMO", "true");
+      expect(isDemoModeAllowed()).toBe(true);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it("does not render app content in production without Supabase keys", async () => {
+    vi.stubEnv("DEV", false);
+    vi.stubEnv("VITE_ALLOW_DEMO", "");
+    try {
+      const root = createRootRoute({
+        component: () => (
+          <LiveAuthGuard>
+            <p>secret app</p>
+          </LiveAuthGuard>
+        ),
+      });
+      const home = createRoute({ getParentRoute: () => root, path: "/", component: () => null });
+      const router = createRouter({
+        routeTree: root.addChildren([home]),
+        history: createMemoryHistory({ initialEntries: ["/"] }),
+      });
+      render(<RouterProvider router={router} />);
+      expect(await screen.findByText("Sign-in is unavailable")).toBeTruthy();
+      expect(screen.queryByText("secret app")).toBeNull();
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 });
 

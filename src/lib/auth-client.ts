@@ -21,6 +21,21 @@ export function isLiveAuthConfigured(): boolean {
   return Boolean(url && anon);
 }
 
+/**
+ * The mock demo studio (role switcher, fixture data, no real sign-in) may only run
+ * in local development or when a build explicitly opts in with VITE_ALLOW_DEMO=true.
+ * A production build without Supabase keys must fail closed, never fall back to the demo.
+ */
+export function isDemoModeAllowed(): boolean {
+  if (isLiveAuthConfigured()) return false;
+  if (readPublicEnv("VITE_ALLOW_DEMO") === "true") return true;
+  const env =
+    typeof import.meta !== "undefined"
+      ? (import.meta.env as Record<string, unknown> | undefined)
+      : undefined;
+  return Boolean(env?.["DEV"]);
+}
+
 /** Browser Supabase client with PKCE. Returns null when env is absent (mock mode). */
 export function getAuthClient(): SupabaseClient | null {
   if (browserClient !== undefined) return browserClient;

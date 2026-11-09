@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import { TurnstileField } from "./TurnstileField";
 import { maskEmail } from "@/lib/auth-paths";
-import { getAuthClient, isLiveAuthConfigured } from "@/lib/auth-client";
+import { getAuthClient, isDemoModeAllowed, isLiveAuthConfigured } from "@/lib/auth-client";
 
 const GoogleMark = () => (
   <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true">
@@ -91,7 +91,12 @@ export function LoginCard({ nextPath, siteKey = "" }: Props) {
   async function oauth(provider: "google" | "azure") {
     setError(null);
     if (!live) {
-      window.location.href = nextPath || "/";
+      // Never "sign in" without a real provider round trip. Local demo only.
+      if (isDemoModeAllowed()) {
+        window.location.href = nextPath || "/";
+      } else {
+        setError("Sign-in is unavailable right now. Please try again shortly.");
+      }
       return;
     }
     const client = getAuthClient();
@@ -105,7 +110,14 @@ export function LoginCard({ nextPath, siteKey = "" }: Props) {
       },
     });
     setBusy(false);
-    if (oauthError) setError("Sign-in could not start. Try again.");
+    if (oauthError) {
+      console.error(`[auth] ${provider} sign-in could not start`, oauthError);
+      setError(
+        provider === "azure"
+          ? `Microsoft sign-in could not start (${oauthError.message}). Try again or use email.`
+          : `Google sign-in could not start (${oauthError.message}). Try again or use email.`,
+      );
+    }
   }
 
   async function onEmail(e: FormEvent) {
@@ -172,7 +184,7 @@ export function LoginCard({ nextPath, siteKey = "" }: Props) {
         </p>
       </div>
 
-      {!live && (
+      {!live && isDemoModeAllowed() && (
         <p
           className="m-0 rounded-[10px] bg-[#F5EBD6] px-3 py-2 text-sm text-[#5A4F43]"
           role="status"
@@ -259,15 +271,15 @@ export function LoginCard({ nextPath, siteKey = "" }: Props) {
       </p>
 
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-[#6B6052]">
-        <a href="mailto:support@example.com" className="text-[#604A19] hover:text-[#15100D]">
+        <a href="/help" className="text-[#604A19] hover:text-[#15100D]">
           Help
         </a>
-        <Link to="/settings/terms" className="text-[#604A19] hover:text-[#15100D]">
+        <a href="/privacy" className="text-[#604A19] hover:text-[#15100D]">
           Privacy
-        </Link>
-        <Link to="/settings/terms" className="text-[#604A19] hover:text-[#15100D]">
+        </a>
+        <a href="/terms" className="text-[#604A19] hover:text-[#15100D]">
           Terms
-        </Link>
+        </a>
         <span>Data hosted in Sydney, Australia</span>
       </div>
     </div>
