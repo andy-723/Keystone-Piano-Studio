@@ -19,6 +19,10 @@ alter table public.platform_staff enable row level security;
 revoke all on table public.platform_staff from anon;
 revoke all on table public.platform_staff from public;
 
+-- Idempotent: same hosted Supabase grants as 0003 (safe if already applied).
+grant tenancy_helper to postgres;
+grant usage, create on schema app_private to tenancy_helper;
+
 -- tenancy_helper may read (user_id, role) for is_platform_admin()
 grant select (user_id, role) on table public.platform_staff to tenancy_helper;
 
