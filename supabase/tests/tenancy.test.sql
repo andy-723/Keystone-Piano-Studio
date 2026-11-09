@@ -31,6 +31,10 @@ insert into public.studio (id, name) values
   (current_setting('test.studio_a')::uuid, 'Studio A'),
   (current_setting('test.studio_b')::uuid, 'Studio B');
 
+-- 0006: new studios start with no subscription (owner read-only); these tests need full access.
+update public.studio_subscription set status = 'active'
+ where studio_id in (current_setting('test.studio_a')::uuid, current_setting('test.studio_b')::uuid);
+
 insert into public.studio_member (studio_id, user_id, role) values
   (current_setting('test.studio_a')::uuid, current_setting('test.owner_a')::uuid, 'owner'),
   (current_setting('test.studio_a')::uuid, current_setting('test.admin_a')::uuid, 'admin'),

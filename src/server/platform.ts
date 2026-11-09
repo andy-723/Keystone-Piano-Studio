@@ -9,6 +9,8 @@ import { ProblemError, forbidden } from "./problem";
 import { getEmailProvider } from "./email";
 import { ownerWelcomeEmail } from "./email/templates/owner-welcome";
 import { maskEmail } from "@/lib/auth-paths";
+import { getSubscriptionStore } from "./subscription-store";
+import { accessLevel, statusLabel } from "@/lib/subscription";
 
 const AU_TIMEZONES = [
   "Australia/Melbourne",
@@ -64,6 +66,7 @@ export const listStudiosFn = createServerFn({ method: "POST" })
         const { data: user } = await supabase.auth.admin.getUserById(studio.owner_user_id);
         ownerEmail = user.user?.email ?? null;
       }
+      const subscription = await getSubscriptionStore().get(studio.id as string);
       rows.push({
         id: studio.id as string,
         name: studio.name as string,
@@ -71,7 +74,13 @@ export const listStudiosFn = createServerFn({ method: "POST" })
         timezone: studio.timezone as string,
         memberCount: count ?? 0,
         ownerEmailMasked: ownerEmail ? maskEmail(ownerEmail) : "—",
-        status: "active" as const,
+        status: subscription ? statusLabel(subscription.status) : "No subscription row",
+        subscriptionStatus: subscription?.status ?? null,
+        plan: subscription?.plan ?? null,
+        accessEndsAt: subscription?.accessEndsAt ?? null,
+        disputeHold: subscription?.disputeHold ?? false,
+        access: accessLevel(subscription),
+        paidThroughStripe: Boolean(subscription?.stripeSubscriptionId),
       });
     }
     return { studios: rows, mock: false as const };

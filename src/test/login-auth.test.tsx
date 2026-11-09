@@ -192,6 +192,7 @@ describe("callback no-account message", () => {
         platformStaff: { role: "platform_admin", displayName: "A" },
         memberships: [],
         guardianFamilyIds: [],
+        studioAccess: [],
       },
       aal: "aal1",
       hasVerifiedTotp: false,

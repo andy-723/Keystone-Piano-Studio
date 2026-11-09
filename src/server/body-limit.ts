@@ -3,13 +3,14 @@ export const DEFAULT_BODY_LIMIT_BYTES = 256 * 1024;
 
 /**
  * Documented exceptions (step 7):
- * - Stripe webhook route (when added) keeps its raw body for signature checks and
- *   may use a higher limit; it must still reject oversized payloads after verify.
+ * - Stripe billing webhook keeps its raw body for signature checks and rejects
+ *   oversized payloads itself (same default limit).
  */
 export const BODY_LIMIT_EXCEPTIONS: Array<{ route: string; reason: string }> = [
   {
-    route: "/api/stripe/webhook",
-    reason: "Raw body required for Stripe signature checks (not implemented yet).",
+    route: "/api/stripe/billing-webhook",
+    reason:
+      "Reads the raw body as text for the Stripe signature check; still rejects bodies over the default limit.",
   },
 ];
 
