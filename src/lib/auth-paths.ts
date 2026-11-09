@@ -37,3 +37,28 @@ export function isAuthExemptPath(pathname: string): boolean {
   if (pathname.startsWith("/api/")) return true;
   return false;
 }
+
+/**
+ * Email link types our branded Supabase Auth templates send to /auth/callback
+ * as ?token_hash=…&type=…. Anything else is ignored.
+ */
+export const EMAIL_LINK_TYPES = [
+  "email",
+  "magiclink",
+  "signup",
+  "invite",
+  "recovery",
+  "email_change",
+] as const;
+export type EmailLinkType = (typeof EMAIL_LINK_TYPES)[number];
+
+export function parseEmailLink(
+  params: URLSearchParams,
+): { tokenHash: string; type: EmailLinkType } | null {
+  const tokenHash = params.get("token_hash")?.trim();
+  const type = params.get("type")?.trim();
+  if (!tokenHash || !type) return null;
+  if (!/^[A-Za-z0-9_-]{8,200}$/.test(tokenHash)) return null;
+  if (!(EMAIL_LINK_TYPES as readonly string[]).includes(type)) return null;
+  return { tokenHash, type: type as EmailLinkType };
+}
