@@ -20,6 +20,7 @@ import appCss from "../styles.css?url";
 import { AppSettingsProvider, useAppSettings } from "@/lib/app-settings";
 import { AppShell } from "@/components/AppShell";
 import { LiveAuthGuard } from "@/components/LiveAuthGuard";
+import { isPublicPagePath } from "@/lib/auth-paths";
 import { ParentPortal } from "@/components/ParentPortal";
 import {
   parentSessionQuery,
@@ -184,7 +185,8 @@ function RoleGate() {
     pathname === "/admin" ||
     pathname.startsWith("/join/") ||
     pathname.startsWith("/intake/") ||
-    pathname.startsWith("/auth/");
+    pathname.startsWith("/auth/") ||
+    isPublicPagePath(pathname);
   if (focusFlow) {
     return (
       <LiveAuthGuard>

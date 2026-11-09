@@ -1,49 +1,122 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useRouterState } from "@tanstack/react-router";
-import { getAuthClient, isLiveAuthConfigured } from "@/lib/auth-client";
+import { getAuthClient, isDemoModeAllowed, isLiveAuthConfigured } from "@/lib/auth-client";
 import { isAuthExemptPath } from "@/lib/auth-paths";
+import { decideMfaGate } from "@/lib/post-login";
+import { resolveAccountFn } from "@/server/account";
+
+type GuardState = "checking" | "ok" | "unavailable";
+
+/** Access tokens already checked in this tab (account + MFA), so navigation stays instant. */
+const verifiedTokens = new Set<string>();
+
+export function resetLiveAuthGuardForTests() {
+  verifiedTokens.clear();
+}
+
+function loginUrl(next: string) {
+  return `/login?next=${encodeURIComponent(next)}`;
+}
 
 /**
- * In live mode, redirects unauthenticated users to /login?next=… for protected routes.
- * Mock mode is a no-op (demo role switcher unchanged).
+ * Protects every non-public route.
+ *
+ * Live mode: a route renders only when there is a Supabase session that belongs to a
+ * Keystone account (platform staff, studio member or guardian) AND has passed the MFA
+ * gate (aal2 for staff roles). Anything else goes to /login, /auth/mfa-setup or /auth/mfa.
+ *
+ * No Supabase keys: the mock demo renders only in local dev or with VITE_ALLOW_DEMO=true.
+ * A production build without keys shows "sign-in unavailable" instead of the demo app.
  */
 export function LiveAuthGuard({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const search = useRouterState({ select: (state) => state.location.searchStr });
-  const [ready, setReady] = useState(!isLiveAuthConfigured());
+  const exempt = isAuthExemptPath(pathname);
+  const [state, setState] = useState<GuardState>(() => {
+    if (exempt) return "ok";
+    if (isLiveAuthConfigured()) return "checking";
+    return isDemoModeAllowed() ? "ok" : "unavailable";
+  });
 
   useEffect(() => {
-    if (!isLiveAuthConfigured()) {
-      setReady(true);
+    if (isAuthExemptPath(pathname)) {
+      setState("ok");
       return;
     }
-    if (isAuthExemptPath(pathname)) {
-      setReady(true);
+    if (!isLiveAuthConfigured()) {
+      setState(isDemoModeAllowed() ? "ok" : "unavailable");
       return;
     }
     let cancelled = false;
+    const next = `${pathname}${search || ""}`;
     void (async () => {
       const client = getAuthClient();
       if (!client) {
-        const next = `${pathname}${search || ""}`;
-        window.location.replace(`/login?next=${encodeURIComponent(next)}`);
+        window.location.replace(loginUrl(next));
         return;
       }
       const { data } = await client.auth.getSession();
       if (cancelled) return;
-      if (!data.session) {
-        const next = `${pathname}${search || ""}`;
-        window.location.replace(`/login?next=${encodeURIComponent(next)}`);
+      const session = data.session;
+      if (!session) {
+        window.location.replace(loginUrl(next));
         return;
       }
-      setReady(true);
+      if (verifiedTokens.has(session.access_token)) {
+        setState("ok");
+        return;
+      }
+      setState("checking");
+      try {
+        const account = await resolveAccountFn({ data: { accessToken: session.access_token } });
+        if (cancelled) return;
+        const hasAccount =
+          Boolean(account.platformStaff) ||
+          account.memberships.length > 0 ||
+          account.guardianFamilyIds.length > 0;
+        if (!hasAccount) {
+          await client.auth.signOut({ scope: "local" });
+          window.location.replace("/login");
+          return;
+        }
+        const factors = await client.auth.mfa.listFactors();
+        if (cancelled) return;
+        const hasVerifiedTotp = (factors.data?.totp ?? []).some((f) => f.status === "verified");
+        const gate = decideMfaGate({ account, aal: account.aal, hasVerifiedTotp });
+        if (gate === "setup") {
+          window.location.replace(`/auth/mfa-setup?next=${encodeURIComponent(next)}`);
+          return;
+        }
+        if (gate === "challenge") {
+          window.location.replace(`/auth/mfa?next=${encodeURIComponent(next)}`);
+          return;
+        }
+        verifiedTokens.add(session.access_token);
+        setState("ok");
+      } catch {
+        if (!cancelled) window.location.replace(loginUrl(next));
+      }
     })();
     return () => {
       cancelled = true;
     };
   }, [pathname, search]);
 
-  if (!ready) {
+  if (exempt) return children;
+  if (state === "unavailable") {
+    return (
+      <main className="flex min-h-[100dvh] flex-col items-center justify-center bg-[#F5EBD6] px-4 text-center text-[#15100D]">
+        <h1 className="text-2xl font-semibold">Sign-in is unavailable</h1>
+        <p className="mt-3 max-w-md text-base text-[#5A4F43]" role="status">
+          Keystone Music HQ can&apos;t sign you in right now. Please try again shortly.
+        </p>
+        <a className="mt-6 text-[#604A19] underline" href="/help">
+          Get help
+        </a>
+      </main>
+    );
+  }
+  if (state !== "ok") {
     return <p className="p-6 text-[#5A4F43]">Checking sign-in…</p>;
   }
   return children;
