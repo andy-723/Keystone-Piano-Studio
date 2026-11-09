@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getAuthClient, isLiveAuthConfigured } from "@/lib/auth-client";
-import { safeNextPath } from "@/lib/auth-paths";
+import { parseEmailLink, safeNextPath } from "@/lib/auth-paths";
 import { decideMfaGate, destinationForAccount, NO_ACCOUNT_MESSAGE } from "@/lib/post-login";
 import { resolveAccountFn, recordNoAccountFn } from "@/server/account";
 import { Button } from "@/components/ui/button";
@@ -10,15 +10,25 @@ export const Route = createFileRoute("/auth/callback")({
   validateSearch: (search: Record<string, unknown>) => ({
     next: typeof search.next === "string" ? search.next : undefined,
     code: typeof search.code === "string" ? search.code : undefined,
+    token_hash: typeof search["token_hash"] === "string" ? search["token_hash"] : undefined,
+    type: typeof search["type"] === "string" ? search["type"] : undefined,
   }),
   component: AuthCallbackPage,
   head: () => ({ meta: [{ title: "Sign in — Keystone Music HQ" }] }),
 });
 
 function AuthCallbackPage() {
-  const { next } = Route.useSearch();
+  const { next, token_hash: tokenHash, type } = Route.useSearch();
   const [message, setMessage] = useState("Finishing sign-in…");
   const [failed, setFailed] = useState(false);
+  // Branded emails link here with ?token_hash=…&type=…. We wait for a tap before
+  // using the token so mail scanners that open links can't burn it.
+  const emailLink = useMemo(
+    () => parseEmailLink(new URLSearchParams({ token_hash: tokenHash ?? "", type: type ?? "" })),
+    [tokenHash, type],
+  );
+  const [confirmed, setConfirmed] = useState(false);
+  const awaitingTap = Boolean(emailLink) && !confirmed && !failed;
 
   useEffect(() => {
     let cancelled = false;
@@ -50,8 +60,26 @@ function AuthCallbackPage() {
         }
         return;
       }
+      if (emailLink) {
+        if (!confirmed) return;
+        const { error } = await client.auth.verifyOtp({
+          token_hash: emailLink.tokenHash,
+          type: emailLink.type,
+        });
+        if (error) {
+          console.error("[auth] email link verify failed", error);
+          if (!cancelled) {
+            setFailed(true);
+            setMessage(
+              "This sign-in link has expired or was already used. Request a new link from the sign-in page.",
+            );
+          }
+          return;
+        }
+      }
+
       const code = url.searchParams.get("code");
-      if (code) {
+      if (!emailLink && code) {
         const { error } = await client.auth.exchangeCodeForSession(code);
         if (error) {
           if (!cancelled) {
@@ -127,18 +155,33 @@ function AuthCallbackPage() {
     return () => {
       cancelled = true;
     };
-  }, [next]);
+  }, [next, emailLink, confirmed]);
 
   return (
     <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-[#F5EBD6] px-4 text-[#15100D]">
       <h1 className="text-3xl font-semibold">Sign in</h1>
-      <p
-        className="mt-3 max-w-md text-center text-base text-[#5A4F43]"
-        role="status"
-        aria-live="polite"
-      >
-        {message}
-      </p>
+      {awaitingTap ? (
+        <>
+          <p className="mt-3 max-w-md text-center text-base text-[#5A4F43]">
+            Tap continue to finish signing in to Keystone Music HQ.
+          </p>
+          <Button
+            className="mt-6"
+            onClick={() => setConfirmed(true)}
+            data-testid="email-link-continue"
+          >
+            Continue
+          </Button>
+        </>
+      ) : (
+        <p
+          className="mt-3 max-w-md text-center text-base text-[#5A4F43]"
+          role="status"
+          aria-live="polite"
+        >
+          {message}
+        </p>
+      )}
       {failed && (
         <Button className="mt-6" asChild>
           <Link to="/login">Back to sign in</Link>

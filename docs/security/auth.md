@@ -74,6 +74,7 @@ Email OTP always shows “Check your inbox” whether or not the address exists 
 5. Multi-Factor: enable TOTP (App Authenticator).
 6. Vercel: `SUPPORT_EMAIL` (not `PLATFORM_ADMIN_*` — those are script-only on your machine).
 7. After applying migration `0005` locally/staging, run the bootstrap script once, sign in at `/login`, enrol MFA.
+8. Branded auth emails from `noreply@keystonemusichq.com` (Resend SMTP + templates): follow `docs/security/auth-emails.md`.
 
 ## Follow-ups
 

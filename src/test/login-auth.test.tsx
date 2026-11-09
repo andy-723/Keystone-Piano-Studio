@@ -10,7 +10,7 @@ import {
 } from "@tanstack/react-router";
 import { LoginCard } from "@/components/login/LoginCard";
 import { MfaCodeInputs } from "@/components/auth/MfaCodeInputs";
-import { isAuthExemptPath, safeNextPath } from "@/lib/auth-paths";
+import { isAuthExemptPath, parseEmailLink, safeNextPath } from "@/lib/auth-paths";
 import { LOGIN_ANIM_STORAGE_KEY, shouldAutoplayAnim, todayKey } from "@/lib/login-animation";
 import { decideMfaGate, NO_ACCOUNT_MESSAGE } from "@/lib/post-login";
 import { requirePlatformAdmin, resetMockPlatformStaff, ProblemError } from "@/server/authz";
@@ -309,5 +309,26 @@ describe("login route exists in router", () => {
       </QueryClientProvider>,
     );
     expect(await screen.findByText("Welcome back")).toBeTruthy();
+  });
+});
+
+describe("branded email links (token_hash)", () => {
+  it("accepts known types with a sane token hash", () => {
+    expect(parseEmailLink(new URLSearchParams("token_hash=pkce_abc123def456&type=email"))).toEqual({
+      tokenHash: "pkce_abc123def456",
+      type: "email",
+    });
+    expect(
+      parseEmailLink(new URLSearchParams("token_hash=abcdef1234567890&type=invite"))?.type,
+    ).toBe("invite");
+  });
+
+  it("rejects missing, unknown or odd values", () => {
+    expect(parseEmailLink(new URLSearchParams("type=email"))).toBeNull();
+    expect(parseEmailLink(new URLSearchParams("token_hash=abcdef1234567890"))).toBeNull();
+    expect(parseEmailLink(new URLSearchParams("token_hash=abcdef1234567890&type=sms"))).toBeNull();
+    expect(
+      parseEmailLink(new URLSearchParams("token_hash=<script>xx</script>&type=email")),
+    ).toBeNull();
   });
 });
