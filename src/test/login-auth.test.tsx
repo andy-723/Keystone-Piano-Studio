@@ -11,7 +11,11 @@ import {
 import { LoginCard } from "@/components/login/LoginCard";
 import { MfaCodeInputs } from "@/components/auth/MfaCodeInputs";
 import { isAuthExemptPath, parseEmailLink, safeNextPath } from "@/lib/auth-paths";
-import { LOGIN_ANIM_STORAGE_KEY, shouldAutoplayAnim, todayKey } from "@/lib/login-animation";
+import {
+  LOGIN_ANIM_CYCLE_MS,
+  LOGIN_ANIM_DURATION_MS,
+  LOGIN_ANIM_ENDING_LEAD_MS,
+} from "@/lib/login-animation";
 import { decideMfaGate, NO_ACCOUNT_MESSAGE } from "@/lib/post-login";
 import { requirePlatformAdmin, resetMockPlatformStaff, ProblemError } from "@/server/authz";
 import { bootstrapPlatformAdmin, maskEmailForLog } from "@/lib/bootstrap-platform-admin";
@@ -167,14 +171,10 @@ describe("MFA code inputs", () => {
   });
 });
 
-describe("login animation hook helpers", () => {
-  it("skips autoplay when today's date is already stored", () => {
-    localStorage.setItem(LOGIN_ANIM_STORAGE_KEY, todayKey());
-    expect(shouldAutoplayAnim()).toBe(false);
-  });
-
-  it("autoplays when storage is empty", () => {
-    expect(shouldAutoplayAnim()).toBe(true);
+describe("login animation loop timing", () => {
+  it("pauses between reveals and marks the ending inside the reveal", () => {
+    expect(LOGIN_ANIM_CYCLE_MS).toBeGreaterThan(LOGIN_ANIM_DURATION_MS);
+    expect(LOGIN_ANIM_ENDING_LEAD_MS).toBeLessThan(LOGIN_ANIM_DURATION_MS);
   });
 });
 
