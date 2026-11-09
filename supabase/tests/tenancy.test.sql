@@ -344,5 +344,154 @@ select throws_ok(
   'removing the remaining last owner fails'
 );
 
+-- ---------------------------------------------------------------------------
+-- Platform admin (0005)
+-- ---------------------------------------------------------------------------
+select set_config('test.platform_admin', 'c0000000-0000-4000-8000-000000000001', true);
+
+create or replace function test_as_aal(uid uuid, aal text) returns void language plpgsql as $$
+begin
+  perform set_config('request.jwt.claim.sub', uid::text, true);
+  perform set_config('request.jwt.claim.role', 'authenticated', true);
+  perform set_config(
+    'request.jwt.claims',
+    json_build_object('sub', uid::text, 'role', 'authenticated', 'aal', aal)::text,
+    true
+  );
+  execute 'set local role authenticated';
+end;
+$$;
+
+-- Seed auth.users + platform_staff as postgres
+select test_reset_role();
+insert into auth.users (
+  instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+  raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+  confirmation_token, recovery_token, email_change_token_new, email_change
+) values (
+  '00000000-0000-0000-0000-000000000000',
+  current_setting('test.platform_admin')::uuid,
+  'authenticated',
+  'authenticated',
+  'platform-admin@example.com',
+  crypt('not-used', gen_salt('bf')),
+  now(),
+  '{"provider":"email","providers":["email"]}',
+  '{}',
+  now(),
+  now(),
+  '',
+  '',
+  '',
+  ''
+);
+
+insert into public.platform_staff (user_id, role, display_name, created_by)
+values (current_setting('test.platform_admin')::uuid, 'platform_admin', 'Platform Admin', null);
+
+insert into public.platform_audit (actor_user_id, event, detail)
+values (current_setting('test.platform_admin')::uuid, 'bootstrap_admin', '{}'::jsonb);
+
+-- anon cannot read platform tables
+select test_as_anon();
+select throws_ok(
+  'select * from public.platform_staff',
+  null,
+  null,
+  'anon cannot read platform_staff'
+);
+select throws_ok(
+  'select * from public.platform_audit',
+  null,
+  null,
+  'anon cannot read platform_audit'
+);
+
+-- studio owner cannot read platform tables
+select test_as_aal(current_setting('test.owner_a')::uuid, 'aal2');
+select is(
+  (select count(*)::int from public.platform_staff),
+  0,
+  'studio owner gets zero platform_staff rows'
+);
+select is(
+  (select count(*)::int from public.platform_audit),
+  0,
+  'studio owner gets zero platform_audit rows'
+);
+
+-- platform admin at aal1 cannot read
+select test_as_aal(current_setting('test.platform_admin')::uuid, 'aal1');
+select is(
+  (select count(*)::int from public.platform_staff),
+  0,
+  'platform admin at aal1 cannot read platform_staff'
+);
+select is(
+  (select count(*)::int from public.platform_audit),
+  0,
+  'platform admin at aal1 cannot read platform_audit'
+);
+
+-- platform admin at aal2 can read
+select test_as_aal(current_setting('test.platform_admin')::uuid, 'aal2');
+select is(
+  (select count(*)::int from public.platform_staff where user_id = current_setting('test.platform_admin')::uuid),
+  1,
+  'platform admin at aal2 can read platform_staff'
+);
+select ok(
+  (select count(*)::int from public.platform_audit) >= 1,
+  'platform admin at aal2 can read platform_audit'
+);
+
+-- nobody can update or delete platform_audit
+select test_as_aal(current_setting('test.platform_admin')::uuid, 'aal2');
+select throws_ok(
+  'update public.platform_audit set event = ''sign_in''',
+  null,
+  null,
+  'authenticated cannot update platform_audit'
+);
+select throws_ok(
+  'delete from public.platform_audit',
+  null,
+  null,
+  'authenticated cannot delete platform_audit'
+);
+
+-- authenticated cannot execute create_studio_with_owner
+select test_as_aal(current_setting('test.platform_admin')::uuid, 'aal2');
+select throws_ok(
+  format(
+    'select public.create_studio_with_owner(%L, %L, %L::uuid, %L::uuid)',
+    'Blocked Studio',
+    'Australia/Melbourne',
+    current_setting('test.owner_a'),
+    current_setting('test.platform_admin')
+  ),
+  null,
+  null,
+  'authenticated cannot execute create_studio_with_owner'
+);
+
+-- platform admin still cannot read another studio's family / student / invoice
+select test_as_aal(current_setting('test.platform_admin')::uuid, 'aal2');
+select is(
+  (select count(*)::int from public.family where studio_id = current_setting('test.studio_a')::uuid),
+  0,
+  'platform admin cannot read studio A family'
+);
+select is(
+  (select count(*)::int from public.student where studio_id = current_setting('test.studio_a')::uuid),
+  0,
+  'platform admin cannot read studio A student'
+);
+select is(
+  (select count(*)::int from public.invoice where studio_id = current_setting('test.studio_a')::uuid),
+  0,
+  'platform admin cannot read studio A invoice'
+);
+
 select finish();
 rollback;

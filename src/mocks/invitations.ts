@@ -111,7 +111,7 @@ export type AuthAuditRecord = {
   at: string;
 };
 
-export type RateBucket = { ip: string; at: number; kind: "token" | "captcha" };
+export type RateBucket = { ip: string; at: number; kind: "token" | "captcha" | "admin" };
 export type Lockout = { ip: string; until: number };
 
 export type InvitationState = {

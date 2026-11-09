@@ -13,6 +13,7 @@ import { parentSessionQuery } from "@/lib/parent-queries";
 import { ReacceptanceCard } from "@/components/terms/ReacceptanceCard";
 import { BrandLogo } from "@/components/BrandLogo";
 import { teacherProfileQuery } from "@/lib/community-queries";
+import { isLiveAuthConfigured } from "@/lib/auth-client";
 
 export function ParentPortal() {
   const { data } = useSuspenseQuery(parentSessionQuery);
@@ -41,6 +42,17 @@ function ParentViews() {
           <Button variant={lang === "zh-CN" ? "secondary" : "ghost"} aria-pressed={lang === "zh-CN"} onClick={() => setLang("zh-CN")}>中文</Button>
         </div>
       </div>
+      {isLiveAuthConfigured() && (
+        <div className="mb-4 rounded-xl border border-border bg-card p-4" data-testid="guardian-mfa-card">
+          <h2 className="text-lg font-semibold">Turn on two-step sign-in</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Optional for families. An authenticator app adds a 6-digit code after email or Google sign-in.
+          </p>
+          <Button className="mt-3 min-h-11" asChild>
+            <a href="/auth/mfa-setup">Set up authenticator</a>
+          </Button>
+        </div>
+      )}
       {!deferReaccept && (
         <Suspense fallback={null}>
           <ReacceptanceCard

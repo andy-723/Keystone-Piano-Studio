@@ -19,6 +19,7 @@ import { Suspense, useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { AppSettingsProvider, useAppSettings } from "@/lib/app-settings";
 import { AppShell } from "@/components/AppShell";
+import { LiveAuthGuard } from "@/components/LiveAuthGuard";
 import { ParentPortal } from "@/components/ParentPortal";
 import {
   parentSessionQuery,
@@ -178,33 +179,42 @@ function RoleGate() {
   const { data: studio } = useSuspenseQuery(studioQuery);
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const focusFlow =
+    pathname === "/login" ||
+    pathname === "/studio-enquiry" ||
+    pathname === "/admin" ||
     pathname.startsWith("/join/") ||
     pathname.startsWith("/intake/") ||
     pathname.startsWith("/auth/");
   if (focusFlow) {
     return (
-      <Suspense fallback={<p className="p-6">Opening enrolment…</p>}>
-        <Outlet />
-      </Suspense>
+      <LiveAuthGuard>
+        <Suspense fallback={<p className="p-6">Opening…</p>}>
+          <Outlet />
+        </Suspense>
+      </LiveAuthGuard>
     );
   }
   if (role === "new-teacher")
     return (
-      <Suspense fallback={<p className="p-6">Opening your new studio…</p>}>
-        <NewTeacherGate />
-      </Suspense>
+      <LiveAuthGuard>
+        <Suspense fallback={<p className="p-6">Opening your new studio…</p>}>
+          <NewTeacherGate />
+        </Suspense>
+      </LiveAuthGuard>
     );
   return (
-    <AppShell studio={studio}>
-      {role === "parent" ? (
-        <Suspense fallback={<p>Opening your family portal…</p>}>
-          <ParentPortal />
-        </Suspense>
-      ) : (
-        /* Required: nested routes render here. */
-        <Outlet />
-      )}
-    </AppShell>
+    <LiveAuthGuard>
+      <AppShell studio={studio}>
+        {role === "parent" ? (
+          <Suspense fallback={<p>Opening your family portal…</p>}>
+            <ParentPortal />
+          </Suspense>
+        ) : (
+          /* Required: nested routes render here. */
+          <Outlet />
+        )}
+      </AppShell>
+    </LiveAuthGuard>
   );
 }
 

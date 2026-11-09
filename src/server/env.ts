@@ -38,6 +38,7 @@ export function getServerEnv() {
     cronSecret: read("CRON_SECRET") ?? "",
     turnstileSiteKey: read("VITE_TURNSTILE_SITE_KEY") ?? "",
     turnstileSecretKey: read("TURNSTILE_SECRET_KEY") ?? "",
+    supportEmail: read("SUPPORT_EMAIL") ?? "support@example.com",
     requireLive() {
       requireWhen(true, "SUPABASE_URL");
       requireWhen(true, "SUPABASE_ANON_KEY");
