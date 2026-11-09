@@ -48,6 +48,19 @@ Native family invoicing lives in `supabase/migrations/0004_native_invoicing.sql`
 
 Invite reminders run daily via Vercel Cron (`vercel.json`) at 09:00 Sydney against `/api/cron/invite-reminders` with `Authorization: Bearer CRON_SECRET`.
 
+
+## Live sign-in setup
+
+See [`docs/security/auth.md`](docs/security/auth.md) for providers, Turnstile, MFA, redirect URLs, and the Andrew dashboard checklist.
+
+Bootstrap the first platform admin (local / staging only, after migration `0005`):
+
+```sh
+bun scripts/bootstrap-platform-admin.ts
+```
+
+Requires `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `PLATFORM_ADMIN_EMAIL`, and `PLATFORM_ADMIN_NAME`. Do not put the platform-admin env vars on Vercel.
+
 ## Deploy
 
 `main` deploys to Vercel (Nitro preset `vercel`). Pull requests get Vercel preview deployments.

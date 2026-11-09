@@ -10,14 +10,20 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as InvoicesRouteImport } from './routes/invoices'
 import { Route as LibraryRouteImport } from './routes/library'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as NewsRouteImport } from './routes/news'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as StudentsRouteImport } from './routes/students'
+import { Route as StudioEnquiryRouteImport } from './routes/studio-enquiry'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as AuthMfaRouteImport } from './routes/auth.mfa'
+import { Route as AuthMfaRecoveryRouteImport } from './routes/auth.mfa-recovery'
+import { Route as AuthMfaSetupRouteImport } from './routes/auth.mfa-setup'
 import { Route as ChatIndexRouteImport } from './routes/chat.index'
 import { Route as ChatConversationIdRouteImport } from './routes/chat.$conversationId'
 import { Route as IntakeRecordIdRouteImport } from './routes/intake.$recordId'
@@ -45,6 +51,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ChatRoute = ChatRouteImport.update({
   id: '/chat',
   path: '/chat',
@@ -58,6 +69,11 @@ const InvoicesRoute = InvoicesRouteImport.update({
 const LibraryRoute = LibraryRouteImport.update({
   id: '/library',
   path: '/library',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NewsRoute = NewsRouteImport.update({
@@ -75,6 +91,11 @@ const StudentsRoute = StudentsRouteImport.update({
   path: '/students',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StudioEnquiryRoute = StudioEnquiryRouteImport.update({
+  id: '/studio-enquiry',
+  path: '/studio-enquiry',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiHealthRoute = ApiHealthRouteImport.update({
   id: '/api/health',
   path: '/api/health',
@@ -83,6 +104,21 @@ const ApiHealthRoute = ApiHealthRouteImport.update({
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
   path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthMfaRoute = AuthMfaRouteImport.update({
+  id: '/auth/mfa',
+  path: '/auth/mfa',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthMfaRecoveryRoute = AuthMfaRecoveryRouteImport.update({
+  id: '/auth/mfa-recovery',
+  path: '/auth/mfa-recovery',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthMfaSetupRoute = AuthMfaSetupRouteImport.update({
+  id: '/auth/mfa-setup',
+  path: '/auth/mfa-setup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChatIndexRoute = ChatIndexRouteImport.update({
@@ -193,14 +229,20 @@ const ApiTermsPdfRoute = ApiTermsPdfRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/chat': typeof ChatRouteWithChildren
   '/invoices': typeof InvoicesRouteWithChildren
   '/library': typeof LibraryRoute
+  '/login': typeof LoginRoute
   '/news': typeof NewsRoute
   '/settings': typeof SettingsRouteWithChildren
   '/students': typeof StudentsRouteWithChildren
+  '/studio-enquiry': typeof StudioEnquiryRoute
   '/api/health': typeof ApiHealthRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/auth/mfa': typeof AuthMfaRoute
+  '/auth/mfa-recovery': typeof AuthMfaRecoveryRoute
+  '/auth/mfa-setup': typeof AuthMfaSetupRoute
   '/chat/$conversationId': typeof ChatConversationIdRoute
   '/intake/$recordId': typeof IntakeRecordIdRoute
   '/invoices/$invoiceId': typeof InvoicesInvoiceIdRoute
@@ -225,10 +267,16 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/library': typeof LibraryRoute
+  '/login': typeof LoginRoute
   '/news': typeof NewsRoute
+  '/studio-enquiry': typeof StudioEnquiryRoute
   '/api/health': typeof ApiHealthRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/auth/mfa': typeof AuthMfaRoute
+  '/auth/mfa-recovery': typeof AuthMfaRecoveryRoute
+  '/auth/mfa-setup': typeof AuthMfaSetupRoute
   '/chat/$conversationId': typeof ChatConversationIdRoute
   '/intake/$recordId': typeof IntakeRecordIdRoute
   '/invoices/$invoiceId': typeof InvoicesInvoiceIdRoute
@@ -254,14 +302,20 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/chat': typeof ChatRouteWithChildren
   '/invoices': typeof InvoicesRouteWithChildren
   '/library': typeof LibraryRoute
+  '/login': typeof LoginRoute
   '/news': typeof NewsRoute
   '/settings': typeof SettingsRouteWithChildren
   '/students': typeof StudentsRouteWithChildren
+  '/studio-enquiry': typeof StudioEnquiryRoute
   '/api/health': typeof ApiHealthRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/auth/mfa': typeof AuthMfaRoute
+  '/auth/mfa-recovery': typeof AuthMfaRecoveryRoute
+  '/auth/mfa-setup': typeof AuthMfaSetupRoute
   '/chat/$conversationId': typeof ChatConversationIdRoute
   '/intake/$recordId': typeof IntakeRecordIdRoute
   '/invoices/$invoiceId': typeof InvoicesInvoiceIdRoute
@@ -288,14 +342,20 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/chat'
     | '/invoices'
     | '/library'
+    | '/login'
     | '/news'
     | '/settings'
     | '/students'
+    | '/studio-enquiry'
     | '/api/health'
     | '/auth/callback'
+    | '/auth/mfa'
+    | '/auth/mfa-recovery'
+    | '/auth/mfa-setup'
     | '/chat/$conversationId'
     | '/intake/$recordId'
     | '/invoices/$invoiceId'
@@ -320,10 +380,16 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
     | '/library'
+    | '/login'
     | '/news'
+    | '/studio-enquiry'
     | '/api/health'
     | '/auth/callback'
+    | '/auth/mfa'
+    | '/auth/mfa-recovery'
+    | '/auth/mfa-setup'
     | '/chat/$conversationId'
     | '/intake/$recordId'
     | '/invoices/$invoiceId'
@@ -348,14 +414,20 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/chat'
     | '/invoices'
     | '/library'
+    | '/login'
     | '/news'
     | '/settings'
     | '/students'
+    | '/studio-enquiry'
     | '/api/health'
     | '/auth/callback'
+    | '/auth/mfa'
+    | '/auth/mfa-recovery'
+    | '/auth/mfa-setup'
     | '/chat/$conversationId'
     | '/intake/$recordId'
     | '/invoices/$invoiceId'
@@ -381,14 +453,20 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
   ChatRoute: typeof ChatRouteWithChildren
   InvoicesRoute: typeof InvoicesRouteWithChildren
   LibraryRoute: typeof LibraryRoute
+  LoginRoute: typeof LoginRoute
   NewsRoute: typeof NewsRoute
   SettingsRoute: typeof SettingsRouteWithChildren
   StudentsRoute: typeof StudentsRouteWithChildren
+  StudioEnquiryRoute: typeof StudioEnquiryRoute
   ApiHealthRoute: typeof ApiHealthRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
+  AuthMfaRoute: typeof AuthMfaRoute
+  AuthMfaRecoveryRoute: typeof AuthMfaRecoveryRoute
+  AuthMfaSetupRoute: typeof AuthMfaSetupRoute
   IntakeRecordIdRoute: typeof IntakeRecordIdRoute
   JoinTokenRoute: typeof JoinTokenRoute
   LessonsLessonIdRoute: typeof LessonsLessonIdRoute
@@ -404,6 +482,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/chat': {
@@ -427,6 +512,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LibraryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/news': {
       id: '/news'
       path: '/news'
@@ -448,6 +540,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudentsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/studio-enquiry': {
+      id: '/studio-enquiry'
+      path: '/studio-enquiry'
+      fullPath: '/studio-enquiry'
+      preLoaderRoute: typeof StudioEnquiryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/health': {
       id: '/api/health'
       path: '/api/health'
@@ -460,6 +559,27 @@ declare module '@tanstack/react-router' {
       path: '/auth/callback'
       fullPath: '/auth/callback'
       preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/mfa': {
+      id: '/auth/mfa'
+      path: '/auth/mfa'
+      fullPath: '/auth/mfa'
+      preLoaderRoute: typeof AuthMfaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/mfa-recovery': {
+      id: '/auth/mfa-recovery'
+      path: '/auth/mfa-recovery'
+      fullPath: '/auth/mfa-recovery'
+      preLoaderRoute: typeof AuthMfaRecoveryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/mfa-setup': {
+      id: '/auth/mfa-setup'
+      path: '/auth/mfa-setup'
+      fullPath: '/auth/mfa-setup'
+      preLoaderRoute: typeof AuthMfaSetupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/chat/': {
@@ -682,14 +802,20 @@ const StudentsRouteWithChildren = StudentsRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
   ChatRoute: ChatRouteWithChildren,
   InvoicesRoute: InvoicesRouteWithChildren,
   LibraryRoute: LibraryRoute,
+  LoginRoute: LoginRoute,
   NewsRoute: NewsRoute,
   SettingsRoute: SettingsRouteWithChildren,
   StudentsRoute: StudentsRouteWithChildren,
+  StudioEnquiryRoute: StudioEnquiryRoute,
   ApiHealthRoute: ApiHealthRoute,
   AuthCallbackRoute: AuthCallbackRoute,
+  AuthMfaRoute: AuthMfaRoute,
+  AuthMfaRecoveryRoute: AuthMfaRecoveryRoute,
+  AuthMfaSetupRoute: AuthMfaSetupRoute,
   IntakeRecordIdRoute: IntakeRecordIdRoute,
   JoinTokenRoute: JoinTokenRoute,
   LessonsLessonIdRoute: LessonsLessonIdRoute,
@@ -700,3 +826,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

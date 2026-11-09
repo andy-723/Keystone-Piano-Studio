@@ -16,6 +16,7 @@ import { useAppSettings, type Role } from "@/lib/app-settings";
 import type { Studio } from "@/mocks/types";
 import { translate } from "@/i18n/parent";
 import { BrandLogo } from "@/components/BrandLogo";
+import { getAuthClient, isLiveAuthConfigured } from "@/lib/auth-client";
 
 const NAV = [
   { to: "/", label: "Today", icon: BookOpen },
@@ -78,18 +79,36 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
               <Switch id="larger-text" className="relative z-10" checked={largeText} onCheckedChange={setLargeText} />
               <Label htmlFor="larger-text" className="flex min-h-12 cursor-pointer items-center text-base before:absolute before:inset-0">{shellText("largerText")}</Label>
             </div>
-            <label className="flex min-w-0 max-w-full items-center gap-2 text-base">
-              <span className="sr-only sm:not-sr-only sm:text-muted-foreground">{shellText("viewingAs")}</span>
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value as Role)}
-                className="min-h-12 w-full min-w-0 max-w-full rounded-lg border-2 border-input bg-card px-2 min-readable font-semibold sm:w-auto sm:px-3"
+            {!isLiveAuthConfigured() && (
+              <label className="flex min-w-0 max-w-full items-center gap-2 text-base">
+                <span className="sr-only sm:not-sr-only sm:text-muted-foreground">{shellText("viewingAs")}</span>
+                <select
+                  value={role}
+                  onChange={(e) => setRole(e.target.value as Role)}
+                  className="min-h-12 w-full min-w-0 max-w-full rounded-lg border-2 border-input bg-card px-2 min-readable font-semibold sm:w-auto sm:px-3"
+                >
+                  <option value="teacher">Teacher ({profile?.name || "Ms Clarke"})</option>
+                  <option value="parent">Parent (Wei Chen)</option>
+                  <option value="new-teacher">New teacher (empty studio)</option>
+                </select>
+              </label>
+            )}
+            {isLiveAuthConfigured() && (
+              <Button
+                type="button"
+                variant="outline"
+                className="min-h-12"
+                onClick={() => {
+                  void getAuthClient()
+                    ?.auth.signOut({ scope: "local" })
+                    .then(() => {
+                      window.location.href = "/login";
+                    });
+                }}
               >
-                <option value="teacher">Teacher ({profile?.name || "Ms Clarke"})</option>
-                <option value="parent">Parent (Wei Chen)</option>
-                <option value="new-teacher">New teacher (empty studio)</option>
-              </select>
-            </label>
+                Sign out
+              </Button>
+            )}
           </div>
         </header>
         <main className="min-w-0 flex-1 px-3 py-4 sm:px-4 md:px-8 md:py-8">{role === "new-teacher" && newPlanOpen ? <div className="mx-auto max-w-3xl"><Button variant="outline" onClick={() => setNewPlanOpen(false)}>Back to studio</Button><h1 className="mt-5 text-3xl font-semibold">Settings</h1><TeacherProfileSettings scope="new-studio"/><PlanBilling scope="new-studio" /><Button className="mt-5" variant="outline" onClick={() => { setNewPlanOpen(false); setNewNewsOpen(true); }}><Megaphone aria-hidden/>Studio news</Button></div> : role === "new-teacher" && newNewsOpen ? <div><Button variant="outline" onClick={() => setNewNewsOpen(false)}>Back to studio</Button><StudioNews scope="new-studio"/></div> : children}</main>

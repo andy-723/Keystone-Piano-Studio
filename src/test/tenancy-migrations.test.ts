@@ -12,7 +12,8 @@ const migrationsDir = join(process.cwd(), "supabase/migrations");
 /** Tables that intentionally have no studio_id (with reason). */
 const STUDIO_ID_ALLOWLIST: Record<string, string> = {
   studio: "studio itself",
-  // Global reference tables would be listed here when introduced.
+  platform_staff: "Keystone platform operators — no studio tenancy (ADR-019 out of scope)",
+  platform_audit: "platform-wide append-only audit — studio id optional on some events",
 };
 
 function sqlFiles() {

@@ -1,27 +1,51 @@
 import { createServiceSupabase } from "./supabase";
-import { forbidden, ProblemError } from "./problem";
+import { forbidden, mfaRequired, ProblemError } from "./problem";
 import { isMockOnboarding } from "./env";
 
 export type StudioRole = "owner" | "admin" | "teacher";
+export type PlatformRole = "platform_admin" | "support";
 
 /** In-memory memberships for mock mode and unit tests. Cleared between tests. */
 export const mockMemberships: Array<{ userId: string; studioId: string; role: StudioRole }> = [];
 
+/** In-memory platform staff for mock mode and unit tests. */
+export const mockPlatformStaff: Array<{
+  userId: string;
+  role: PlatformRole;
+  displayName: string;
+}> = [];
+
 export function resetMockMemberships(entries: typeof mockMemberships = []) {
   mockMemberships.splice(0, mockMemberships.length, ...entries);
+}
+
+export function resetMockPlatformStaff(entries: typeof mockPlatformStaff = []) {
+  mockPlatformStaff.splice(0, mockPlatformStaff.length, ...entries);
+}
+
+function assertStaffAal(options?: { aal?: string | null }) {
+  // Live callers must pass aal from the verified JWT. Mock callers may omit options.
+  if (!options || !("aal" in options)) {
+    if (isMockOnboarding()) return;
+    throw mfaRequired();
+  }
+  if (options.aal !== "aal2") throw mfaRequired();
 }
 
 /**
  * Reads membership with the service client (or mock store) and throws a 403
  * problem error if the user does not hold one of the required roles.
  * Never trusts a studio_id from the browser beyond this check.
+ * Live owner/admin/teacher routes must pass aal from the verified JWT (`aal2`).
  */
 export async function requireStudioRole(
   userId: string,
   studioId: string,
   roles: StudioRole[],
+  options?: { aal?: string | null },
 ): Promise<StudioRole> {
   if (!userId || !studioId) throw forbidden("Missing user or studio.");
+  assertStaffAal(options);
 
   if (isMockOnboarding()) {
     const row = mockMemberships.find(
@@ -46,4 +70,34 @@ export async function requireStudioRole(
   return role;
 }
 
-export { ProblemError, forbidden };
+/**
+ * Platform admin gate. Service-key read of platform_staff; requires role
+ * platform_admin and aal2 from the verified JWT.
+ */
+export async function requirePlatformAdmin(
+  userId: string,
+  options?: { aal?: string | null },
+): Promise<{ role: "platform_admin"; displayName: string }> {
+  if (!userId) throw forbidden("Missing user.");
+  assertStaffAal(options);
+
+  if (isMockOnboarding()) {
+    const row = mockPlatformStaff.find((entry) => entry.userId === userId);
+    if (!row || row.role !== "platform_admin") throw forbidden("Platform admin required.");
+    return { role: "platform_admin", displayName: row.displayName };
+  }
+
+  // Service-key read of platform_staff — guarded by requirePlatformAdmin.
+  const supabase = createServiceSupabase();
+  const { data, error } = await supabase
+    .from("platform_staff")
+    .select("role, display_name")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) throw new ProblemError(500, "Platform staff lookup failed", error.message);
+  if (!data || data.role !== "platform_admin") throw forbidden("Platform admin required.");
+  return { role: "platform_admin", displayName: data.display_name as string };
+}
+
+export { ProblemError, forbidden, mfaRequired };
