@@ -24,6 +24,12 @@ do $$ begin
 exception when duplicate_object then null;
 end $$;
 
+-- Hosted Supabase SQL editor: postgres must inherit tenancy_helper to
+-- ALTER FUNCTION ... OWNER TO tenancy_helper; helper needs schema rights
+-- to own functions in app_private.
+grant tenancy_helper to postgres;
+grant usage, create on schema app_private to tenancy_helper;
+
 grant select (studio_id, user_id, role) on table public.studio_member to tenancy_helper;
 grant select (family_id, user_id) on table public.guardian to tenancy_helper;
 grant select (id, studio_id) on table public.family to tenancy_helper;
@@ -113,7 +119,7 @@ stable
 security invoker
 set search_path = ''
 as $$
-  select family_id from app_private.guardian_family_ids();
+  select app_private.guardian_family_ids();
 $$;
 
 revoke all on function public.is_studio_member(uuid) from public, anon;
