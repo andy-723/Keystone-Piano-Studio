@@ -19,6 +19,9 @@
  */
 
 @theme inline {
+  --color-deco-ink: oklch(0.22 0.012 70);
+  --color-deco-cream: oklch(0.96 0.02 85);
+  --color-deco-gold: oklch(0.72 0.11 80);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);

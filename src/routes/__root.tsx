@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
   type ErrorComponentProps,
@@ -138,6 +139,8 @@ function RootComponent() {
 function RoleGate() {
   const { role } = useAppSettings();
   const { data: studio } = useSuspenseQuery(studioQuery);
+  const pathname = useRouterState({ select: (st) => st.location.pathname });
+  if (pathname === "/welcome") return <Outlet />;
   if (role === "new-teacher") return <Suspense fallback={<p className="p-6">Opening your new studio…</p>}><NewTeacherGate /></Suspense>;
   return (
     <AppShell studio={studio}>
