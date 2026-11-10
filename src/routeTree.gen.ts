@@ -14,6 +14,7 @@ import { Route as ChatRouteImport } from './routes/chat'
 import { Route as InvoicesRouteImport } from './routes/invoices'
 import { Route as LibraryRouteImport } from './routes/library'
 import { Route as NewsRouteImport } from './routes/news'
+import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as StudentsRouteImport } from './routes/students'
 import { Route as WelcomeRouteImport } from './routes/welcome'
@@ -54,6 +55,11 @@ const LibraryRoute = LibraryRouteImport.update({
 const NewsRoute = NewsRouteImport.update({
   id: '/news',
   path: '/news',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -143,6 +149,7 @@ export interface FileRoutesByFullPath {
   '/invoices': typeof InvoicesRouteWithChildren
   '/library': typeof LibraryRoute
   '/news': typeof NewsRoute
+  '/pricing': typeof PricingRoute
   '/settings': typeof SettingsRoute
   '/students': typeof StudentsRouteWithChildren
   '/welcome': typeof WelcomeRoute
@@ -164,6 +171,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/library': typeof LibraryRoute
   '/news': typeof NewsRoute
+  '/pricing': typeof PricingRoute
   '/settings': typeof SettingsRoute
   '/welcome': typeof WelcomeRoute
   '/chat/$conversationId': typeof ChatConversationIdRoute
@@ -187,6 +195,7 @@ export interface FileRoutesById {
   '/invoices': typeof InvoicesRouteWithChildren
   '/library': typeof LibraryRoute
   '/news': typeof NewsRoute
+  '/pricing': typeof PricingRoute
   '/settings': typeof SettingsRoute
   '/students': typeof StudentsRouteWithChildren
   '/welcome': typeof WelcomeRoute
@@ -212,6 +221,7 @@ export interface FileRouteTypes {
     | '/invoices'
     | '/library'
     | '/news'
+    | '/pricing'
     | '/settings'
     | '/students'
     | '/welcome'
@@ -233,6 +243,7 @@ export interface FileRouteTypes {
     | '/'
     | '/library'
     | '/news'
+    | '/pricing'
     | '/settings'
     | '/welcome'
     | '/chat/$conversationId'
@@ -255,6 +266,7 @@ export interface FileRouteTypes {
     | '/invoices'
     | '/library'
     | '/news'
+    | '/pricing'
     | '/settings'
     | '/students'
     | '/welcome'
@@ -279,6 +291,7 @@ export interface RootRouteChildren {
   InvoicesRoute: typeof InvoicesRouteWithChildren
   LibraryRoute: typeof LibraryRoute
   NewsRoute: typeof NewsRoute
+  PricingRoute: typeof PricingRoute
   SettingsRoute: typeof SettingsRoute
   StudentsRoute: typeof StudentsRouteWithChildren
   WelcomeRoute: typeof WelcomeRoute
@@ -321,6 +334,13 @@ declare module '@tanstack/react-router' {
       path: '/news'
       fullPath: '/news'
       preLoaderRoute: typeof NewsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -494,6 +514,7 @@ const rootRouteChildren: RootRouteChildren = {
   InvoicesRoute: InvoicesRouteWithChildren,
   LibraryRoute: LibraryRoute,
   NewsRoute: NewsRoute,
+  PricingRoute: PricingRoute,
   SettingsRoute: SettingsRoute,
   StudentsRoute: StudentsRouteWithChildren,
   WelcomeRoute: WelcomeRoute,

@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Button } from "@/components/ui/button";
 import hero from "@/assets/welcome-hero.jpg";
 import { DeviceShowcase } from "@/components/DeviceShowcase";
 import logo from "@/assets/keystone-logo.jpg";
@@ -59,6 +60,7 @@ function Welcome() {
         <header className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-5 py-5 md:px-10">
           <a href="#top" className="rounded-2xl bg-mk-paper px-3 py-1.5"><img src={logo} alt="Keystone Music HQ" className="h-11 w-auto" /></a>
           <nav className="flex items-center gap-2">
+            <Button asChild variant="ghost" className="px-2 text-mk-paper hover:bg-mk-paper/10 hover:text-mk-paper"><Link to="/pricing">Pricing</Link></Button>
             <a href="#enrolment" className="hidden min-h-12 items-center px-4 text-base text-mk-paper/85 hover:text-mk-paper md:inline-flex">How it works</a>
             <a href="#trust" className="hidden min-h-12 items-center px-4 text-base text-mk-paper/85 hover:text-mk-paper md:inline-flex">Trust</a>
             <a href={SIGN_IN} className="inline-flex min-h-12 items-center rounded-full border border-mk-paper/40 px-5 text-base backdrop-blur-md hover:bg-mk-paper/10">Sign in</a>
@@ -196,6 +198,7 @@ function Welcome() {
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-5 py-8 text-base text-mk-ink/70 md:px-10">
           <p>© 2026 Synoratech Pty Ltd · Keystone Music HQ</p>
           <nav className="flex flex-wrap gap-6">
+            <Link to="/pricing" className="hover:text-mk-ink">Pricing</Link>
             <a href="mailto:support@keystonemusichq.com" className="hover:text-mk-ink">Help</a>
             <a href="#trust" className="hover:text-mk-ink">Privacy</a>
             <a href="#trust" className="hover:text-mk-ink">Terms</a>
