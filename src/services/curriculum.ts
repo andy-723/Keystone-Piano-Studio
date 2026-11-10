@@ -1,8 +1,11 @@
 import { practiceLogs, requirements, studentProgress } from "@/mocks/data";
 import type { PracticeLog, Requirement, StudentProgress } from "@/mocks/types";
 import { respond } from "./_delay";
-import { students } from "@/mocks/data";
-import { courseFeedback, courseItems, frameworkSections, frameworkSlots, seedStudentCourse, stageNames, termMilestones } from "@/mocks/curriculum";
+import { students, teacher } from "@/mocks/data";
+import { libraryState } from "@/mocks/library";
+import { buildCourseSnapshot } from "@/lib/course-snapshot";
+import { getOrCreateFamilyConversation, sendMessage } from "./chat";
+import { courseFeedback, courseItems, frameworkSections, frameworkSlots, seedStudentCourse, stageNames, studentCourses, termMilestones } from "@/mocks/curriculum";
 import { courseReadiness, hasNoFeedbackInThreeLessons, stageAfterFeedback } from "@/lib/course-progress";
 import type { CourseItem, Feedback, StudentCourse } from "@/mocks/types";
 
@@ -80,4 +83,103 @@ export async function addPractice(input: Omit<PracticeLog, "id">): Promise<Pract
   const log = { ...input, id: `pl-${practiceLogs.length + 1}` };
   practiceLogs.push(log);
   return respond(log);
+}
+
+export type CourseAssignmentOption = {
+  studentId: string;
+  name: string;
+  currentCourse: { name: string; templateId?: string } | null;
+};
+
+function courseLabel(course: StudentCourse) {
+  return course.name || `${course.framework} · ${course.grade}`;
+}
+
+function activeCourse(studentId: string) {
+  return studentCourses.find((course) => course.studentId === studentId && course.status === "active") ?? null;
+}
+
+/** Students the teacher can pick in "Assign to students", with the course each is on now. */
+export async function getCourseAssignmentOptions(): Promise<CourseAssignmentOption[]> {
+  return respond(
+    students
+      .map((student) => {
+        const course = activeCourse(student.id);
+        return {
+          studentId: student.id,
+          name: `${student.firstName} ${student.lastName}`,
+          currentCourse: course ? { name: courseLabel(course), ...(course.templateId ? { templateId: course.templateId } : {}) } : null,
+        };
+      })
+      .sort((a, b) => a.name.localeCompare(b.name)),
+  );
+}
+
+export type CourseAssignmentResult = {
+  assigned: string[];
+  skipped: { studentId: string; reason: "has_course" | "already_on_course" }[];
+};
+
+/**
+ * Assigns a studio course template to existing students (demo studio). Each student gets the same
+ * deep copy enrolment makes. A student already on another course is skipped unless listed in
+ * `replace`; replacing archives the old course and keeps its items, feedback and history.
+ * Re-assigning a student's current template does nothing, so the call is safe to repeat.
+ */
+export async function assignCourseTemplate(input: {
+  templateId: string;
+  studentIds: string[];
+  targetTerm: string;
+  replace?: string[];
+}): Promise<CourseAssignmentResult> {
+  const template = libraryState.demo.courses.find((entry) => entry.id === input.templateId);
+  if (!template) throw new Error("Course template not found.");
+  if (template.supplied) throw new Error("Copy this template first, then assign your studio copy.");
+  if (!/^\d{4}-T[1-4]$/.test(input.targetTerm)) throw new Error("Choose a target term.");
+  const ids = [...new Set(input.studentIds)];
+  if (!ids.length) throw new Error("Choose at least one student.");
+  const unknown = ids.find((id) => !students.some((student) => student.id === id));
+  if (unknown) throw new Error("Student not found.");
+  const replace = new Set(input.replace ?? []);
+  const result: CourseAssignmentResult = { assigned: [], skipped: [] };
+  const now = new Date().toISOString();
+  for (const studentId of ids) {
+    const current = activeCourse(studentId);
+    if (current?.templateId === template.id) {
+      result.skipped.push({ studentId, reason: "already_on_course" });
+      continue;
+    }
+    if (current && !replace.has(studentId)) {
+      result.skipped.push({ studentId, reason: "has_course" });
+      continue;
+    }
+    const snapshot = buildCourseSnapshot(structuredClone(template), {
+      studentId,
+      targetTerm: input.targetTerm,
+      weeklyPracticeGoalMin: current?.weeklyPracticeGoalMin ?? 75,
+      gradeHoursEstimate: current?.gradeHoursEstimate ?? 40,
+      updatedAt: now,
+    });
+    if (current) {
+      current.status = "archived";
+      current.archivedAt = now;
+    }
+    studentCourses.push(snapshot.course);
+    frameworkSections.push(...snapshot.sections);
+    courseItems.push(...snapshot.items);
+    termMilestones.push(...snapshot.milestones);
+    result.assigned.push(studentId);
+    const student = students.find((entry) => entry.id === studentId);
+    if (student) {
+      const conversation = await getOrCreateFamilyConversation(student.familyId);
+      await sendMessage({
+        conversationId: conversation.id,
+        authorRole: "teacher",
+        authorName: teacher.name,
+        kind: "text",
+        body: `${student.firstName} has started ${template.name}. / ${student.firstName} 已开始学习「${template.name}」。`,
+      });
+    }
+  }
+  return respond(result);
 }

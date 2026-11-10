@@ -63,7 +63,7 @@ export const STUDIO_TOUR: TourStep[] = [
     route: "/library",
     title: { en: "Tailor a course" },
     body: {
-      en: "Open Course templates, copy one of ours, then edit the sections and pieces to suit your studio. Section weights must add up to 100%. You pick the course when you enrol a student.",
+      en: "Open Course templates. Start a new course or copy one of ours, then set the sections and pieces. Section weights must add up to 100%. Assign to students gives each student their own copy.",
     },
   },
   {

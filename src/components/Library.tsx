@@ -1,6 +1,16 @@
 import { useState } from "react";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { ArrowDown, ArrowUp, BookOpen, Copy, Pencil, Plus, Save, Trash2 } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  BookOpen,
+  Copy,
+  Pencil,
+  Plus,
+  Save,
+  Trash2,
+  UserPlus,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -15,6 +25,8 @@ import type { ContentItem, CourseTemplate, LessonTemplate } from "@/mocks/types"
 import type { ImportScope } from "@/mocks/roster-import";
 import { useAppSettings } from "@/lib/app-settings";
 import { intakeField } from "./StudentIntake";
+import { AssignCourseDialog } from "./AssignCourseDialog";
+import { newCourseTemplate } from "@/lib/course-snapshot";
 type Editor =
   | { kind: "content"; item: ContentItem }
   | { kind: "lessons"; item: LessonTemplate }
@@ -25,6 +37,7 @@ export function Library({ scope = "demo" }: { scope?: ImportScope }) {
   const client = useQueryClient();
   const [tab, setTab] = useState<"content" | "lessons" | "courses">("content");
   const [editor, setEditor] = useState<Editor | null>(null);
+  const [assigning, setAssigning] = useState<CourseTemplate | null>(null);
   const refresh = () => client.invalidateQueries({ queryKey: ["library", scope] });
   const copy = useMutation({
     mutationFn: (id: string) => copyTemplate(tab, id, scope),
@@ -115,6 +128,18 @@ export function Library({ scope = "demo" }: { scope?: ImportScope }) {
           )}
         </div>
       )}
+      {tab === "courses" && (
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            data-tour="library-new-course"
+            onClick={() => open({ kind: "courses", item: newCourseTemplate() })}
+          >
+            <Plus aria-hidden />
+            New course template
+          </Button>
+        </div>
+      )}
       <div className="mt-5 space-y-4">
         {data[tab].map((item) => (
           <article key={item.id} className="rounded-md border border-border bg-card p-5">
@@ -192,6 +217,12 @@ export function Library({ scope = "demo" }: { scope?: ImportScope }) {
                   Edit
                 </Button>
               )}
+              {"sections" in item && !item.supplied && scope === "demo" && (
+                <Button variant="ghost" onClick={() => setAssigning(item)}>
+                  <UserPlus aria-hidden />
+                  Assign to students
+                </Button>
+              )}
             </div>
           </article>
         ))}
@@ -210,7 +241,9 @@ export function Library({ scope = "demo" }: { scope?: ImportScope }) {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              Edit studio {editor?.kind === "content" ? "content" : "template"}
+              {editor?.kind === "courses" && !data.courses.some((c) => c.id === editor.item.id)
+                ? "New course template"
+                : `Edit studio ${editor?.kind === "content" ? "content" : "template"}`}
             </DialogTitle>
           </DialogHeader>
           {editor && (
@@ -454,6 +487,27 @@ export function Library({ scope = "demo" }: { scope?: ImportScope }) {
                   </div>
                   {editor.item.sections.map((section, index) => (
                     <fieldset key={index} className="min-w-0 border-t border-border pt-4">
+                      {editor.item.sections.length > 1 && (
+                        <div className="flex justify-end">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            aria-label={`Remove section ${index + 1}${section.name ? ` (${section.name})` : ""}`}
+                            onClick={() =>
+                              setEditor({
+                                ...editor,
+                                item: {
+                                  ...editor.item,
+                                  sections: editor.item.sections.filter((_, i) => i !== index),
+                                },
+                              })
+                            }
+                          >
+                            <Trash2 aria-hidden />
+                            Remove section
+                          </Button>
+                        </div>
+                      )}
                       <label className="block font-semibold">
                         Section name
                         <Input
@@ -518,6 +572,37 @@ export function Library({ scope = "demo" }: { scope?: ImportScope }) {
                       </label>
                     </fieldset>
                   ))}
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() =>
+                        setEditor({
+                          ...editor,
+                          item: {
+                            ...editor.item,
+                            sections: [
+                              ...editor.item.sections,
+                              { name: "", weightPct: 0, items: [] },
+                            ],
+                          },
+                        })
+                      }
+                    >
+                      <Plus aria-hidden />
+                      Add section
+                    </Button>
+                    <p
+                      role="status"
+                      className={
+                        sectionWeightTotal(editor.item) === 100
+                          ? "font-semibold text-success"
+                          : "font-semibold text-destructive"
+                      }
+                    >
+                      Weights total: {sectionWeightTotal(editor.item)}%
+                    </p>
+                  </div>
                   <h3 className="text-xl font-semibold">Default milestones</h3>
                   {editor.item.defaultMilestones.map((milestone, index) => (
                     <div className="grid gap-4 sm:grid-cols-2" key={index}>
@@ -588,6 +673,14 @@ export function Library({ scope = "demo" }: { scope?: ImportScope }) {
           )}
         </DialogContent>
       </Dialog>
+      {assigning && <AssignCourseDialog template={assigning} onClose={() => setAssigning(null)} />}
     </div>
+  );
+}
+
+function sectionWeightTotal(item: CourseTemplate) {
+  return item.sections.reduce(
+    (sum, section) => sum + (Number.isFinite(section.weightPct) ? section.weightPct : 0),
+    0,
   );
 }

@@ -95,11 +95,22 @@ export async function saveLessonTemplate(item: LessonTemplate, scope: ImportScop
   state.lessons[index] = structuredClone(item);
   return getLibrary(scope);
 }
-export async function saveCourseTemplate(item: CourseTemplate, scope: ImportScope = "demo") {
+/** Saves a studio course template. A new id adds a blank template made in the Library. */
+export async function saveCourseTemplate(input: CourseTemplate, scope: ImportScope = "demo") {
   const state = libraryState[scope];
-  const index = state.courses.findIndex((entry) => entry.id === item.id);
-  if (index < 0 || state.courses[index]?.supplied || item.supplied)
+  const index = state.courses.findIndex((entry) => entry.id === input.id);
+  if (state.courses[index]?.supplied || input.supplied)
     throw new Error("Copy a Keystone Music HQ template before editing.");
+  // Drop blank lines left by the one-item-per-line box.
+  const item: CourseTemplate = {
+    ...input,
+    name: input.name.trim(),
+    sections: input.sections.map((section) => ({
+      ...section,
+      name: section.name.trim(),
+      items: section.items.map((title) => title.trim()).filter(Boolean),
+    })),
+  };
   if (
     !item.name.trim() ||
     !item.sections.length ||
@@ -114,6 +125,7 @@ export async function saveCourseTemplate(item: CourseTemplate, scope: ImportScop
     item.sections.reduce((sum, section) => sum + section.weightPct, 0) !== 100
   )
     throw new Error("Give each section items and weights totalling 100%.");
-  state.courses[index] = structuredClone(item);
+  if (index < 0) state.courses.push(structuredClone({ ...item, supplied: false }));
+  else state.courses[index] = structuredClone(item);
   return getLibrary(scope);
 }
