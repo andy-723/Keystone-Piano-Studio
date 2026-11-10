@@ -86,8 +86,8 @@ function Welcome() {
         <h2 className={`${serif} mt-4 max-w-3xl text-4xl font-semibold leading-tight md:text-5xl`}>Built for the teacher. Clear for the family.</h2>
         <div className="mt-12 grid gap-px overflow-hidden rounded-3xl border border-mk-gold/50 bg-mk-gold/50 md:grid-cols-2">
           {[
-            ["Studio owners & teachers", "Run one or more studios without spreadsheets and scattered message threads. Everything you need before and after a lesson, on any device.", ["Today view and timetable", "Student records and practice", "Term invoices"]],
-            ["Families & guardians", "Enrol from a studio invite, one question at a time. Know exactly what you agreed to, and stay connected to your teacher.", ["Guided enrolment form", "Plain-language terms with receipts", "Chat and studio updates"]],
+            ["Studio owners & teachers", "Run your studio without spreadsheets and scattered message threads. Everything you need before and after a lesson, on any device.", ["Day book and week view", "Student records, courses and red flags", "Term invoices with Stripe and Xero"]],
+            ["Families & guardians", "Enrol from a studio invite, one question at a time. Know exactly what you agreed to, and stay connected to your teacher.", ["Guided enrolment form", "Studio news and recital notices", "Chat and video sharing"]],
           ].map(([title, body, items]) => (
             <article key={title as string} className="bg-mk-paper p-8 md:p-12">
               <h3 className={`${serif} text-3xl font-semibold`}>{title as string}</h3>
@@ -150,7 +150,7 @@ function Welcome() {
           <h2 className={`${serif} mt-4 max-w-3xl text-4xl font-semibold leading-tight md:text-5xl`}>Student records deserve care.</h2>
           <div className="mt-14 grid gap-px overflow-hidden rounded-3xl bg-mk-gold/30 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              [MapPin, "Hosted in Sydney", "Australian data residency for Australian studios."],
+              [MapPin, "Australian made, hosted in Sydney", "Secure Sydney hosting, compliant with the Australian Privacy Act — cybersecurity by design."],
               [Lock, "Staff two-step sign-in", "An authenticator is required for studio staff."],
               [MailOpen, "Invite-only", "Accounts start from a teacher or Keystone — never an open sign-up."],
               [FileSignature, "Agreements on record", "Clear terms, guardian rules for minors and receipts of acceptance."],
