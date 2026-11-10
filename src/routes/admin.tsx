@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Fragment, useEffect, useState } from "react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { getAuthClient, isLiveAuthConfigured } from "@/lib/auth-client";
+import { clearVerifiedAccess } from "@/lib/live-auth-cache";
 import {
   AU_TIMEZONES,
   addPlatformStaffFn,
@@ -46,6 +47,7 @@ function AdminPage() {
   }, [live]);
 
   async function signOut() {
+    clearVerifiedAccess();
     const client = getAuthClient();
     await client?.auth.signOut({ scope: "local" });
     window.location.href = "/login";

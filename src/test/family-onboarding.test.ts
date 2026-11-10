@@ -348,9 +348,8 @@ describe("terms screen reuse and layout gates", () => {
 
   it("RoleGate renders join/intake without AppShell", () => {
     const root = readFileSync(join(process.cwd(), "src/routes/__root.tsx"), "utf8");
-    expect(root).toContain('pathname.startsWith("/join/")');
-    expect(root).toContain('pathname.startsWith("/intake/")');
-    expect(root).toContain("focusFlow");
+    expect(root).toContain("isFocusFlowPath");
+    expect(root).toContain("StudioShell");
   });
 });
 

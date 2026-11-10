@@ -6,6 +6,7 @@ GitHub Release with the same text. See `docs/release-process.md`.
 
 ## Unreleased
 
+- Faster: platform admin and support reach `/admin` without waiting on studio/parent mock loaders; sign-in reuse skips a repeat account check after MFA.
 - Fixed: database access checks for signed-in users failed with "permission denied for schema auth" (migration 0008).
 - Fixed: the platform audit log could be edited by server code; it is now append-only (migration 0009).
 - Release safety: every pull request is now checked automatically (tests, build, and every

@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { MfaCodeInputs } from "@/components/auth/MfaCodeInputs";
 import { getAuthClient } from "@/lib/auth-client";
 import { safeNextPath } from "@/lib/auth-paths";
-import { destinationForAccount } from "@/lib/post-login";
+import { rememberVerifiedAccess } from "@/lib/live-auth-cache";
+import { decideStudioAccessGate, destinationForAccount } from "@/lib/post-login";
 import { recordMfaEnrolledFn, resolveAccountFn } from "@/server/account";
 
 export const Route = createFileRoute("/auth/mfa-setup")({
@@ -80,6 +81,7 @@ function MfaSetupPage() {
     }
     await recordMfaEnrolledFn({ data: { accessToken: token, userAgent: navigator.userAgent } });
     const account = await resolveAccountFn({ data: { accessToken: token } });
+    rememberVerifiedAccess(token, decideStudioAccessGate(account));
     window.location.replace(destinationForAccount(account, safeNextPath(next)));
   }
 

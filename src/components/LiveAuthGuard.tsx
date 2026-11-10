@@ -2,17 +2,20 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { getAuthClient, isDemoModeAllowed, isLiveAuthConfigured } from "@/lib/auth-client";
 import { isAuthExemptPath } from "@/lib/auth-paths";
+import {
+  clearVerifiedAccess,
+  getVerifiedAccess,
+  rememberVerifiedAccess,
+  resetLiveAuthCacheForTests,
+} from "@/lib/live-auth-cache";
 import { decideMfaGate, decideStudioAccessGate, type StudioAccessGate } from "@/lib/post-login";
 import { StudioPausedScreen, StudioReadOnlyBanner } from "@/components/StudioAccessNotice";
 import { resolveAccountFn } from "@/server/account";
 
 type GuardState = "checking" | "ok" | "unavailable";
 
-/** Access tokens already checked in this tab (account + MFA + subscription), so navigation stays instant. */
-const verifiedTokens = new Map<string, StudioAccessGate>();
-
 export function resetLiveAuthGuardForTests() {
-  verifiedTokens.clear();
+  resetLiveAuthCacheForTests();
 }
 
 function loginUrl(next: string) {
@@ -61,10 +64,11 @@ export function LiveAuthGuard({ children }: { children: ReactNode }) {
       if (cancelled) return;
       const session = data.session;
       if (!session) {
+        clearVerifiedAccess();
         window.location.replace(loginUrl(next));
         return;
       }
-      const known = verifiedTokens.get(session.access_token);
+      const known = getVerifiedAccess(session.access_token);
       if (known) {
         setAccessGate(known);
         setState("ok");
@@ -72,19 +76,22 @@ export function LiveAuthGuard({ children }: { children: ReactNode }) {
       }
       setState("checking");
       try {
-        const account = await resolveAccountFn({ data: { accessToken: session.access_token } });
+        // Account resolve (server) and MFA factor list (Supabase) are independent — run together.
+        const [account, factors] = await Promise.all([
+          resolveAccountFn({ data: { accessToken: session.access_token } }),
+          client.auth.mfa.listFactors(),
+        ]);
         if (cancelled) return;
         const hasAccount =
           Boolean(account.platformStaff) ||
           account.memberships.length > 0 ||
           account.guardianFamilyIds.length > 0;
         if (!hasAccount) {
+          clearVerifiedAccess();
           await client.auth.signOut({ scope: "local" });
           window.location.replace("/login");
           return;
         }
-        const factors = await client.auth.mfa.listFactors();
-        if (cancelled) return;
         const hasVerifiedTotp = (factors.data?.totp ?? []).some((f) => f.status === "verified");
         const gate = decideMfaGate({ account, aal: account.aal, hasVerifiedTotp });
         if (gate === "setup") {
@@ -98,7 +105,7 @@ export function LiveAuthGuard({ children }: { children: ReactNode }) {
         // Subscription gate (0006). The database enforces the same rule through RLS; this is
         // only so people see a clear screen instead of empty pages.
         const access = decideStudioAccessGate(account);
-        verifiedTokens.set(session.access_token, access);
+        rememberVerifiedAccess(session.access_token, access);
         setAccessGate(access);
         setState("ok");
       } catch {

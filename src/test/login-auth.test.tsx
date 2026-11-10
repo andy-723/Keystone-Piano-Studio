@@ -10,24 +10,31 @@ import {
 } from "@tanstack/react-router";
 import { LoginCard } from "@/components/login/LoginCard";
 import { MfaCodeInputs } from "@/components/auth/MfaCodeInputs";
-import { isAuthExemptPath, parseEmailLink, safeNextPath } from "@/lib/auth-paths";
+import { isAuthExemptPath, isFocusFlowPath, parseEmailLink, safeNextPath } from "@/lib/auth-paths";
 import {
   LOGIN_ANIM_CYCLE_MS,
   LOGIN_ANIM_DURATION_MS,
   LOGIN_ANIM_ENDING_LEAD_MS,
 } from "@/lib/login-animation";
-import { decideMfaGate, NO_ACCOUNT_MESSAGE } from "@/lib/post-login";
+import {
+  clearVerifiedAccess,
+  getVerifiedAccess,
+  rememberVerifiedAccess,
+} from "@/lib/live-auth-cache";
+import { decideMfaGate, destinationForAccount, NO_ACCOUNT_MESSAGE } from "@/lib/post-login";
 import { requirePlatformAdmin, resetMockPlatformStaff, ProblemError } from "@/server/authz";
 import { bootstrapPlatformAdmin, maskEmailForLog } from "@/lib/bootstrap-platform-admin";
 import { isDemoModeAllowed, resetAuthClientForTests } from "@/lib/auth-client";
-import { LiveAuthGuard } from "@/components/LiveAuthGuard";
+import { LiveAuthGuard, resetLiveAuthGuardForTests } from "@/components/LiveAuthGuard";
 
 afterEach(() => {
   cleanup();
   resetMockPlatformStaff();
   resetAuthClientForTests();
+  resetLiveAuthGuardForTests();
   try {
     localStorage.clear();
+    sessionStorage.clear();
   } catch {
     // ignore
   }
@@ -108,6 +115,50 @@ describe("route guard helpers", () => {
     expect(isAuthExemptPath("/terms")).toBe(true);
     expect(isAuthExemptPath("/settings/terms")).toBe(false);
     expect(isAuthExemptPath("/")).toBe(false);
+  });
+
+  it("treats admin and auth as focus flows (no studio fixture shell)", () => {
+    expect(isFocusFlowPath("/admin")).toBe(true);
+    expect(isFocusFlowPath("/login")).toBe(true);
+    expect(isFocusFlowPath("/auth/mfa")).toBe(true);
+    expect(isFocusFlowPath("/join/abc")).toBe(true);
+    expect(isFocusFlowPath("/intake/abc")).toBe(true);
+    expect(isFocusFlowPath("/help")).toBe(true);
+    expect(isFocusFlowPath("/")).toBe(false);
+    expect(isFocusFlowPath("/students")).toBe(false);
+  });
+});
+
+describe("live auth verified-access cache", () => {
+  it("survives a memory clear via sessionStorage for the same token", () => {
+    rememberVerifiedAccess("tok-admin", { kind: "ok" });
+    expect(getVerifiedAccess("tok-admin")).toEqual({ kind: "ok" });
+    clearVerifiedAccess();
+    expect(getVerifiedAccess("tok-admin")).toBeUndefined();
+    rememberVerifiedAccess("tok-admin", { kind: "ok" });
+    // Simulate a full document reload: memory map empty, sessionStorage still set.
+    resetLiveAuthGuardForTests();
+    // reset clears storage too — re-seed storage-only path:
+    sessionStorage.setItem(
+      "kmhq.live-auth.verified.v1",
+      JSON.stringify({ token: "tok-admin", gate: { kind: "ok" } }),
+    );
+    expect(getVerifiedAccess("tok-other")).toBeUndefined();
+    expect(getVerifiedAccess("tok-admin")).toEqual({ kind: "ok" });
+  });
+
+  it("sends platform staff to /admin by default", () => {
+    expect(
+      destinationForAccount({
+        userId: "u1",
+        email: null,
+        aal: "aal2",
+        platformStaff: { role: "platform_admin", displayName: "A" },
+        memberships: [],
+        guardianFamilyIds: [],
+        studioAccess: [],
+      }),
+    ).toBe("/admin");
   });
 });
 
