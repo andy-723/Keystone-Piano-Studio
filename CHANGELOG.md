@@ -6,6 +6,7 @@ GitHub Release with the same text. See `docs/release-process.md`.
 
 ## Unreleased
 
+- Fixed: database access checks for signed-in users (migration 0008).
 - Release safety: every pull request is now checked automatically (tests, build, and every
   database change applied to a fresh database) before it can go live.
 
