@@ -38,6 +38,8 @@ function occurrence(id: string): LessonWithDetails | undefined {
 }
 export const getLessonOccurrence = (id: string) => respond(occurrence(id) ?? null);
 export const getDayLessons = (date: string): Promise<DayPlan> => respond(buildDay(date));
+/** Sync day plan for reporting aggregations (no mock latency). */
+export const listDayLessonsSync = (date: string): DayPlan => buildDay(date);
 export const getTodayLessons = (): Promise<DayPlan> => getDayLessons(PROTOTYPE_TODAY);
 export const getWeekLessons = (date: string) => respond(Array.from({ length: 6 }, (_, index) => buildDay(addDays(weekMonday(date), index))));
 /** Extend expired on-time make-up credits when no slot was offered (S-04). Append-only. */

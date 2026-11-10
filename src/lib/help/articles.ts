@@ -220,6 +220,29 @@ Make-up credits are kept as a running balance for each family. When a make-up is
     ],
   },
   {
+    id: "studio-snapshot",
+    audience: "studio",
+    topic: "using-the-app",
+    title: { en: "Studio snapshot for owners and admins" },
+    body: {
+      en: `Open Snapshot in the main menu. Owners and admins see a week or month view (Australia/Sydney) with tiles for revenue collected, overdue invoices, active students, incomplete enrolment invites, practice at risk, and lessons delivered.
+
+Tap a tile to open the list underneath. Export CSV exports the list you're looking at. Links at the bottom open Invoices and Students. Teachers without owner or admin access stay on Today and don't see whole-studio revenue.`,
+    },
+    keywords: [
+      "snapshot",
+      "dashboard",
+      "report",
+      "revenue",
+      "overdue",
+      "practice",
+      "csv",
+      "export",
+      "owner",
+      "admin",
+    ],
+  },
+  {
     id: "studio-calendar",
     audience: "studio",
     topic: "lessons-teaching",
