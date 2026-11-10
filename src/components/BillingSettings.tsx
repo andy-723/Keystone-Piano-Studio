@@ -113,7 +113,7 @@ export function BillingSettings({ scope = "demo" }: { scope?: IntegrationScope }
   return (
     <div className="space-y-8">
       <section className="border-b border-border py-6" aria-label="Payment details">
-        <h2 className="flex items-center gap-3 text-2xl font-semibold">
+        <h2 className="flex items-center gap-3 text-2xl font-semibold" data-tour="settings-payment-details">
           <Landmark aria-hidden className="size-6 text-primary" />
           Payment details
         </h2>

@@ -15,7 +15,7 @@ import {
   Scripts,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
-import { Suspense, useEffect, type ReactNode } from "react";
+import { Suspense, useEffect, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { AppSettingsProvider, useAppSettings } from "@/lib/app-settings";
@@ -31,7 +31,7 @@ import { planBillingQuery } from "@/lib/plan-queries";
 import { NewTeacherSetup } from "@/components/NewTeacherSetup";
 import { teacherProfileQuery } from "@/lib/community-queries";
 import { TourProvider } from "@/components/tour/Tour";
-import { STUDIO_TOUR } from "@/lib/tour-steps";
+import { SETUP_TOUR, STUDIO_TOUR, type TourStep } from "@/lib/tour-steps";
 
 const studioQuery = queryOptions({ queryKey: ["studio"], queryFn: getStudio });
 
@@ -215,21 +215,39 @@ function StudioShell({ role }: { role: "teacher" | "parent" }) {
   );
 }
 
-/** Studio tour for owners and teachers; the family portal mounts its own tour. */
+/**
+ * Studio tour for owners and teachers; the family portal mounts its own tour. The studio tour's
+ * last card offers the setup guide, which wraps it so the ? button still replays the studio tour.
+ */
 function StudioTour({ enabled, children }: { enabled: boolean; children: ReactNode }) {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const [setupToken, setSetupToken] = useState(0);
   if (!enabled) return <>{children}</>;
+  const openStep = (step: TourStep) => {
+    if (step.route && step.route !== pathname) void navigate({ to: step.route });
+  };
+  const cardBottomClass =
+    "bottom-[calc(9rem+env(safe-area-inset-bottom))] sm:bottom-[calc(5rem+env(safe-area-inset-bottom))]";
   return (
     <TourProvider
-      tourId="studio"
-      steps={STUDIO_TOUR}
-      cardBottomClass="bottom-[calc(9rem+env(safe-area-inset-bottom))] sm:bottom-[calc(5rem+env(safe-area-inset-bottom))]"
-      onStep={(step) => {
-        if (step.route && step.route !== pathname) void navigate({ to: step.route });
-      }}
+      tourId="setup"
+      steps={SETUP_TOUR}
+      autoStart={false}
+      introCard={false}
+      startToken={setupToken}
+      cardBottomClass={cardBottomClass}
+      onStep={openStep}
     >
-      {children}
+      <TourProvider
+        tourId="studio"
+        steps={STUDIO_TOUR}
+        cardBottomClass={cardBottomClass}
+        onStep={openStep}
+        onOffer={() => setSetupToken((token) => token + 1)}
+      >
+        {children}
+      </TourProvider>
     </TourProvider>
   );
 }

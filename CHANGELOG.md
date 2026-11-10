@@ -6,6 +6,7 @@ GitHub Release with the same text. See `docs/release-process.md`.
 
 ## Unreleased
 
+- Studio tour now follows the order an owner sets up: studio details, terms and privacy, payment details, invoices, enrolling, course templates, news and chat. It ends back on studio details and offers a step-by-step setup guide.
 - Faster: platform admin and support reach `/admin` without waiting on studio/parent mock loaders; sign-in reuse skips a repeat account check after MFA.
 - Faster: server code now runs in Sydney next to the database, the first page download is about
   40% smaller, and the admin studio list makes far fewer database round trips.

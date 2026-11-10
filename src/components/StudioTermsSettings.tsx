@@ -112,7 +112,7 @@ export function StudioTermsSettings({ scope = "demo" }: { scope?: TermsScope }) 
     <div className="mx-auto max-w-3xl space-y-8">
       <div>
         {scope === "demo" && <Button asChild variant="ghost"><Link to="/settings"><ArrowLeft aria-hidden />Settings</Link></Button>}
-        <h1 className="mt-4 text-3xl font-semibold">Studio terms</h1>
+        <h1 className="mt-4 text-3xl font-semibold" data-tour="terms-heading">Studio terms</h1>
         <p className="mt-3 text-base text-muted-foreground">Australian template for Keystone Music HQ studios (AU v3).</p>
         <p className="mt-1 text-sm text-muted-foreground">Prepared for AU studios.</p>
         <div className="mt-4 flex flex-wrap gap-2">
@@ -124,7 +124,7 @@ export function StudioTermsSettings({ scope = "demo" }: { scope?: TermsScope }) 
       </div>
 
       <section className="space-y-4 border-y border-border py-6">
-        <h2 className="text-2xl font-semibold">Studio details</h2>
+        <h2 className="text-2xl font-semibold" data-tour="terms-studio-details">Studio details</h2>
         {([
           ["legalName", "Legal name"],
           ["name", "Trading name"],
@@ -163,7 +163,7 @@ export function StudioTermsSettings({ scope = "demo" }: { scope?: TermsScope }) 
       </section>
 
       <section className="space-y-4 border-b border-border pb-6">
-        <h2 className="text-2xl font-semibold">Billing</h2>
+        <h2 className="text-2xl font-semibold" data-tour="terms-billing">Billing</h2>
         <label className="block font-semibold">Billing cycle
           <select className="mt-2 min-h-12 w-full rounded-md border border-input bg-card px-3" defaultValue={studioForm.billing?.cycle ?? "per_term"} onChange={(event) => save.mutate({ studio: { billing: { ...studioForm.billing!, cycle: event.target.value as "per_term" | "monthly" | "per_lesson" } } })}>
             <option value="per_term">Each school term</option>
@@ -187,7 +187,7 @@ export function StudioTermsSettings({ scope = "demo" }: { scope?: TermsScope }) 
       </section>
 
       <section className="space-y-4 border-b border-border pb-6">
-        <h2 className="text-2xl font-semibold">Lessons and make-ups</h2>
+        <h2 className="text-2xl font-semibold" data-tour="terms-lessons">Lessons and make-ups</h2>
         <label className="block font-semibold">Cancel notice (hours)<Input type="number" className="mt-2" defaultValue={studioForm.policies?.cancelNoticeHours ?? 24} onBlur={(event) => save.mutate({ studio: { policies: { ...studioForm.policies!, cancelNoticeHours: Number(event.target.value) } } })} /></label>
         <label className="block font-semibold">Make-up quota<Input type="number" className="mt-2" defaultValue={studioForm.policies?.makeUpQuota ?? 1} onBlur={(event) => save.mutate({ studio: { policies: { ...studioForm.policies!, makeUpQuota: Number(event.target.value) } } })} /></label>
         <label className="block font-semibold">Online platform<Input className="mt-2" defaultValue={studioForm.policies?.onlinePlatform ?? "Zoom"} onBlur={(event) => save.mutate({ studio: { policies: { ...studioForm.policies!, onlinePlatform: event.target.value } } })} /></label>
@@ -209,7 +209,7 @@ export function StudioTermsSettings({ scope = "demo" }: { scope?: TermsScope }) 
       </section>
 
       <section className="space-y-4 border-b border-border pb-6">
-        <h2 className="text-2xl font-semibold">Privacy</h2>
+        <h2 className="text-2xl font-semibold" data-tour="terms-privacy">Privacy</h2>
         <p className="text-base">{draft.privacy.keystoneStorageStatement}</p>
         <p className="text-base text-muted-foreground">Overseas: {draft.privacy.overseasCountriesLabel}</p>
         <label className="block font-semibold">
@@ -245,7 +245,7 @@ export function StudioTermsSettings({ scope = "demo" }: { scope?: TermsScope }) 
       </section>
 
       <section className="space-y-4 border-b border-border pb-6">
-        <h2 className="text-2xl font-semibold">Publish</h2>
+        <h2 className="text-2xl font-semibold" data-tour="terms-publish">Publish</h2>
         <label className="block font-semibold">Change summary<Input className="mt-2" value={summary} onChange={(event) => setSummary(event.target.value)} /></label>
         <label className="block font-semibold">Effective date<Input type="date" className="mt-2" value={effectiveAt} onChange={(event) => setEffectiveAt(event.target.value)} /></label>
         <label className="flex items-center gap-3"><Switch checked={forceMaterial} onCheckedChange={setForceMaterial} />Treat as material change</label>

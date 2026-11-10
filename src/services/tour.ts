@@ -5,7 +5,7 @@
  * and can be replayed. Real build: a `tour_state` jsonb column on the person's own profile row
  * (never on the studio), read and written through the same two functions.
  */
-export type TourId = "studio" | "family";
+export type TourId = "studio" | "family" | "setup";
 export type TourStatus = "not_started" | "in_progress" | "dismissed" | "completed";
 export type TourProgress = { stepIndex: number; status: TourStatus };
 
