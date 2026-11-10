@@ -6,6 +6,9 @@ GitHub Release with the same text. See `docs/release-process.md`.
 
 ## Unreleased
 
+- New: Calendar. Give students weekly or one-off lesson times, then move or cancel a single week,
+  change the regular time from a given week, or stop lessons. Optional one-way sync to a
+  "Keystone lessons" calendar in Google Calendar (migration 0010).
 - Studio tour now follows the order an owner sets up: studio details, terms and privacy, payment details, invoices, enrolling, course templates, news and chat. It ends back on studio details and offers a step-by-step setup guide.
 - Faster: platform admin and support reach `/admin` without waiting on studio/parent mock loaders; sign-in reuse skips a repeat account check after MFA.
 - Faster: server code now runs in Sydney next to the database, the first page download is about

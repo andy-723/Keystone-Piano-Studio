@@ -28,6 +28,8 @@ import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AuthMfaRouteImport } from './routes/auth.mfa'
 import { Route as AuthMfaRecoveryRouteImport } from './routes/auth.mfa-recovery'
 import { Route as AuthMfaSetupRouteImport } from './routes/auth.mfa-setup'
+import { Route as CalendarIndexRouteImport } from './routes/calendar.index'
+import { Route as CalendarGoogleRouteImport } from './routes/calendar.google'
 import { Route as ChatIndexRouteImport } from './routes/chat.index'
 import { Route as ChatConversationIdRouteImport } from './routes/chat.$conversationId'
 import { Route as IntakeRecordIdRouteImport } from './routes/intake.$recordId'
@@ -145,6 +147,16 @@ const AuthMfaRecoveryRoute = AuthMfaRecoveryRouteImport.update({
 const AuthMfaSetupRoute = AuthMfaSetupRouteImport.update({
   id: '/auth/mfa-setup',
   path: '/auth/mfa-setup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CalendarIndexRoute = CalendarIndexRouteImport.update({
+  id: '/calendar/',
+  path: '/calendar/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CalendarGoogleRoute = CalendarGoogleRouteImport.update({
+  id: '/calendar/google',
+  path: '/calendar/google',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChatIndexRoute = ChatIndexRouteImport.update({
@@ -284,6 +296,7 @@ export interface FileRoutesByFullPath {
   '/auth/mfa': typeof AuthMfaRoute
   '/auth/mfa-recovery': typeof AuthMfaRecoveryRoute
   '/auth/mfa-setup': typeof AuthMfaSetupRoute
+  '/calendar/google': typeof CalendarGoogleRoute
   '/chat/$conversationId': typeof ChatConversationIdRoute
   '/intake/$recordId': typeof IntakeRecordIdRoute
   '/invoices/$invoiceId': typeof InvoicesInvoiceIdRoute
@@ -298,6 +311,7 @@ export interface FileRoutesByFullPath {
   '/students/enrol': typeof StudentsEnrolRoute
   '/students/groups': typeof StudentsGroupsRoute
   '/students/import': typeof StudentsImportRoute
+  '/calendar/': typeof CalendarIndexRoute
   '/chat/': typeof ChatIndexRoute
   '/invoices/': typeof InvoicesIndexRoute
   '/settings/': typeof SettingsIndexRoute
@@ -324,6 +338,7 @@ export interface FileRoutesByTo {
   '/auth/mfa': typeof AuthMfaRoute
   '/auth/mfa-recovery': typeof AuthMfaRecoveryRoute
   '/auth/mfa-setup': typeof AuthMfaSetupRoute
+  '/calendar/google': typeof CalendarGoogleRoute
   '/chat/$conversationId': typeof ChatConversationIdRoute
   '/intake/$recordId': typeof IntakeRecordIdRoute
   '/invoices/$invoiceId': typeof InvoicesInvoiceIdRoute
@@ -338,6 +353,7 @@ export interface FileRoutesByTo {
   '/students/enrol': typeof StudentsEnrolRoute
   '/students/groups': typeof StudentsGroupsRoute
   '/students/import': typeof StudentsImportRoute
+  '/calendar': typeof CalendarIndexRoute
   '/chat': typeof ChatIndexRoute
   '/invoices': typeof InvoicesIndexRoute
   '/settings': typeof SettingsIndexRoute
@@ -369,6 +385,7 @@ export interface FileRoutesById {
   '/auth/mfa': typeof AuthMfaRoute
   '/auth/mfa-recovery': typeof AuthMfaRecoveryRoute
   '/auth/mfa-setup': typeof AuthMfaSetupRoute
+  '/calendar/google': typeof CalendarGoogleRoute
   '/chat/$conversationId': typeof ChatConversationIdRoute
   '/intake/$recordId': typeof IntakeRecordIdRoute
   '/invoices/$invoiceId': typeof InvoicesInvoiceIdRoute
@@ -383,6 +400,7 @@ export interface FileRoutesById {
   '/students/enrol': typeof StudentsEnrolRoute
   '/students/groups': typeof StudentsGroupsRoute
   '/students/import': typeof StudentsImportRoute
+  '/calendar/': typeof CalendarIndexRoute
   '/chat/': typeof ChatIndexRoute
   '/invoices/': typeof InvoicesIndexRoute
   '/settings/': typeof SettingsIndexRoute
@@ -415,6 +433,7 @@ export interface FileRouteTypes {
     | '/auth/mfa'
     | '/auth/mfa-recovery'
     | '/auth/mfa-setup'
+    | '/calendar/google'
     | '/chat/$conversationId'
     | '/intake/$recordId'
     | '/invoices/$invoiceId'
@@ -429,6 +448,7 @@ export interface FileRouteTypes {
     | '/students/enrol'
     | '/students/groups'
     | '/students/import'
+    | '/calendar/'
     | '/chat/'
     | '/invoices/'
     | '/settings/'
@@ -455,6 +475,7 @@ export interface FileRouteTypes {
     | '/auth/mfa'
     | '/auth/mfa-recovery'
     | '/auth/mfa-setup'
+    | '/calendar/google'
     | '/chat/$conversationId'
     | '/intake/$recordId'
     | '/invoices/$invoiceId'
@@ -469,6 +490,7 @@ export interface FileRouteTypes {
     | '/students/enrol'
     | '/students/groups'
     | '/students/import'
+    | '/calendar'
     | '/chat'
     | '/invoices'
     | '/settings'
@@ -499,6 +521,7 @@ export interface FileRouteTypes {
     | '/auth/mfa'
     | '/auth/mfa-recovery'
     | '/auth/mfa-setup'
+    | '/calendar/google'
     | '/chat/$conversationId'
     | '/intake/$recordId'
     | '/invoices/$invoiceId'
@@ -513,6 +536,7 @@ export interface FileRouteTypes {
     | '/students/enrol'
     | '/students/groups'
     | '/students/import'
+    | '/calendar/'
     | '/chat/'
     | '/invoices/'
     | '/settings/'
@@ -544,9 +568,11 @@ export interface RootRouteChildren {
   AuthMfaRoute: typeof AuthMfaRoute
   AuthMfaRecoveryRoute: typeof AuthMfaRecoveryRoute
   AuthMfaSetupRoute: typeof AuthMfaSetupRoute
+  CalendarGoogleRoute: typeof CalendarGoogleRoute
   IntakeRecordIdRoute: typeof IntakeRecordIdRoute
   JoinTokenRoute: typeof JoinTokenRoute
   LessonsLessonIdRoute: typeof LessonsLessonIdRoute
+  CalendarIndexRoute: typeof CalendarIndexRoute
   ApiCronBillingRemindersRoute: typeof ApiCronBillingRemindersRoute
   ApiCronInviteRemindersRoute: typeof ApiCronInviteRemindersRoute
   ApiCronSubscriptionEnforcementRoute: typeof ApiCronSubscriptionEnforcementRoute
@@ -687,6 +713,20 @@ declare module '@tanstack/react-router' {
       path: '/auth/mfa-setup'
       fullPath: '/auth/mfa-setup'
       preLoaderRoute: typeof AuthMfaSetupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/calendar/': {
+      id: '/calendar/'
+      path: '/calendar'
+      fullPath: '/calendar/'
+      preLoaderRoute: typeof CalendarIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/calendar/google': {
+      id: '/calendar/google'
+      path: '/calendar/google'
+      fullPath: '/calendar/google'
+      preLoaderRoute: typeof CalendarGoogleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/chat/': {
@@ -941,9 +981,11 @@ const rootRouteChildren: RootRouteChildren = {
   AuthMfaRoute: AuthMfaRoute,
   AuthMfaRecoveryRoute: AuthMfaRecoveryRoute,
   AuthMfaSetupRoute: AuthMfaSetupRoute,
+  CalendarGoogleRoute: CalendarGoogleRoute,
   IntakeRecordIdRoute: IntakeRecordIdRoute,
   JoinTokenRoute: JoinTokenRoute,
   LessonsLessonIdRoute: LessonsLessonIdRoute,
+  CalendarIndexRoute: CalendarIndexRoute,
   ApiCronBillingRemindersRoute: ApiCronBillingRemindersRoute,
   ApiCronInviteRemindersRoute: ApiCronInviteRemindersRoute,
   ApiCronSubscriptionEnforcementRoute: ApiCronSubscriptionEnforcementRoute,
