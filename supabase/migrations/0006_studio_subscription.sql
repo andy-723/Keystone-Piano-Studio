@@ -197,6 +197,12 @@ begin
     'terms_acceptance', 'consent_record', 'email_log', 'auth_audit', 'oauth_connection',
     'studio_billing_profile', 'invoice', 'invoice_line', 'payment', 'credit_note', 'invoice_event'
   ] loop
+    -- Skip tables from a migration that is not applied on this database yet (e.g. 0004).
+    -- Re-run this block after applying it so the new tables get their gates.
+    if to_regclass(format('public.%I', t)) is null then
+      raise notice 'access gate skipped: public.% does not exist yet', t;
+      continue;
+    end if;
     col := case when t = 'studio' then 'id' else 'studio_id' end;
     -- auth_audit keeps recording sign-ins while a studio is paused.
     gated_writes := t <> 'auth_audit';
@@ -322,3 +328,6 @@ alter table public.platform_audit add constraint platform_audit_event_check chec
   'staff_removed',
   'studio_access_changed'
 ));
+
+-- Hosted Supabase: make the API (PostgREST) see the new tables straight away.
+notify pgrst, 'reload schema';
