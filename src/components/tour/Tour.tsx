@@ -49,6 +49,12 @@ type Props = {
   cardBottomClass?: string;
   /** Hold the tour back while something more important is open (for example a terms update). */
   paused?: boolean;
+  /** false: the first card is a real step (Skip and Next) rather than a Start tour offer. */
+  introCard?: boolean;
+  /** Bump to start the tour from outside, for example when another tour's last card offers it. */
+  startToken?: number;
+  /** Called when the person accepts a last-step offer (see TourStep.offer). */
+  onOffer?: (tourId: TourId) => void;
   children: ReactNode;
 };
 
@@ -60,6 +66,9 @@ export function TourProvider({
   autoStart = true,
   cardBottomClass = "bottom-4",
   paused = false,
+  introCard = true,
+  startToken = 0,
+  onOffer,
   children,
 }: Props) {
   const [index, setIndex] = useState<number | null>(null);
@@ -101,6 +110,10 @@ export function TourProvider({
     setIndex(0);
   }, [tourId]);
 
+  useEffect(() => {
+    if (startToken > 0) start();
+  }, [startToken, start]);
+
   return (
     <TourContext.Provider value={{ tourId, lang, start, active: index !== null }}>
       {children}
@@ -111,6 +124,12 @@ export function TourProvider({
           total={steps.length}
           lang={lang}
           cardBottomClass={cardBottomClass}
+          introCard={introCard}
+          onAccept={() => {
+            const next = steps[index]?.offer?.starts;
+            close("completed");
+            if (next) onOffer?.(next);
+          }}
           onBack={() => setIndex((i) => (i === null ? i : Math.max(0, i - 1)))}
           onNext={() => (index >= steps.length - 1 ? close("completed") : setIndex(index + 1))}
           onSkip={() => close("dismissed")}
@@ -137,19 +156,35 @@ function useTargetRect(target: string | null, stepKey: string) {
       const r = element.getBoundingClientRect();
       setRect({ top: r.top, left: r.left, width: r.width, height: r.height });
     };
+    const reveal = (found: HTMLElement, smooth: boolean) => {
+      const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+      const behavior: ScrollBehavior = smooth && !reduce ? "smooth" : "auto";
+      const r = found.getBoundingClientRect();
+      // Phones: put the element near the top so the card fits underneath it, clear of the tab bar.
+      if (window.innerWidth < 768) {
+        window.scrollTo?.({ top: window.scrollY + r.top - 16, behavior });
+        return;
+      }
+      const tall = r.height > window.innerHeight * 0.5;
+      found.scrollIntoView?.({ block: tall ? "start" : "center", behavior });
+    };
     const attach = (found: HTMLElement) => {
       element = found;
-      const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-      const tall = found.getBoundingClientRect().height > window.innerHeight * 0.5;
-      found.scrollIntoView?.({
-        block: tall ? "start" : "center",
-        behavior: reduce ? "auto" : "smooth",
-      });
+      reveal(found, true);
       measure();
+      // A route change can reset the scroll after the element appears; bring it back once.
+      settle = setTimeout(() => {
+        if (!found.isConnected) return;
+        const r = found.getBoundingClientRect();
+        const phoneMisplaced = window.innerWidth < 768 && Math.abs(r.top - 16) > 48;
+        if (r.bottom < 0 || r.top > window.innerHeight || phoneMisplaced) reveal(found, false);
+        measure();
+      }, 600);
     };
     const found = findTourTarget(target);
     let observer: MutationObserver | null = null;
     let timeout: ReturnType<typeof setTimeout> | null = null;
+    let settle: ReturnType<typeof setTimeout> | null = null;
     if (found) attach(found);
     else {
       // Wait for the screen to render the element; no timers polling services.
@@ -169,6 +204,7 @@ function useTargetRect(target: string | null, stepKey: string) {
     return () => {
       observer?.disconnect();
       if (timeout) clearTimeout(timeout);
+      if (settle) clearTimeout(settle);
       window.removeEventListener("scroll", measure, true);
       window.removeEventListener("resize", measure);
     };
@@ -183,6 +219,8 @@ function TourCard({
   total,
   lang,
   cardBottomClass,
+  introCard,
+  onAccept,
   onBack,
   onNext,
   onSkip,
@@ -192,13 +230,15 @@ function TourCard({
   total: number;
   lang: Lang;
   cardBottomClass: string;
+  introCard: boolean;
+  onAccept: () => void;
   onBack: () => void;
   onNext: () => void;
   onSkip: () => void;
 }) {
   const rect = useTargetRect(step.target, step.id);
   const headingRef = useRef<HTMLHeadingElement>(null);
-  const first = index === 0;
+  const first = index === 0 && introCard;
   const last = index === total - 1;
   const centred = !step.target || !rect;
 
@@ -288,11 +328,22 @@ function TourCard({
                 {tourControl("start", lang)}
               </Button>
             </>
+          ) : last && step.offer ? (
+            <>
+              <Button variant="ghost" className="min-h-12" onClick={onNext}>
+                {tourText(step.offer.decline, lang)}
+              </Button>
+              <Button className="min-h-12" onClick={onAccept}>
+                {tourText(step.offer.accept, lang)}
+              </Button>
+            </>
           ) : (
             <>
-              <Button variant="outline" className="min-h-12" onClick={onBack}>
-                {tourControl("back", lang)}
-              </Button>
+              {index > 0 && (
+                <Button variant="outline" className="min-h-12" onClick={onBack}>
+                  {tourControl("back", lang)}
+                </Button>
+              )}
               <Button className="min-h-12" onClick={onNext}>
                 {tourControl(last ? "finish" : "next", lang)}
               </Button>

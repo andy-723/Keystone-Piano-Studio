@@ -32,7 +32,7 @@ export function TeacherProfileSettings({ scope = "demo" }: { scope?: CommunitySc
   });
   return (
     <section className="border-b border-border py-7">
-      <h2 className="mb-5 text-2xl font-semibold">Your profile</h2>
+      <h2 className="mb-5 text-2xl font-semibold" data-tour="settings-profile">Your profile</h2>
       <ProfilePicture id="teacher" name={data.name || "Teacher"} editable scope={scope} />
       <form
         className="mt-5 space-y-4"

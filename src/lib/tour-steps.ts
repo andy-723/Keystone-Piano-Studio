@@ -14,6 +14,8 @@ export type TourStep = {
   view?: FamilyView;
   title: TourText;
   body: TourText;
+  /** Last step only: offer another tour instead of a plain Finish. */
+  offer?: { accept: TourText; decline: TourText; starts: TourId };
 };
 
 export function tourText(text: TourText, lang: Lang): string {
@@ -27,78 +29,44 @@ export const STUDIO_TOUR: TourStep[] = [
     target: null,
     title: { en: "Welcome to Keystone Music HQ" },
     body: {
-      en: "This 2-minute tour shows where everything lives, from your plan to your first invoice. Skip it any time and replay it from the ? button.",
+      en: "This 3-minute tour follows the order you'll set up your studio: your details, terms and privacy, invoicing, enrolling students, courses, news and chat. Skip it any time and replay it from the ? button.",
     },
   },
   {
-    id: "plan",
-    target: "settings-plan",
+    id: "details",
+    target: "settings-profile",
     route: "/settings",
-    title: { en: "Your plan" },
+    title: { en: "Your studio details" },
     body: {
-      en: "Your Keystone plan and what it includes live here in Settings. Change plans here too.",
+      en: "Start in Settings. Add your name, photo and Working with Children Check here. Your studio name and GST registration are further down the page.",
     },
   },
   {
-    id: "integrations",
-    target: "settings-integrations",
+    id: "terms",
+    target: "terms-studio-details",
+    route: "/settings/terms",
+    title: { en: "Your studio terms" },
+    body: {
+      en: "Fill in your legal name, ABN, fees and cancellation rules. Keystone builds your studio agreement from them, and families accept it when they enrol.",
+    },
+  },
+  {
+    id: "privacy",
+    target: "terms-privacy",
+    route: "/settings/terms",
+    title: { en: "Privacy" },
+    body: {
+      en: "This shows where Keystone stores family data and how long records are kept. Your privacy email goes in Studio details above, and your privacy policy PDF downloads from the top of the page.",
+    },
+  },
+  {
+    id: "payments",
+    target: "settings-payment-details",
     route: "/settings",
-    title: { en: "Get paid online" },
+    title: { en: "How families pay you" },
     body: {
-      en: "Connect Stripe so families can pay invoices online, and Xero (Pro plan) to send invoices and payments to your books.",
+      en: "Add your bank details so they print on every invoice. Further down, connect Stripe for online payments and Xero (Pro plan) for your books.",
     },
-  },
-  {
-    id: "library",
-    target: "open-library",
-    route: "/settings",
-    title: { en: "Your Library" },
-    body: {
-      en: "Teaching content, lesson templates and course templates all live in the Library.",
-    },
-  },
-  {
-    id: "courses",
-    target: "library-tabs",
-    route: "/library",
-    title: { en: "Tailor a course" },
-    body: {
-      en: "Open Course templates. Start a new course or copy one of ours, then set the sections and pieces. Section weights must add up to 100%. Assign to students gives each student their own copy.",
-    },
-  },
-  {
-    id: "enrol",
-    target: "enrol-student",
-    route: "/students",
-    title: { en: "Enrol a family" },
-    body: {
-      en: "Add a student and their family. Keystone sends the family an invite and a short intake form, and opens a private chat with them.",
-    },
-  },
-  {
-    id: "groups",
-    target: "student-groups",
-    route: "/students",
-    title: { en: "Group your students" },
-    body: {
-      en: "Make groups such as “Grade 3” or “Saturday class” so news reaches the right families.",
-    },
-  },
-  {
-    id: "chat",
-    target: "chat-family-list",
-    route: "/chat",
-    title: { en: "Chat with families" },
-    body: {
-      en: "Every enrolled family has its own private chat with the studio. Families get an alert when you write.",
-    },
-  },
-  {
-    id: "news",
-    target: "news-new-post",
-    route: "/news",
-    title: { en: "Share studio news" },
-    body: { en: "Post news to the whole studio, your own students or a group." },
   },
   {
     id: "invoices",
@@ -110,10 +78,126 @@ export const STUDIO_TOUR: TourStep[] = [
     },
   },
   {
-    id: "done",
+    id: "enrol",
+    target: "enrol-student",
+    route: "/students",
+    title: { en: "Enrol a family" },
+    body: {
+      en: "Add a student and their family. Keystone sends the family an invite and a short intake form, and opens a private chat with them. Groups, next to it, let news reach the right families.",
+    },
+  },
+  {
+    id: "courses",
+    target: "library-tabs",
+    route: "/library",
+    title: { en: "Course templates" },
+    body: {
+      en: "Your Library (Settings, then Open library) holds course templates. Start a new course or copy one of ours, set the sections and pieces (weights add up to 100%), then Assign to students.",
+    },
+  },
+  {
+    id: "news",
+    target: "news-new-post",
+    route: "/news",
+    title: { en: "Share studio news" },
+    body: { en: "Post news to the whole studio, your own students or a group." },
+  },
+  {
+    id: "chat",
+    target: "chat-family-list",
+    route: "/chat",
+    title: { en: "Chat with families" },
+    body: {
+      en: "Every enrolled family has its own private chat with the studio. Families get an alert when you write.",
+    },
+  },
+  {
+    id: "offer-setup",
+    target: "settings-profile",
+    route: "/settings",
+    title: { en: "Ready to set up your studio?" },
+    body: {
+      en: "That's everything. Want a hand filling in your studio details, terms and payment details now? It walks you through each part, and you can stop any time.",
+    },
+    offer: { accept: { en: "Yes, help me" }, decline: { en: "Not now" }, starts: "setup" },
+  },
+];
+
+/**
+ * Offered at the end of the studio tour: walks an owner through the parts they fill in before
+ * enrolling anyone. Never auto-starts; replay comes from the end of the studio tour.
+ */
+export const SETUP_TOUR: TourStep[] = [
+  {
+    id: "setup-profile",
+    target: "settings-profile",
+    route: "/settings",
+    title: { en: "1. Your profile" },
+    body: {
+      en: "Type your name as families should see it, add a photo, and enter your Working with Children Check. Press Save profile, then Next.",
+    },
+  },
+  {
+    id: "setup-terms-details",
+    target: "terms-studio-details",
+    route: "/settings/terms",
+    title: { en: "2. Studio details for your terms" },
+    body: {
+      en: "Enter your legal name, trading name, ABN, address, email, phone and privacy email. Each field saves when you move to the next one.",
+    },
+  },
+  {
+    id: "setup-terms-billing",
+    target: "terms-billing",
+    route: "/settings/terms",
+    title: { en: "3. Billing rules" },
+    body: {
+      en: "Choose how often you bill, when invoices are due, any late fee, and how many weeks' notice a family gives to stop lessons.",
+    },
+  },
+  {
+    id: "setup-terms-lessons",
+    target: "terms-lessons",
+    route: "/settings/terms",
+    title: { en: "4. Cancellations and make-ups" },
+    body: {
+      en: "Set the cancellation notice and how many make-up lessons a family gets. Anything still missing is listed in red here.",
+    },
+  },
+  {
+    id: "setup-privacy",
+    target: "terms-privacy",
+    route: "/settings/terms",
+    title: { en: "5. Privacy and extra terms" },
+    body: {
+      en: "Read how family data is stored. Add any extra terms of your own in the box here; Keystone warns you if the wording needs a second look.",
+    },
+  },
+  {
+    id: "setup-publish",
+    target: "terms-publish",
+    route: "/settings/terms",
+    title: { en: "6. Publish your terms" },
+    body: {
+      en: "Check the live preview above, add a short summary and publish. New families accept this version when they enrol.",
+    },
+  },
+  {
+    id: "setup-payments",
+    target: "settings-payment-details",
+    route: "/settings",
+    title: { en: "7. Your bank details" },
+    body: {
+      en: "Enter the account name, BSB and account number (or PayID) for invoices, then Save payment details.",
+    },
+  },
+  {
+    id: "setup-done",
     target: null,
-    title: { en: "You're ready" },
-    body: { en: "That's the tour. Replay it any time from the ? button at the top of the screen." },
+    title: { en: "Your studio is set up" },
+    body: {
+      en: "Next, enrol your first family from Students. The ? button at the top replays the studio tour.",
+    },
   },
 ];
 
@@ -198,7 +282,11 @@ export const FAMILY_TOUR: TourStep[] = [
   },
 ];
 
-export const TOURS: Record<TourId, TourStep[]> = { studio: STUDIO_TOUR, family: FAMILY_TOUR };
+export const TOURS: Record<TourId, TourStep[]> = {
+  studio: STUDIO_TOUR,
+  family: FAMILY_TOUR,
+  setup: SETUP_TOUR,
+};
 
 type ControlKey =
   "start" | "notNow" | "next" | "back" | "skip" | "finish" | "replay" | "stepOf" | "label";

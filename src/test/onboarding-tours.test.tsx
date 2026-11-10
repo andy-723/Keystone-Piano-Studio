@@ -1,8 +1,9 @@
+import { useState } from "react";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { FAMILY_TOUR, STUDIO_TOUR, tourControl, type TourStep } from "@/lib/tour-steps";
+import { FAMILY_TOUR, SETUP_TOUR, STUDIO_TOUR, tourControl, type TourStep } from "@/lib/tour-steps";
 import { getTourProgress, saveTourProgress, tourStorageKey } from "@/services/tour";
 import { TourHelpButton, TourProvider } from "@/components/tour/Tour";
 
@@ -21,11 +22,37 @@ describe("tour steps", () => {
   it.each([
     ["studio", STUDIO_TOUR],
     ["family", FAMILY_TOUR],
-  ] as const)("%s tour has unique ids and opens and closes with a centred card", (_name, steps) => {
+    ["setup", SETUP_TOUR],
+  ] as const)("%s tour has unique ids and a short length", (_name, steps) => {
     expect(new Set(steps.map((s) => s.id)).size).toBe(steps.length);
-    expect(steps[0]?.target).toBeNull();
-    expect(steps.at(-1)?.target).toBeNull();
     expect(steps.length).toBeLessThanOrEqual(12);
+  });
+
+  it("family and setup tours close with a centred card; the family tour also opens with one", () => {
+    expect(FAMILY_TOUR[0]?.target).toBeNull();
+    expect(FAMILY_TOUR.at(-1)?.target).toBeNull();
+    expect(SETUP_TOUR.at(-1)?.target).toBeNull();
+  });
+
+  it("studio tour follows the owner's setup order and ends back on studio details with a setup offer", () => {
+    expect(STUDIO_TOUR[0]?.target).toBeNull();
+    expect(STUDIO_TOUR.map((s) => s.id)).toEqual([
+      "welcome",
+      "details",
+      "terms",
+      "privacy",
+      "payments",
+      "invoices",
+      "enrol",
+      "courses",
+      "news",
+      "chat",
+      "offer-setup",
+    ]);
+    const last = STUDIO_TOUR.at(-1);
+    expect(last?.target).toBe(STUDIO_TOUR[1]?.target);
+    expect(last?.offer?.starts).toBe("setup");
+    expect(STUDIO_TOUR.slice(0, -1).every((s) => !s.offer)).toBe(true);
   });
 
   it("every highlighted element exists as a data-tour attribute in the app", () => {
@@ -33,7 +60,7 @@ describe("tour steps", () => {
       .map((file) => readFileSync(file, "utf8"))
       .join("\n");
     const portal = readFileSync(join(process.cwd(), "src/components/ParentPortal.tsx"), "utf8");
-    for (const step of [...STUDIO_TOUR, ...FAMILY_TOUR]) {
+    for (const step of [...STUDIO_TOUR, ...FAMILY_TOUR, ...SETUP_TOUR]) {
       if (!step.target) continue;
       if (step.target.startsWith("family-tab-")) {
         expect(portal).toContain("data-tour={`family-tab-${key}`}");
@@ -49,7 +76,8 @@ describe("tour steps", () => {
       expect(step.title["zh-CN"], step.id).toBeTruthy();
       expect(step.body["zh-CN"], step.id).toBeTruthy();
     }
-    for (const step of STUDIO_TOUR) if (step.target) expect(step.route, step.id).toMatch(/^\//);
+    for (const step of [...STUDIO_TOUR, ...SETUP_TOUR])
+      if (step.target) expect(step.route, step.id).toMatch(/^\//);
     expect(tourControl("stepOf", "zh-CN", { n: 2, total: 8 })).toBe("第 2 步，共 8 步");
   });
 });
@@ -193,6 +221,80 @@ describe("TourProvider", () => {
       </TourProvider>,
     );
     expect(await screen.findByRole("dialog", { name: "Welcome" })).toBeInTheDocument();
+  });
+
+  it("a last-card offer starts the next tour, which opens on a real step", async () => {
+    const offerSteps: TourStep[] = [
+      STEPS[0]!,
+      {
+        id: "offer",
+        target: null,
+        title: { en: "Set up now?" },
+        body: { en: "Want help?" },
+        offer: { accept: { en: "Yes, help me" }, decline: { en: "Not now" }, starts: "setup" },
+      },
+    ];
+    const setupSteps: TourStep[] = [
+      { id: "s1", target: null, title: { en: "Fill your profile" }, body: { en: "Name" } },
+      { id: "s2", target: null, title: { en: "All set" }, body: { en: "Done" } },
+    ];
+    function Harness() {
+      const [token, setToken] = useState(0);
+      return (
+        <TourProvider
+          tourId="setup"
+          steps={setupSteps}
+          autoStart={false}
+          introCard={false}
+          startToken={token}
+        >
+          <TourProvider tourId="studio" steps={offerSteps} onOffer={() => setToken((t) => t + 1)}>
+            <TourHelpButton />
+          </TourProvider>
+        </TourProvider>
+      );
+    }
+    render(<Harness />);
+    fireEvent.click(await screen.findByRole("button", { name: "Start tour" }));
+    expect(screen.getByRole("dialog", { name: "Set up now?" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Yes, help me" }));
+    expect(await screen.findByRole("dialog", { name: "Fill your profile" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Back" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Start tour" })).not.toBeInTheDocument();
+    expect(await getTourProgress("studio")).toEqual({ stepIndex: 0, status: "completed" });
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    fireEvent.click(screen.getByRole("button", { name: "Finish" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(await getTourProgress("setup")).toEqual({ stepIndex: 0, status: "completed" });
+    // The ? button replays the studio tour, not the setup guide.
+    fireEvent.click(screen.getByRole("button", { name: "Take the tour" }));
+    expect(screen.getByRole("dialog", { name: "Welcome" })).toBeInTheDocument();
+  });
+
+  it("declining the offer just finishes the tour", async () => {
+    await saveTourProgress("studio", { stepIndex: 1, status: "in_progress" });
+    const onOffer = vi.fn();
+    render(
+      <TourProvider
+        tourId="studio"
+        steps={[
+          STEPS[0]!,
+          {
+            id: "offer",
+            target: null,
+            title: { en: "Set up now?" },
+            body: { en: "Want help?" },
+            offer: { accept: { en: "Yes, help me" }, decline: { en: "Not now" }, starts: "setup" },
+          },
+        ]}
+        onOffer={onOffer}
+      >
+        <span />
+      </TourProvider>,
+    );
+    fireEvent.click(await screen.findByRole("button", { name: "Not now" }));
+    expect(onOffer).not.toHaveBeenCalled();
+    expect(await getTourProgress("studio")).toEqual({ stepIndex: 0, status: "completed" });
   });
 
   it("renders no ? button without a tour", () => {
