@@ -1,13 +1,17 @@
 import { billingAuditLog, billingProfileState, seedBillingExtras } from "@/mocks/billing-profile";
 import type { IntegrationScope } from "@/mocks/integrations";
-import { newsState } from "@/mocks/news";
+import { newsState, type Announcement } from "@/mocks/news";
 import { studio, teacher } from "@/mocks/data";
 import type { StudioBillingProfile, StudioPayTo } from "@/mocks/types";
-import { melbourneIso, PROTOTYPE_TODAY } from "@/lib/calendar";
 import { emailProvider } from "./_lazy";
 import { payToChangedEmail } from "@/server/email/templates/billing";
 import { integrationState } from "@/mocks/integrations";
 import { respond } from "./_delay";
+import { isLiveStudio } from "@/lib/studio-workspace";
+import { studioNow } from "@/lib/studio-clock";
+import { saveLiveBillingProfile } from "./live/billing-store";
+import { getAuthClient } from "@/lib/auth-client";
+import { saveLivePost } from "./live/news-store";
 
 seedBillingExtras();
 
@@ -95,13 +99,26 @@ export async function saveBillingProfile(
   };
   // Never unlock via a casual patch.
   if (current.numberingLockedAt) next.numberingLockedAt = current.numberingLockedAt;
+  if (scope === "demo" && isLiveStudio()) await saveLiveBillingProfile(next);
   billingProfileState[scope] = next;
   billingAuditLog.push({
-    at: melbourneIso(PROTOTYPE_TODAY, "12:00"),
+    at: studioNow(),
     kind: "billing_profile_saved",
     detail: `Billing profile updated (${scope})`,
   });
   return respond(next);
+}
+
+/** Checks a code from the owner's authenticator app with Supabase (step-up for bank details). */
+async function verifyLiveMfaCode(code: string) {
+  if (!/^\d{6}$/.test(code)) throw new Error("Enter the six-digit code from your authenticator.");
+  const auth = getAuthClient()?.auth;
+  if (!auth) throw new Error("Sign-in is unavailable. Please reload and try again.");
+  const factors = await auth.mfa.listFactors();
+  const factor = factors.data?.totp.find((entry: { status: string }) => entry.status === "verified");
+  if (!factor) throw new Error("Set up two-step sign-in before changing bank details.");
+  const result = await auth.mfa.challengeAndVerify({ factorId: factor.id, code });
+  if (result.error) throw new Error("That code didn't match. Try the newest code from your authenticator.");
 }
 
 /** Allocate and lock the next invoice number (INV- + 6 digits). */
@@ -109,7 +126,7 @@ export function allocateInvoiceNumber(scope: IntegrationScope = "demo"): string 
   const current = profile(scope);
   const number = `${current.invoicePrefix}${String(current.nextInvoiceNumber).padStart(6, "0")}`;
   current.nextInvoiceNumber += 1;
-  current.numberingLockedAt ??= melbourneIso(PROTOTYPE_TODAY, "12:00");
+  current.numberingLockedAt ??= studioNow();
   return number;
 }
 
@@ -117,7 +134,7 @@ export function allocateCreditNoteNumber(scope: IntegrationScope = "demo"): stri
   const current = profile(scope);
   const number = `${current.creditNotePrefix}${String(current.nextCreditNoteNumber).padStart(6, "0")}`;
   current.nextCreditNoteNumber += 1;
-  current.numberingLockedAt ??= melbourneIso(PROTOTYPE_TODAY, "12:00");
+  current.numberingLockedAt ??= studioNow();
   return number;
 }
 
@@ -126,7 +143,9 @@ export async function savePayTo(
   payTo: StudioPayTo,
   mfaCode: string,
 ): Promise<StudioBillingProfile> {
-  if (mfaCode !== MFA_CODE) throw new Error("Enter the six-digit code from your authenticator.");
+  const live = scope === "demo" && isLiveStudio();
+  if (live) await verifyLiveMfaCode(mfaCode);
+  else if (mfaCode !== MFA_CODE) throw new Error("Enter the six-digit code from your authenticator.");
   const membership = newsState[scope].membership;
   if (membership.role !== "owner")
     throw new Error("Only the studio owner can change pay-to details.");
@@ -140,13 +159,14 @@ export async function savePayTo(
   if (nextPayTo.bsb) nextPayTo.bsb = nextPayTo.bsb.replace(/\D/g, "");
   if (nextPayTo.accountNumber) nextPayTo.accountNumber = nextPayTo.accountNumber.replace(/\D/g, "");
   current.payTo = nextPayTo;
+  if (live) await saveLiveBillingProfile(current);
   billingProfileState[scope] = current;
 
   const masked = maskAccountNumber(nextPayTo.accountNumber);
   const bsbLabel = nextPayTo.bsb ? formatBsb(nextPayTo.bsb) : "not set";
   const detail = `Pay-to updated · BSB ${bsbLabel} · account ${masked || "not set"}`;
   billingAuditLog.push({
-    at: melbourneIso(PROTOTYPE_TODAY, "12:05"),
+    at: studioNow("12:05"),
     kind: "pay_to_updated",
     detail,
   });
@@ -173,8 +193,8 @@ export async function savePayTo(
   });
 
   // Studio news item — never include the full account number.
-  newsState[scope].posts.unshift({
-    id: `news-payto-${crypto.randomUUID()}`,
+  const notice = {
+    id: live ? crypto.randomUUID() : `news-payto-${crypto.randomUUID()}`,
     studioId: scope === "demo" ? studio.id : "new-studio",
     authorMembershipId: membership.id,
     authorName: scope === "demo" ? teacher.name : "Teacher",
@@ -183,10 +203,13 @@ export async function savePayTo(
     tag: "reminder",
     audience: { kind: "studio" },
     important: true,
-    publishAt: melbourneIso(PROTOTYPE_TODAY, "12:06"),
+    publishAt: studioNow("12:06"),
     status: "published",
     attachments: [],
-  });
+  } satisfies Announcement;
+  // Families see bank changes in news. A failed news save does not undo the saved bank details.
+  if (live) await saveLivePost(notice, true).catch((error) => console.error("[billing] pay-to notice not saved", error));
+  newsState[scope].posts.unshift(notice);
 
   return respond(current);
 }

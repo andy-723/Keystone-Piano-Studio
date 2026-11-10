@@ -1,9 +1,12 @@
 import { invoices, families, studio, teacher } from "@/mocks/data";
 import { invoiceEvents } from "@/mocks/billing-profile";
 import type { IntegrationScope } from "@/mocks/integrations";
-import { addDays, melbourneIso, PROTOTYPE_TODAY } from "@/lib/calendar";
+import { addDays } from "@/lib/calendar";
 import { respond } from "./_delay";
-import { createInvoice, enrichInvoice, getInvoice, sendInvoice } from "./billing";
+import { billingInternals, enrichInvoice, getInvoice } from "./billing";
+import { withLiveBillingSave } from "./live/billing-store";
+import { newRecordId } from "./live/studio-store";
+import { studioNow, studioToday } from "@/lib/studio-clock";
 import { readBillingProfile } from "./billing-profile";
 import { lateFeeForInvoice } from "./terms";
 import { emailProvider } from "./_lazy";
@@ -27,11 +30,11 @@ function pushEvent(
   data?: Record<string, unknown>,
 ) {
   invoiceEvents.push({
-    id: `evt-${crypto.randomUUID()}`,
+    id: newRecordId("evt"),
     invoiceId,
     kind,
     actor: "system",
-    at: melbourneIso(PROTOTYPE_TODAY, "09:15"),
+    at: studioNow("09:15"),
     ...(data ? { data } : {}),
   });
 }
@@ -51,7 +54,7 @@ function guardianEmail(familyId: string, billToGuardianId?: string) {
  * Walk open invoices and emit pre-due / overdue reminders, late-fee proposals and pause notices.
  * Runs on every plan (studio agreement clause 1.4). Pro-only automation lives in billing-automation.ts.
  */
-export async function runBillingSchedule(scope: IntegrationScope = "demo", today: string = PROTOTYPE_TODAY) {
+async function runBillingScheduleImpl(scope: IntegrationScope = "demo", today: string = studioToday()) {
   const profile = readBillingProfile(scope);
   const actions: string[] = [];
   const lateAfter = studio.billing?.lateFeeAfterDays ?? 7;
@@ -162,7 +165,7 @@ export async function runBillingSchedule(scope: IntegrationScope = "demo", today
   return respond({ ran: true as const, actions });
 }
 
-export async function applyLateFee(invoiceId: string, scope: IntegrationScope = "demo") {
+async function applyLateFeeImpl(invoiceId: string, scope: IntegrationScope = "demo") {
   const invoice = await getInvoice(invoiceId);
   if (!invoice) throw new Error("Invoice not found");
   if (invoice.status === "draft" || invoice.status === "void" || invoice.status === "paid") {
@@ -179,11 +182,11 @@ export async function applyLateFee(invoiceId: string, scope: IntegrationScope = 
   const feeCents = lateFeeForInvoice(invoice.totalCents, termsScope);
   if (feeCents <= 0) throw new Error("No late fee applies");
 
-  const feeInvoice = await createInvoice({
+  const feeInvoice = await billingInternals.createInvoice({
     familyId: invoice.familyId,
     kind: "late_fee",
     ...(invoice.billToGuardianId ? { billToGuardianId: invoice.billToGuardianId } : {}),
-    dueDate: addDays(PROTOTYPE_TODAY, 7),
+    dueDate: addDays(studioToday(), 7),
     lines: [
       {
         description: `Late fee for ${invoice.number ?? invoice.id}`,
@@ -198,7 +201,7 @@ export async function applyLateFee(invoiceId: string, scope: IntegrationScope = 
   const stored = invoices.find((entry) => entry.id === feeInvoice.id);
   if (stored) stored.relatedInvoiceId = invoiceId;
 
-  const sent = await sendInvoice(feeInvoice.id);
+  const sent = await billingInternals.sendInvoice(feeInvoice.id);
   pushEvent(invoiceId, "late_fee_applied", {
     amountCents: feeCents,
     lateFeeInvoiceId: feeInvoice.id,
@@ -206,7 +209,7 @@ export async function applyLateFee(invoiceId: string, scope: IntegrationScope = 
   return respond({ feeInvoice: sent ?? feeInvoice, amountCents: feeCents });
 }
 
-export async function waiveLateFee(invoiceId: string) {
+async function waiveLateFeeImpl(invoiceId: string) {
   const invoice = await getInvoice(invoiceId);
   if (!invoice) throw new Error("Invoice not found");
   if (hasEvent(invoiceId, "late_fee_applied")) throw new Error("Late fee already applied");
@@ -214,7 +217,7 @@ export async function waiveLateFee(invoiceId: string) {
   return respond(invoice);
 }
 
-export async function sendPauseNotice(invoiceId: string) {
+async function sendPauseNoticeImpl(invoiceId: string) {
   const invoice = await getInvoice(invoiceId);
   if (!invoice) throw new Error("Invoice not found");
   if (!invoice.isOverdue) throw new Error("Pause notices are for overdue invoices");
@@ -240,3 +243,8 @@ export async function sendPauseNotice(invoiceId: string) {
   pushEvent(invoiceId, "pause_notice_sent");
   return respond(await getInvoice(invoiceId));
 }
+
+export const runBillingSchedule = withLiveBillingSave(runBillingScheduleImpl);
+export const applyLateFee = withLiveBillingSave(applyLateFeeImpl);
+export const waiveLateFee = withLiveBillingSave(waiveLateFeeImpl);
+export const sendPauseNotice = withLiveBillingSave(sendPauseNoticeImpl);

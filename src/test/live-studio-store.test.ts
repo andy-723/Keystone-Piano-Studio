@@ -12,6 +12,18 @@ import {
 import { newsState } from "@/mocks/news";
 import { courseItems, studentCourses } from "@/mocks/curriculum";
 import { libraryState } from "@/mocks/library";
+import { payments } from "@/mocks/data";
+import { billingProfileState, creditNotes, invoiceEvents } from "@/mocks/billing-profile";
+import {
+  createInvoice,
+  getInvoices,
+  issueCreditNote,
+  recordPayment,
+  sendInvoice,
+  updateDraft,
+  deleteDraft,
+} from "@/services/billing";
+import { resetLiveBillingForTests } from "@/services/live/billing-store";
 import { getStudentCourse, saveStudentCourse } from "@/services/curriculum";
 import { copyTemplate, saveCourseTemplate } from "@/services/library";
 import { clientNotes } from "@/mocks/notes";
@@ -136,7 +148,39 @@ function fakeSupabase(tables: Record<string, Row[]>, options: { failOn?: string 
     };
     return builder;
   };
-  return { client: { from } as never, calls, tables };
+  const rpcCalls: Array<[string, Record<string, unknown>]> = [];
+  const rpc = async (name: string, args: Record<string, unknown>) => {
+    rpcCalls.push([name, args]);
+    if (options.failOn === `rpc.${name}`)
+      return { data: null, error: { message: "not allowed", code: "42501" } };
+    const profile = (tables.studio_billing_profile ??= [
+      {
+        studio_id: STUDIO_ID,
+        invoice_prefix: "INV-",
+        next_invoice_number: 1,
+        credit_note_prefix: "CN-",
+        next_credit_note_number: 1,
+      },
+    ])[0]!;
+    if (name === "send_studio_invoice") {
+      const row = (tables.invoice ?? []).find((entry) => entry.id === args.p_invoice_id);
+      if (!row) return { data: null, error: { message: "Invoice not found" } };
+      if (row.status === "draft") {
+        row.number = `${profile.invoice_prefix}${String(profile.next_invoice_number).padStart(6, "0")}`;
+        profile.next_invoice_number = Number(profile.next_invoice_number) + 1;
+        row.status = "sent";
+        row.sent_at = "2026-11-10T02:00:00.000Z";
+      }
+      return { data: row, error: null };
+    }
+    if (name === "issue_studio_credit_note_number") {
+      const number = `${profile.credit_note_prefix}${String(profile.next_credit_note_number).padStart(6, "0")}`;
+      profile.next_credit_note_number = Number(profile.next_credit_note_number) + 1;
+      return { data: number, error: null };
+    }
+    return { data: null, error: { message: `unknown rpc ${name}` } };
+  };
+  return { client: { from, rpc } as never, calls, tables, rpcCalls };
 }
 
 const STUDIO_ID = "5f1c7e0e-1111-4111-8111-000000000001";
@@ -758,5 +802,222 @@ describe("live courses and Library (0015)", () => {
       isWelcomeDefault: true,
     });
     expect(lessons.filter((lesson) => lesson.isWelcomeDefault)).toHaveLength(1);
+  });
+});
+
+describe("live invoices (0004 + 0016)", () => {
+  beforeEach(() => {
+    resetStudioWorkspaceForTests();
+    resetLiveBillingForTests();
+  });
+  afterEach(() => setStudioStoreClientForTests(null));
+
+  const line = {
+    description: "Alex Example – 30 min lesson",
+    qty: 10,
+    unitCents: 4500,
+    taxCents: 0,
+    lineTotalCents: 45000,
+    studentId: EXAMPLE_STUDENT,
+    taxCode: "taxable" as const,
+  };
+
+  it("starts a real studio with no invoices and its own numbering", async () => {
+    const tables = liveTables();
+    tables.studio_billing_profile = [
+      {
+        studio_id: STUDIO_ID,
+        invoice_prefix: "KPS-",
+        next_invoice_number: 4,
+        credit_note_prefix: "CN-",
+        next_credit_note_number: 1,
+        numbering_locked_at: null,
+        pay_to_bsb: "062000",
+        pay_to_account_number: "12345678",
+        pay_to_account_name: "Test Studio",
+        attach_pdf: true,
+        pre_due_reminder_days: 3,
+        receipt_emails: false,
+        auto_send_term_invoices: false,
+        tailored_pre_due_days: null,
+        tailored_pre_due_note: null,
+      },
+    ];
+    await signInLive(tables);
+    expect(await getInvoices()).toEqual([]);
+    expect(payments).toHaveLength(0);
+    expect(billingProfileState.demo).toMatchObject({
+      invoicePrefix: "KPS-",
+      nextInvoiceNumber: 4,
+      receiptEmails: false,
+      payTo: { bsb: "062000", accountNumber: "12345678", accountName: "Test Studio" },
+    });
+  });
+
+  it("saves a draft, lets the database number it on send, and records a payment", async () => {
+    const fake = await signInLive();
+    const draft = await createInvoice({ familyId: EXAMPLE_FAMILY, lines: [line] });
+    expect(draft.id).toMatch(/^[0-9a-f-]{36}$/);
+    expect(draft.issueDate).not.toMatch(/^2027-03-15/);
+    expect(fake.tables.invoice).toHaveLength(1);
+    expect(fake.tables.invoice![0]).toMatchObject({
+      id: draft.id,
+      status: "draft",
+      number: null,
+      total_cents: 45000,
+    });
+    expect(fake.tables.invoice_line).toHaveLength(1);
+
+    await updateDraft(draft.id, {
+      lines: [
+        line,
+        { ...line, description: "Book", qty: 1, unitCents: 2000, lineTotalCents: 2000 },
+      ],
+    });
+    expect(fake.tables.invoice_line).toHaveLength(2);
+
+    const sent = await sendInvoice(draft.id);
+    expect(fake.rpcCalls.map(([name]) => name)).toEqual(["send_studio_invoice"]);
+    expect(sent).toMatchObject({ number: "INV-000001", status: "sent" });
+    expect(fake.tables.invoice![0]).toMatchObject({ number: "INV-000001", status: "sent" });
+    expect(
+      (fake.tables.invoice![0]!.snapshot as { totals: { totalCents: number } }).totals.totalCents,
+    ).toBe(47000);
+    expect(billingProfileState.demo.nextInvoiceNumber).toBe(2);
+    expect((fake.tables.invoice_event ?? []).map((event) => event.kind)).toEqual(
+      expect.arrayContaining(["created", "sent"]),
+    );
+
+    const paid = await recordPayment(draft.id, { method: "bank_transfer", amountCents: 47000 });
+    expect(paid.status).toBe("paid");
+    expect(fake.tables.payment).toHaveLength(1);
+    expect(fake.tables.payment![0]).toMatchObject({
+      invoice_id: draft.id,
+      amount_cents: 47000,
+      method: "bank_transfer",
+    });
+    expect(fake.tables.invoice![0]!.status).toBe("paid");
+  });
+
+  it("does not keep a payment or invoice change Supabase refused", async () => {
+    await signInLive(liveTables(), { failOn: "payment.insert" });
+    const draft = await createInvoice({ familyId: EXAMPLE_FAMILY, lines: [line] });
+    await sendInvoice(draft.id);
+    const eventsBefore = invoiceEvents.length;
+    await expect(recordPayment(draft.id, { method: "cash", amountCents: 1000 })).rejects.toThrow(
+      /permission|read-only/,
+    );
+    expect(payments).toHaveLength(0);
+    expect((await getInvoices())[0]!.status).toBe("sent");
+    expect(invoiceEvents).toHaveLength(eventsBefore);
+  });
+
+  it("does not send an invoice the database would not number", async () => {
+    await signInLive(liveTables(), { failOn: "rpc.send_studio_invoice" });
+    const draft = await createInvoice({ familyId: EXAMPLE_FAMILY, lines: [line] });
+    await expect(sendInvoice(draft.id)).rejects.toThrow();
+    const [after] = await getInvoices();
+    expect(after).toMatchObject({ status: "draft", number: null });
+  });
+
+  it("numbers credit notes in the database and deletes drafts", async () => {
+    const fake = await signInLive();
+    const note = await issueCreditNote({
+      familyId: EXAMPLE_FAMILY,
+      amountCents: 2000,
+      reason: "Missed lesson",
+    });
+    expect(note.number).toBe("CN-000001");
+    expect(fake.tables.credit_note![0]).toMatchObject({
+      number: "CN-000001",
+      amount_cents: 2000,
+      status: "open",
+    });
+    expect(creditNotes).toHaveLength(1);
+
+    const draft = await createInvoice({ familyId: EXAMPLE_FAMILY, lines: [line] });
+    await deleteDraft(draft.id);
+    expect(fake.tables.invoice).toHaveLength(0);
+  });
+
+  it("loads saved invoices, lines and payments at sign-in", async () => {
+    const tables = liveTables();
+    const invoiceId = "5f1c7e0e-6666-4666-8666-000000000001";
+    tables.invoice = [
+      {
+        id: invoiceId,
+        studio_id: STUDIO_ID,
+        family_id: EXAMPLE_FAMILY,
+        number: "INV-000001",
+        status: "partially_paid",
+        kind: "standard",
+        related_invoice_id: null,
+        bill_to_guardian_id: null,
+        cc_guardian_ids: [],
+        billing_period_start: null,
+        billing_period_end: null,
+        terms_version_id: null,
+        snapshot: null,
+        pdf_path: null,
+        pdf_sha256: null,
+        collection: "manual",
+        queried_at: null,
+        query_resolved_at: null,
+        voided_at: null,
+        void_reason: null,
+        sent_at: "2026-11-01T00:00:00Z",
+        issue_date: "2026-11-01",
+        due_date: "2026-11-15",
+        subtotal_cents: 45000,
+        tax_cents: 0,
+        total_cents: 45000,
+        is_tax_invoice: false,
+        gst_registered: false,
+        title: "Invoice",
+        term_key: null,
+        reviewed_at: null,
+        xero_synced_at: null,
+        invoice_line: [
+          {
+            id: "l1",
+            description: "Lessons",
+            qty: 10,
+            unit_cents: 4500,
+            tax_cents: 0,
+            line_total_cents: 45000,
+            student_id: EXAMPLE_STUDENT,
+            lesson_type_id: null,
+            tax_code: "taxable",
+            credit_note_id: null,
+            created_at: "2026-11-01T00:00:00Z",
+          },
+        ],
+      },
+    ];
+    tables.payment = [
+      {
+        id: "5f1c7e0e-7777-4777-8777-000000000001",
+        studio_id: STUDIO_ID,
+        invoice_id: invoiceId,
+        family_id: EXAMPLE_FAMILY,
+        amount_cents: 20000,
+        method: "payid",
+        received_on: "2026-11-05",
+        reference: null,
+        recorded_by: null,
+        reverses_payment_id: null,
+        stripe_payment_intent_id: null,
+        xero_synced_at: null,
+      },
+    ];
+    await signInLive(tables);
+    const [loaded] = await getInvoices();
+    expect(loaded).toMatchObject({
+      id: invoiceId,
+      number: "INV-000001",
+      paidCents: 20000,
+      balanceCents: 25000,
+    });
+    expect(loaded!.lines.map((entry) => entry.description)).toEqual(["Lessons"]);
   });
 });
