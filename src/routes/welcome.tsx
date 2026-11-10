@@ -10,7 +10,7 @@ export const Route = createFileRoute("/welcome")({
   head: () => ({
     meta: [
       { title: "Keystone Music HQ — The calm operating system for music studios" },
-      { name: "description", content: "Lessons, invite-only enrolment, family chat, invoices and agreements in one Sydney-hosted workspace for Australian music studios." },
+      { name: "description", content: "Designed for simplicity, built for scalability. Lessons, family chat, studio news, invoices and agreements in one Sydney-hosted workspace for Australian music studios." },
       { property: "og:title", content: "Keystone Music HQ — The calm operating system for music studios" },
       { property: "og:description", content: "Run lessons, enrolments, chat, invoices and agreements in one calm Australian-hosted workspace." },
       { property: "og:type", content: "website" },
@@ -39,12 +39,13 @@ function PrimaryCta({ className = "" }: { className?: string }) {
 }
 
 const studioPoints = [
-  ["One studio HQ", "Today view, students, family chat, invoices and settings — one place instead of five tools."],
+  ["A digital day book", "A clean, simple view focused on lessons. See your day book or your week, and mark attendance, add notes to student files, and manage courses, exams and templates with simple clicks."],
+  ["Chat, all in one place", "Families and teachers interact through built-in chat — every message on one platform. Upload videos of a student's performance or an area needing help, or send a quick note about upcoming payments."],
+  ["News and notices, organised", "Send notices and news feeds to the right groups — school-holiday closures, recitals, away schedules and more. Organise students into the categories that matter, from Grade 1 to Grade 6, and control how important newsletters reach families."],
+  ["No student forgotten", "Visibility into every student's performance, with a built-in red flag for students who need assistance — so teachers can follow through."],
+  ["No more invoice nightmares", "Prepare invoices for each family, get reminded each term and trigger the next reminder. Better yet, plug in Stripe and Xero for simple payments and bookkeeping."],
   ["Invite-only enrolment", "Send a branded invite; families complete a guided form. No stray sign-ups on your roll."],
   ["Agreements that stick", "Studio agreement and app terms accepted at enrolment with a typed name and guardian rules for minors."],
-  ["Practice and chat in context", "Conversations sit next to the student, not lost in personal messaging apps."],
-  ["Invoicing in the flow", "Native term invoices, with Stripe and Xero ready to plug in when you go live."],
-  ["No passwords to babysit", "Sign in with Google, Microsoft or an emailed link — plus an authenticator for staff."],
 ];
 
 function Welcome() {
@@ -69,7 +70,7 @@ function Welcome() {
               Your studio, <em className="font-normal italic">in tune.</em>
             </h1>
             <p className="mt-6 max-w-xl text-xl leading-relaxed text-mk-paper/85">
-              Lessons, enrolments, practice, chat, invoices and agreements — in one calm, Australian-hosted workspace for independent music studios and the families they teach.
+              Designed for simplicity, built for scalability — one studio, 40+ students. Lessons, chat, news, invoices and agreements in one calm, Australian-hosted workspace.
             </p>
             <div className="mt-10 flex flex-wrap items-center gap-4">
               <PrimaryCta className="bg-mk-paper !text-mk-ink hover:!bg-mk-cream" />
@@ -85,8 +86,8 @@ function Welcome() {
         <h2 className={`${serif} mt-4 max-w-3xl text-4xl font-semibold leading-tight md:text-5xl`}>Built for the teacher. Clear for the family.</h2>
         <div className="mt-12 grid gap-px overflow-hidden rounded-3xl border border-mk-gold/50 bg-mk-gold/50 md:grid-cols-2">
           {[
-            ["Studio owners & teachers", "Run one or more studios without spreadsheets and scattered message threads. Everything you need before and after a lesson, on any device.", ["Today view and timetable", "Student records and practice", "Term invoices"]],
-            ["Families & guardians", "Enrol from a studio invite, one question at a time. Know exactly what you agreed to, and stay connected to your teacher.", ["Guided enrolment form", "Plain-language terms with receipts", "Chat and studio updates"]],
+            ["Studio owners & teachers", "Run your studio without spreadsheets and scattered message threads. Everything you need before and after a lesson, on any device.", ["Day book and week view", "Student records, courses and red flags", "Term invoices with Stripe and Xero"]],
+            ["Families & guardians", "Enrol from a studio invite, one question at a time. Know exactly what you agreed to, and stay connected to your teacher.", ["Guided enrolment form", "Studio news and recital notices", "Chat and video sharing"]],
           ].map(([title, body, items]) => (
             <article key={title as string} className="bg-mk-paper p-8 md:p-12">
               <h3 className={`${serif} text-3xl font-semibold`}>{title as string}</h3>
@@ -149,7 +150,7 @@ function Welcome() {
           <h2 className={`${serif} mt-4 max-w-3xl text-4xl font-semibold leading-tight md:text-5xl`}>Student records deserve care.</h2>
           <div className="mt-14 grid gap-px overflow-hidden rounded-3xl bg-mk-gold/30 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              [MapPin, "Hosted in Sydney", "Australian data residency for Australian studios."],
+              [MapPin, "Australian made, hosted in Sydney", "Secure Sydney hosting, compliant with the Australian Privacy Act — cybersecurity by design."],
               [Lock, "Staff two-step sign-in", "An authenticator is required for studio staff."],
               [MailOpen, "Invite-only", "Accounts start from a teacher or Keystone — never an open sign-up."],
               [FileSignature, "Agreements on record", "Clear terms, guardian rules for minors and receipts of acceptance."],
