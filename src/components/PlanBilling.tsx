@@ -26,7 +26,7 @@ export function PlanBilling({ scope = "demo" }: { scope?: IntegrationScope }) {
     await Promise.all(["plan-billing", "studio", "studio-settings", "assignment-settings", "assignment-editor", "parent", "integrations"].map(key => client.invalidateQueries({ queryKey: [key] })));
   } });
   return <section id="plan-and-billing" className="scroll-mt-6 border-b border-border py-8" aria-label="Plan and billing">
-    <h2 className="text-2xl font-semibold">Plan and billing</h2>
+    <h2 className="text-2xl font-semibold" data-tour="settings-plan">Plan and billing</h2>
     <div className="mt-5 rounded-md border border-border bg-card p-5 md:p-7">
       <p className="text-2xl font-semibold">You're on the {label} plan</p>
       {data.plan !== "academy" && <p className="mt-3 text-lg">A${base ? "29" : "49"} a month + GST (A${base ? "31.90" : "53.90"} including GST)</p>}

@@ -68,7 +68,9 @@ export function Integrations({
     : "Never";
   return (
     <section aria-label="Integrations" className="mt-8">
-      <h2 className="text-2xl font-semibold">Integrations</h2>
+      <h2 className="text-2xl font-semibold" data-tour="settings-integrations">
+        Integrations
+      </h2>
       <div className="mt-5 grid gap-5">
         <article
           id="stripe-integration"

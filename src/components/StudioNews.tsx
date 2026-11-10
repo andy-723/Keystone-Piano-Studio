@@ -65,7 +65,7 @@ export function StudioNews({ scope = "demo" }: { scope?: CommunityScope }) {
           <Megaphone aria-hidden />
           Studio news
         </h1>
-        <Button onClick={() => setCompose(true)}>
+        <Button data-tour="news-new-post" onClick={() => setCompose(true)}>
           <Plus aria-hidden />
           New post
         </Button>

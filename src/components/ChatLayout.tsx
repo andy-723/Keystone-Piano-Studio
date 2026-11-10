@@ -15,7 +15,7 @@ export function ChatLayout() {
   return <div className="mx-auto max-w-7xl">
     <h1 className="mb-5 flex items-center gap-3 text-3xl font-semibold"><MessageCircle aria-hidden className="size-7 text-primary" /> Chat</h1>
     <div className="chat-workspace flex min-w-0 overflow-hidden border-y border-border bg-card md:border">
-      <aside className={`${selected ? "hidden md:flex" : "flex"} w-full shrink-0 flex-col md:w-72 lg:w-80 md:border-r md:border-border`} aria-label="Family threads">
+      <aside className={`${selected ? "hidden md:flex" : "flex"} w-full shrink-0 flex-col md:w-72 lg:w-80 md:border-r md:border-border`} aria-label="Family threads" data-tour="chat-family-list">
         <div className="shrink-0 border-b border-border p-4">
           <label htmlFor="family-search" className="mb-2 block font-semibold">Families <span className="font-normal text-muted-foreground">· {threads.length}</span></label>
           <div className="relative"><Search aria-hidden className="absolute left-3 top-4 size-5 text-muted-foreground" /><input id="family-search" type="search" aria-label="Search families" placeholder="Search families" value={search} onChange={(event) => setSearch(event.target.value)} className="min-h-12 w-full min-w-0 rounded-md border-2 border-input bg-background py-2 pl-10 pr-3 text-base" /></div>

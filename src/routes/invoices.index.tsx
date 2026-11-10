@@ -108,7 +108,7 @@ function Invoices() {
         <h1 className="flex items-center gap-3 text-3xl font-semibold">
           <Receipt className="size-7 text-primary" aria-hidden /> Invoices
         </h1>
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-3" data-tour="invoices-actions">
           <Button asChild className="max-w-full whitespace-normal">
             <Link to="/invoices/new">
               <Plus aria-hidden /> New invoice

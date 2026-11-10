@@ -17,6 +17,7 @@ import type { Studio } from "@/mocks/types";
 import { translate } from "@/i18n/parent";
 import { BrandLogo } from "@/components/BrandLogo";
 import { getAuthClient, isLiveAuthConfigured } from "@/lib/auth-client";
+import { TourHelpButton } from "@/components/tour/Tour";
 
 const NAV = [
   { to: "/", label: "Today", icon: BookOpen },
@@ -75,6 +76,7 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
             {role !== "parent" && <div className={isTeacher ? "md:hidden" : ""}>{planBadge}</div>}
           </div>
           <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-3 sm:flex sm:flex-wrap sm:gap-4">
+            {isTeacher && <TourHelpButton />}
             <div className="relative flex min-h-12 shrink-0 items-center gap-2">
               <Switch id="larger-text" className="relative z-10" checked={largeText} onCheckedChange={setLargeText} />
               <Label htmlFor="larger-text" className="flex min-h-12 cursor-pointer items-center text-base before:absolute before:inset-0">{shellText("largerText")}</Label>
