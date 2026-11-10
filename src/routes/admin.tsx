@@ -360,7 +360,11 @@ function NewStudioTab({ token, onError }: { token: string; onError: (m: string |
           userAgent: navigator.userAgent,
         },
       });
-      setDone(`Invite sent to ${result.inviteSentTo}`);
+      setDone(
+        result.welcomeEmailError
+          ? `Studio created and sign-in invite sent to ${result.inviteSentTo}, but the welcome email failed: ${result.welcomeEmailError}. Don't create the studio again.`
+          : `Invite sent to ${result.inviteSentTo}`,
+      );
       onError(null);
       setName("");
       setOwnerName("");

@@ -173,18 +173,28 @@ export const createStudioFn = createServerFn({ method: "POST" })
       studioName: name,
       signInUrl: `${env.appUrl}/login`,
     });
-    await getEmailProvider().send({
-      to: ownerEmail,
-      from: env.emailFrom,
-      subject: mail.subject,
-      html: mail.html,
-      text: mail.text,
-      tags: [{ name: "kind", value: "owner_welcome" }],
-    });
+    // The studio and the Supabase sign-in invite already exist at this point, so a
+    // failed welcome email must not surface as a failed create (a retry would make
+    // a duplicate studio).
+    let welcomeEmailError: string | null = null;
+    try {
+      await getEmailProvider().send({
+        to: ownerEmail,
+        from: env.emailFrom,
+        subject: mail.subject,
+        html: mail.html,
+        text: mail.text,
+        tags: [{ name: "kind", value: "owner_welcome" }],
+      });
+    } catch (err) {
+      welcomeEmailError = err instanceof Error ? err.message : "Welcome email failed";
+      console.error("[platform] owner welcome email failed", welcomeEmailError);
+    }
 
     return {
       studioId: resolvedStudioId,
       inviteSentTo: maskEmail(ownerEmail),
+      welcomeEmailError,
     };
   });
 
