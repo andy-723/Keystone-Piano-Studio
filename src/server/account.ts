@@ -4,6 +4,34 @@ import { isMockOnboarding } from "./env";
 import { verifyAccessToken } from "./session";
 import { mockMemberships, mockPlatformStaff } from "./authz";
 import { ProblemError } from "./problem";
+import { getStudioAccess } from "./subscription-store";
+import type { AccessLevel, SubscriptionPlan, SubscriptionStatus } from "@/lib/subscription";
+
+export type StudioAccessEntry = {
+  studioId: string;
+  role: "owner" | "admin" | "teacher" | "guardian";
+  level: AccessLevel;
+  status: SubscriptionStatus | null;
+  plan: SubscriptionPlan | null;
+  accessEndsAt: string | null;
+};
+
+async function studioAccessFor(
+  entries: Array<{ studioId: string; role: StudioAccessEntry["role"] }>,
+): Promise<StudioAccessEntry[]> {
+  const result: StudioAccessEntry[] = [];
+  for (const entry of entries) {
+    const { level, subscription } = await getStudioAccess(entry.studioId);
+    result.push({
+      ...entry,
+      level,
+      status: subscription?.status ?? null,
+      plan: subscription?.plan ?? null,
+      accessEndsAt: subscription?.accessEndsAt ?? null,
+    });
+  }
+  return result;
+}
 
 export type ResolvedAccount = {
   userId: string;
@@ -12,6 +40,8 @@ export type ResolvedAccount = {
   platformStaff: { role: "platform_admin" | "support"; displayName: string } | null;
   memberships: Array<{ studioId: string; role: string }>;
   guardianFamilyIds: string[];
+  /** Subscription access for each studio this person belongs to (0006). */
+  studioAccess: StudioAccessEntry[];
 };
 
 export async function resolveAccountForUser(
@@ -21,15 +51,17 @@ export async function resolveAccountForUser(
 ): Promise<ResolvedAccount> {
   if (isMockOnboarding()) {
     const staff = mockPlatformStaff.find((row) => row.userId === userId) ?? null;
+    const memberships = mockMemberships
+      .filter((row) => row.userId === userId)
+      .map((row) => ({ studioId: row.studioId, role: row.role }));
     return {
       userId,
       email,
       aal,
       platformStaff: staff ? { role: staff.role, displayName: staff.displayName } : null,
-      memberships: mockMemberships
-        .filter((row) => row.userId === userId)
-        .map((row) => ({ studioId: row.studioId, role: row.role })),
+      memberships,
       guardianFamilyIds: [],
+      studioAccess: await studioAccessFor(memberships),
     };
   }
 
@@ -56,21 +88,46 @@ export async function resolveAccountForUser(
     throw new ProblemError(500, "Account lookup failed", guardianRes.error.message);
   }
 
+  const memberships = (memberRes.data ?? []).map((row) => ({
+    studioId: row.studio_id as string,
+    role: row.role as string,
+  }));
+  const guardianFamilyIds = (guardianRes.data ?? []).map((row) => row.family_id as string);
+
+  // Guardian families → their studios (service-key read, same verified user).
+  let guardianStudios: string[] = [];
+  if (guardianFamilyIds.length > 0) {
+    const { data: families, error: familyError } = await supabase
+      .from("family")
+      .select("studio_id")
+      .in("id", guardianFamilyIds);
+    if (familyError) throw new ProblemError(500, "Account lookup failed", familyError.message);
+    guardianStudios = [...new Set((families ?? []).map((row) => row.studio_id as string))];
+  }
+  const memberStudios = new Set(memberships.map((m) => m.studioId));
+  const studioAccess = await studioAccessFor([
+    ...memberships.map((m) => ({
+      studioId: m.studioId,
+      role: m.role as StudioAccessEntry["role"],
+    })),
+    ...guardianStudios
+      .filter((studioId) => !memberStudios.has(studioId))
+      .map((studioId) => ({ studioId, role: "guardian" as const })),
+  ]);
+
   return {
     userId,
     email,
     aal,
+    studioAccess,
     platformStaff: staffRes.data
       ? {
           role: staffRes.data.role as "platform_admin" | "support",
           displayName: staffRes.data.display_name as string,
         }
       : null,
-    memberships: (memberRes.data ?? []).map((row) => ({
-      studioId: row.studio_id as string,
-      role: row.role as string,
-    })),
-    guardianFamilyIds: (guardianRes.data ?? []).map((row) => row.family_id as string),
+    memberships,
+    guardianFamilyIds,
   };
 }
 

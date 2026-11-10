@@ -47,6 +47,8 @@ import { Route as StudentsGroupsRouteImport } from './routes/students.groups'
 import { Route as StudentsImportRouteImport } from './routes/students.import'
 import { Route as ApiCronBillingRemindersRouteImport } from './routes/api/cron/billing-reminders'
 import { Route as ApiCronInviteRemindersRouteImport } from './routes/api/cron/invite-reminders'
+import { Route as ApiCronSubscriptionEnforcementRouteImport } from './routes/api/cron/subscription-enforcement'
+import { Route as ApiStripeBillingWebhookRouteImport } from './routes/api/stripe/billing-webhook'
 import { Route as ApiTermsPdfRouteImport } from './routes/api/terms/pdf'
 
 const IndexRoute = IndexRouteImport.update({
@@ -239,6 +241,17 @@ const ApiCronInviteRemindersRoute = ApiCronInviteRemindersRouteImport.update({
   path: '/api/cron/invite-reminders',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCronSubscriptionEnforcementRoute =
+  ApiCronSubscriptionEnforcementRouteImport.update({
+    id: '/api/cron/subscription-enforcement',
+    path: '/api/cron/subscription-enforcement',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiStripeBillingWebhookRoute = ApiStripeBillingWebhookRouteImport.update({
+  id: '/api/stripe/billing-webhook',
+  path: '/api/stripe/billing-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiTermsPdfRoute = ApiTermsPdfRouteImport.update({
   id: '/api/terms/pdf',
   path: '/api/terms/pdf',
@@ -284,6 +297,8 @@ export interface FileRoutesByFullPath {
   '/students/': typeof StudentsIndexRoute
   '/api/cron/billing-reminders': typeof ApiCronBillingRemindersRoute
   '/api/cron/invite-reminders': typeof ApiCronInviteRemindersRoute
+  '/api/cron/subscription-enforcement': typeof ApiCronSubscriptionEnforcementRoute
+  '/api/stripe/billing-webhook': typeof ApiStripeBillingWebhookRoute
   '/api/terms/pdf': typeof ApiTermsPdfRoute
 }
 export interface FileRoutesByTo {
@@ -321,6 +336,8 @@ export interface FileRoutesByTo {
   '/students': typeof StudentsIndexRoute
   '/api/cron/billing-reminders': typeof ApiCronBillingRemindersRoute
   '/api/cron/invite-reminders': typeof ApiCronInviteRemindersRoute
+  '/api/cron/subscription-enforcement': typeof ApiCronSubscriptionEnforcementRoute
+  '/api/stripe/billing-webhook': typeof ApiStripeBillingWebhookRoute
   '/api/terms/pdf': typeof ApiTermsPdfRoute
 }
 export interface FileRoutesById {
@@ -363,6 +380,8 @@ export interface FileRoutesById {
   '/students/': typeof StudentsIndexRoute
   '/api/cron/billing-reminders': typeof ApiCronBillingRemindersRoute
   '/api/cron/invite-reminders': typeof ApiCronInviteRemindersRoute
+  '/api/cron/subscription-enforcement': typeof ApiCronSubscriptionEnforcementRoute
+  '/api/stripe/billing-webhook': typeof ApiStripeBillingWebhookRoute
   '/api/terms/pdf': typeof ApiTermsPdfRoute
 }
 export interface FileRouteTypes {
@@ -406,6 +425,8 @@ export interface FileRouteTypes {
     | '/students/'
     | '/api/cron/billing-reminders'
     | '/api/cron/invite-reminders'
+    | '/api/cron/subscription-enforcement'
+    | '/api/stripe/billing-webhook'
     | '/api/terms/pdf'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -443,6 +464,8 @@ export interface FileRouteTypes {
     | '/students'
     | '/api/cron/billing-reminders'
     | '/api/cron/invite-reminders'
+    | '/api/cron/subscription-enforcement'
+    | '/api/stripe/billing-webhook'
     | '/api/terms/pdf'
   id:
     | '__root__'
@@ -484,6 +507,8 @@ export interface FileRouteTypes {
     | '/students/'
     | '/api/cron/billing-reminders'
     | '/api/cron/invite-reminders'
+    | '/api/cron/subscription-enforcement'
+    | '/api/stripe/billing-webhook'
     | '/api/terms/pdf'
   fileRoutesById: FileRoutesById
 }
@@ -511,6 +536,8 @@ export interface RootRouteChildren {
   LessonsLessonIdRoute: typeof LessonsLessonIdRoute
   ApiCronBillingRemindersRoute: typeof ApiCronBillingRemindersRoute
   ApiCronInviteRemindersRoute: typeof ApiCronInviteRemindersRoute
+  ApiCronSubscriptionEnforcementRoute: typeof ApiCronSubscriptionEnforcementRoute
+  ApiStripeBillingWebhookRoute: typeof ApiStripeBillingWebhookRoute
   ApiTermsPdfRoute: typeof ApiTermsPdfRoute
 }
 
@@ -782,6 +809,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiCronInviteRemindersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/cron/subscription-enforcement': {
+      id: '/api/cron/subscription-enforcement'
+      path: '/api/cron/subscription-enforcement'
+      fullPath: '/api/cron/subscription-enforcement'
+      preLoaderRoute: typeof ApiCronSubscriptionEnforcementRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/stripe/billing-webhook': {
+      id: '/api/stripe/billing-webhook'
+      path: '/api/stripe/billing-webhook'
+      fullPath: '/api/stripe/billing-webhook'
+      preLoaderRoute: typeof ApiStripeBillingWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/terms/pdf': {
       id: '/api/terms/pdf'
       path: '/api/terms/pdf'
@@ -884,6 +925,8 @@ const rootRouteChildren: RootRouteChildren = {
   LessonsLessonIdRoute: LessonsLessonIdRoute,
   ApiCronBillingRemindersRoute: ApiCronBillingRemindersRoute,
   ApiCronInviteRemindersRoute: ApiCronInviteRemindersRoute,
+  ApiCronSubscriptionEnforcementRoute: ApiCronSubscriptionEnforcementRoute,
+  ApiStripeBillingWebhookRoute: ApiStripeBillingWebhookRoute,
   ApiTermsPdfRoute: ApiTermsPdfRoute,
 }
 export const routeTree = rootRouteImport

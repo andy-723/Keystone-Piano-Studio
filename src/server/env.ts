@@ -39,6 +39,11 @@ export function getServerEnv() {
     turnstileSiteKey: read("VITE_TURNSTILE_SITE_KEY") ?? "",
     turnstileSecretKey: read("TURNSTILE_SECRET_KEY") ?? "",
     supportEmail: read("SUPPORT_EMAIL") ?? "support@example.com",
+    // Keystone's own subscription billing (Synoratech → studios). Not Stripe Connect.
+    stripeSecretKey: read("STRIPE_SECRET_KEY") ?? "",
+    stripeBillingWebhookSecret: read("STRIPE_BILLING_WEBHOOK_SECRET") ?? "",
+    stripePriceBase: read("STRIPE_PRICE_BASE") ?? "",
+    stripePricePro: read("STRIPE_PRICE_PRO") ?? "",
     requireLive() {
       requireWhen(true, "SUPABASE_URL");
       requireWhen(true, "SUPABASE_ANON_KEY");

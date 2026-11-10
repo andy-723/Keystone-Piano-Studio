@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { getAuthClient, isLiveAuthConfigured } from "@/lib/auth-client";
 import {
@@ -12,6 +12,7 @@ import {
   removePlatformStaffFn,
   resetMfaFn,
 } from "@/server/platform";
+import { setStudioAccessFn } from "@/server/subscription";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
@@ -114,29 +115,36 @@ function AdminPage() {
   );
 }
 
+type StudioRow = {
+  id: string;
+  name: string;
+  createdAt: string;
+  memberCount: number;
+  ownerEmailMasked: string;
+  status: string;
+  plan?: "base" | "pro" | null;
+  accessEndsAt?: string | null;
+  disputeHold?: boolean;
+  access?: string;
+  paidThroughStripe?: boolean;
+};
+
 function StudiosTab({ token, onError }: { token: string; onError: (m: string | null) => void }) {
-  const [rows, setRows] = useState<
-    Array<{
-      id: string;
-      name: string;
-      createdAt: string;
-      memberCount: number;
-      ownerEmailMasked: string;
-      status: string;
-    }>
-  >([]);
+  const [rows, setRows] = useState<StudioRow[]>([]);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [version, setVersion] = useState(0);
 
   useEffect(() => {
     void (async () => {
       try {
         const result = await listStudiosFn({ data: { accessToken: token } });
-        setRows(result.studios);
+        setRows(result.studios as StudioRow[]);
         onError(null);
       } catch (e) {
         onError(e instanceof Error ? e.message : "Could not load studios");
       }
     })();
-  }, [token, onError]);
+  }, [token, onError, version]);
 
   return (
     <div className="overflow-x-auto rounded-[16px] border border-[#D9C79E] bg-[#FBF7EE]">
@@ -147,22 +155,63 @@ function StudiosTab({ token, onError }: { token: string; onError: (m: string | n
             <th className="px-3 py-3 font-medium">Created</th>
             <th className="px-3 py-3 font-medium">Owner</th>
             <th className="px-3 py-3 font-medium">Members</th>
+            <th className="px-3 py-3 font-medium">Plan</th>
             <th className="px-3 py-3 font-medium">Status</th>
+            <th className="px-3 py-3 font-medium">Access</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={row.id} className="border-t border-[#E8DCC0]">
-              <td className="px-3 py-3 font-medium">{row.name}</td>
-              <td className="px-3 py-3">{new Date(row.createdAt).toLocaleDateString("en-AU")}</td>
-              <td className="px-3 py-3">{row.ownerEmailMasked}</td>
-              <td className="px-3 py-3">{row.memberCount}</td>
-              <td className="px-3 py-3">{row.status}</td>
-            </tr>
+            <Fragment key={row.id}>
+              <tr className="border-t border-[#E8DCC0]">
+                <td className="px-3 py-3 font-medium">{row.name}</td>
+                <td className="px-3 py-3">{new Date(row.createdAt).toLocaleDateString("en-AU")}</td>
+                <td className="px-3 py-3">{row.ownerEmailMasked}</td>
+                <td className="px-3 py-3">{row.memberCount}</td>
+                <td className="px-3 py-3">
+                  {row.plan === "pro" ? "Pro" : row.plan === "base" ? "Base" : "—"}
+                </td>
+                <td className="px-3 py-3">
+                  {row.status}
+                  {row.accessEndsAt && (
+                    <span className="block text-xs text-[#5A4F43]">
+                      until {new Date(row.accessEndsAt).toLocaleDateString("en-AU")}
+                    </span>
+                  )}
+                  {row.disputeHold && (
+                    <span className="block text-xs text-[#8B1E1E]">Dispute hold</span>
+                  )}
+                </td>
+                <td className="px-3 py-3">
+                  <button
+                    type="button"
+                    onClick={() => setEditing(editing === row.id ? null : row.id)}
+                    className="min-h-11 rounded-[10px] border border-[#CDBF9F] bg-white px-3 text-sm"
+                  >
+                    {editing === row.id ? "Close" : "Change"}
+                  </button>
+                </td>
+              </tr>
+              {editing === row.id && (
+                <tr>
+                  <td colSpan={7} className="bg-[#F5EBD6] px-3 py-4">
+                    <StudioAccessForm
+                      token={token}
+                      row={row}
+                      onError={onError}
+                      onSaved={() => {
+                        setEditing(null);
+                        setVersion((v) => v + 1);
+                      }}
+                    />
+                  </td>
+                </tr>
+              )}
+            </Fragment>
           ))}
           {rows.length === 0 && (
             <tr>
-              <td className="px-3 py-6 text-[#5A4F43]" colSpan={5}>
+              <td className="px-3 py-6 text-[#5A4F43]" colSpan={7}>
                 No studios yet.
               </td>
             </tr>
@@ -170,6 +219,121 @@ function StudiosTab({ token, onError }: { token: string; onError: (m: string | n
         </tbody>
       </table>
     </div>
+  );
+}
+
+/** Pilot / complimentary access, plan and dispute hold (MSA 3.5 and 5.8). Paid plans come from Stripe. */
+function StudioAccessForm({
+  token,
+  row,
+  onError,
+  onSaved,
+}: {
+  token: string;
+  row: StudioRow;
+  onError: (m: string | null) => void;
+  onSaved: () => void;
+}) {
+  const [status, setStatus] = useState<"" | "pilot" | "comp">("");
+  const [plan, setPlan] = useState<"base" | "pro">(row.plan ?? "pro");
+  const [endsOn, setEndsOn] = useState(row.accessEndsAt ? row.accessEndsAt.slice(0, 10) : "");
+  const [disputeHold, setDisputeHold] = useState(Boolean(row.disputeHold));
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      await setStudioAccessFn({
+        data: {
+          accessToken: token,
+          studioId: row.id,
+          update: {
+            ...(status ? { status } : {}),
+            plan,
+            accessEndsOn: endsOn || null,
+            disputeHold,
+            ...(note.trim() ? { note } : {}),
+          },
+        },
+      });
+      onError(null);
+      onSaved();
+    } catch (err) {
+      onError(err instanceof Error ? err.message : "Could not save access");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form onSubmit={(e) => void save(e)} className="grid gap-3 sm:grid-cols-2">
+      <label className="text-sm font-medium">
+        Free access
+        <select
+          value={status}
+          onChange={(e) => setStatus(e.target.value as "" | "pilot" | "comp")}
+          className="mt-1 min-h-11 w-full rounded-[10px] border border-[#CDBF9F] bg-white px-3"
+          disabled={row.paidThroughStripe}
+        >
+          <option value="">Keep current status</option>
+          <option value="pilot">Pilot (Order Form, free until end date)</option>
+          <option value="comp">Complimentary</option>
+        </select>
+      </label>
+      <label className="text-sm font-medium">
+        Plan
+        <select
+          value={plan}
+          onChange={(e) => setPlan(e.target.value as "base" | "pro")}
+          className="mt-1 min-h-11 w-full rounded-[10px] border border-[#CDBF9F] bg-white px-3"
+        >
+          <option value="base">Base (up to 35 students)</option>
+          <option value="pro">Pro (unlimited students)</option>
+        </select>
+      </label>
+      <label className="text-sm font-medium">
+        Free access ends on (last day, blank = no end)
+        <input
+          type="date"
+          value={endsOn}
+          onChange={(e) => setEndsOn(e.target.value)}
+          className="mt-1 min-h-11 w-full rounded-[10px] border border-[#CDBF9F] bg-white px-3"
+        />
+      </label>
+      <label className="flex items-center gap-2 text-sm font-medium">
+        <input
+          type="checkbox"
+          checked={disputeHold}
+          onChange={(e) => setDisputeHold(e.target.checked)}
+        />
+        Dispute hold (don&apos;t suspend for non-payment, MSA 5.8)
+      </label>
+      <label className="text-sm font-medium sm:col-span-2">
+        Note (optional)
+        <input
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          className="mt-1 min-h-11 w-full rounded-[10px] border border-[#CDBF9F] bg-white px-3"
+        />
+      </label>
+      {row.paidThroughStripe && (
+        <p className="text-sm text-[#5A4F43] sm:col-span-2">
+          This studio pays through Stripe, so its status comes from Stripe. Plan changes for paying
+          studios should be made in Stripe too.
+        </p>
+      )}
+      <div className="sm:col-span-2">
+        <button
+          type="submit"
+          disabled={busy}
+          className="min-h-11 rounded-[10px] bg-[#604A19] px-4 text-sm font-semibold text-[#FBF7EE] disabled:opacity-60"
+        >
+          Save access
+        </button>
+      </div>
+    </form>
   );
 }
 

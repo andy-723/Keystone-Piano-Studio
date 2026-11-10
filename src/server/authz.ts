@@ -1,6 +1,8 @@
 import { createServiceSupabase } from "./supabase";
 import { forbidden, mfaRequired, ProblemError } from "./problem";
 import { isMockOnboarding } from "./env";
+import { getStudioAccess } from "./subscription-store";
+import { canRead, canWrite } from "@/lib/subscription";
 
 export type StudioRole = "owner" | "admin" | "teacher";
 export type PlatformRole = "platform_admin" | "support";
@@ -38,11 +40,37 @@ function assertStaffAal(options?: { aal?: string | null }) {
  * Never trusts a studio_id from the browser beyond this check.
  * Live owner/admin/teacher routes must pass aal from the verified JWT (`aal2`).
  */
+export function studioPaused(detail = "This studio's Keystone subscription is paused.") {
+  return new ProblemError(
+    402,
+    "Studio paused",
+    detail,
+    "https://keystone.music/problems/studio-paused",
+    "studio_paused",
+  );
+}
+
+/**
+ * Subscription gate (0006). Service-key paths bypass RLS, so they must check this too.
+ * "write" (default) needs full access; "read" also lets the owner of a paused studio read
+ * (MSA 12.2 read-only export); "skip" is only for billing paths that restore access.
+ */
+async function assertStudioAccess(
+  studioId: string,
+  role: StudioRole,
+  access: "write" | "read" | "skip",
+) {
+  if (access === "skip") return;
+  const { level } = await getStudioAccess(studioId);
+  const allowed = access === "write" ? canWrite(level) : canRead(level, role);
+  if (!allowed) throw studioPaused();
+}
+
 export async function requireStudioRole(
   userId: string,
   studioId: string,
   roles: StudioRole[],
-  options?: { aal?: string | null },
+  options?: { aal?: string | null; access?: "write" | "read" | "skip" },
 ): Promise<StudioRole> {
   if (!userId || !studioId) throw forbidden("Missing user or studio.");
   assertStaffAal(options);
@@ -52,6 +80,7 @@ export async function requireStudioRole(
       (entry) => entry.userId === userId && entry.studioId === studioId,
     );
     if (!row || !roles.includes(row.role)) throw forbidden();
+    await assertStudioAccess(studioId, row.role, options?.access ?? "write");
     return row.role;
   }
 
@@ -67,6 +96,7 @@ export async function requireStudioRole(
   if (error) throw new ProblemError(500, "Membership lookup failed", error.message);
   const role = data?.role as StudioRole | undefined;
   if (!role || !roles.includes(role)) throw forbidden();
+  await assertStudioAccess(studioId, role, options?.access ?? "write");
   return role;
 }
 

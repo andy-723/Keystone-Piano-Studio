@@ -9,8 +9,10 @@ import {
 
 const apiDir = join(process.cwd(), "src/routes/api");
 
-it("documents the Stripe webhook raw-body exception", () => {
-  expect(BODY_LIMIT_EXCEPTIONS.some((entry) => entry.route.includes("stripe/webhook"))).toBe(true);
+it("documents the Stripe billing webhook raw-body exception", () => {
+  expect(
+    BODY_LIMIT_EXCEPTIONS.some((entry) => entry.route.includes("stripe/billing-webhook")),
+  ).toBe(true);
 });
 
 it("every server API route applies a body size limit (or is documented)", () => {

@@ -2,13 +2,14 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { getAuthClient, isDemoModeAllowed, isLiveAuthConfigured } from "@/lib/auth-client";
 import { isAuthExemptPath } from "@/lib/auth-paths";
-import { decideMfaGate } from "@/lib/post-login";
+import { decideMfaGate, decideStudioAccessGate, type StudioAccessGate } from "@/lib/post-login";
+import { StudioPausedScreen, StudioReadOnlyBanner } from "@/components/StudioAccessNotice";
 import { resolveAccountFn } from "@/server/account";
 
 type GuardState = "checking" | "ok" | "unavailable";
 
-/** Access tokens already checked in this tab (account + MFA), so navigation stays instant. */
-const verifiedTokens = new Set<string>();
+/** Access tokens already checked in this tab (account + MFA + subscription), so navigation stays instant. */
+const verifiedTokens = new Map<string, StudioAccessGate>();
 
 export function resetLiveAuthGuardForTests() {
   verifiedTokens.clear();
@@ -32,6 +33,7 @@ export function LiveAuthGuard({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const search = useRouterState({ select: (state) => state.location.searchStr });
   const exempt = isAuthExemptPath(pathname);
+  const [accessGate, setAccessGate] = useState<StudioAccessGate>({ kind: "ok" });
   const [state, setState] = useState<GuardState>(() => {
     if (exempt) return "ok";
     if (isLiveAuthConfigured()) return "checking";
@@ -62,7 +64,9 @@ export function LiveAuthGuard({ children }: { children: ReactNode }) {
         window.location.replace(loginUrl(next));
         return;
       }
-      if (verifiedTokens.has(session.access_token)) {
+      const known = verifiedTokens.get(session.access_token);
+      if (known) {
+        setAccessGate(known);
         setState("ok");
         return;
       }
@@ -91,7 +95,11 @@ export function LiveAuthGuard({ children }: { children: ReactNode }) {
           window.location.replace(`/auth/mfa?next=${encodeURIComponent(next)}`);
           return;
         }
-        verifiedTokens.add(session.access_token);
+        // Subscription gate (0006). The database enforces the same rule through RLS; this is
+        // only so people see a clear screen instead of empty pages.
+        const access = decideStudioAccessGate(account);
+        verifiedTokens.set(session.access_token, access);
+        setAccessGate(access);
         setState("ok");
       } catch {
         if (!cancelled) window.location.replace(loginUrl(next));
@@ -118,6 +126,17 @@ export function LiveAuthGuard({ children }: { children: ReactNode }) {
   }
   if (state !== "ok") {
     return <p className="p-6 text-[#5A4F43]">Checking sign-in…</p>;
+  }
+  if (accessGate.kind === "paused") {
+    return <StudioPausedScreen ownerStudioId={accessGate.ownerStudioId} ended={accessGate.ended} />;
+  }
+  if (accessGate.kind === "read_only") {
+    return (
+      <>
+        <StudioReadOnlyBanner studioId={accessGate.studioId} />
+        {children}
+      </>
+    );
   }
   return children;
 }

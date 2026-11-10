@@ -10,6 +10,7 @@ import {
   unlockJoinSession,
 } from "@/services/invitations";
 import { requireStudioRole, forbidden } from "./authz";
+import { getStudioAccess } from "./subscription-store";
 import { createServiceSupabase } from "./supabase";
 import { isMockOnboarding } from "./env";
 import { sha256Hex } from "@/lib/onboarding/crypto";
@@ -80,7 +81,14 @@ export async function loadJoinSessionPrivileged(input: { token: string; studioId
     };
   }
   // studio_id from the invitation row only; request body studioId is never used.
-  void data.studio_id;
+  // 0006: a paused or unpaid studio cannot take on new families.
+  const { level } = await getStudioAccess(data.studio_id as string);
+  if (level !== "full") {
+    return {
+      state: "unavailable" as const,
+      message: "This studio isn't accepting new families right now. Please contact your teacher.",
+    };
+  }
   void input.studioId;
   return loadJoinSession(input.token);
 }
