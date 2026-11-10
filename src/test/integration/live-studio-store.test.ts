@@ -17,6 +17,7 @@ import { startEnrolment } from "@/services/onboarding";
 import { deleteExampleStudent } from "@/services/students";
 import { getPublishedStudioTerms } from "@/services/terms";
 import { insertLiveTermsVersion } from "@/services/live/studio-store";
+import { getChatThreads, getOrCreateFamilyConversation, sendMessage } from "@/services/chat";
 
 const enabled = process.env.SUPABASE_LOCAL === "1";
 
@@ -107,6 +108,16 @@ describe.skipIf(!enabled)("live studio store (local Supabase)", () => {
       editedClauseIds: [],
     });
 
+    const realFamily = families.find((f) => !f.isExample)!;
+    const conv = await getOrCreateFamilyConversation(realFamily.id);
+    await sendMessage({
+      conversationId: conv.id,
+      authorName: "Ms Integration",
+      authorRole: "teacher",
+      kind: "text",
+      body: "Welcome to the studio",
+    });
+
     await deleteExampleStudent(students.find((s) => s.isExample)!.id);
     const after = await admin.from("student").select("first_name").eq("studio_id", studioId);
     expect(after.data?.map((k) => k.first_name)).toEqual(["Real"]);
@@ -130,6 +141,8 @@ describe.skipIf(!enabled)("live studio store (local Supabase)", () => {
     expect(teacher.name).toBe("Ms Integration");
     expect(students.map((s) => s.firstName)).toEqual(["Real"]);
     expect((await getPublishedStudioTerms()).versions.map((v) => v.versionNo)).toEqual([1]);
+    const threads = await getChatThreads();
+    expect(threads.map((t) => t.latest?.body)).toContain("Welcome to the studio");
     setStudioStoreClientForTests(null);
   });
 });

@@ -3,12 +3,11 @@
  * person's session, so RLS (0003 staff/guardian policies, 0006 access gates) decides what they
  * can see. Nothing here uses the service key.
  *
- * Pattern (transitional, ADR-057): at sign-in the in-memory store the screens already use is
+ * Pattern (transitional, ADR-058): at sign-in the in-memory store the screens already use is
  * emptied and filled from Supabase; each save writes to Supabase first and only then updates the
  * store, so a failed save never shows as saved. Areas not moved to Supabase yet (chat, news,
  * courses, invoices, lessons) simply start empty for a live studio and do not survive a reload.
  */
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { families, lessonTypes, students, studio, teacher } from "@/mocks/data";
 import { emptyDemoFixtures, DEFAULT_LESSON_TYPES } from "@/mocks/clean-studio";
 import { newsState } from "@/mocks/news";
@@ -29,7 +28,8 @@ import type {
   StudioPlan,
   Teacher,
 } from "@/mocks/types";
-import { getAuthClient } from "@/lib/auth-client";
+import { client, friendly, setStudioStoreClientForTests, type Client } from "./client";
+import { loadLiveChat } from "./chat-store";
 import {
   isLiveStudio,
   liveStudioId,
@@ -38,7 +38,7 @@ import {
   type StudioWorkspace,
 } from "@/lib/studio-workspace";
 
-type Client = Pick<SupabaseClient, "from">;
+export { setStudioStoreClientForTests };
 
 /** What we keep in studio.profile (jsonb). Name, id, plan and timezone live elsewhere. */
 export type StudioProfile = {
@@ -89,27 +89,6 @@ export type AccountForWorkspace = {
   studioAccess?: Array<{ studioId: string; role: string; plan: StudioPlan | null }>;
 };
 
-let clientOverride: Client | null = null;
-/** Tests inject a fake Supabase client. */
-export function setStudioStoreClientForTests(client: Client | null) {
-  clientOverride = client;
-}
-
-function client(): Client {
-  const c = clientOverride ?? getAuthClient();
-  if (!c) throw new Error("Sign-in is unavailable. Please reload and try again.");
-  return c;
-}
-
-function friendly(error: { message?: string; code?: string } | null, fallback: string): Error {
-  const message = error?.message ?? "";
-  if (message.includes("base_plan_student_limit"))
-    return new Error("The Base plan allows up to 35 students. Upgrade to Pro to add more.");
-  if (error?.code === "42501" || /row-level security/i.test(message))
-    return new Error("You don't have permission to change this, or your studio is read-only.");
-  return new Error(fallback);
-}
-
 const STAFF_ORDER = ["owner", "admin", "teacher"] as const;
 
 /**
@@ -144,7 +123,12 @@ export async function chooseStudioWorkspace(
 
   if (staff) {
     return {
-      workspace: { mode: "live", studioId, role: staff.role as "owner" | "admin" | "teacher" },
+      workspace: {
+        mode: "live",
+        studioId,
+        userId: account.userId,
+        role: staff.role as "owner" | "admin" | "teacher",
+      },
       row,
       plan,
     };
@@ -164,6 +148,7 @@ export async function chooseStudioWorkspace(
     workspace: {
       mode: "live",
       studioId,
+      userId: account.userId,
       role: "guardian",
       guardianId: (guardian.data as { id: string }).id,
     },
@@ -276,6 +261,7 @@ export async function loadLiveStudio(
   } else {
     console.error("[studio-store] terms versions not loaded", termsRes.error.message);
   }
+  await loadLiveChat(workspace, c);
   if (workspace.guardianId) setParentGuardianId(workspace.guardianId);
   setStudioWorkspace(workspace);
   markWorkspaceLoaded(workspace);

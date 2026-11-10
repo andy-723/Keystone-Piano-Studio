@@ -6,6 +6,8 @@ GitHub Release with the same text. See `docs/release-process.md`.
 
 ## Unreleased
 
+- Family chat is now saved per studio: messages, new family chats and read status survive a
+  reload, and families only ever see their own chat (migration 0013).
 - Studio tour now follows the order an owner sets up: studio details, terms and privacy, payment details, invoices, enrolling, course templates, news and chat. It ends back on studio details and offers a step-by-step setup guide.
 - New studios start clean: each real studio now sees only its own students and families, with
   one example student it can delete. Studio details, studio terms, students and families are

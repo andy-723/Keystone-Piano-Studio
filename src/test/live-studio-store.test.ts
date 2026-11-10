@@ -27,18 +27,34 @@ import { startEnrolment } from "@/services/onboarding";
 import { getPlanBilling, setStudioPlan } from "@/services/plans";
 import { createInvitation } from "@/services/invitations";
 import { validateStartingAccess } from "@/server/platform";
+import {
+  getChatThreads,
+  getOrCreateFamilyConversation,
+  markThreadRead,
+  sendMessage,
+} from "@/services/chat";
 
 type Row = Record<string, unknown>;
-type Call = { table: string; op: string; payload?: unknown; filters: Array<[string, unknown]> };
+type Call = {
+  table: string;
+  op: string;
+  payload?: unknown;
+  filters: Array<[string, unknown]>;
+  other: Array<[string, unknown, "neq" | "is"]>;
+};
 
 /** Just enough of the Supabase query builder for the studio store. */
 function fakeSupabase(tables: Record<string, Row[]>, options: { failOn?: string } = {}) {
   const calls: Call[] = [];
   const from = (table: string) => {
-    const call: Call = { table, op: "select", filters: [] };
+    const call: Call = { table, op: "select", filters: [], other: [] };
     const rowsFor = () =>
-      (tables[table] ?? []).filter((row) =>
-        call.filters.every(([column, value]) => column.includes(".") || row[column] === value),
+      (tables[table] ?? []).filter(
+        (row) =>
+          call.filters.every(([column, value]) => column.includes(".") || row[column] === value) &&
+          call.other.every(([column, value, op]) =>
+            op === "neq" ? row[column] !== value : (row[column] ?? null) === value,
+          ),
       );
     const result = () => {
       if (options.failOn === `${table}.${call.op}`) {
@@ -84,6 +100,8 @@ function fakeSupabase(tables: Record<string, Row[]>, options: { failOn?: string 
       eq: (column: string, value: unknown) => (call.filters.push([column, value]), builder),
       order: () => builder,
       limit: () => builder,
+      neq: (column: string, value: unknown) => (call.other.push([column, value, "neq"]), builder),
+      is: (column: string, value: unknown) => (call.other.push([column, value, "is"]), builder),
       maybeSingle: async () => {
         const r = result();
         return { data: Array.isArray(r.data) ? (r.data[0] ?? null) : r.data, error: r.error };
@@ -141,6 +159,28 @@ function liveTables(): Record<string, Row[]> {
     ],
     terms_version: [],
     terms_document: [],
+    conversation: [
+      {
+        id: "c0nv0000-0000-4000-8000-000000000001",
+        studio_id: STUDIO_ID,
+        family_id: EXAMPLE_FAMILY,
+        last_message_at: "2026-11-10T01:00:00Z",
+      },
+    ],
+    message: [
+      {
+        id: "m0000000-0000-4000-8000-000000000001",
+        studio_id: STUDIO_ID,
+        conversation_id: "c0nv0000-0000-4000-8000-000000000001",
+        author_role: "guardian",
+        author_name: "Sam Example",
+        kind: "text",
+        body: "Hello from the example family",
+        metadata: {},
+        sent_at: "2026-11-10T01:00:00Z",
+        read_at: null,
+      },
+    ],
   };
 }
 
@@ -202,9 +242,9 @@ describe("live studio data (0011)", () => {
     expect(isLiveStudio()).toBe(true);
     expect(families.map((f) => f.displayName)).toEqual(["Example family"]);
     expect(students.map((s) => s.firstName)).toEqual(["Alex"]);
+    expect(conversations.map((c) => c.familyId)).toEqual([EXAMPLE_FAMILY]);
+    expect(messages.map((m) => m.body)).toEqual(["Hello from the example family"]);
     for (const list of [
-      conversations,
-      messages,
       invoices,
       studentCourses,
       clientNotes,
@@ -345,5 +385,91 @@ describe("starting access for a new studio (paused banner fix)", () => {
   });
   it("allows no free access on purpose", () => {
     expect(validateStartingAccess({ status: "none", plan: "base" }).status).toBe("none");
+  });
+});
+
+describe("live family chat (0013)", () => {
+  beforeEach(() => resetStudioWorkspaceForTests());
+  afterEach(() => setStudioStoreClientForTests(null));
+  const CONV = "c0nv0000-0000-4000-8000-000000000001";
+
+  it("loads the studio's saved chat with unread counts", async () => {
+    await signInLive();
+    const threads = await getChatThreads();
+    expect(threads).toHaveLength(1);
+    expect(threads[0]).toMatchObject({
+      id: CONV,
+      unreadCount: 1,
+      family: { displayName: "Example family" },
+    });
+    expect(threads[0]!.latest?.body).toBe("Hello from the example family");
+  });
+
+  it("saves a sent message as the signed-in teacher before showing it", async () => {
+    const fake = await signInLive();
+    const sent = await sendMessage({
+      conversationId: CONV,
+      authorName: "Ms Phan",
+      authorRole: "teacher",
+      kind: "text",
+      body: " Welcome! ",
+    });
+    const row = fake.tables.message!.find((m) => m.id === sent.id)!;
+    expect(row).toMatchObject({
+      studio_id: STUDIO_ID,
+      author_user_id: "owner-1",
+      author_role: "teacher",
+      body: "Welcome!",
+    });
+    expect(messages.some((m) => m.id === sent.id)).toBe(true);
+  });
+
+  it("does not show a message Supabase refused", async () => {
+    await signInLive(liveTables(), { failOn: "message.insert" });
+    await expect(
+      sendMessage({
+        conversationId: CONV,
+        authorName: "Ms Phan",
+        authorRole: "teacher",
+        kind: "text",
+        body: "Hi",
+      }),
+    ).rejects.toThrow();
+    expect(messages).toHaveLength(1);
+  });
+
+  it("drops browser-only media links when saving", async () => {
+    const fake = await signInLive();
+    const sent = await sendMessage({
+      conversationId: CONV,
+      authorName: "Ms Phan",
+      authorRole: "teacher",
+      kind: "image",
+      body: "Photo",
+      media: { url: "blob:http://x/1", fileName: "a.png" },
+    });
+    expect(fake.tables.message!.find((m) => m.id === sent.id)!.metadata).toEqual({
+      media: { fileName: "a.png" },
+    });
+  });
+
+  it("marks the family's messages read and starts new family chats once", async () => {
+    const fake = await signInLive();
+    await markThreadRead(CONV);
+    expect(fake.tables.message![0]!.read_at).toBeTruthy();
+    await startEnrolment({
+      firstName: "Edison",
+      lastName: "Phan",
+      birthYear: 2017,
+      guardianName: "Andrew Phan",
+      guardianEmail: "parent@example.org",
+      guardianMobile: "0400000000",
+      language: "en",
+    }).catch(() => undefined);
+    const family = families.find((f) => f.displayName === "Phan family")!;
+    const first = await getOrCreateFamilyConversation(family.id);
+    const again = await getOrCreateFamilyConversation(family.id);
+    expect(again.id).toBe(first.id);
+    expect(fake.tables.conversation!.filter((c) => c.family_id === family.id)).toHaveLength(1);
   });
 });
