@@ -34,9 +34,11 @@ function LoginPage() {
 
   return (
     <main
-      className="relative min-h-[640px] overflow-hidden bg-[#F5EBD6] text-[#15100D] max-[860px]:min-h-0 max-[860px]:h-auto"
+      // Full-screen split on wide screens. Below 860px the page stacks (scene, then card) and must
+      // grow and scroll naturally: never set a fixed height inline here, because an inline height
+      // beats the max-[860px] classes and clipped the card on phones (Continue button unreachable).
+      className="relative h-dvh min-h-[640px] overflow-hidden bg-[#F5EBD6] text-[#15100D] max-[860px]:h-auto max-[860px]:min-h-dvh max-[860px]:overflow-visible"
       style={{
-        height: "100vh",
         ["--font-login-serif" as string]: "'Source Serif 4', Georgia, serif",
       }}
     >
@@ -58,7 +60,7 @@ function LoginPage() {
         <BrandLogo variant="horizontal" alt="Keystone Music HQ" />
       </div>
 
-      <aside className="absolute right-[5%] top-1/2 z-[2] flex w-[32%] min-w-[380px] max-w-[460px] -translate-y-1/2 justify-center rounded-[22px] border border-[#D9C79E] bg-[#FBF7EE] px-9 py-10 shadow-[0_24px_60px_rgba(0,0,0,0.45),inset_0_0_0_6px_#FBF7EE,inset_0_0_0_7px_#E3D3AE] max-[860px]:relative max-[860px]:right-auto max-[860px]:top-auto max-[860px]:mx-3 max-[860px]:mt-[-36px] max-[860px]:mb-6 max-[860px]:w-auto max-[860px]:min-w-0 max-[860px]:max-w-none max-[860px]:translate-y-0 max-[860px]:px-5 max-[860px]:py-7">
+      <aside className="absolute right-[5%] top-1/2 z-[2] flex max-h-[calc(100%-48px)] w-[32%] overflow-y-auto min-w-[380px] max-w-[460px] -translate-y-1/2 justify-center rounded-[22px] border border-[#D9C79E] bg-[#FBF7EE] px-9 py-10 shadow-[0_24px_60px_rgba(0,0,0,0.45),inset_0_0_0_6px_#FBF7EE,inset_0_0_0_7px_#E3D3AE] max-[860px]:relative max-[860px]:right-auto max-[860px]:top-auto max-[860px]:mx-3 max-[860px]:mt-[-36px] max-[860px]:mb-6 max-[860px]:w-auto max-[860px]:min-w-0 max-[860px]:max-w-none max-[860px]:max-h-none max-[860px]:translate-y-0 max-[860px]:overflow-visible max-[860px]:px-5 max-[860px]:py-7">
         <LoginCard nextPath={nextPath} siteKey={siteKey} />
       </aside>
     </main>
