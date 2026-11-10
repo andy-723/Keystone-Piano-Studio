@@ -1,6 +1,6 @@
 # Teacher day-book
-- [ ] Add public pricing with clear Base/Pro comparison and separately labelled financial roadmap from the tax blueprint.
-- [ ] Align Base capacity to 30 students, test plan rules and verify pricing navigation on laptop, iPad and phone.
+- [x] Add public pricing with clear Base/Pro comparison and separately labelled financial roadmap from the tax blueprint.
+- [x] Align Base capacity to 30 students, test plan rules and verify pricing navigation on laptop, iPad and phone.
 - [x] Rename visible Opus branding to Keystone Music HQ, apply uploaded logo and matching favicon, verify layouts.
 - [x] Explain how to sync the latest code to GitHub; repository connection and sync status require the user's Git settings.
 - [x] Add editable teacher/student pictures and teacher profile settings; verify session-only saves.
