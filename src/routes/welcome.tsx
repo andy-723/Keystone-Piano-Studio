@@ -2,8 +2,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import hero from "@/assets/welcome-hero.jpg";
 import { DeviceShowcase } from "@/components/DeviceShowcase";
+import { MarketingMotion } from "@/components/MarketingMotion";
+import teachingMoment from "@/assets/keystone-teaching-moment.jpg";
 import logo from "@/assets/keystone-logo.jpg";
-import { ArrowRight, Check, Lock, MapPin, MailOpen, FileSignature } from "lucide-react";
+import { ArrowRight, Check, Lock, MapPin, MailOpen, FileSignature, BookOpen, MessageCircle, Newspaper, Flag, Receipt, UserPlus } from "lucide-react";
 
 const SIGN_IN = "https://keystonemusichq.com/login";
 const ENQUIRE = "mailto:support@keystonemusichq.com?subject=Request%20a%20studio";
@@ -49,13 +51,14 @@ const studioPoints = [
   ["Invite-only enrolment", "Send a branded invite; families complete a guided form. No stray sign-ups on your roll."],
   ["Agreements that stick", "Studio agreement and app terms accepted at enrolment with a typed name and guardian rules for minors."],
 ];
+const featureIcons = [BookOpen, MessageCircle, Newspaper, Flag, Receipt, UserPlus, FileSignature];
 
 function Welcome() {
   return (
-    <div className="min-h-screen bg-mk-cream font-mk-sans text-mk-ink antialiased">
+    <MarketingMotion><div className="min-h-screen bg-mk-cream font-mk-sans text-mk-ink antialiased">
       {/* Hero */}
       <section className="relative isolate flex min-h-[92svh] flex-col overflow-hidden bg-mk-ink text-mk-paper">
-        <img src={hero} alt="Grand piano on an Art Deco stage under a gold sunburst" width={1600} height={1008} className="absolute inset-0 -z-10 h-full w-full object-cover" />
+        <img src={hero} alt="Grand piano on an Art Deco stage under a gold sunburst" width={1600} height={1008} className="mk-stage-image absolute inset-0 -z-10 h-full w-full object-cover" />
         <div className="absolute inset-0 -z-10 bg-gradient-to-r from-mk-ink/90 via-mk-ink/60 to-mk-ink/10" aria-hidden />
         <header className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-5 py-5 md:px-10">
           <a href="#top" className="rounded-2xl bg-mk-paper px-3 py-1.5"><img src={logo} alt="Keystone Music HQ" className="h-11 w-auto" /></a>
@@ -67,9 +70,9 @@ function Welcome() {
           </nav>
         </header>
         <div id="top" className="mx-auto flex w-full max-w-7xl flex-1 items-center px-5 pb-20 md:px-10">
-          <div className="max-w-2xl">
+          <div className="mk-hero-copy max-w-2xl">
             <p className="text-base font-medium uppercase tracking-[0.22em] text-mk-gold">Keystone Music HQ</p>
-            <h1 className={`${serif} mt-5 text-[clamp(2.75rem,6.5vw,5.5rem)] font-semibold leading-[1.02] tracking-tight`}>
+            <h1 className={`${serif} mt-5 text-5xl font-semibold leading-[1.08] md:text-7xl`}>
               Your studio, <em className="font-normal italic">in tune.</em>
             </h1>
             <p className="mt-6 max-w-xl text-xl leading-relaxed text-mk-paper/85">
@@ -87,6 +90,10 @@ function Welcome() {
       <section className="mx-auto max-w-7xl px-5 py-24 md:px-10">
         <Eyebrow>Who it's for</Eyebrow>
         <h2 className={`${serif} mt-4 max-w-3xl text-4xl font-semibold leading-tight md:text-5xl`}>Built for the teacher. Clear for the family.</h2>
+        <figure data-reveal className="mk-teaching-photo relative mt-10 overflow-hidden rounded-lg">
+          <img src={teachingMoment} alt="A piano teacher guiding a student through sheet music, with a tablet beside the piano" loading="lazy" width={1536} height={1024} className="h-full w-full object-cover" />
+          <figcaption className="absolute bottom-0 left-0 right-0 bg-mk-ink/85 px-6 py-4 text-lg text-mk-paper md:px-8">More time for the moments that matter.</figcaption>
+        </figure>
         <div className="mt-12 grid gap-px overflow-hidden rounded-3xl border border-mk-gold/50 bg-mk-gold/50 md:grid-cols-2">
           {[
             ["Studio owners & teachers", "Run your studio without spreadsheets and scattered message threads. Everything you need before and after a lesson, on any device.", ["Day book and week view", "Student records, courses and red flags", "Term invoices with Stripe and Xero"]],
@@ -117,7 +124,7 @@ function Welcome() {
               ["Teach", "The student appears on your roll with chat, practice and invoicing ready."],
             ].map(([t, b], i) => (
               <li key={t} className="relative md:border-l md:border-mk-gold/60 md:px-10 first:md:border-l-0 first:md:pl-0">
-                <span className={`${serif} text-7xl font-normal leading-none text-mk-bronze/25`}>0{i + 1}</span>
+                <span className="mk-step-icon inline-flex size-16 items-center justify-center rounded-lg border border-mk-gold/60 bg-mk-cream text-mk-bronze" aria-hidden>{i === 0 ? <MailOpen className="size-8" /> : i === 1 ? <FileSignature className="size-8" /> : <BookOpen className="size-8" />}</span>
                 <h3 className={`${serif} mt-4 text-3xl font-semibold`}>{t}</h3>
                 <p className="mt-3 text-lg leading-relaxed text-mk-ink/75">{b}</p>
               </li>
@@ -147,13 +154,15 @@ function Welcome() {
             <p className="mt-5 text-lg leading-relaxed text-mk-ink/75">A calm interface for the minutes before and after lessons — and a mobile-friendly studio for teachers on the move.</p>
           </div>
           <dl className="divide-y divide-mk-gold/50 border-y border-mk-gold/50">
-            {studioPoints.map(([t, b], i) => (
+            {studioPoints.map(([t, b], i) => {
+              const Icon = featureIcons[i] ?? BookOpen;
+              return (
               <div key={t} className="grid gap-2 py-7 sm:grid-cols-[3rem_1fr_1.4fr] sm:gap-6">
-                <span className="text-base font-medium tabular-nums text-mk-bronze">{String(i + 1).padStart(2, "0")}</span>
+                <span className="mk-feature-icon flex size-12 items-center justify-center rounded-lg border border-mk-gold/50 bg-mk-paper text-mk-bronze"><Icon className="size-6" aria-hidden /></span>
                 <dt className={`${serif} text-2xl font-semibold`}>{t}</dt>
                 <dd className="text-lg leading-relaxed text-mk-ink/75">{b}</dd>
               </div>
-            ))}
+            ); })}
           </dl>
         </div>
       </section>
@@ -206,6 +215,6 @@ function Welcome() {
           </nav>
         </div>
       </footer>
-    </div>
+    </div></MarketingMotion>
   );
 }

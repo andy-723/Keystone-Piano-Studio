@@ -3,6 +3,7 @@ import { ArrowRight, Check, Minus, Laptop, Tablet, ChevronDown } from "lucide-re
 import { Button } from "@/components/ui/button";
 import { PUBLIC_PLANS } from "@/lib/plans";
 import logo from "@/assets/keystone-logo.jpg";
+import { MarketingMotion } from "@/components/MarketingMotion";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({ meta: [
@@ -34,7 +35,7 @@ const financialRoadmap = [
 ];
 
 function Pricing() {
-  return <div className="min-h-screen bg-mk-cream font-mk-sans text-mk-ink antialiased">
+  return <MarketingMotion><div className="min-h-screen bg-mk-cream font-mk-sans text-mk-ink antialiased">
     <header className="border-b border-mk-gold/50 bg-mk-paper">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-5 py-5 md:px-10">
         <Link to="/welcome" aria-label="Keystone Music HQ home"><img src={logo} alt="Keystone Music HQ" className="h-12 w-auto max-w-[190px]" /></Link>
@@ -47,7 +48,7 @@ function Pricing() {
     </header>
 
     <main>
-      <section className="mx-auto max-w-7xl px-5 pb-12 pt-14 md:px-10 md:pt-20">
+      <section className="mk-pricing-intro relative mx-auto max-w-7xl overflow-hidden px-5 pb-12 pt-14 md:px-10 md:pt-20">
         <p className="text-base font-semibold text-mk-bronze">KEYSTONE MUSIC HQ · PRICING</p>
         <h1 className="mt-5 font-mk-serif text-4xl font-semibold leading-tight md:text-6xl">A simple plan.<br />Room to grow.</h1>
         <p className="mt-6 max-w-2xl text-xl leading-relaxed text-mk-ink/75">The teaching essentials in Base. More students, deeper visibility and Xero automation in Pro. One clear workspace either way.</p>
@@ -56,7 +57,7 @@ function Pricing() {
 
       <section aria-label="Monthly plans" className="mx-auto max-w-7xl px-5 pb-16 md:px-10">
         <div className="grid gap-6 md:grid-cols-2">
-          {PUBLIC_PLANS.map(plan => <article key={plan.id} className={`flex min-w-0 flex-col rounded-lg border p-6 md:p-9 ${plan.id === "pro" ? "border-mk-bronze bg-mk-ink text-mk-paper" : "border-mk-gold/60 bg-mk-paper"}`}>
+          {PUBLIC_PLANS.map(plan => <article key={plan.id} className={`mk-plan flex min-w-0 flex-col rounded-lg border p-6 md:p-9 ${plan.id === "pro" ? "border-mk-bronze bg-mk-ink text-mk-paper" : "border-mk-gold/60 bg-mk-paper"}`}>
             <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-mk-serif text-3xl font-semibold">{plan.name}</h2><span className={`text-base ${plan.id === "pro" ? "text-mk-paper/80" : "text-mk-bronze"}`}>{plan.studentLimit ? `Up to ${plan.studentLimit} students` : "Unlimited students"}</span></div>
             <p className={`mt-3 text-lg ${plan.id === "pro" ? "text-mk-paper/75" : "text-mk-ink/75"}`}>{plan.id === "base" ? "For a solo teacher’s everyday teaching week." : "For growing studios that want less admin."}</p>
             <p className="mt-7 flex flex-wrap items-baseline gap-2"><span className="font-mk-serif text-6xl font-semibold">A${plan.monthlyCents / 100}</span><span className="text-lg">/ month + GST</span></p>
@@ -101,5 +102,5 @@ function Pricing() {
       </section>
     </main>
     <footer className="border-t border-mk-gold/50 px-5 py-8 text-base text-mk-ink/70"><div className="mx-auto flex max-w-7xl flex-wrap justify-between gap-4 md:px-5"><p>© 2026 Synoratech Pty Ltd · Keystone Music HQ</p><a className="inline-flex min-h-12 items-center text-mk-bronze underline underline-offset-4" href="mailto:support@keystonemusichq.com">Contact Keystone</a></div></footer>
-  </div>;
+  </div></MarketingMotion>;
 }
