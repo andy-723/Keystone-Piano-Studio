@@ -10,6 +10,7 @@
 <!-- LOVABLE:END -->
 
 ## Architecture
+- Marketing motion is scoped and optional to preserve readability.
 - Profiles and targeted news use scoped mock services; news validates consent/audiences and returns family-safe fields plus receipts. Due schedules release on reads using a separate fixture clock, never background jobs.
 - Plans use a scope-keyed mock subscription service with legacy normalisation; Pro capabilities are checked without deleting data, and Opus subscription invoices stay separate from family invoices.
 - The teacher enrolment details form is a presentational question flow over the existing onboarding service; later intake, welcome and activation stages retain their service-owned validation.
