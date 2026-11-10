@@ -22,7 +22,7 @@ const ROLLBACKS = "supabase/rollbacks";
 const FIRST_VERSION_NEEDING_ROLLBACK = 7;
 const NAME = /^(\d{4})_([a-z0-9_]+)\.sql$/;
 const DESTRUCTIVE =
-  /\b(drop\s+(table|column|schema|type|function|view)|rename\s+(column|to)|alter\s+column\s+\w+\s+(set\s+data\s+)?type|truncate)\b/i;
+  /\b(drop\s+(table|column|schema|type|function|view)|rename\s+(column|to)|alter\s+column\s+\w+\s+(set\s+data\s+)?type)\b|^\s*truncate\b/im;
 
 const errors = [];
 const files = readdirSync(MIGRATIONS)

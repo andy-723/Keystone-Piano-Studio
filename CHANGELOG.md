@@ -6,7 +6,8 @@ GitHub Release with the same text. See `docs/release-process.md`.
 
 ## Unreleased
 
-- Fixed: database access checks for signed-in users (migration 0008).
+- Fixed: database access checks for signed-in users failed with "permission denied for schema auth" (migration 0008).
+- Fixed: the platform audit log could be edited by server code; it is now append-only (migration 0009).
 - Release safety: every pull request is now checked automatically (tests, build, and every
   database change applied to a fresh database) before it can go live.
 

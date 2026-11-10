@@ -79,6 +79,9 @@ $$;
 
 create or replace function test_reset_role() returns void language plpgsql as $$
 begin
+  -- Back to the bootstrap identity: clear the signed-in user too, or triggers still see them.
+  perform set_config('request.jwt.claim.sub', '', true);
+  perform set_config('request.jwt.claim.role', '', true);
   execute 'reset role';
 end;
 $$;
