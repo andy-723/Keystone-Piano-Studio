@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import hero from "@/assets/welcome-hero.jpg";
+import insideApp from "@/assets/welcome-inside-app.jpg";
 import logo from "@/assets/keystone-logo.jpg";
 import { ArrowRight, Check, Lock, MapPin, MailOpen, FileSignature } from "lucide-react";
 
@@ -120,6 +121,25 @@ function Welcome() {
               </li>
             ))}
           </ol>
+        </div>
+      </section>
+
+      {/* A look inside */}
+      <section className="bg-mk-cream">
+        <div className="mx-auto max-w-7xl px-5 py-24 md:px-10">
+          <Eyebrow>A look inside</Eyebrow>
+          <div className="mt-4 flex flex-wrap items-end justify-between gap-6">
+            <h2 className={`${serif} max-w-2xl text-4xl font-semibold leading-tight md:text-5xl`}>See the studio your families will see.</h2>
+            <p className="max-w-md text-lg leading-relaxed text-mk-ink/75">The real day book — lessons, attendance, family chat and invoices on one calm screen.</p>
+          </div>
+          <figure className="mt-12 overflow-hidden rounded-3xl border border-mk-gold/60 bg-mk-paper shadow-[0_30px_80px_-30px_rgba(28,25,23,0.35)]">
+            <img src={insideApp} alt="The Keystone Music HQ day book: today's lessons with attendance, a week strip, family chat and a Term 2 invoice" width={1600} height={1000} loading="lazy" className="h-auto w-full" />
+          </figure>
+          <ul className="mt-8 flex flex-wrap gap-3">
+            {["Day book & week view", "One-tap attendance", "Family chat", "Term invoices"].map((label) => (
+              <li key={label} className="rounded-full border border-mk-gold/60 bg-mk-paper px-5 py-2.5 text-base font-medium text-mk-ink">{label}</li>
+            ))}
+          </ul>
         </div>
       </section>
 
