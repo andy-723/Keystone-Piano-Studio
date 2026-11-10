@@ -12,7 +12,7 @@ export const courseFeedback: Feedback[] = [];
 
 /** Titles are teacher-entered mock examples, never a published syllabus or sheet music. */
 export function seedStudentCourse(student: Student) {
-  const existing = studentCourses.find((course) => course.studentId === student.id);
+  const existing = studentCourses.find((course) => course.studentId === student.id && course.status !== "archived");
   if (existing) return existing;
   const index = students.findIndex((entry) => entry.id === student.id);
   const amy = student.firstName === "Amy" && student.lastName === "Liu";

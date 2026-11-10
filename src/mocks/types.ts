@@ -300,7 +300,7 @@ export type Framework = "AMEB" | "Trinity" | "ABRSM" | "Custom";
 export type CourseStage = 1 | 2 | 3 | 4 | 5;
 export interface FrameworkSection { id: string; framework: Framework; grade: string; name: string; weightPct: number }
 export interface FrameworkSlot { id: string; sectionId: string; label: string }
-export interface StudentCourse { id: string; studentId: string; framework: Framework; grade: string; stream?: string; targetTerm: string; weeklyPracticeGoalMin: number; gradeHoursEstimate: number; status: "draft" | "active" }
+export interface StudentCourse { id: string; studentId: string; framework: Framework; grade: string; stream?: string; targetTerm: string; weeklyPracticeGoalMin: number; gradeHoursEstimate: number; status: "draft" | "active" | "archived"; templateId?: string; name?: string; archivedAt?: string }
 export interface CourseItem { id: string; studentCourseId: string; sectionId: string; slotId?: string | undefined; title: string; composer?: string | undefined; stage: CourseStage; targetBpm?: number | undefined; currentBpm?: number | undefined; barsDone?: number | undefined; barsTotal?: number | undefined; updatedAt: string }
 export interface TermMilestone { id: string; studentCourseId: string; termKey: string; courseItemId: string; targetStage: CourseStage }
 export interface Feedback { id: string; courseItemId: string; occurrenceId?: string | undefined; submissionId?: string | undefined; outcome: "pass" | "stage_move" | "carry_over" | "needs_work"; newStage?: CourseStage | undefined; comment?: string | undefined; createdAt: string; shared?: boolean | undefined }
@@ -328,7 +328,7 @@ export interface OnboardingRecord { id: string; studentId: string; intake: Intak
 export interface ContentItem { id: string; kind: "text" | "link" | "file" | "video" | "video_link" | "audio" | "checklist"; title: string; body?: string; url?: string; mediaPlaceholder?: string; supplied?: boolean }
 export interface LessonTemplate { id: string; name: string; isWelcomeDefault: boolean; steps: { contentItemId: string; note?: string }[]; supplied?: boolean; audience: "beginner" | "transferring" }
 export interface CourseTemplate { id: string; name: string; framework: Framework; grade: string; sections: { name: string; weightPct: number; items: string[] }[]; defaultMilestones: { termOffset: number; targetStage: CourseStage }[]; supplied?: boolean }
-export interface AssignmentTask { id: string; courseItemId?: string; text: string; minutesPerDay: number; daysPerWeek: number; submissionRequested: "none" | "audio" | "video"; done: boolean }
+export interface AssignmentTask { id: string; courseItemId?: string; contentItemId?: string | undefined; text: string; minutesPerDay: number; daysPerWeek: number; submissionRequested: "none" | "audio" | "video"; done: boolean }
 export interface Assignment { id: string; studentId: string; occurrenceId: string; dueDate: string; tasks: AssignmentTask[]; demoClip?: boolean }
 export interface Submission {
   id: string;

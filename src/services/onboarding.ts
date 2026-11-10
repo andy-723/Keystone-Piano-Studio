@@ -15,6 +15,7 @@ import { enrolmentYear, isAdultStudent } from "@/lib/enrolment";
 import { ensureTermsState, type TermsScope } from "@/mocks/terms";
 import { getPublishedStudioTerms } from "./terms";
 import { createInvitation } from "./invitations";
+import { buildCourseSnapshot } from "@/lib/course-snapshot";
 const store = (scope: ImportScope) => scope === "demo" ? { families, students } : newStudioRoster;
 
 async function requireTermsAcceptance(studentId: string, scope: TermsScope) {
@@ -131,14 +132,9 @@ export async function saveEnrolment(id: string, input: Pick<EnrolmentDraft, "ste
 export async function activateEnrolment(id: string, scope: ImportScope = "demo") {
   const draft = draftFor(id, scope); if (draft.status === "active") return respond(structuredClone(draft));
   if (draft.status !== "welcome_done" || draft.step !== 4 || !draft.strengths.trim() || !draft.workOn.trim()) throw new Error("Complete the welcome lesson, goal and summary first.");
-  if (scope === "demo" && studentCourses.some((course) => course.studentId === draft.studentId)) throw new Error("This student already has a course. Enrol a new student to create a first course.");
+  if (scope === "demo" && studentCourses.some((course) => course.studentId === draft.studentId && course.status !== "archived")) throw new Error("This student already has a course. Use Assign to students in the Library to change it.");
   const template = structuredClone(libraryState[scope].courses.find((entry) => entry.id === draft.templateId)); if (!template) throw new Error("Course template not found.");
-  const course = { id: crypto.randomUUID(), studentId: draft.studentId, framework: template.framework, grade: template.grade, targetTerm: draft.targetTerm, weeklyPracticeGoalMin: draft.practiceGoal, gradeHoursEstimate: draft.gradeHours, status: "active" as const };
-  const sections = template.sections.map((section) => ({ id: crypto.randomUUID(), framework: template.framework, grade: template.grade, name: section.name, weightPct: section.weightPct }));
-  // Curriculum reads course-owned sections via this stable prefix.
-  sections.forEach((section, index) => { section.id = `${course.id}-section-${index}`; });
-  const items = template.sections.flatMap((section, index) => section.items.map((title) => ({ id: crypto.randomUUID(), studentCourseId: course.id, sectionId: sections[index]?.id ?? "", title, stage: draft.startingStages[section.name] ?? 1 as CourseStage, updatedAt: `${PROTOTYPE_TODAY}T13:00:00+11:00` })));
-  const milestones = template.defaultMilestones.flatMap((milestone) => items.map((item) => { const serial = Number(draft.targetTerm.slice(0, 4)) * 4 + Number(draft.targetTerm.slice(-1)) - 1 + milestone.termOffset; return { id: crypto.randomUUID(), studentCourseId: course.id, courseItemId: item.id, termKey: `${Math.floor(serial / 4)}-T${serial % 4 + 1}`, targetStage: milestone.targetStage }; }));
+  const { course, sections, items, milestones } = buildCourseSnapshot(template, { studentId: draft.studentId, targetTerm: draft.targetTerm, weeklyPracticeGoalMin: draft.practiceGoal, gradeHoursEstimate: draft.gradeHours, startingStages: draft.startingStages, updatedAt: `${PROTOTYPE_TODAY}T13:00:00+11:00` });
   draft.courseSnapshot = { course, sections, items, milestones }; draft.assignment = { week: PROTOTYPE_TODAY, title: "First week’s assignment", body: `Explore ${items[0]?.title ?? "your first melody"}. Practice goal: ${draft.practiceGoal} minutes this week. Assignment placeholder.` };
   await postFamily(draft, `Strengths: ${draft.strengths}\nWhat we’ll work on: ${draft.workOn}\nTerm-by-term plan:\n${template.defaultMilestones.map((milestone) => { const term = milestones.find((entry) => entry.targetStage === milestone.targetStage)?.termKey ?? draft.targetTerm; return `${termName(term)} — stage ${milestone.targetStage}`; }).join("\n")}\nPractice goal: ${draft.practiceGoal} min/week\n${draft.assignment.body}`, { welcomeSummary: { studentName: store(scope).students.find((entry) => entry.id === draft.studentId)?.firstName ?? "Student", practiceGoal: draft.practiceGoal } });
   if (scope === "demo") { assignments.push({id:crypto.randomUUID(),studentId:draft.studentId,occurrenceId:`welcome-${draft.id}`,dueDate:addDays(PROTOTYPE_TODAY,6),tasks:items.slice(0,2).map(item=>({id:crypto.randomUUID(),courseItemId:item.id,text:`Explore ${item.title}`,minutesPerDay:Math.max(1,Math.round(draft.practiceGoal/10)),daysPerWeek:5,submissionRequested:"none",done:false}))}); studentCourses.push(structuredClone(course)); frameworkSections.push(...structuredClone(sections)); courseItems.push(...structuredClone(items)); termMilestones.push(...structuredClone(milestones)); }
