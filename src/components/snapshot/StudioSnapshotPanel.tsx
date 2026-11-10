@@ -22,6 +22,7 @@ import {
   type SnapshotTileId,
   type StudioSnapshot,
 } from "@/services/snapshot";
+import { ProCfoPanel } from "@/components/snapshot/ProCfoPanel";
 import { TaxLitePanel } from "@/components/snapshot/TaxLitePanel";
 import type { TaxLiteFyKey } from "@/lib/tax-lite-fy";
 
@@ -410,6 +411,8 @@ export function StudioSnapshotPanel({
           Export CSV for this list
         </Button>
       </footer>
+
+      <ProCfoPanel />
 
       <TaxLitePanel fy={taxFy} onFyChange={onTaxFyChange} />
     </div>
