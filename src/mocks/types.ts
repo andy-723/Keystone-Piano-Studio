@@ -105,6 +105,9 @@ export type PaymentMethod =
 /** @deprecated Map legacy fixtures to stripe_* methods. */
 export type LegacyPaymentMethod = "payto" | "becs" | "card";
 
+/** Tuition vs parent reimbursement (pass-through cost, not pure tuition profit). */
+export type InvoiceLineKind = "tuition" | "reimbursement";
+
 export interface InvoiceLine {
   description: string;
   qty: number;
@@ -115,6 +118,8 @@ export interface InvoiceLine {
   lessonTypeId?: string;
   taxCode?: InvoiceTaxCode;
   creditNoteId?: string;
+  /** Pass-through / reimbursement lines are tagged so they are not misread as tuition. */
+  lineKind?: InvoiceLineKind;
 }
 
 export interface InvoiceSnapshot {
@@ -187,6 +192,13 @@ export interface Payment {
   reversesPaymentId?: string;
   stripePaymentIntentId?: string;
   xeroSyncedAt?: string;
+  /**
+   * Stripe Connect / webhook fields (Phase 0). Prefer these for Tax Lite gross vs fees.
+   * When absent, Tax Lite may derive a labelled estimate for Stripe methods.
+   */
+  grossAmountCents?: number;
+  stripeFeeCents?: number;
+  netPayoutCents?: number;
   /** @deprecated Prefer receivedOn. Kept for older call sites during migration. */
   date?: string;
 }

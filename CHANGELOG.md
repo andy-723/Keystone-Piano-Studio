@@ -6,6 +6,9 @@ GitHub Release with the same text. See `docs/release-process.md`.
 
 ## Unreleased
 
+- New: Tax Lite (Accounting Lite) on Snapshot for owners and admins — billable pass-through
+  expenses onto family drafts, Stripe gross vs merchant fees (YTD / AU FY), home-studio hours at
+  ATO 70c/hr, optional kilometre log, and EOFY tax pack CSV. Not a second ledger or Xero sync.
 - New: Studio snapshot for owners and admins — week/month tiles for revenue collected, overdue,
   active students, incomplete invites, practice at risk and lessons delivered, with list drill-downs
   and CSV export (Australia/Sydney). Teachers keep Today without whole-studio revenue.
