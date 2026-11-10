@@ -6,6 +6,14 @@ GitHub Release with the same text. See `docs/release-process.md`.
 
 ## Unreleased
 
+- Family invoices, payments, credit notes and billing settings are now saved per studio. Invoice
+  and credit note numbers come from the database (gapless per studio), real studios use today's
+  date, and changing bank details checks a real authenticator code (migration 0016).
+- Student courses and the studio's own Library templates are now saved per studio. A real
+  student starts on an empty course instead of demo pieces, and target terms are no longer fixed
+  to 2027 (migration 0015).
+- Studio news and student groups are now saved per studio, and scheduled posts follow the real
+  clock for real studios (migration 0014).
 - Family chat is now saved per studio: messages, new family chats and read status survive a
   reload, and families only ever see their own chat (migration 0013).
 - New: Pro CFO on Snapshot for owners and admins — net cash vs Stripe fees, studio margin /

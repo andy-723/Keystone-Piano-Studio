@@ -30,3 +30,21 @@ export function termLabel(key: string) {
   const match = key.match(/^(\d{4})-T([1-4])$/);
   return match ? `Term ${match[2]} ${match[1]}` : key;
 }
+
+/** The school term a date falls in, by quarter ("2026-T4" for November). */
+export function currentTermKey(date: Date) {
+  return `${date.getFullYear()}-T${Math.floor(date.getMonth() / 3) + 1}`;
+}
+
+/** The term `offset` terms after `key` ("2026-T4" + 1 = "2027-T1"). */
+export function termAfterKey(key: string, offset: number) {
+  const serial = Number(key.slice(0, 4)) * 4 + Number(key.slice(-1)) - 1 + offset;
+  return `${Math.floor(serial / 4)}-T${(serial % 4) + 1}`;
+}
+
+/** Target-term choices: the selected term's year and the next, plus the selected term itself. */
+export function termOptions(selected: string) {
+  const year = Number(selected.slice(0, 4)) || new Date().getFullYear();
+  const keys = [year, year + 1].flatMap((y) => [1, 2, 3, 4].map((t) => `${y}-T${t}`));
+  return keys.includes(selected) ? keys : [selected, ...keys];
+}

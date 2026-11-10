@@ -7,13 +7,46 @@ import { buildCourseSnapshot } from "@/lib/course-snapshot";
 import { getOrCreateFamilyConversation, sendMessage } from "./chat";
 import { courseFeedback, courseItems, frameworkSections, frameworkSlots, seedStudentCourse, stageNames, studentCourses, termMilestones } from "@/mocks/curriculum";
 import { courseReadiness, hasNoFeedbackInThreeLessons, stageAfterFeedback } from "@/lib/course-progress";
-import type { CourseItem, Feedback, StudentCourse } from "@/mocks/types";
+import type { CourseItem, Feedback, FrameworkSection, Student, StudentCourse } from "@/mocks/types";
+import { isLiveStudio } from "@/lib/studio-workspace";
+import { currentTermKey, termAfterKey } from "@/lib/course-progress";
+import { withLiveCourseSave } from "./live/course-store";
+
+/**
+ * Real studios get an empty starter course (not saved until the teacher edits it) instead of the
+ * demo's made-up pieces. Kept per student so ids stay the same between reads.
+ */
+const starterCourses = new Map<string, { course: StudentCourse; sections: FrameworkSection[] }>();
+const STARTER_SECTIONS: [string, number][] = [["Repertoire", 50], ["Technical work", 15], ["Musicianship", 15], ["Theory", 20]];
+function starterCourse(student: Student) {
+  const saved = starterCourses.get(student.id);
+  if (saved) return saved;
+  const course: StudentCourse = { id: crypto.randomUUID(), studentId: student.id, framework: "Custom", grade: student.gradeGoal || "Personal repertoire", targetTerm: termAfterKey(currentTermKey(new Date()), 1), weeklyPracticeGoalMin: 75, gradeHoursEstimate: 40, status: "active" };
+  const sections = STARTER_SECTIONS.map(([name, weightPct], index): FrameworkSection => ({ id: `${course.id}-section-${index}`, framework: course.framework, grade: course.grade, name, weightPct }));
+  const starter = { course, sections };
+  starterCourses.set(student.id, starter);
+  return starter;
+}
+function activeOrStarter(student: Student) {
+  if (!isLiveStudio()) return { course: seedStudentCourse(student), sections: null };
+  const existing = studentCourses.find((course) => course.studentId === student.id && course.status !== "archived");
+  if (existing) return { course: existing, sections: null };
+  return starterCourse(student);
+}
+/** Puts an unsaved starter course into the store, so the first save keeps it. */
+function adoptStarter(course: StudentCourse) {
+  const starter = starterCourses.get(course.studentId);
+  if (starter?.course !== course || studentCourses.includes(course)) return;
+  studentCourses.push(course);
+  frameworkSections.push(...starter.sections);
+  starterCourses.delete(course.studentId);
+}
 
 function courseState(studentId: string) {
   const student = students.find((entry) => entry.id === studentId);
   if (!student) throw new Error("Student not found.");
-  const course = seedStudentCourse(student);
-  const sections = frameworkSections.filter((entry) => entry.id.startsWith(`${course.id}-`));
+  const { course, sections: starterSections } = activeOrStarter(student);
+  const sections = starterSections ?? frameworkSections.filter((entry) => entry.id.startsWith(`${course.id}-`));
   const items = courseItems.filter((entry) => entry.studentCourseId === course.id);
   const slots = frameworkSlots.filter((entry) => sections.some((section) => section.id === entry.sectionId));
   const feedback = courseFeedback.filter((entry) => items.some((item) => item.id === entry.courseItemId));
@@ -22,14 +55,17 @@ function courseState(studentId: string) {
 export const getStudentCourse = (studentId: string) => respond(courseState(studentId));
 export async function saveStudentCourse(studentId: string, input: Pick<StudentCourse, "targetTerm"> & { items: CourseItem[] }) {
   const state = courseState(studentId);
-  if (!/^2027-T[1-4]$/.test(input.targetTerm)) throw new Error("Choose a target term.");
+  if (!/^\d{4}-T[1-4]$/.test(input.targetTerm)) throw new Error("Choose a target term.");
   if (input.items.some((item) => !item.title.trim() || !state.sections.some((section) => section.id === item.sectionId) || item.slotId && !state.slots.some((slot) => slot.id === item.slotId && slot.sectionId === item.sectionId) || !Number.isInteger(item.stage) || item.stage < 1 || item.stage > 5)) throw new Error("Give every item a title and a valid section, slot and stage.");
   const ids = input.items.map((item) => item.id);
   if (new Set(ids).size !== ids.length || input.items.some((item) => courseItems.some((existing) => existing.id === item.id && existing.studentCourseId !== state.course.id))) throw new Error("Course items must have unique IDs.");
-  state.course.targetTerm = input.targetTerm;
-  for (let i = courseItems.length - 1; i >= 0; i--) if (courseItems[i]?.studentCourseId === state.course.id) courseItems.splice(i, 1);
-  courseItems.push(...input.items.map((item) => ({ ...item, studentCourseId: state.course.id, title: item.title.trim(), composer: item.composer?.trim(), updatedAt: new Date().toISOString() })));
-  for (let i = termMilestones.length - 1; i >= 0; i--) if (termMilestones[i]?.studentCourseId === state.course.id && !ids.includes(termMilestones[i]?.courseItemId ?? "")) termMilestones.splice(i, 1);
+  await withLiveCourseSave(() => {
+    adoptStarter(state.course);
+    state.course.targetTerm = input.targetTerm;
+    for (let i = courseItems.length - 1; i >= 0; i--) if (courseItems[i]?.studentCourseId === state.course.id) courseItems.splice(i, 1);
+    courseItems.push(...input.items.map((item) => ({ ...item, studentCourseId: state.course.id, title: item.title.trim(), composer: item.composer?.trim(), updatedAt: new Date().toISOString() })));
+    for (let i = termMilestones.length - 1; i >= 0; i--) if (termMilestones[i]?.studentCourseId === state.course.id && !ids.includes(termMilestones[i]?.courseItemId ?? "")) termMilestones.splice(i, 1);
+  }, () => [state.course.id]);
   return getStudentCourse(studentId);
 }
 export async function recordCourseFeedback(input: Omit<Feedback, "id" | "createdAt"> & { studentId: string }) {
@@ -43,10 +79,12 @@ export async function recordCourseFeedback(input: Omit<Feedback, "id" | "created
   }
   if (!["pass", "stage_move", "carry_over", "needs_work"].includes(input.outcome)) throw new Error("Choose a checkpoint outcome.");
   const stage = stageAfterFeedback(item.stage, input.outcome, input.newStage);
-  const createdAt = new Date(Math.max(Date.parse("2027-03-15T12:00:00+11:00"), ...courseFeedback.map((entry) => Date.parse(entry.createdAt) + 1000))).toISOString();
+  const createdAt = isLiveStudio() ? new Date().toISOString() : new Date(Math.max(Date.parse("2027-03-15T12:00:00+11:00"), ...courseFeedback.map((entry) => Date.parse(entry.createdAt) + 1000))).toISOString();
   const feedback: Feedback = { id: crypto.randomUUID(), courseItemId: item.id, occurrenceId: input.occurrenceId, submissionId: input.submissionId, outcome: input.outcome, newStage: stage, comment: input.comment?.trim() || undefined, shared: input.shared ?? false, createdAt };
-  courseFeedback.push(feedback);
-  item.stage = stage; item.updatedAt = feedback.createdAt;
+  await withLiveCourseSave(() => {
+    courseFeedback.push(feedback);
+    item.stage = stage; item.updatedAt = feedback.createdAt;
+  }, () => [state.course.id]);
   return getStudentCourse(input.studentId);
 }
 export async function getCourseReminders(studentId: string, beforeDate: string) {
@@ -160,14 +198,16 @@ export async function assignCourseTemplate(input: {
       gradeHoursEstimate: current?.gradeHoursEstimate ?? 40,
       updatedAt: now,
     });
-    if (current) {
-      current.status = "archived";
-      current.archivedAt = now;
-    }
-    studentCourses.push(snapshot.course);
-    frameworkSections.push(...snapshot.sections);
-    courseItems.push(...snapshot.items);
-    termMilestones.push(...snapshot.milestones);
+    await withLiveCourseSave(() => {
+      if (current) {
+        current.status = "archived";
+        current.archivedAt = now;
+      }
+      studentCourses.push(snapshot.course);
+      frameworkSections.push(...snapshot.sections);
+      courseItems.push(...snapshot.items);
+      termMilestones.push(...snapshot.milestones);
+    }, () => [snapshot.course.id, ...(current ? [current.id] : [])]);
     result.assigned.push(studentId);
     const student = students.find((entry) => entry.id === studentId);
     if (student) {
