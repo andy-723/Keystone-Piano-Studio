@@ -29,6 +29,8 @@
   --color-mk-gold: #C2A259;
   --font-mk-serif: "Source Serif 4", Georgia, serif;
   --font-mk-sans: "Instrument Sans", system-ui, sans-serif;
+  --shadow-mk-device: 0 30px 80px -30px oklch(0.22 0.012 70 / 45%);
+  --shadow-mk-lift: 0 18px 40px -24px oklch(0.3 0.035 80 / 35%);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -176,4 +178,45 @@
   .invoice-paper { padding: 0; }
   .invoice-paper header { display: flex !important; }
   body { background: var(--card); }
+}
+
+/* Marketing motion is scoped away from the studio workspace. */
+.marketing-site { overflow-x: clip; }
+.marketing-site h1, .marketing-site h2, .marketing-site h3, .marketing-site p { letter-spacing: 0; }
+.mk-teaching-photo { height: 420px; }
+.mk-teaching-photo img { object-position: center 45%; }
+.mk-plan, .mk-feature-icon, .mk-step-icon {
+  transition: transform 250ms ease, box-shadow 250ms ease;
+}
+.mk-device { box-shadow: var(--shadow-mk-device); }
+.mk-screen { animation: mk-screen-in 300ms ease-out both; }
+.mk-hero-copy { animation: mk-enter 850ms ease-out both; }
+.mk-stage-image { animation: mk-stage-settle 1800ms ease-out both; }
+.mk-revealed { animation: mk-enter 650ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.mk-pricing-intro::after {
+  content: "";
+  position: absolute;
+  right: 2rem;
+  top: 3rem;
+  width: 180px;
+  height: 190px;
+  border: 1px solid var(--color-mk-gold);
+  border-radius: 90px 90px 0 0;
+  background: repeating-linear-gradient(90deg, transparent 0 29px, var(--color-mk-gold) 29px 30px);
+  opacity: 0.22;
+  pointer-events: none;
+}
+@keyframes mk-enter { from { opacity: 0.3; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes mk-screen-in { from { opacity: 0.5; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes mk-stage-settle { from { transform: scale(1.04); } to { transform: scale(1); } }
+@media (hover: hover) {
+  .mk-plan:hover { transform: translateY(-5px); box-shadow: var(--shadow-mk-lift); }
+  .marketing-site dl > div:hover .mk-feature-icon, .marketing-site ol > li:hover .mk-step-icon { transform: translateY(-3px); }
+}
+@media (max-width: 767px) {
+  .mk-teaching-photo { height: 340px; }
+  .mk-pricing-intro::after { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .marketing-site *, .marketing-site *::before, .marketing-site *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
