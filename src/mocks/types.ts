@@ -75,8 +75,8 @@ export interface Teacher {
   childSafety?: ChildSafetyCheck;
 }
 export interface Guardian { id: string; name: string; email: string; preferredLanguage: Lang; mobile?: string }
-export interface Family { id: string; displayName: string; guardians: Guardian[]; mediaConsent?: boolean; newsPhotoConsent?: boolean }
-export interface Student { id: string; familyId: string; firstName: string; lastName: string; birthYear: number; examDate?: string; targetTerm?: string }
+export interface Family { id: string; displayName: string; guardians: Guardian[]; mediaConsent?: boolean; newsPhotoConsent?: boolean; /** Example row a new studio starts with; it can be deleted and is never invited. */ isExample?: boolean }
+export interface Student { id: string; familyId: string; firstName: string; lastName: string; birthYear: number; examDate?: string; targetTerm?: string; /** Grade goal saved on the student when there is no weekly lesson slot yet. */ gradeGoal?: string; isExample?: boolean }
 export interface LessonType { id: string; name: string; durationMin: number; priceCents: number }
 
 export type LessonStatus = "scheduled" | "attended" | "absent" | "cancelled_by_studio" | "cancelled_late";

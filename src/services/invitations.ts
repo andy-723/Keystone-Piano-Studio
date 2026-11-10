@@ -170,6 +170,7 @@ export async function createInvitation(input: {
 }) {
   const family = families.find((entry) => entry.id === input.familyId);
   if (!family) throw new Error("Family not found.");
+  if (family.isExample) throw new Error("This is the example family, so no invite is sent. Enrol a real family to invite them.");
   const selected = students.filter(
     (student) => input.studentIds.includes(student.id) && student.familyId === family.id,
   );

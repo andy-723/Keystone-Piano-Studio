@@ -6,6 +6,8 @@ GitHub Release with the same text. See `docs/release-process.md`.
 
 ## Unreleased
 
+- Family chat is now saved per studio: messages, new family chats and read status survive a
+  reload, and families only ever see their own chat (migration 0013).
 - New: Pro CFO on Snapshot for owners and admins — net cash vs Stripe fees, studio margin /
   solo net, unearned tuition, Xero + GST health, earned vs collected with at-risk and make-up
   liability, Xero queue retry, teacher remittance export, overdue chat chaser, and $75k GST radar
@@ -20,6 +22,12 @@ GitHub Release with the same text. See `docs/release-process.md`.
   change the regular time from a given week, or stop lessons. Optional one-way sync to a
   "Keystone lessons" calendar in Google Calendar (migration 0010).
 - Studio tour now follows the order an owner sets up: studio details, terms and privacy, payment details, invoices, enrolling, course templates, news and chat. It ends back on studio details and offers a step-by-step setup guide.
+- New studios start clean: each real studio now sees only its own students and families, with
+  one example student it can delete. Studio details, studio terms, students and families are
+  saved per studio and survive a reload (migration 0011). Chat, news, courses and invoices start
+  empty for a real studio and are saved in the next releases. The demo studio keeps the demo data.
+- Fixed: studios created in the admin console no longer start read-only ("your studio is
+  paused"). The console now asks for starting access (complimentary, pilot or none).
 - Faster: platform admin and support reach `/admin` without waiting on studio/parent mock loaders; sign-in reuse skips a repeat account check after MFA.
 - Faster: server code now runs in Sydney next to the database, the first page download is about
   40% smaller, and the admin studio list makes far fewer database round trips.

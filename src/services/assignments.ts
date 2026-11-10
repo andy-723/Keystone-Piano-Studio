@@ -3,6 +3,7 @@ import { families, students, studio, teacher, practiceLogs } from "@/mocks/data"
 import { creditLedger } from "@/mocks/scheduling";
 import type { AssignmentTask, Feedback, Submission } from "@/mocks/types";
 import { respond } from "./_delay";
+import { saveLiveStudioDetails, studioSnapshot } from "./live/studio-store";
 import { getParentSession, sendParentMessage } from "./parent";
 import { getLessonOccurrence, weekMonday } from "./schedule";
 import { getStudentCourse, recordCourseFeedback } from "./curriculum";
@@ -23,7 +24,7 @@ function attachableContent(): TaskAttachment[] {
 }
 export function requirePro() { if (readStudioPlan() === "base") throw new Error("Available on Pro"); }
 export async function getAssignmentSettings() { return respond({ plan: readStudioPlan(), asyncLessonPolicy: studio.asyncLessonPolicy ?? "makeup_credit" }); }
-export async function setAssignmentSettings(input: { plan: StudioPlan; asyncLessonPolicy: "makeup_credit" | "counts_as_lesson" }) { if (!["base", "pro", "academy"].includes(input.plan) || !["makeup_credit", "counts_as_lesson"].includes(input.asyncLessonPolicy)) throw new Error("Choose a valid plan and policy."); await setStudioPlan(input.plan); studio.asyncLessonPolicy = input.asyncLessonPolicy; return getAssignmentSettings(); }
+export async function setAssignmentSettings(input: { plan: StudioPlan; asyncLessonPolicy: "makeup_credit" | "counts_as_lesson" }) { if (!["base", "pro", "academy"].includes(input.plan) || !["makeup_credit", "counts_as_lesson"].includes(input.asyncLessonPolicy)) throw new Error("Choose a valid plan and policy."); const before = studioSnapshot(); if (input.plan !== readStudioPlan()) await setStudioPlan(input.plan); studio.asyncLessonPolicy = input.asyncLessonPolicy; await saveLiveStudioDetails(before); return getAssignmentSettings(); }
 export async function getStudentAssignments(studentId: string) { if (!students.some(student=>student.id===studentId)) throw new Error("Student not found."); return respond(structuredClone(assignments.filter(entry=>entry.studentId===studentId).sort((a,b)=>b.dueDate.localeCompare(a.dueDate)))); }
 export async function getAssignmentEditor(occurrenceId: string) { const lesson=await getLessonOccurrence(occurrenceId); if(!lesson) throw new Error("Lesson not found."); const [history,course,settings]=await Promise.all([getStudentAssignments(lesson.studentId),getStudentCourse(lesson.studentId),getAssignmentSettings()]); return { lesson, history, course, settings, attachable: attachableContent() }; }
 export async function saveAssignment(input: { studentId: string; occurrenceId: string; dueDate: string; tasks: AssignmentTask[]; demoClip?: boolean }) {

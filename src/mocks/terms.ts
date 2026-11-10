@@ -471,3 +471,35 @@ export async function resetTermsStateForTests(): Promise<TermsState> {
   termsReady = null;
   return ensureTermsState();
 }
+
+/**
+ * Live studios (not the demo): no published studio terms, no family acceptances, and a draft
+ * that starts from this studio's own details. Keystone's family app terms stay published.
+ */
+export async function resetTermsStateForCleanStudio(saved?: Pick<StudioTermsDraft, "switches" | "clauseEdits" | "studioPatch">): Promise<TermsState> {
+  const base = await createInitialTermsState();
+  const appVersion = base.versions.find((version) => version.id === "tv-app-1");
+  const draft = emptyDraft("demo");
+  const state: TermsState = {
+    ...base,
+    versions: appVersion ? [appVersion] : [],
+    acceptances: [],
+    consents: [],
+    receipts: [],
+    outbox: [],
+    drafts: {
+      demo: {
+        ...draft,
+        switches: saved?.switches ?? draft.switches,
+        clauseEdits: saved?.clauseEdits ?? {},
+        studioPatch: saved?.studioPatch ?? {},
+      },
+      "new-studio": emptyDraft("new-studio"),
+    },
+    minorNoticesDismissed: new Set(),
+    paperFiles: [],
+  };
+  termsState = state;
+  termsReady = Promise.resolve(state);
+  return state;
+}
