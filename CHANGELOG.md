@@ -6,6 +6,10 @@ GitHub Release with the same text. See `docs/release-process.md`.
 
 ## Unreleased
 
+- New: Pro CFO on Snapshot for owners and admins — net cash vs Stripe fees, studio margin /
+  solo net, unearned tuition, Xero + GST health, earned vs collected with at-risk and make-up
+  liability, Xero queue retry, teacher remittance export, overdue chat chaser, and $75k GST radar
+  (mock Xero; not live 2-way sync or BAS lodging).
 - New: Tax Lite (Accounting Lite) on Snapshot for owners and admins — billable pass-through
   expenses onto family drafts, Stripe gross vs merchant fees (YTD / AU FY), home-studio hours at
   ATO 70c/hr, optional kilometre log, and EOFY tax pack CSV. Not a second ledger or Xero sync.
