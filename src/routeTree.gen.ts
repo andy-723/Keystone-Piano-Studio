@@ -19,6 +19,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as NewsRouteImport } from './routes/news'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SnapshotRouteImport } from './routes/snapshot'
 import { Route as StudentsRouteImport } from './routes/students'
 import { Route as StudioEnquiryRouteImport } from './routes/studio-enquiry'
 import { Route as SupportRouteImport } from './routes/support'
@@ -28,6 +29,8 @@ import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AuthMfaRouteImport } from './routes/auth.mfa'
 import { Route as AuthMfaRecoveryRouteImport } from './routes/auth.mfa-recovery'
 import { Route as AuthMfaSetupRouteImport } from './routes/auth.mfa-setup'
+import { Route as CalendarIndexRouteImport } from './routes/calendar.index'
+import { Route as CalendarGoogleRouteImport } from './routes/calendar.google'
 import { Route as ChatIndexRouteImport } from './routes/chat.index'
 import { Route as ChatConversationIdRouteImport } from './routes/chat.$conversationId'
 import { Route as IntakeRecordIdRouteImport } from './routes/intake.$recordId'
@@ -102,6 +105,11 @@ const SettingsRoute = SettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SnapshotRoute = SnapshotRouteImport.update({
+  id: '/snapshot',
+  path: '/snapshot',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StudentsRoute = StudentsRouteImport.update({
   id: '/students',
   path: '/students',
@@ -145,6 +153,16 @@ const AuthMfaRecoveryRoute = AuthMfaRecoveryRouteImport.update({
 const AuthMfaSetupRoute = AuthMfaSetupRouteImport.update({
   id: '/auth/mfa-setup',
   path: '/auth/mfa-setup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CalendarIndexRoute = CalendarIndexRouteImport.update({
+  id: '/calendar/',
+  path: '/calendar/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CalendarGoogleRoute = CalendarGoogleRouteImport.update({
+  id: '/calendar/google',
+  path: '/calendar/google',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChatIndexRoute = ChatIndexRouteImport.update({
@@ -275,6 +293,7 @@ export interface FileRoutesByFullPath {
   '/news': typeof NewsRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRouteWithChildren
+  '/snapshot': typeof SnapshotRoute
   '/students': typeof StudentsRouteWithChildren
   '/studio-enquiry': typeof StudioEnquiryRoute
   '/support': typeof SupportRoute
@@ -284,6 +303,7 @@ export interface FileRoutesByFullPath {
   '/auth/mfa': typeof AuthMfaRoute
   '/auth/mfa-recovery': typeof AuthMfaRecoveryRoute
   '/auth/mfa-setup': typeof AuthMfaSetupRoute
+  '/calendar/google': typeof CalendarGoogleRoute
   '/chat/$conversationId': typeof ChatConversationIdRoute
   '/intake/$recordId': typeof IntakeRecordIdRoute
   '/invoices/$invoiceId': typeof InvoicesInvoiceIdRoute
@@ -298,6 +318,7 @@ export interface FileRoutesByFullPath {
   '/students/enrol': typeof StudentsEnrolRoute
   '/students/groups': typeof StudentsGroupsRoute
   '/students/import': typeof StudentsImportRoute
+  '/calendar/': typeof CalendarIndexRoute
   '/chat/': typeof ChatIndexRoute
   '/invoices/': typeof InvoicesIndexRoute
   '/settings/': typeof SettingsIndexRoute
@@ -316,6 +337,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/news': typeof NewsRoute
   '/privacy': typeof PrivacyRoute
+  '/snapshot': typeof SnapshotRoute
   '/studio-enquiry': typeof StudioEnquiryRoute
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
@@ -324,6 +346,7 @@ export interface FileRoutesByTo {
   '/auth/mfa': typeof AuthMfaRoute
   '/auth/mfa-recovery': typeof AuthMfaRecoveryRoute
   '/auth/mfa-setup': typeof AuthMfaSetupRoute
+  '/calendar/google': typeof CalendarGoogleRoute
   '/chat/$conversationId': typeof ChatConversationIdRoute
   '/intake/$recordId': typeof IntakeRecordIdRoute
   '/invoices/$invoiceId': typeof InvoicesInvoiceIdRoute
@@ -338,6 +361,7 @@ export interface FileRoutesByTo {
   '/students/enrol': typeof StudentsEnrolRoute
   '/students/groups': typeof StudentsGroupsRoute
   '/students/import': typeof StudentsImportRoute
+  '/calendar': typeof CalendarIndexRoute
   '/chat': typeof ChatIndexRoute
   '/invoices': typeof InvoicesIndexRoute
   '/settings': typeof SettingsIndexRoute
@@ -360,6 +384,7 @@ export interface FileRoutesById {
   '/news': typeof NewsRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRouteWithChildren
+  '/snapshot': typeof SnapshotRoute
   '/students': typeof StudentsRouteWithChildren
   '/studio-enquiry': typeof StudioEnquiryRoute
   '/support': typeof SupportRoute
@@ -369,6 +394,7 @@ export interface FileRoutesById {
   '/auth/mfa': typeof AuthMfaRoute
   '/auth/mfa-recovery': typeof AuthMfaRecoveryRoute
   '/auth/mfa-setup': typeof AuthMfaSetupRoute
+  '/calendar/google': typeof CalendarGoogleRoute
   '/chat/$conversationId': typeof ChatConversationIdRoute
   '/intake/$recordId': typeof IntakeRecordIdRoute
   '/invoices/$invoiceId': typeof InvoicesInvoiceIdRoute
@@ -383,6 +409,7 @@ export interface FileRoutesById {
   '/students/enrol': typeof StudentsEnrolRoute
   '/students/groups': typeof StudentsGroupsRoute
   '/students/import': typeof StudentsImportRoute
+  '/calendar/': typeof CalendarIndexRoute
   '/chat/': typeof ChatIndexRoute
   '/invoices/': typeof InvoicesIndexRoute
   '/settings/': typeof SettingsIndexRoute
@@ -406,6 +433,7 @@ export interface FileRouteTypes {
     | '/news'
     | '/privacy'
     | '/settings'
+    | '/snapshot'
     | '/students'
     | '/studio-enquiry'
     | '/support'
@@ -415,6 +443,7 @@ export interface FileRouteTypes {
     | '/auth/mfa'
     | '/auth/mfa-recovery'
     | '/auth/mfa-setup'
+    | '/calendar/google'
     | '/chat/$conversationId'
     | '/intake/$recordId'
     | '/invoices/$invoiceId'
@@ -429,6 +458,7 @@ export interface FileRouteTypes {
     | '/students/enrol'
     | '/students/groups'
     | '/students/import'
+    | '/calendar/'
     | '/chat/'
     | '/invoices/'
     | '/settings/'
@@ -447,6 +477,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/news'
     | '/privacy'
+    | '/snapshot'
     | '/studio-enquiry'
     | '/support'
     | '/terms'
@@ -455,6 +486,7 @@ export interface FileRouteTypes {
     | '/auth/mfa'
     | '/auth/mfa-recovery'
     | '/auth/mfa-setup'
+    | '/calendar/google'
     | '/chat/$conversationId'
     | '/intake/$recordId'
     | '/invoices/$invoiceId'
@@ -469,6 +501,7 @@ export interface FileRouteTypes {
     | '/students/enrol'
     | '/students/groups'
     | '/students/import'
+    | '/calendar'
     | '/chat'
     | '/invoices'
     | '/settings'
@@ -490,6 +523,7 @@ export interface FileRouteTypes {
     | '/news'
     | '/privacy'
     | '/settings'
+    | '/snapshot'
     | '/students'
     | '/studio-enquiry'
     | '/support'
@@ -499,6 +533,7 @@ export interface FileRouteTypes {
     | '/auth/mfa'
     | '/auth/mfa-recovery'
     | '/auth/mfa-setup'
+    | '/calendar/google'
     | '/chat/$conversationId'
     | '/intake/$recordId'
     | '/invoices/$invoiceId'
@@ -513,6 +548,7 @@ export interface FileRouteTypes {
     | '/students/enrol'
     | '/students/groups'
     | '/students/import'
+    | '/calendar/'
     | '/chat/'
     | '/invoices/'
     | '/settings/'
@@ -535,6 +571,7 @@ export interface RootRouteChildren {
   NewsRoute: typeof NewsRoute
   PrivacyRoute: typeof PrivacyRoute
   SettingsRoute: typeof SettingsRouteWithChildren
+  SnapshotRoute: typeof SnapshotRoute
   StudentsRoute: typeof StudentsRouteWithChildren
   StudioEnquiryRoute: typeof StudioEnquiryRoute
   SupportRoute: typeof SupportRoute
@@ -544,9 +581,11 @@ export interface RootRouteChildren {
   AuthMfaRoute: typeof AuthMfaRoute
   AuthMfaRecoveryRoute: typeof AuthMfaRecoveryRoute
   AuthMfaSetupRoute: typeof AuthMfaSetupRoute
+  CalendarGoogleRoute: typeof CalendarGoogleRoute
   IntakeRecordIdRoute: typeof IntakeRecordIdRoute
   JoinTokenRoute: typeof JoinTokenRoute
   LessonsLessonIdRoute: typeof LessonsLessonIdRoute
+  CalendarIndexRoute: typeof CalendarIndexRoute
   ApiCronBillingRemindersRoute: typeof ApiCronBillingRemindersRoute
   ApiCronInviteRemindersRoute: typeof ApiCronInviteRemindersRoute
   ApiCronSubscriptionEnforcementRoute: typeof ApiCronSubscriptionEnforcementRoute
@@ -626,6 +665,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/snapshot': {
+      id: '/snapshot'
+      path: '/snapshot'
+      fullPath: '/snapshot'
+      preLoaderRoute: typeof SnapshotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/students': {
       id: '/students'
       path: '/students'
@@ -687,6 +733,20 @@ declare module '@tanstack/react-router' {
       path: '/auth/mfa-setup'
       fullPath: '/auth/mfa-setup'
       preLoaderRoute: typeof AuthMfaSetupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/calendar/': {
+      id: '/calendar/'
+      path: '/calendar'
+      fullPath: '/calendar/'
+      preLoaderRoute: typeof CalendarIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/calendar/google': {
+      id: '/calendar/google'
+      path: '/calendar/google'
+      fullPath: '/calendar/google'
+      preLoaderRoute: typeof CalendarGoogleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/chat/': {
@@ -932,6 +992,7 @@ const rootRouteChildren: RootRouteChildren = {
   NewsRoute: NewsRoute,
   PrivacyRoute: PrivacyRoute,
   SettingsRoute: SettingsRouteWithChildren,
+  SnapshotRoute: SnapshotRoute,
   StudentsRoute: StudentsRouteWithChildren,
   StudioEnquiryRoute: StudioEnquiryRoute,
   SupportRoute: SupportRoute,
@@ -941,9 +1002,11 @@ const rootRouteChildren: RootRouteChildren = {
   AuthMfaRoute: AuthMfaRoute,
   AuthMfaRecoveryRoute: AuthMfaRecoveryRoute,
   AuthMfaSetupRoute: AuthMfaSetupRoute,
+  CalendarGoogleRoute: CalendarGoogleRoute,
   IntakeRecordIdRoute: IntakeRecordIdRoute,
   JoinTokenRoute: JoinTokenRoute,
   LessonsLessonIdRoute: LessonsLessonIdRoute,
+  CalendarIndexRoute: CalendarIndexRoute,
   ApiCronBillingRemindersRoute: ApiCronBillingRemindersRoute,
   ApiCronInviteRemindersRoute: ApiCronInviteRemindersRoute,
   ApiCronSubscriptionEnforcementRoute: ApiCronSubscriptionEnforcementRoute,

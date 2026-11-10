@@ -3,6 +3,33 @@ import type { ImportScope } from "@/mocks/roster-import";
 import type { ContentItem, CourseTemplate, LessonTemplate } from "@/mocks/types";
 import { videoLinksEnabled } from "@/lib/app-settings";
 import { respond } from "./_delay";
+import { isLiveStudio } from "@/lib/studio-workspace";
+import { saveLiveLibraryItems, type LibraryTab } from "./live/course-store";
+
+type LibraryEntry = ContentItem | LessonTemplate | CourseTemplate;
+
+/**
+ * Runs a Library change and, for a live studio's own Library, saves the items it names. A failed
+ * save puts that Library list back as it was.
+ */
+async function withLibrarySave(
+  scope: ImportScope,
+  tab: LibraryTab,
+  change: () => LibraryEntry[],
+) {
+  const state = libraryState[scope];
+  if (scope !== "demo" || !isLiveStudio()) {
+    change();
+    return;
+  }
+  const before = structuredClone(state[tab]);
+  try {
+    await saveLiveLibraryItems(tab, change());
+  } catch (error) {
+    (state[tab] as LibraryEntry[]).splice(0, state[tab].length, ...before);
+    throw error;
+  }
+}
 
 const ALLOWED_VIDEO_HOSTS = new Set([
   "youtube.com",
@@ -44,9 +71,12 @@ export async function copyTemplate(
     supplied: false,
     ...("steps" in original ? { isWelcomeDefault: false } : {}),
   };
-  if (kind === "content") state.content.push(copy as ContentItem);
-  else if (kind === "lessons") state.lessons.push(copy as LessonTemplate);
-  else state.courses.push(copy as CourseTemplate);
+  await withLibrarySave(scope, kind, () => {
+    if (kind === "content") state.content.push(copy as ContentItem);
+    else if (kind === "lessons") state.lessons.push(copy as LessonTemplate);
+    else state.courses.push(copy as CourseTemplate);
+    return [copy as LibraryEntry];
+  });
   return getLibrary(scope);
 }
 export async function saveContent(item: ContentItem, scope: ImportScope = "demo") {
@@ -73,8 +103,11 @@ export async function saveContent(item: ContentItem, scope: ImportScope = "demo"
   } else if (item.url && !/^https?:\/\//.test(item.url)) {
     throw new Error("Use an http or https link.");
   }
-  if (index < 0) state.content.push(structuredClone(item));
-  else state.content[index] = structuredClone(item);
+  await withLibrarySave(scope, "content", () => {
+    if (index < 0) state.content.push(structuredClone(item));
+    else state.content[index] = structuredClone(item);
+    return [item];
+  });
   return getLibrary(scope);
 }
 export async function saveLessonTemplate(item: LessonTemplate, scope: ImportScope = "demo") {
@@ -88,11 +121,19 @@ export async function saveLessonTemplate(item: LessonTemplate, scope: ImportScop
     item.steps.some((step) => !state.content.some((content) => content.id === step.contentItemId))
   )
     throw new Error("Give the lesson a name and valid content steps.");
-  if (item.isWelcomeDefault)
-    state.lessons.forEach((entry) => {
-      if (entry.audience === item.audience) entry.isWelcomeDefault = false;
-    });
-  state.lessons[index] = structuredClone(item);
+  await withLibrarySave(scope, "lessons", () => {
+    // Moving the welcome default also changes the other studio lessons for that audience.
+    const changed: LessonTemplate[] = [item];
+    if (item.isWelcomeDefault)
+      state.lessons.forEach((entry) => {
+        if (entry.audience === item.audience && entry.isWelcomeDefault && entry.id !== item.id) {
+          entry.isWelcomeDefault = false;
+          changed.push(entry);
+        }
+      });
+    state.lessons[index] = structuredClone(item);
+    return changed;
+  });
   return getLibrary(scope);
 }
 /** Saves a studio course template. A new id adds a blank template made in the Library. */
@@ -125,7 +166,10 @@ export async function saveCourseTemplate(input: CourseTemplate, scope: ImportSco
     item.sections.reduce((sum, section) => sum + section.weightPct, 0) !== 100
   )
     throw new Error("Give each section items and weights totalling 100%.");
-  if (index < 0) state.courses.push(structuredClone({ ...item, supplied: false }));
-  else state.courses[index] = structuredClone(item);
+  await withLibrarySave(scope, "courses", () => {
+    if (index < 0) state.courses.push(structuredClone({ ...item, supplied: false }));
+    else state.courses[index] = structuredClone(item);
+    return [{ ...item, supplied: false }];
+  });
   return getLibrary(scope);
 }

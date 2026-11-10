@@ -5,7 +5,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAuthClient } from "@/lib/auth-client";
 
-export type Client = Pick<SupabaseClient, "from">;
+export type Client = Pick<SupabaseClient, "from" | "rpc">;
 
 let clientOverride: Client | null = null;
 /** Tests inject a fake (or a local Supabase) client. */

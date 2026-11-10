@@ -31,6 +31,8 @@ import type {
 import { client, friendly, setStudioStoreClientForTests, type Client } from "./client";
 import { loadLiveChat } from "./chat-store";
 import { loadLiveNews } from "./news-store";
+import { loadLiveCourses } from "./course-store";
+import { loadLiveBilling } from "./billing-store";
 import {
   isLiveStudio,
   liveStudioId,
@@ -264,6 +266,8 @@ export async function loadLiveStudio(
   }
   await loadLiveChat(workspace, c);
   await loadLiveNews(workspace, c);
+  await loadLiveCourses(workspace, c);
+  await loadLiveBilling(workspace, c);
   if (workspace.guardianId) setParentGuardianId(workspace.guardianId);
   setStudioWorkspace(workspace);
   markWorkspaceLoaded(workspace);

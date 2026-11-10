@@ -284,20 +284,35 @@ export const invoices: Invoice[] = families.map((f, i) => {
   };
 });
 
+/** Mock Stripe fee schedule when webhook fields are not yet live (Tax Lite). */
+function mockStripeFeeCents(method: Payment["method"], grossCents: number): number {
+  if (method === "stripe_card") return Math.round(grossCents * 0.017) + 30;
+  if (method === "stripe_becs" || method === "stripe_payto") return Math.round(grossCents * 0.01) + 30;
+  return 0;
+}
+
 export const payments: Payment[] = [];
 invoices.forEach((invoice, index) => {
   if (invoice.status !== "paid" && invoice.status !== "partially_paid") return;
   const method = index % 3 === 0 ? "stripe_payto" : index % 3 === 1 ? "stripe_becs" : "stripe_card";
   const amountCents = invoice.status === "paid" ? invoice.totalCents : Math.round(invoice.totalCents / 2);
+  // Spread received dates across Feb and March so Studio snapshot week/month tiles have cash in.
+  const receivedOn =
+    index % 3 === 0 ? "2027-03-15" : index % 3 === 1 ? "2027-03-08" : "2027-02-05";
+  const stripeFeeCents = mockStripeFeeCents(method, amountCents);
   payments.push({
     id: `payment-${payments.length + 1}`,
     invoiceId: invoice.id,
     familyId: invoice.familyId,
     method,
     amountCents,
-    receivedOn: "2027-02-05",
-    date: "2027-02-05",
+    receivedOn,
+    date: receivedOn,
     recordedBy: "teacher-1",
+    grossAmountCents: amountCents,
+    stripeFeeCents,
+    netPayoutCents: amountCents - stripeFeeCents,
+    stripePaymentIntentId: `pi_mock_${invoice.id}`,
   });
 });
 
@@ -315,12 +330,14 @@ invoices.forEach((invoice, index) => {
     dueDate: addDays(PROTOTYPE_TODAY, 14),
     lines: [
       {
-        description: "AMEB exam entry fee",
+        description: "AMEB exam entry fee (reimbursement)",
         qty: 1,
         unitCents: 9500,
         lineTotalCents: 9500,
         taxCents: 0,
         taxCode: "gst_free",
+        lineKind: "reimbursement",
+        studentId: "stu-1",
       },
     ],
     subtotalCents: 9500,

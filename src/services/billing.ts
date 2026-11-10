@@ -14,6 +14,15 @@ import type {
   CreditNote,
 } from "@/mocks/types";
 import { respond } from "./_delay";
+import { isLiveStudio } from "@/lib/studio-workspace";
+import { studioNow, studioToday } from "@/lib/studio-clock";
+import { billingProfileState } from "@/mocks/billing-profile";
+import {
+  issueLiveInvoice,
+  nextLiveCreditNoteNumber,
+  withLiveBillingSave,
+} from "./live/billing-store";
+import { newRecordId } from "./live/studio-store";
 import { pushInvoiceToXero } from "./integrations";
 import {
   allocateCreditNoteNumber,
@@ -101,7 +110,7 @@ function taxView(invoice: Invoice): Invoice {
 }
 
 /** Derive overdue flags on every read — overdue is never a stored status. */
-export function enrichInvoice(invoice: Invoice, today: string = PROTOTYPE_TODAY): Invoice {
+export function enrichInvoice(invoice: Invoice, today: string = studioToday()): Invoice {
   const balance = invoice.balanceCents ?? invoice.totalCents - (invoice.paidCents ?? 0);
   const unpaid =
     invoice.status !== "draft" &&
@@ -125,13 +134,23 @@ function pushEvent(
   actor: "system" | string = teacher.id,
 ) {
   invoiceEvents.push({
-    id: `evt-${crypto.randomUUID()}`,
+    id: newRecordId("evt"),
     invoiceId,
     kind,
     actor,
-    at: melbourneIso(PROTOTYPE_TODAY, "12:00"),
+    at: studioNow(),
     ...(data ? { data } : {}),
   });
+}
+
+/** Credit note number from the database, mirrored in the local profile. */
+async function liveCreditNoteNumber() {
+  const number = await nextLiveCreditNoteNumber();
+  const profile = billingProfileState.demo;
+  const used = Number(number.slice(profile.creditNotePrefix.length));
+  if (Number.isInteger(used)) profile.nextCreditNoteNumber = Math.max(profile.nextCreditNoteNumber, used + 1);
+  profile.numberingLockedAt ??= studioNow();
+  return number;
 }
 
 function findMutableInvoice(id: string): Invoice | undefined {
@@ -185,7 +204,7 @@ export const getInvoices = (): Promise<Invoice[]> => respond(invoices.map(taxVie
 export type PaymentFlag = { invoice: Invoice; kind: "overdue" | "due_soon"; days: number };
 
 /** Flags unpaid invoices that are overdue or due within `soonDays` of `today`. */
-export function paymentFlags(list: Invoice[], today: string = PROTOTYPE_TODAY, soonDays = 7): PaymentFlag[] {
+export function paymentFlags(list: Invoice[], today: string = studioToday(), soonDays = 7): PaymentFlag[] {
   const dayMs = 86_400_000;
   const diff = (date: string) => Math.round((Date.parse(date) - Date.parse(today)) / dayMs);
   return list
@@ -249,11 +268,11 @@ export async function getTerm2Preview() {
   });
 }
 
-export async function prepareTerm2Invoices() {
+async function prepareTerm2InvoicesImpl() {
   const preview = await getTerm2Preview();
   for (const family of families) {
     if (renewalState.active && renewalState.families.get(family.id)?.status !== "confirmed") {
-      termInvoiceDrafts.delete(`inv-term2-${family.id}`);
+      for (const [key, entry] of termInvoiceDrafts) if (entry.familyId === family.id) termInvoiceDrafts.delete(key);
       continue;
     }
     if (invoices.some((invoice) => invoice.termKey === "2027-term-2" && invoice.familyId === family.id)) continue;
@@ -272,7 +291,10 @@ export async function prepareTerm2Invoices() {
         if (row.lessonType?.id) line.lessonTypeId = row.lessonType.id;
         return line;
       });
-    const id = `inv-term2-${family.id}`;
+    // Real studios need uuid ids; reuse this family's open draft so preparing twice adds nothing.
+    const id = isLiveStudio()
+      ? ([...termInvoiceDrafts.values()].find((entry) => entry.familyId === family.id)?.id ?? crypto.randomUUID())
+      : `inv-term2-${family.id}`;
     const totalCents = lines.reduce((total, line) => total + line.lineTotalCents, 0);
     const draft: Invoice = {
       id,
@@ -306,7 +328,7 @@ export const getTerm2Drafts = (): Promise<Invoice[]> =>
       .map(taxView),
   );
 
-export async function sendTerm2Invoices() {
+async function sendTerm2InvoicesImpl() {
   const sent: Invoice[] = [];
   for (const draft of [...termInvoiceDrafts.values()]) {
     if (renewalState.active && renewalState.families.get(draft.familyId)?.status !== "confirmed") continue;
@@ -323,14 +345,14 @@ export async function sendTerm2Invoices() {
   return respond(sent);
 }
 
-export async function setInvoiceStatus(id: string, status: InvoiceStatus): Promise<Invoice | null> {
+async function setInvoiceStatusImpl(id: string, status: InvoiceStatus): Promise<Invoice | null> {
   const inv = findMutableInvoice(id);
   if (inv) {
     if (status === "draft" && inv.status !== "draft") throw new Error("An issued invoice cannot return to draft");
     if (inv.status === "draft" && status !== "draft") Object.assign(inv, taxView(inv));
-    if (status === "paid") await recordInvoicePayment(id, "card");
-    else if (status === "void") await voidInvoice(id, "Marked void");
-    else if (status === "sent" && inv.status === "draft") await sendInvoice(id);
+    if (status === "paid") await recordInvoicePaymentImpl(id, "card");
+    else if (status === "void") await voidInvoiceImpl(id, "Marked void");
+    else if (status === "sent" && inv.status === "draft") await sendInvoiceImpl(id);
     else {
       inv.status = status;
       if (status === "sent") await pushInvoiceToXero(id);
@@ -339,7 +361,7 @@ export async function setInvoiceStatus(id: string, status: InvoiceStatus): Promi
   return respond(inv ? taxView(inv) : null);
 }
 
-export async function recordInvoicePayment(id: string, method: PaymentMethod | LegacyPaymentMethod) {
+async function recordInvoicePaymentImpl(id: string, method: PaymentMethod | LegacyPaymentMethod) {
   const mapped = mapPaymentMethod(method);
   const invoice = findMutableInvoice(id);
   if (!invoice) throw new Error("Invoice not found");
@@ -348,10 +370,10 @@ export async function recordInvoicePayment(id: string, method: PaymentMethod | L
     invoice.status = "paid";
     return respond(taxView(invoice));
   }
-  return recordPayment(id, { method: mapped, amountCents: balance });
+  return recordPaymentImpl(id, { method: mapped, amountCents: balance });
 }
 
-export async function createInvoice(input: {
+async function createInvoiceImpl(input: {
   familyId: string;
   lines: InvoiceLine[];
   dueDate?: string;
@@ -365,7 +387,7 @@ export async function createInvoice(input: {
   if (!family) throw new Error("Family not found");
   if (!input.lines.length) throw new Error("Add at least one line");
   const totalCents = input.lines.reduce((sum, line) => sum + line.lineTotalCents, 0);
-  const id = `inv-${crypto.randomUUID()}`;
+  const id = newRecordId("inv");
   const draftBase: Invoice = {
     id,
     number: null,
@@ -373,8 +395,8 @@ export async function createInvoice(input: {
     status: "draft",
     kind: input.kind ?? "standard",
     collection: input.collection ?? "manual",
-    issueDate: input.issueDate ?? PROTOTYPE_TODAY,
-    dueDate: input.dueDate ?? addDays(PROTOTYPE_TODAY, 14),
+    issueDate: input.issueDate ?? studioToday(),
+    dueDate: input.dueDate ?? addDays(studioToday(), 14),
     lines: input.lines.map((line) => ({ ...line })),
     totalCents,
     subtotalCents: totalCents,
@@ -390,7 +412,7 @@ export async function createInvoice(input: {
   return respond(taxView(draft));
 }
 
-export async function updateDraft(id: string, patch: Partial<Pick<Invoice, "lines" | "dueDate" | "issueDate" | "billToGuardianId" | "ccGuardianIds" | "billingPeriod" | "collection" | "reviewedAt">>): Promise<Invoice> {
+async function updateDraftImpl(id: string, patch: Partial<Pick<Invoice, "lines" | "dueDate" | "issueDate" | "billToGuardianId" | "ccGuardianIds" | "billingPeriod" | "collection" | "reviewedAt">>): Promise<Invoice> {
   const invoice = findMutableInvoice(id);
   if (!invoice) throw new Error("Invoice not found");
   if (invoice.status !== "draft") throw new Error("Only drafts can be edited");
@@ -409,7 +431,7 @@ export async function updateDraft(id: string, patch: Partial<Pick<Invoice, "line
   return respond(taxView(invoice));
 }
 
-export async function deleteDraft(id: string): Promise<{ deleted: true }> {
+async function deleteDraftImpl(id: string): Promise<{ deleted: true }> {
   const index = invoices.findIndex((entry) => entry.id === id);
   if (index >= 0) {
     if (invoices[index]!.status !== "draft") throw new Error("Only drafts can be deleted");
@@ -423,18 +445,18 @@ export async function deleteDraft(id: string): Promise<{ deleted: true }> {
   throw new Error("Draft not found");
 }
 
-export async function copyLastInvoice(familyId: string): Promise<Invoice> {
+async function copyLastInvoiceImpl(familyId: string): Promise<Invoice> {
   const prior = invoices
     .filter((invoice) => invoice.familyId === familyId && invoice.status !== "draft" && invoice.kind !== "late_fee")
     .sort((a, b) => b.issueDate.localeCompare(a.issueDate) || (b.number ?? "").localeCompare(a.number ?? ""))[0];
   if (!prior) throw new Error("No previous invoice to copy");
-  return createInvoice({
+  return createInvoiceImpl({
     familyId,
     lines: prior.lines
       .filter((line) => !line.creditNoteId)
       .map((line) => ({ ...line, taxCents: 0 })),
-    dueDate: addDays(PROTOTYPE_TODAY, 14),
-    issueDate: PROTOTYPE_TODAY,
+    dueDate: addDays(studioToday(), 14),
+    issueDate: studioToday(),
     ...(prior.billToGuardianId ? { billToGuardianId: prior.billToGuardianId } : {}),
     ...(prior.collection ? { collection: prior.collection } : {}),
   });
@@ -448,11 +470,24 @@ async function issueInvoice(id: string, opts: { notify: boolean }): Promise<Invo
 
   const frozen = taxView(invoice);
   Object.assign(invoice, frozen);
-  invoice.number = allocateInvoiceNumber("demo");
-  invoice.status = "sent";
-  invoice.sentAt = melbourneIso(PROTOTYPE_TODAY, "12:00");
-  invoice.issueDate = invoice.issueDate || PROTOTYPE_TODAY;
-  invoice.snapshot = buildSnapshot(invoice);
+  invoice.issueDate = invoice.issueDate || studioToday();
+  if (isLiveStudio()) {
+    // The database numbers it (gapless per studio) before anything is emailed.
+    invoice.snapshot = buildSnapshot(invoice);
+    const issued = await issueLiveInvoice(invoice);
+    invoice.number = issued.number;
+    invoice.status = "sent";
+    invoice.sentAt = issued.sentAt;
+    const profile = billingProfileState.demo;
+    const used = Number(issued.number.slice(profile.invoicePrefix.length));
+    if (Number.isInteger(used)) profile.nextInvoiceNumber = Math.max(profile.nextInvoiceNumber, used + 1);
+    profile.numberingLockedAt ??= issued.sentAt;
+  } else {
+    invoice.number = allocateInvoiceNumber("demo");
+    invoice.status = "sent";
+    invoice.sentAt = studioNow();
+    invoice.snapshot = buildSnapshot(invoice);
+  }
 
   const profile = readBillingProfile("demo");
   let pdfBytes: Uint8Array | undefined;
@@ -509,20 +544,20 @@ async function issueInvoice(id: string, opts: { notify: boolean }): Promise<Invo
   return taxView(invoice);
 }
 
-export async function sendInvoice(id: string): Promise<Invoice | null> {
+async function sendInvoiceImpl(id: string): Promise<Invoice | null> {
   return respond(await issueInvoice(id, { notify: true }));
 }
 
-export async function sendInvoices(ids: string[]): Promise<Invoice[]> {
+async function sendInvoicesImpl(ids: string[]): Promise<Invoice[]> {
   const sent: Invoice[] = [];
   for (const id of ids) {
-    const invoice = await sendInvoice(id);
+    const invoice = await sendInvoiceImpl(id);
     if (invoice) sent.push(invoice);
   }
   return respond(sent);
 }
 
-export async function recordPayment(
+async function recordPaymentImpl(
   id: string,
   input: {
     method: PaymentMethod | LegacyPaymentMethod;
@@ -546,17 +581,31 @@ export async function recordPayment(
   }
 
   const method = mapPaymentMethod(input.method);
+  const isStripe =
+    method === "stripe_card" || method === "stripe_becs" || method === "stripe_payto";
+  const stripeFeeCents = isStripe
+    ? method === "stripe_card"
+      ? Math.round(input.amountCents * 0.017) + 30
+      : Math.round(input.amountCents * 0.01) + 30
+    : 0;
   const payment: Payment = {
-    id: `payment-${crypto.randomUUID()}`,
+    id: newRecordId("payment"),
     invoiceId: id,
     familyId: invoice.familyId,
     method,
     amountCents: input.amountCents,
-    receivedOn: input.receivedOn ?? PROTOTYPE_TODAY,
-    date: input.receivedOn ?? PROTOTYPE_TODAY,
+    receivedOn: input.receivedOn ?? studioToday(),
+    date: input.receivedOn ?? studioToday(),
     recordedBy: input.recordedBy ?? teacher.id,
     ...(input.reference ? { reference: input.reference } : {}),
     ...(input.stripePaymentIntentId ? { stripePaymentIntentId: input.stripePaymentIntentId } : {}),
+    ...(isStripe
+      ? {
+          grossAmountCents: input.amountCents,
+          stripeFeeCents,
+          netPayoutCents: input.amountCents - stripeFeeCents,
+        }
+      : {}),
   };
   payments.push(payment);
   syncStatusFromBalance(invoice);
@@ -595,7 +644,7 @@ export async function recordPayment(
   return respond(taxView(invoice));
 }
 
-export async function reversePayment(paymentId: string, reason?: string): Promise<Invoice> {
+async function reversePaymentImpl(paymentId: string, reason?: string): Promise<Invoice> {
   const original = payments.find((payment) => payment.id === paymentId);
   if (!original) throw new Error("Payment not found");
   if (original.amountCents <= 0) throw new Error("Only positive payments can be reversed");
@@ -607,13 +656,13 @@ export async function reversePayment(paymentId: string, reason?: string): Promis
   if (invoice.status === "void") throw new Error("Cannot reverse payment on a void invoice");
 
   const reversal: Payment = {
-    id: `payment-${crypto.randomUUID()}`,
+    id: newRecordId("payment"),
     invoiceId: original.invoiceId,
     familyId: original.familyId,
     method: original.method,
     amountCents: -original.amountCents,
-    receivedOn: PROTOTYPE_TODAY,
-    date: PROTOTYPE_TODAY,
+    receivedOn: studioToday(),
+    date: studioToday(),
     recordedBy: teacher.id,
     reversesPaymentId: paymentId,
     ...(reason ? { reference: reason } : {}),
@@ -628,13 +677,13 @@ export async function reversePayment(paymentId: string, reason?: string): Promis
   return respond(taxView(invoice));
 }
 
-export async function voidInvoice(id: string, reason: string): Promise<Invoice> {
+async function voidInvoiceImpl(id: string, reason: string): Promise<Invoice> {
   const invoice = findMutableInvoice(id);
   if (!invoice) throw new Error("Invoice not found");
   if (invoice.status === "void") return respond(taxView(invoice));
   if (invoice.status === "draft") {
     invoice.status = "void";
-    invoice.voidedAt = melbourneIso(PROTOTYPE_TODAY, "12:00");
+    invoice.voidedAt = studioNow();
     invoice.voidReason = reason;
     pushEvent(id, "voided", { reason });
     return respond(taxView(invoice));
@@ -642,13 +691,13 @@ export async function voidInvoice(id: string, reason: string): Promise<Invoice> 
   const paid = paidCentsFor(id, invoice.totalCents);
   if (paid > 0) throw new Error("Reverse payments before voiding");
   invoice.status = "void";
-  invoice.voidedAt = melbourneIso(PROTOTYPE_TODAY, "12:00");
+  invoice.voidedAt = studioNow();
   invoice.voidReason = reason;
   pushEvent(id, "voided", { reason });
   return respond(taxView(invoice));
 }
 
-export async function issueCreditNote(input: {
+async function issueCreditNoteImpl(input: {
   familyId: string;
   amountCents: number;
   reason: string;
@@ -667,15 +716,15 @@ export async function issueCreditNote(input: {
   const taxCents =
     input.taxCents ?? (studio.gstRegistered ? gstFromInclusive(input.amountCents) : 0);
   const note: CreditNote = {
-    id: `cn-${crypto.randomUUID()}`,
-    number: allocateCreditNoteNumber("demo"),
+    id: newRecordId("cn"),
+    number: isLiveStudio() ? await liveCreditNoteNumber() : allocateCreditNoteNumber("demo"),
     familyId: input.familyId,
     ...(input.invoiceId ? { invoiceId: input.invoiceId } : {}),
     reason: input.reason,
     amountCents: input.amountCents,
     taxCents,
     status: "open",
-    issuedOn: PROTOTYPE_TODAY,
+    issuedOn: studioToday(),
   };
   creditNotes.push(note);
   if (input.invoiceId) pushEvent(input.invoiceId, "credit_note_issued", { creditNoteId: note.id, number: note.number });
@@ -702,7 +751,7 @@ export async function issueCreditNote(input: {
   return respond(note);
 }
 
-export async function applyCredit(creditNoteId: string, invoiceId: string): Promise<Invoice> {
+async function applyCreditImpl(creditNoteId: string, invoiceId: string): Promise<Invoice> {
   const note = creditNotes.find((entry) => entry.id === creditNoteId);
   if (!note) throw new Error("Credit note not found");
   if (note.status !== "open") throw new Error("Credit note is not open");
@@ -713,7 +762,7 @@ export async function applyCredit(creditNoteId: string, invoiceId: string): Prom
   const amount = Math.min(note.amountCents, balance);
   if (amount <= 0) throw new Error("Invoice has no balance to credit");
 
-  await recordPayment(invoiceId, {
+  await recordPaymentImpl(invoiceId, {
     method: "credit",
     amountCents: amount,
     reference: note.number,
@@ -732,7 +781,7 @@ export async function applyCredit(creditNoteId: string, invoiceId: string): Prom
   return respond(taxView(invoice));
 }
 
-export async function refundCredit(creditNoteId: string): Promise<CreditNote> {
+async function refundCreditImpl(creditNoteId: string): Promise<CreditNote> {
   const note = creditNotes.find((entry) => entry.id === creditNoteId);
   if (!note) throw new Error("Credit note not found");
   if (note.status === "refunded") return respond(note);
@@ -741,7 +790,7 @@ export async function refundCredit(creditNoteId: string): Promise<CreditNote> {
   return respond(note);
 }
 
-export async function changeDueDate(id: string, dueDate: string): Promise<Invoice> {
+async function changeDueDateImpl(id: string, dueDate: string): Promise<Invoice> {
   const invoice = findMutableInvoice(id);
   if (!invoice) throw new Error("Invoice not found");
   if (invoice.status === "void" || invoice.status === "paid") {
@@ -812,23 +861,23 @@ export async function exportBillingCsv(_range?: { from?: string; to?: string }):
   return respond({ invoices: invoiceCsv, payments: paymentCsv, creditNotes: creditCsv });
 }
 
-export async function markInvoiceQueried(id: string): Promise<Invoice> {
+async function markInvoiceQueriedImpl(id: string): Promise<Invoice> {
   const invoice = findMutableInvoice(id);
   if (!invoice) throw new Error("Invoice not found");
   if (invoice.status === "draft" || invoice.status === "void") {
     throw new Error("Only open invoices can be queried");
   }
-  invoice.queriedAt = melbourneIso(PROTOTYPE_TODAY, "12:00");
+  invoice.queriedAt = studioNow();
   delete invoice.queryResolvedAt;
   pushEvent(id, "queried");
   return respond(taxView(invoice));
 }
 
-export async function resolveInvoiceQuery(id: string): Promise<Invoice> {
+async function resolveInvoiceQueryImpl(id: string): Promise<Invoice> {
   const invoice = findMutableInvoice(id);
   if (!invoice) throw new Error("Invoice not found");
   if (!invoice.queriedAt) throw new Error("Invoice has no open query");
-  invoice.queryResolvedAt = melbourneIso(PROTOTYPE_TODAY, "12:00");
+  invoice.queryResolvedAt = studioNow();
   pushEvent(id, "query_resolved");
   return respond(taxView(invoice));
 }
@@ -858,3 +907,26 @@ export async function downloadInvoicePdf(id: string): Promise<{ blob: Blob; base
   });
   return respond({ blob, base64, filename });
 }
+
+// Public billing services: a live studio's change is saved before it stands (see billing-store).
+export const prepareTerm2Invoices = withLiveBillingSave(prepareTerm2InvoicesImpl);
+export const sendTerm2Invoices = withLiveBillingSave(sendTerm2InvoicesImpl);
+export const setInvoiceStatus = withLiveBillingSave(setInvoiceStatusImpl);
+export const recordInvoicePayment = withLiveBillingSave(recordInvoicePaymentImpl);
+export const createInvoice = withLiveBillingSave(createInvoiceImpl);
+export const updateDraft = withLiveBillingSave(updateDraftImpl);
+export const deleteDraft = withLiveBillingSave(deleteDraftImpl);
+export const copyLastInvoice = withLiveBillingSave(copyLastInvoiceImpl);
+export const sendInvoice = withLiveBillingSave(sendInvoiceImpl);
+export const sendInvoices = withLiveBillingSave(sendInvoicesImpl);
+export const recordPayment = withLiveBillingSave(recordPaymentImpl);
+export const reversePayment = withLiveBillingSave(reversePaymentImpl);
+export const voidInvoice = withLiveBillingSave(voidInvoiceImpl);
+export const issueCreditNote = withLiveBillingSave(issueCreditNoteImpl);
+export const applyCredit = withLiveBillingSave(applyCreditImpl);
+export const refundCredit = withLiveBillingSave(refundCreditImpl);
+export const changeDueDate = withLiveBillingSave(changeDueDateImpl);
+export const markInvoiceQueried = withLiveBillingSave(markInvoiceQueriedImpl);
+export const resolveInvoiceQuery = withLiveBillingSave(resolveInvoiceQueryImpl);
+/** Unwrapped services, for other billing services that are wrapped themselves. */
+export const billingInternals = { createInvoice: createInvoiceImpl, sendInvoice: sendInvoiceImpl, sendInvoices: sendInvoicesImpl, updateDraft: updateDraftImpl, prepareTerm2Invoices: prepareTerm2InvoicesImpl };

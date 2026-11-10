@@ -220,6 +220,83 @@ Make-up credits are kept as a running balance for each family. When a make-up is
     ],
   },
   {
+    id: "studio-snapshot",
+    audience: "studio",
+    topic: "using-the-app",
+    title: { en: "Studio snapshot for owners and admins" },
+    body: {
+      en: `Open Snapshot in the main menu. Owners and admins see a week or month view (Australia/Sydney) with tiles for revenue collected, overdue invoices, active students, incomplete enrolment invites, practice at risk, and lessons delivered.
+
+Tap a tile to open the list underneath. Export CSV exports the list you're looking at. Links at the bottom open Invoices and Students. Teachers without owner or admin access stay on Today and don't see whole-studio revenue.
+
+Below the snapshot, Pro CFO shows a cash and margin ribbon (net after Stripe fees, studio margin after teacher splits or Tax Lite expenses, unearned prepaid tuition, and a Xero + GST health badge), earned versus collected with at-risk students and make-up credit dollar liability, a Xero reconciliation queue with retry, teacher remittance export, overdue chase into family chat with a payment link, and a rolling 12-month GST radar versus $75k. Mock Xero is fine when live sync is off. This is not two-way Xero, BAS lodging or a general ledger.
+
+Tax Lite (Accounting Lite) shows year-to-date or full financial year (1 July–30 June) figures for myTax: billable client expenses you can pass on to a student's next draft invoice as a reimbursement, Stripe gross tuition versus merchant fees, home-studio hours at the ATO Fixed Rate of 70c per hour, an optional kilometre log, and an EOFY tax pack CSV.`,
+    },
+    keywords: [
+      "snapshot",
+      "dashboard",
+      "report",
+      "revenue",
+      "overdue",
+      "practice",
+      "csv",
+      "export",
+      "owner",
+      "admin",
+      "tax",
+      "tax lite",
+      "stripe fees",
+      "pass-through",
+      "home studio",
+      "eofy",
+      "mytax",
+      "pro cfo",
+      "xero",
+      "gst",
+      "unearned",
+      "makeup",
+      "churn",
+      "margin",
+    ],
+  },
+  {
+    id: "studio-calendar",
+    audience: "studio",
+    topic: "lessons-teaching",
+    title: { en: "Give students lesson times in the Calendar" },
+    body: {
+      en: `Open Calendar to see your week. Click an empty time, or Add lesson, then choose the student, the day and time, the length, and whether it repeats every week or happens once. Weekly lessons keep going until you stop them or set a last lesson date.
+
+Keystone warns you if the time overlaps another of your lessons. Choose Save anyway if you really do want to double-book.
+
+Click a lesson to change it:
+- Move this week only, for one-off swaps.
+- Cancel this week, for holidays or sickness. Put back to the usual time undoes it.
+- Change day or time from this week on, when a student moves to a new regular slot. Earlier weeks stay as they were.
+- Stop weekly lessons, when a student finishes.
+
+Cancelling in the Calendar doesn't give a make-up credit or change invoices yet.
+
+To see your lessons in Google Calendar, choose Connect Google Calendar and sign in to Google. Keystone makes a separate calendar called "Keystone lessons" and keeps it up to date whenever you change a lesson here. It only shows the student's first name and last initial. Keystone can't see or change your other Google calendars, and changes you make in Google aren't copied back, so always change lessons in Keystone. Stop syncing removes Keystone's access; the "Keystone lessons" calendar stays in Google until you delete it there.`,
+    },
+    keywords: [
+      "calendar",
+      "google calendar",
+      "gcal",
+      "schedule",
+      "timetable",
+      "add student",
+      "time slot",
+      "weekly",
+      "recurring",
+      "repeat",
+      "move lesson",
+      "cancel lesson",
+      "sync",
+    ],
+  },
+  {
     id: "studio-library",
     audience: "studio",
     topic: "lessons-teaching",
