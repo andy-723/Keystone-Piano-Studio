@@ -116,7 +116,7 @@ function Chat() {
 
 function Invoices() {
   const [sent, setSent] = useState<Record<string, boolean>>({ Chen: true });
-  const rows = [["Chen", "$1,240"], ["Wang", "$620"], ["Patel", "$930"]];
+  const rows: [string, string][] = [["Chen", "$1,240"], ["Wang", "$620"], ["Patel", "$930"]];
   return (
     <div>
       <p className="font-mk-serif text-2xl font-semibold">Term 2 invoices</p>
