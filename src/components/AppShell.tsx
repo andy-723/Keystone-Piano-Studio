@@ -56,7 +56,9 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
   const planBadge = <Button asChild={role === "teacher"} variant={subscription.plan === "base" ? "outline" : "default"} className="min-h-12 h-auto rounded-full px-3 text-base" onClick={() => role === "new-teacher" && setNewPlanOpen(true)}>{role === "teacher" ? <Link to="/settings" hash="plan-and-billing">{planLabel}</Link> : planLabel}</Button>;
   const isTeacher = role === "teacher";
   const showSnapshot = isTeacher && canViewStudioSnapshot(studioStaffRole);
-  const navItems = NAV.filter((item) => !("ownerAdminOnly" in item && item.ownerAdminOnly) || showSnapshot);
+  const navItems = NAV.filter((item) =>
+    "ownerAdminOnly" in item && item.ownerAdminOnly ? showSnapshot : true,
+  );
   const { data: chatThreads } = useQuery({ ...chatThreadsQuery, enabled: isTeacher });
   const unread = chatThreads?.reduce((total, thread) => total + thread.unreadCount, 0) ?? 0;
   const chatNotification = unread > 0 ? <span role="status" aria-label={`${unread} unread chat messages`} className="absolute -right-5 -top-2 flex min-h-7 min-w-7 items-center justify-center rounded-full bg-destructive px-1.5 text-base font-semibold text-destructive-foreground">{unread > 99 ? "99+" : unread}</span> : null;

@@ -191,14 +191,26 @@ function buildOverdue(invoices: Invoice[], today: string): {
   };
 }
 
+function practiceWindow(
+  range: SnapshotRangeKey,
+  boundsStart: string,
+  today: string,
+): { start: string; end: string; quietDays: number } {
+  // Week uses a rolling 7 days ending today so Monday's snapshot still has practice history.
+  if (range === "week") {
+    return { start: addDays(today, -6), end: today, quietDays: 7 };
+  }
+  return { start: boundsStart, end: today, quietDays: 14 };
+}
+
 function buildPracticeAtRisk(
   roster: StudentSummary[],
-  start: string,
-  end: string,
+  boundsStart: string,
+  today: string,
   range: SnapshotRangeKey,
 ): SnapshotPracticeRow[] {
   const threshold = PRACTICE_THRESHOLD_MINUTES[range];
-  const quietDays = range === "week" ? 7 : 14;
+  const { start, end, quietDays } = practiceWindow(range, boundsStart, today);
   const quietSince = addDays(end, -quietDays + 1);
   return roster
     .map((student) => {
@@ -209,7 +221,7 @@ function buildPracticeAtRisk(
       if (!quiet && !below) return null;
       const reasons: string[] = [];
       if (quiet) reasons.push(`No practice logged in ${quietDays} days`);
-      if (below) reasons.push(`Below ${threshold} min in range (${minutes} min)`);
+      if (below) reasons.push(`Below ${threshold} min (${minutes} min)`);
       return {
         studentId: student.id,
         name: `${student.firstName} ${student.lastName}`,
@@ -279,7 +291,7 @@ export async function getStudioSnapshot(
     familyName: familyName(invite.familyId),
     studentNames: invite.studentIds.map(studentName).join(", "),
   }));
-  const practiceAtRisk = buildPracticeAtRisk(roster, bounds.start, bounds.end, range);
+  const practiceAtRisk = buildPracticeAtRisk(roster, bounds.start, today, range);
   const lessons = buildLessons(bounds.start, bounds.end, today);
   return respond({
     bounds,
