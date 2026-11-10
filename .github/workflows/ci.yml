@@ -1,0 +1,68 @@
+# Checks every pull request (and main) before it can reach production.
+# Make "App checks" and "Database checks" required in GitHub branch protection for main.
+# See docs/release-process.md.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  app:
+    name: App checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      - name: Migration rules
+        env:
+          BASE_REF: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || '' }}
+        run: node scripts/check-migrations.mjs
+
+      - name: Unit tests
+        run: bun run test
+
+      - name: Production build
+        run: bun run build
+
+  database:
+    name: Database checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      # Starts a throwaway local Supabase, applies every migration from an empty database,
+      # then loads seed.sql. A migration that can't apply cleanly fails here, not in production.
+      - name: Start local Supabase and apply migrations
+        run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,mailpit,inbucket
+
+      - name: Tenancy and subscription tests (pgTAP)
+        run: supabase test db
+
+      - name: Stop
+        if: always()
+        run: supabase stop --no-backup
