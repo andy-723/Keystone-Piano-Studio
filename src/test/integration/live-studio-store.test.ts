@@ -18,6 +18,9 @@ import { deleteExampleStudent } from "@/services/students";
 import { getPublishedStudioTerms } from "@/services/terms";
 import { insertLiveTermsVersion } from "@/services/live/studio-store";
 import { getChatThreads, getOrCreateFamilyConversation, sendMessage } from "@/services/chat";
+import { getStudentCourse, saveStudentCourse } from "@/services/curriculum";
+import { copyTemplate } from "@/services/library";
+import { libraryState } from "@/mocks/library";
 
 const enabled = process.env.SUPABASE_LOCAL === "1";
 
@@ -118,6 +121,23 @@ describe.skipIf(!enabled)("live studio store (local Supabase)", () => {
       body: "Welcome to the studio",
     });
 
+    const realKid = students.find((s) => !s.isExample)!;
+    const starter = await getStudentCourse(realKid.id);
+    await saveStudentCourse(realKid.id, {
+      targetTerm: starter.course.targetTerm,
+      items: [
+        {
+          id: crypto.randomUUID(),
+          studentCourseId: starter.course.id,
+          sectionId: starter.sections[0]!.id,
+          title: "Minuet in G",
+          stage: 2,
+          updatedAt: new Date().toISOString(),
+        },
+      ],
+    });
+    await copyTemplate("courses", libraryState.demo.courses.find((c) => c.supplied)!.id);
+
     await deleteExampleStudent(students.find((s) => s.isExample)!.id);
     const after = await admin.from("student").select("first_name").eq("studio_id", studioId);
     expect(after.data?.map((k) => k.first_name)).toEqual(["Real"]);
@@ -143,6 +163,8 @@ describe.skipIf(!enabled)("live studio store (local Supabase)", () => {
     expect((await getPublishedStudioTerms()).versions.map((v) => v.versionNo)).toEqual([1]);
     const threads = await getChatThreads();
     expect(threads.map((t) => t.latest?.body)).toContain("Welcome to the studio");
+    expect((await getStudentCourse(realKid.id)).items.map((i) => i.title)).toEqual(["Minuet in G"]);
+    expect(libraryState.demo.courses.filter((c) => !c.supplied)).toHaveLength(1);
     setStudioStoreClientForTests(null);
   });
 });

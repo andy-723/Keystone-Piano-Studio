@@ -1,3 +1,4 @@
+import { courseItems, studentCourses, termMilestones } from "@/mocks/curriculum";
 import { newsState } from "@/mocks/news";
 import { teacher as rosterTeacher, families as rosterFamilies, students as rosterStudents, weeklySlots as rosterSlots } from "@/mocks/data";
 import { deleteLiveExampleFamily } from "./live/studio-store";
@@ -61,5 +62,10 @@ export async function deleteExampleStudent(id: string) {
   for (let i = rosterSlots.length - 1; i >= 0; i--) if (removedIds.has(rosterSlots[i]!.studentId)) rosterSlots.splice(i, 1);
   rosterFamilies.splice(rosterFamilies.indexOf(family), 1);
   for (const group of newsState.demo.groups) group.studentIds = group.studentIds.filter((sid) => !removedIds.has(sid));
+  // The database removes their courses with the student; mirror that in memory.
+  const courseIds = new Set(studentCourses.filter((course) => removedIds.has(course.studentId)).map((course) => course.id));
+  for (let i = studentCourses.length - 1; i >= 0; i--) if (courseIds.has(studentCourses[i]!.id)) studentCourses.splice(i, 1);
+  for (let i = courseItems.length - 1; i >= 0; i--) if (courseIds.has(courseItems[i]!.studentCourseId)) courseItems.splice(i, 1);
+  for (let i = termMilestones.length - 1; i >= 0; i--) if (courseIds.has(termMilestones[i]!.studentCourseId)) termMilestones.splice(i, 1);
   return { deletedStudentIds: [...removedIds] };
 }

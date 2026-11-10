@@ -6,6 +6,9 @@ GitHub Release with the same text. See `docs/release-process.md`.
 
 ## Unreleased
 
+- Student courses and the studio's own Library templates are now saved per studio. A real
+  student starts on an empty course instead of demo pieces, and target terms are no longer fixed
+  to 2027 (migration 0015).
 - Studio news and student groups are now saved per studio, and scheduled posts follow the real
   clock for real studios (migration 0014).
 - Family chat is now saved per studio: messages, new family chats and read status survive a

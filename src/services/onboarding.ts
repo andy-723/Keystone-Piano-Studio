@@ -17,6 +17,7 @@ import { getPublishedStudioTerms } from "./terms";
 import { createInvitation } from "./invitations";
 import { buildCourseSnapshot } from "@/lib/course-snapshot";
 import { insertLiveFamily, insertLiveStudents } from "./live/studio-store";
+import { withLiveCourseSave } from "./live/course-store";
 const store = (scope: ImportScope) => scope === "demo" ? { families, students } : newStudioRoster;
 
 async function requireTermsAcceptance(studentId: string, scope: TermsScope) {
@@ -139,6 +140,6 @@ export async function activateEnrolment(id: string, scope: ImportScope = "demo")
   const { course, sections, items, milestones } = buildCourseSnapshot(template, { studentId: draft.studentId, targetTerm: draft.targetTerm, weeklyPracticeGoalMin: draft.practiceGoal, gradeHoursEstimate: draft.gradeHours, startingStages: draft.startingStages, updatedAt: `${PROTOTYPE_TODAY}T13:00:00+11:00` });
   draft.courseSnapshot = { course, sections, items, milestones }; draft.assignment = { week: PROTOTYPE_TODAY, title: "First week’s assignment", body: `Explore ${items[0]?.title ?? "your first melody"}. Practice goal: ${draft.practiceGoal} minutes this week. Assignment placeholder.` };
   await postFamily(draft, `Strengths: ${draft.strengths}\nWhat we’ll work on: ${draft.workOn}\nTerm-by-term plan:\n${template.defaultMilestones.map((milestone) => { const term = milestones.find((entry) => entry.targetStage === milestone.targetStage)?.termKey ?? draft.targetTerm; return `${termName(term)} — stage ${milestone.targetStage}`; }).join("\n")}\nPractice goal: ${draft.practiceGoal} min/week\n${draft.assignment.body}`, { welcomeSummary: { studentName: store(scope).students.find((entry) => entry.id === draft.studentId)?.firstName ?? "Student", practiceGoal: draft.practiceGoal } });
-  if (scope === "demo") { assignments.push({id:crypto.randomUUID(),studentId:draft.studentId,occurrenceId:`welcome-${draft.id}`,dueDate:addDays(PROTOTYPE_TODAY,6),tasks:items.slice(0,2).map(item=>({id:crypto.randomUUID(),courseItemId:item.id,text:`Explore ${item.title}`,minutesPerDay:Math.max(1,Math.round(draft.practiceGoal/10)),daysPerWeek:5,submissionRequested:"none",done:false}))}); studentCourses.push(structuredClone(course)); frameworkSections.push(...structuredClone(sections)); courseItems.push(...structuredClone(items)); termMilestones.push(...structuredClone(milestones)); }
+  if (scope === "demo") { await withLiveCourseSave(() => { studentCourses.push(structuredClone(course)); frameworkSections.push(...structuredClone(sections)); courseItems.push(...structuredClone(items)); termMilestones.push(...structuredClone(milestones)); }, () => [course.id]); assignments.push({id:crypto.randomUUID(),studentId:draft.studentId,occurrenceId:`welcome-${draft.id}`,dueDate:addDays(PROTOTYPE_TODAY,6),tasks:items.slice(0,2).map(item=>({id:crypto.randomUUID(),courseItemId:item.id,text:`Explore ${item.title}`,minutesPerDay:Math.max(1,Math.round(draft.practiceGoal/10)),daysPerWeek:5,submissionRequested:"none",done:false}))}); }
   draft.status = "active"; draft.completedAt = `${PROTOTYPE_TODAY}T13:00:00+11:00`; return respond(structuredClone(draft));
 }

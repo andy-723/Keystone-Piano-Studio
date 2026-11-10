@@ -10,7 +10,10 @@ import {
   teacher,
 } from "@/mocks/data";
 import { newsState } from "@/mocks/news";
-import { studentCourses } from "@/mocks/curriculum";
+import { courseItems, studentCourses } from "@/mocks/curriculum";
+import { libraryState } from "@/mocks/library";
+import { getStudentCourse, saveStudentCourse } from "@/services/curriculum";
+import { copyTemplate, saveCourseTemplate } from "@/services/library";
 import { clientNotes } from "@/mocks/notes";
 import { opusInvoices } from "@/mocks/plans";
 import {
@@ -65,6 +68,17 @@ function fakeSupabase(tables: Record<string, Row[]>, options: { failOn?: string 
           error: { message: "new row violates row-level security policy", code: "42501" },
         };
       }
+      if (call.op === "upsert") {
+        const list = (Array.isArray(call.payload) ? call.payload : [call.payload]) as Row[];
+        const current = tables[table] ?? [];
+        for (const row of list) {
+          const existing = current.find((entry) => entry.id === row.id);
+          if (existing) Object.assign(existing, row);
+          else current.push({ ...row });
+        }
+        tables[table] = current;
+        return { data: list, error: null };
+      }
       if (call.op === "insert") {
         const list = Array.isArray(call.payload) ? call.payload : [call.payload];
         tables[table] = [
@@ -88,6 +102,12 @@ function fakeSupabase(tables: Record<string, Row[]>, options: { failOn?: string 
       select: () => builder,
       insert: (payload: unknown) => (
         (call.op = "insert"),
+        (call.payload = payload),
+        calls.push(call),
+        builder
+      ),
+      upsert: (payload: unknown) => (
+        (call.op = "upsert"),
         (call.payload = payload),
         calls.push(call),
         builder
@@ -163,6 +183,8 @@ function liveTables(): Record<string, Row[]> {
     terms_document: [],
     news_post: [],
     student_group: [],
+    student_course: [],
+    library_item: [],
     conversation: [
       {
         id: "c0nv0000-0000-4000-8000-000000000001",
@@ -553,5 +575,188 @@ describe("live studio news and groups (0014)", () => {
     const posts = await getAnnouncements();
     expect(posts.map((p) => [p.title, p.own])).toEqual([["Concert", false]]);
     expect((await listGroups()).manual.map((g) => g.name)).toEqual(["Beginners"]);
+  });
+});
+
+describe("live courses and Library (0015)", () => {
+  beforeEach(() => resetStudioWorkspaceForTests());
+  afterEach(() => setStudioStoreClientForTests(null));
+
+  it("gives a real student an empty starter course, saved only when the teacher edits it", async () => {
+    const fake = await signInLive();
+    const first = await getStudentCourse(EXAMPLE_STUDENT);
+    expect(first.course).toMatchObject({
+      framework: "Custom",
+      grade: "Beginner",
+      status: "active",
+    });
+    expect(first.items).toHaveLength(0);
+    expect(first.feedback).toHaveLength(0);
+    expect(first.sections.map((section) => section.name)).toEqual([
+      "Repertoire",
+      "Technical work",
+      "Musicianship",
+      "Theory",
+    ]);
+    expect((await getStudentCourse(EXAMPLE_STUDENT)).course.id).toBe(first.course.id);
+    expect(studentCourses).toHaveLength(0);
+    expect(
+      fake.calls.filter((call) => call.table === "student_course" && call.op !== "select"),
+    ).toHaveLength(0);
+
+    const saved = await saveStudentCourse(EXAMPLE_STUDENT, {
+      targetTerm: "2027-T2",
+      items: [
+        {
+          id: "item-1",
+          studentCourseId: first.course.id,
+          sectionId: first.sections[0]!.id,
+          title: "Ode to Joy",
+          stage: 2,
+          updatedAt: "2026-11-10T00:00:00Z",
+        },
+      ],
+    });
+    expect(saved.items.map((item) => item.title)).toEqual(["Ode to Joy"]);
+    const row = fake.tables.student_course![0]!;
+    expect(row).toMatchObject({
+      id: first.course.id,
+      studio_id: STUDIO_ID,
+      student_id: EXAMPLE_STUDENT,
+      status: "active",
+    });
+    const data = row.data as {
+      items: { title: string }[];
+      sections: unknown[];
+      course: { targetTerm: string };
+    };
+    expect(data.items.map((item) => item.title)).toEqual(["Ode to Joy"]);
+    expect(data.sections).toHaveLength(4);
+    expect(data.course.targetTerm).toBe("2027-T2");
+  });
+
+  it("puts the course back if Supabase refuses the save", async () => {
+    await signInLive(liveTables(), { failOn: "student_course.upsert" });
+    const first = await getStudentCourse(EXAMPLE_STUDENT);
+    await expect(
+      saveStudentCourse(EXAMPLE_STUDENT, {
+        targetTerm: "2027-T2",
+        items: [
+          {
+            id: "item-1",
+            studentCourseId: first.course.id,
+            sectionId: first.sections[0]!.id,
+            title: "Ode to Joy",
+            stage: 1,
+            updatedAt: "2026-11-10T00:00:00Z",
+          },
+        ],
+      }),
+    ).rejects.toThrow(/read-only|permission/);
+    expect(studentCourses).toHaveLength(0);
+    expect(courseItems).toHaveLength(0);
+    expect((await getStudentCourse(EXAMPLE_STUDENT)).items).toHaveLength(0);
+  });
+
+  it("saves studio Library templates but never the supplied ones", async () => {
+    const fake = await signInLive();
+    const supplied = libraryState.demo.courses.find((course) => course.supplied)!;
+    await copyTemplate("courses", supplied.id);
+    const copy = libraryState.demo.courses.find((course) => !course.supplied)!;
+    expect(fake.tables.library_item).toHaveLength(1);
+    expect(fake.tables.library_item![0]).toMatchObject({
+      id: copy.id,
+      kind: "course",
+      studio_id: STUDIO_ID,
+    });
+    await saveCourseTemplate({ ...copy, name: "Our beginner plan" });
+    expect(fake.tables.library_item).toHaveLength(1);
+    expect((fake.tables.library_item![0]!.data as { name: string }).name).toBe("Our beginner plan");
+  });
+
+  it("does not keep a Library copy Supabase refused", async () => {
+    await signInLive(liveTables(), { failOn: "library_item.upsert" });
+    const supplied = libraryState.demo.courses.find((course) => course.supplied)!;
+    const before = libraryState.demo.courses.length;
+    await expect(copyTemplate("courses", supplied.id)).rejects.toThrow();
+    expect(libraryState.demo.courses).toHaveLength(before);
+  });
+
+  it("loads saved courses and Library templates at sign-in", async () => {
+    const tables = liveTables();
+    const courseId = "5f1c7e0e-4444-4444-8444-000000000001";
+    tables.student_course = [
+      {
+        id: courseId,
+        studio_id: STUDIO_ID,
+        student_id: EXAMPLE_STUDENT,
+        status: "active",
+        data: {
+          course: {
+            id: courseId,
+            studentId: EXAMPLE_STUDENT,
+            framework: "AMEB",
+            grade: "Grade 1",
+            targetTerm: "2027-T1",
+            weeklyPracticeGoalMin: 90,
+            gradeHoursEstimate: 40,
+            status: "active",
+          },
+          sections: [
+            {
+              id: `${courseId}-section-0`,
+              framework: "AMEB",
+              grade: "Grade 1",
+              name: "Repertoire",
+              weightPct: 100,
+            },
+          ],
+          slots: [],
+          items: [
+            {
+              id: "i1",
+              studentCourseId: courseId,
+              sectionId: `${courseId}-section-0`,
+              title: "Minuet",
+              stage: 3,
+              updatedAt: "2026-11-01T00:00:00Z",
+            },
+          ],
+          milestones: [],
+          feedback: [],
+        },
+      },
+    ];
+    tables.library_item = [
+      {
+        id: "5f1c7e0e-5555-4555-8555-000000000001",
+        studio_id: STUDIO_ID,
+        kind: "lesson",
+        data: {
+          id: "x",
+          name: "Our welcome",
+          audience: "beginner",
+          isWelcomeDefault: true,
+          steps: [],
+          supplied: true,
+        },
+      },
+    ];
+    await signInLive(tables);
+    const course = await getStudentCourse(EXAMPLE_STUDENT);
+    expect(course.course).toMatchObject({
+      id: courseId,
+      framework: "AMEB",
+      weeklyPracticeGoalMin: 90,
+    });
+    expect(course.items.map((item) => item.title)).toEqual(["Minuet"]);
+    const lessons = libraryState.demo.lessons.filter((lesson) => lesson.audience === "beginner");
+    const ours = lessons.find((lesson) => lesson.name === "Our welcome")!;
+    expect(ours).toMatchObject({
+      id: "5f1c7e0e-5555-4555-8555-000000000001",
+      supplied: false,
+      isWelcomeDefault: true,
+    });
+    expect(lessons.filter((lesson) => lesson.isWelcomeDefault)).toHaveLength(1);
   });
 });
