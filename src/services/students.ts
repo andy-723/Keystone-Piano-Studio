@@ -1,3 +1,4 @@
+import { newsState } from "@/mocks/news";
 import { teacher as rosterTeacher, families as rosterFamilies, students as rosterStudents, weeklySlots as rosterSlots } from "@/mocks/data";
 import { deleteLiveExampleFamily } from "./live/studio-store";
 import { getStudent, getFamily, getStudents } from "./roster";
@@ -59,5 +60,6 @@ export async function deleteExampleStudent(id: string) {
   for (let i = rosterStudents.length - 1; i >= 0; i--) if (removedIds.has(rosterStudents[i]!.id)) rosterStudents.splice(i, 1);
   for (let i = rosterSlots.length - 1; i >= 0; i--) if (removedIds.has(rosterSlots[i]!.studentId)) rosterSlots.splice(i, 1);
   rosterFamilies.splice(rosterFamilies.indexOf(family), 1);
+  for (const group of newsState.demo.groups) group.studentIds = group.studentIds.filter((sid) => !removedIds.has(sid));
   return { deletedStudentIds: [...removedIds] };
 }

@@ -27,6 +27,8 @@ import { startEnrolment } from "@/services/onboarding";
 import { getPlanBilling, setStudioPlan } from "@/services/plans";
 import { createInvitation } from "@/services/invitations";
 import { validateStartingAccess } from "@/server/platform";
+import { getAnnouncements, saveAnnouncement, archiveAnnouncement } from "@/services/news";
+import { createGroup, setGroupMembers, listGroups } from "@/services/groups";
 import {
   getChatThreads,
   getOrCreateFamilyConversation,
@@ -159,6 +161,8 @@ function liveTables(): Record<string, Row[]> {
     ],
     terms_version: [],
     terms_document: [],
+    news_post: [],
+    student_group: [],
     conversation: [
       {
         id: "c0nv0000-0000-4000-8000-000000000001",
@@ -471,5 +475,83 @@ describe("live family chat (0013)", () => {
     const again = await getOrCreateFamilyConversation(family.id);
     expect(again.id).toBe(first.id);
     expect(fake.tables.conversation!.filter((c) => c.family_id === family.id)).toHaveLength(1);
+  });
+});
+
+describe("live studio news and groups (0014)", () => {
+  beforeEach(() => resetStudioWorkspaceForTests());
+  afterEach(() => setStudioStoreClientForTests(null));
+
+  it("publishes on real time, saves the post as the signed-in author, and archives it", async () => {
+    const fake = await signInLive();
+    expect(await getAnnouncements()).toHaveLength(0);
+    const post = await saveAnnouncement({ title: "Welcome", body: "Lessons start Monday" });
+    expect(post.status).toBe("published");
+    expect(Math.abs(Date.parse(post.publishAt) - Date.now())).toBeLessThan(60_000);
+    expect(fake.tables.news_post![0]).toMatchObject({
+      id: post.id,
+      studio_id: STUDIO_ID,
+      author_user_id: "owner-1",
+      title: "Welcome",
+    });
+    await archiveAnnouncement(post.id);
+    expect(fake.tables.news_post![0]!.status).toBe("archived");
+  });
+
+  it("does not show a post Supabase refused", async () => {
+    await signInLive(liveTables(), { failOn: "news_post.insert" });
+    await expect(saveAnnouncement({ title: "Welcome", body: "Hi" })).rejects.toThrow();
+    expect(await getAnnouncements()).toHaveLength(0);
+  });
+
+  it("saves manual groups and their students", async () => {
+    const fake = await signInLive();
+    const group = await createGroup("Saturday mornings");
+    await setGroupMembers(group.id, [EXAMPLE_STUDENT]);
+    expect(fake.tables.student_group![0]).toMatchObject({
+      name: "Saturday mornings",
+      student_ids: [EXAMPLE_STUDENT],
+      owner_user_id: "owner-1",
+    });
+    expect((await listGroups()).manual.map((g) => g.name)).toEqual(["Saturday mornings"]);
+  });
+
+  it("loads saved posts and groups at sign-in", async () => {
+    const tables = liveTables();
+    tables.news_post = [
+      {
+        id: "p1",
+        studio_id: STUDIO_ID,
+        author_user_id: "someone-else",
+        author_name: "Ms Other",
+        title: "Concert",
+        body: "Sunday",
+        tag: "concert",
+        audience: { kind: "studio" },
+        important: false,
+        status: "published",
+        publish_at: "2026-11-01T00:00:00Z",
+        pinned_until: null,
+        expires_at: null,
+        event_date: null,
+        edited_at: null,
+        attachments: [],
+      },
+    ];
+    tables.student_group = [
+      {
+        id: "g1",
+        studio_id: STUDIO_ID,
+        name: "Beginners",
+        description: null,
+        student_ids: [EXAMPLE_STUDENT],
+        owner_user_id: "owner-1",
+        archived: false,
+      },
+    ];
+    await signInLive(tables);
+    const posts = await getAnnouncements();
+    expect(posts.map((p) => [p.title, p.own])).toEqual([["Concert", false]]);
+    expect((await listGroups()).manual.map((g) => g.name)).toEqual(["Beginners"]);
   });
 });

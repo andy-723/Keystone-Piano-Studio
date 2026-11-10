@@ -1,3 +1,4 @@
+import { deleteLiveGroup, saveLiveGroup } from "./live/news-store";
 import { studio } from "@/mocks/data";
 import { newsState, type StudentGroup } from "@/mocks/news";
 import type { CommunityScope } from "@/mocks/community";
@@ -107,6 +108,7 @@ export async function createGroup(name: string, description?: string, scope: Com
     studentIds: [],
     ownerMembershipId: member.id,
   };
+  if (scope === "demo") await saveLiveGroup(group, true);
   newsState[scope].groups.push(group);
   if (!member.groupIds.includes(group.id)) member.groupIds.push(group.id);
   return respond(annotateGroup(clone(group), scope));
@@ -119,6 +121,7 @@ export async function renameGroup(groupId: string, name: string, scope: Communit
   const trimmed = normalizeName(name);
   if (!trimmed) throw new Error("Enter a group name.");
   assertUniqueName(trimmed, scope, groupId);
+  if (scope === "demo") await saveLiveGroup({ ...group, name: trimmed }, false);
   group.name = trimmed;
   return respond(annotateGroup(clone(group), scope));
 }
@@ -136,9 +139,11 @@ export async function deleteGroup(groupId: string, scope: CommunityScope = "demo
       post.audience.groupIds?.includes(groupId),
   );
   if (referenced) {
+    if (scope === "demo") await saveLiveGroup({ ...group, archived: true }, false);
     group.archived = true;
     return respond(annotateGroup(clone(group), scope));
   }
+  if (scope === "demo") await deleteLiveGroup(groupId);
   state.groups.splice(index, 1);
   state.membership.groupIds = state.membership.groupIds.filter((id) => id !== groupId);
   return respond({ id: groupId, deleted: true as const });
@@ -150,6 +155,7 @@ export async function setGroupMembers(groupId: string, studentIds: string[], sco
   assertCanManageManual(group, scope);
   const unique = [...new Set(studentIds)];
   assertStudentsInStudio(unique, scope);
+  if (scope === "demo") await saveLiveGroup({ ...group, studentIds: unique }, false);
   group.studentIds = unique;
   return respond(annotateGroup(clone(group), scope));
 }
@@ -162,7 +168,10 @@ export async function addStudentToGroups(studentId: string, groupIds: string[], 
     const group = newsState[scope].groups.find((entry) => entry.id === groupId);
     if (!group) throw new Error("Group not found.");
     assertCanManageManual(group, scope);
-    if (!group.studentIds.includes(studentId)) group.studentIds.push(studentId);
+    if (!group.studentIds.includes(studentId)) {
+      if (scope === "demo") await saveLiveGroup({ ...group, studentIds: [...group.studentIds, studentId] }, false);
+      group.studentIds.push(studentId);
+    }
     updated.push(clone(group));
   }
   return respond(annotateGroups(updated, scope));
