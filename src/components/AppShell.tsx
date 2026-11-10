@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { BookOpen, MessageCircle, Receipt, Settings, Users, Megaphone } from "lucide-react";
+import { BookOpen, LifeBuoy, MessageCircle, Receipt, Settings, Users, Megaphone } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { chatThreadsQuery } from "@/lib/chat-queries";
@@ -81,6 +81,22 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
               <Switch id="larger-text" className="relative z-10" checked={largeText} onCheckedChange={setLargeText} />
               <Label htmlFor="larger-text" className="flex min-h-12 cursor-pointer items-center text-base before:absolute before:inset-0">{shellText("largerText")}</Label>
             </div>
+            {isTeacher && (
+              <Button asChild variant="outline" className="min-h-12">
+                <Link to="/support" activeProps={{ "aria-current": "page" }}>
+                  <LifeBuoy aria-hidden />
+                  Help
+                </Link>
+              </Button>
+            )}
+            {role === "new-teacher" && (
+              <Button asChild variant="outline" className="min-h-12">
+                <a href="/help" target="_blank" rel="noreferrer">
+                  <LifeBuoy aria-hidden />
+                  Help
+                </a>
+              </Button>
+            )}
             {!isLiveAuthConfigured() && (
               <label className="flex min-w-0 max-w-full items-center gap-2 text-base">
                 <span className="sr-only sm:not-sr-only sm:text-muted-foreground">{shellText("viewingAs")}</span>

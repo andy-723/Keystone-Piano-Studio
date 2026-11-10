@@ -1,40 +1,85 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { PublicPage, publicSupportEmail } from "@/components/public/PublicPage";
+import { HelpCentre } from "@/components/help/HelpCentre";
+import { Button } from "@/components/ui/button";
+import type { HelpLang } from "@/lib/help/articles";
+
+type HelpSearch = { for?: "studio" | "family" };
 
 export const Route = createFileRoute("/help")({
-  head: () => ({ meta: [{ title: "Help — Keystone Music HQ" }] }),
+  validateSearch: (search: Record<string, unknown>): HelpSearch =>
+    search["for"] === "family" || search["for"] === "studio" ? { for: search["for"] } : {},
+  head: () => ({ meta: [{ title: "Help centre — Keystone Music HQ" }] }),
   component: HelpPage,
 });
 
+/**
+ * Public help centre: no session, no studio data. Studios and families each get their own
+ * FAQ (families in English or Chinese) and a signed-out support form with a security check.
+ */
 function HelpPage() {
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: "/help" });
+  const audience = search.for ?? "studio";
+  const [lang, setLang] = useState<HelpLang>("en");
   const email = publicSupportEmail();
+
   return (
-    <PublicPage title="Help with signing in">
-      <h2 className="pt-2 text-2xl font-semibold">Ways to sign in</h2>
-      <p>
-        Use <strong>Continue with Google</strong> or <strong>Continue with Microsoft</strong> with
-        the same email address your studio has on file, or enter that email and we&apos;ll send you
-        a one-time sign-in link. Open the link on the same device.
-      </p>
-      <h2 className="pt-2 text-2xl font-semibold">Families and students</h2>
-      <p>
-        Families join from the invite email their teacher sends. If you can&apos;t sign in, check
-        you&apos;re using the email address the invite was sent to, or ask your teacher to resend
-        it.
-      </p>
-      <h2 className="pt-2 text-2xl font-semibold">Teachers and studio owners</h2>
-      <p>
-        Studio accounts use two-step sign-in. After signing in you&apos;ll be asked for the 6-digit
-        code from your authenticator app. If you&apos;ve lost your authenticator, use a recovery
-        code or contact us below.
-      </p>
-      <h2 className="pt-2 text-2xl font-semibold">Contact</h2>
-      <p>
-        Email{" "}
+    <PublicPage title={audience === "family" && lang === "zh-CN" ? "帮助中心" : "Help centre"}>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div role="group" aria-label="Who is this help for?" className="flex flex-wrap gap-2">
+          <Button
+            variant={audience === "studio" ? "default" : "outline"}
+            aria-pressed={audience === "studio"}
+            className="min-h-11"
+            onClick={() => void navigate({ search: { for: "studio" } })}
+          >
+            Studios and teachers
+          </Button>
+          <Button
+            variant={audience === "family" ? "default" : "outline"}
+            aria-pressed={audience === "family"}
+            className="min-h-11"
+            onClick={() => void navigate({ search: { for: "family" } })}
+          >
+            Families 家庭
+          </Button>
+        </div>
+        {audience === "family" && (
+          <div role="group" aria-label="Language" className="flex gap-1">
+            <Button
+              variant={lang === "en" ? "secondary" : "ghost"}
+              aria-pressed={lang === "en"}
+              onClick={() => setLang("en")}
+            >
+              EN
+            </Button>
+            <Button
+              variant={lang === "zh-CN" ? "secondary" : "ghost"}
+              aria-pressed={lang === "zh-CN"}
+              onClick={() => setLang("zh-CN")}
+            >
+              中文
+            </Button>
+          </div>
+        )}
+      </div>
+      <HelpCentre
+        key={audience}
+        audience={audience}
+        lang={lang}
+        mode="public"
+        supportEmail={email}
+      />
+      <p className="text-sm text-[#6B6052]">
+        {audience === "family" && lang === "zh-CN" ? "也可以发邮件至 " : "You can also email "}
         <a className="text-[#604A19] underline" href={`mailto:${email}`}>
           {email}
         </a>
-        . We never ask for your password or authenticator codes.
+        {audience === "family" && lang === "zh-CN"
+          ? "。我们绝不会索要您的密码或验证码。"
+          : ". We never ask for your password or authenticator codes."}
       </p>
     </PublicPage>
   );
