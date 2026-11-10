@@ -1,4 +1,3 @@
-import { render } from "@react-email/components";
 import { addDays, PROTOTYPE_TODAY } from "@/lib/calendar";
 import { bytesToHex, randomTokenBytes, sha256Hex } from "@/lib/onboarding/crypto";
 import { allStudentsAdult, buildSteps, goalLabel } from "@/lib/onboarding/steps";
@@ -13,9 +12,7 @@ import {
 } from "@/mocks/invitations";
 import { enrolmentDrafts } from "@/mocks/onboarding";
 import type { Intake, Lang } from "@/mocks/types";
-import { InviteEmail, invitePlainText, inviteSubject } from "@/emails/InviteEmail";
-import { ReminderEmail, reminderPlainText, reminderSubject } from "@/emails/ReminderEmail";
-import { getEmailProvider } from "@/server/email";
+import { emailProvider, loadInviteEmails } from "./_lazy";
 import { getServerEnv, isMockOnboarding } from "@/server/env";
 import { checkTokenLookupRate, isIpLocked, recordAuthFailure } from "@/server/rate-limit";
 import { verifyTurnstile } from "@/server/turnstile";
@@ -120,10 +117,19 @@ async function sendInviteEmail(
     expiresLabel,
     logoUrl: null as string | null,
   };
+  const {
+    InviteEmail,
+    invitePlainText,
+    inviteSubject,
+    ReminderEmail,
+    reminderPlainText,
+    reminderSubject,
+    renderEmailHtml,
+  } = await loadInviteEmails();
   const html =
     kind === "invite"
-      ? await render(InviteEmail(props))
-      : await render(ReminderEmail({ ...props, day: day ?? 3 }));
+      ? await renderEmailHtml(InviteEmail(props))
+      : await renderEmailHtml(ReminderEmail({ ...props, day: day ?? 3 }));
   const text =
     kind === "invite" ? invitePlainText(props) : reminderPlainText({ ...props, day: day ?? 3 });
   const subject =
@@ -131,7 +137,7 @@ async function sendInviteEmail(
       ? inviteSubject(invite.language, teacher.name, props.childNames)
       : reminderSubject(invite.language, teacher.name, props.childNames);
   const from = `${teacher.name} via Keystone Music HQ <${env.emailFrom.includes("<") ? env.emailFrom.replace(/^.*<([^>]+)>.*$/, "$1") : "invites@mail.example.com"}>`;
-  const provider = getEmailProvider();
+  const provider = await emailProvider();
   const result = await provider.send({
     to: invite.email,
     from,
@@ -702,7 +708,7 @@ export async function requestFamilyMagicLink(input: {
       throw new Error("Security check failed.");
     }
   }
-  const provider = getEmailProvider();
+  const provider = await emailProvider();
   const env = getServerEnv();
   await provider.send({
     to: input.email,

@@ -4,7 +4,7 @@ import { isMockOnboarding } from "./env";
 import { verifyAccessToken } from "./session";
 import { mockMemberships, mockPlatformStaff } from "./authz";
 import { ProblemError } from "./problem";
-import { getStudioAccess } from "./subscription-store";
+import { getStudioAccessMany } from "./subscription-store";
 import type { AccessLevel, SubscriptionPlan, SubscriptionStatus } from "@/lib/subscription";
 
 export type StudioAccessEntry = {
@@ -19,18 +19,18 @@ export type StudioAccessEntry = {
 async function studioAccessFor(
   entries: Array<{ studioId: string; role: StudioAccessEntry["role"] }>,
 ): Promise<StudioAccessEntry[]> {
-  const result: StudioAccessEntry[] = [];
-  for (const entry of entries) {
-    const { level, subscription } = await getStudioAccess(entry.studioId);
-    result.push({
+  // One read for all studios instead of one round trip per studio.
+  const access = await getStudioAccessMany(entries.map((entry) => entry.studioId));
+  return entries.map((entry) => {
+    const { level, subscription } = access.get(entry.studioId)!;
+    return {
       ...entry,
       level,
       status: subscription?.status ?? null,
       plan: subscription?.plan ?? null,
       accessEndsAt: subscription?.accessEndsAt ?? null,
-    });
-  }
-  return result;
+    };
+  });
 }
 
 export type ResolvedAccount = {

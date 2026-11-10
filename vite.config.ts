@@ -25,6 +25,11 @@ export default defineConfig({
       server: { entry: "server" },
     }),
     viteReact(),
-    nitro({ preset: "vercel" }),
+    nitro({
+      preset: "vercel",
+      // Run server functions in Sydney, next to Supabase (ap-southeast-2). Vercel's default
+      // region is Washington DC (iad1), which adds ~200 ms to every database round trip.
+      vercel: { functions: { regions: ["syd1"] } },
+    }),
   ],
 });

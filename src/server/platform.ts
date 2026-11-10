@@ -33,6 +33,29 @@ function assertAdminRate(ip?: string) {
   }
 }
 
+/** PostgREST embedded count: `studio_member(count)` comes back as `[{ count: n }]`. */
+function memberCount(embedded: unknown): number {
+  if (Array.isArray(embedded)) return Number(embedded[0]?.count ?? 0);
+  return 0;
+}
+
+/** Looks up auth emails for several users in parallel (the Admin API has no batch get). */
+async function ownerEmailsById(
+  supabase: ReturnType<typeof createServiceSupabase>,
+  userIds: string[],
+): Promise<Map<string, string>> {
+  const unique = [...new Set(userIds)];
+  const found = await Promise.all(
+    unique.map(async (id) => {
+      const { data } = await supabase.auth.admin.getUserById(id);
+      return [id, data.user?.email ?? null] as const;
+    }),
+  );
+  const result = new Map<string, string>();
+  for (const [id, email] of found) if (email) result.set(id, email);
+  return result;
+}
+
 async function gateAdmin(accessToken: string, ip?: string) {
   assertAdminRate(ip);
   const session = await verifyAccessToken(accessToken);
@@ -49,30 +72,35 @@ export const listStudiosFn = createServerFn({ method: "POST" })
     void session;
     // Service-key studio list — guarded by requirePlatformAdmin above.
     const supabase = createServiceSupabase();
+    // Member counts come back embedded in the same query (studio_member has a FK to studio).
     const { data: studios, error } = await supabase
       .from("studio")
-      .select("id, name, created_at, owner_user_id, timezone")
+      .select("id, name, created_at, owner_user_id, timezone, studio_member(count)")
       .order("created_at", { ascending: false });
     if (error) throw new ProblemError(500, "Studio list failed", error.message);
 
-    const rows = [];
-    for (const studio of studios ?? []) {
-      const { count } = await supabase
-        .from("studio_member")
-        .select("*", { count: "exact", head: true })
-        .eq("studio_id", studio.id);
-      let ownerEmail: string | null = null;
-      if (studio.owner_user_id) {
-        const { data: user } = await supabase.auth.admin.getUserById(studio.owner_user_id);
-        ownerEmail = user.user?.email ?? null;
-      }
-      const subscription = await getSubscriptionStore().get(studio.id as string);
-      rows.push({
+    // Subscriptions in one read and owner emails in parallel, instead of three sequential
+    // round trips per studio.
+    const list = studios ?? [];
+    const ownerIds = [
+      ...new Set(list.map((studio) => studio.owner_user_id as string | null).filter(Boolean)),
+    ] as string[];
+    const [subscriptions, ownerEmails] = await Promise.all([
+      getSubscriptionStore().getMany(list.map((studio) => studio.id as string)),
+      ownerEmailsById(supabase, ownerIds),
+    ]);
+
+    const rows = list.map((studio) => {
+      const ownerEmail = studio.owner_user_id
+        ? (ownerEmails.get(studio.owner_user_id as string) ?? null)
+        : null;
+      const subscription = subscriptions.get(studio.id as string) ?? null;
+      return {
         id: studio.id as string,
         name: studio.name as string,
         createdAt: studio.created_at as string,
         timezone: studio.timezone as string,
-        memberCount: count ?? 0,
+        memberCount: memberCount(studio.studio_member),
         ownerEmailMasked: ownerEmail ? maskEmail(ownerEmail) : "—",
         status: subscription ? statusLabel(subscription.status) : "No subscription row",
         subscriptionStatus: subscription?.status ?? null,
@@ -81,8 +109,8 @@ export const listStudiosFn = createServerFn({ method: "POST" })
         disputeHold: subscription?.disputeHold ?? false,
         access: accessLevel(subscription),
         paidThroughStripe: Boolean(subscription?.stripeSubscriptionId),
-      });
-    }
+      };
+    });
     return { studios: rows, mock: false as const };
   });
 
@@ -211,17 +239,20 @@ export const listPlatformStaffFn = createServerFn({ method: "POST" })
       .order("created_at", { ascending: true });
     if (error) throw new ProblemError(500, "Staff list failed", error.message);
 
-    const staff = [];
-    for (const row of rows ?? []) {
-      const { data: user } = await supabase.auth.admin.getUserById(row.user_id);
-      staff.push({
+    const emails = await ownerEmailsById(
+      supabase,
+      (rows ?? []).map((row) => row.user_id as string),
+    );
+    const staff = (rows ?? []).map((row) => {
+      const email = emails.get(row.user_id as string);
+      return {
         userId: row.user_id as string,
         role: row.role as string,
         displayName: row.display_name as string,
         createdAt: row.created_at as string,
-        emailMasked: user.user?.email ? maskEmail(user.user.email) : "—",
-      });
-    }
+        emailMasked: email ? maskEmail(email) : "—",
+      };
+    });
     return { staff, mock: false as const };
   });
 

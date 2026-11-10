@@ -1,5 +1,3 @@
-import { downloadTermsPdf } from "@/lib/terms-pdf";
-
 /** Prefer the API route; fall back to client-side pdf-lib if the request fails. */
 export async function downloadDocumentPdf(input: {
   title: string;
@@ -23,6 +21,8 @@ export async function downloadDocumentPdf(input: {
     anchor.click();
     URL.revokeObjectURL(url);
   } catch {
+    // pdf-lib is ~200 KB gzipped: load it only for this fallback, not with every page.
+    const { downloadTermsPdf } = await import("@/lib/terms-pdf");
     await downloadTermsPdf(input);
   }
 }
