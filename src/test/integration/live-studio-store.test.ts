@@ -21,6 +21,7 @@ import { getChatThreads, getOrCreateFamilyConversation, sendMessage } from "@/se
 import { getStudentCourse, saveStudentCourse } from "@/services/curriculum";
 import { copyTemplate } from "@/services/library";
 import { libraryState } from "@/mocks/library";
+import { createInvoice, getInvoices, issueCreditNote, recordPayment, sendInvoice } from "@/services/billing";
 
 const enabled = process.env.SUPABASE_LOCAL === "1";
 
@@ -138,6 +139,32 @@ describe.skipIf(!enabled)("live studio store (local Supabase)", () => {
     });
     await copyTemplate("courses", libraryState.demo.courses.find((c) => c.supplied)!.id);
 
+    const realFamilyId = families.find((f) => !f.isExample)!.id;
+    const draft = await createInvoice({
+      familyId: realFamilyId,
+      lines: [
+        {
+          description: "Lessons",
+          qty: 10,
+          unitCents: 4500,
+          taxCents: 0,
+          lineTotalCents: 45000,
+          studentId: realKid.id,
+          taxCode: "taxable",
+        },
+      ],
+    });
+    const sent = await sendInvoice(draft.id);
+    expect(sent?.number).toBe("INV-000001");
+    await recordPayment(draft.id, { method: "bank_transfer", amountCents: 20000 });
+    const note = await issueCreditNote({ familyId: realFamilyId, amountCents: 1000, reason: "Missed lesson" });
+    expect(note.number).toBe("CN-000001");
+    const second = await createInvoice({
+      familyId: realFamilyId,
+      lines: [{ description: "Book", qty: 1, unitCents: 2000, taxCents: 0, lineTotalCents: 2000 }],
+    });
+    expect((await sendInvoice(second.id))?.number).toBe("INV-000002");
+
     await deleteExampleStudent(students.find((s) => s.isExample)!.id);
     const after = await admin.from("student").select("first_name").eq("studio_id", studioId);
     expect(after.data?.map((k) => k.first_name)).toEqual(["Real"]);
@@ -165,6 +192,12 @@ describe.skipIf(!enabled)("live studio store (local Supabase)", () => {
     expect(threads.map((t) => t.latest?.body)).toContain("Welcome to the studio");
     expect((await getStudentCourse(realKid.id)).items.map((i) => i.title)).toEqual(["Minuet in G"]);
     expect(libraryState.demo.courses.filter((c) => !c.supplied)).toHaveLength(1);
+    const reloaded = await getInvoices();
+    expect(reloaded.map((i) => [i.number, i.status, i.paidCents])).toEqual([
+      ["INV-000001", "partially_paid", 20000],
+      ["INV-000002", "sent", 0],
+    ]);
+    expect(reloaded[0]!.lines.map((l) => l.description)).toEqual(["Lessons"]);
     setStudioStoreClientForTests(null);
   });
 });
