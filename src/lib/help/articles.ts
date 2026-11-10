@@ -227,7 +227,9 @@ Make-up credits are kept as a running balance for each family. When a make-up is
     body: {
       en: `Open Snapshot in the main menu. Owners and admins see a week or month view (Australia/Sydney) with tiles for revenue collected, overdue invoices, active students, incomplete enrolment invites, practice at risk, and lessons delivered.
 
-Tap a tile to open the list underneath. Export CSV exports the list you're looking at. Links at the bottom open Invoices and Students. Teachers without owner or admin access stay on Today and don't see whole-studio revenue.`,
+Tap a tile to open the list underneath. Export CSV exports the list you're looking at. Links at the bottom open Invoices and Students. Teachers without owner or admin access stay on Today and don't see whole-studio revenue.
+
+Below the snapshot, Tax Lite (Accounting Lite) shows year-to-date or full financial year (1 July–30 June) figures for myTax: billable client expenses you can pass on to a student's next draft invoice as a reimbursement, Stripe gross tuition versus merchant fees, home-studio hours at the ATO Fixed Rate of 70c per hour, an optional kilometre log, and an EOFY tax pack CSV. This is not a second Xero or full expense ledger.`,
     },
     keywords: [
       "snapshot",
@@ -240,6 +242,13 @@ Tap a tile to open the list underneath. Export CSV exports the list you're looki
       "export",
       "owner",
       "admin",
+      "tax",
+      "tax lite",
+      "stripe fees",
+      "pass-through",
+      "home studio",
+      "eofy",
+      "mytax",
     ],
   },
   {

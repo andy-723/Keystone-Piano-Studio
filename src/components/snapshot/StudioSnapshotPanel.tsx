@@ -22,6 +22,8 @@ import {
   type SnapshotTileId,
   type StudioSnapshot,
 } from "@/services/snapshot";
+import { TaxLitePanel } from "@/components/snapshot/TaxLitePanel";
+import type { TaxLiteFyKey } from "@/lib/tax-lite-fy";
 
 const TILES: Array<{
   id: SnapshotTileId;
@@ -136,9 +138,16 @@ const LESSON_LABEL: Record<string, string> = {
   scheduled: "Scheduled",
 };
 
-export function StudioSnapshotPanel({ range, onRangeChange }: {
+export function StudioSnapshotPanel({
+  range,
+  onRangeChange,
+  taxFy,
+  onTaxFyChange,
+}: {
   range: SnapshotRangeKey;
   onRangeChange: (range: SnapshotRangeKey) => void;
+  taxFy: TaxLiteFyKey;
+  onTaxFyChange: (fy: TaxLiteFyKey) => void;
 }) {
   const { data } = useSuspenseQuery(studioSnapshotQuery(range));
   const [drill, setDrill] = useState<SnapshotTileId>("revenue");
@@ -401,6 +410,8 @@ export function StudioSnapshotPanel({ range, onRangeChange }: {
           Export CSV for this list
         </Button>
       </footer>
+
+      <TaxLitePanel fy={taxFy} onFyChange={onTaxFyChange} />
     </div>
   );
 }

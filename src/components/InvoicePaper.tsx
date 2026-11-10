@@ -103,7 +103,14 @@ export function InvoicePaper({
       </div>
       {invoice.lines.map((line, index) => (
         <div key={index} className="grid gap-3 border-b border-border py-5 md:grid-cols-[minmax(0,1fr)_4rem_6rem_7rem]">
-          <p className="break-words text-lg">{line.description}</p>
+          <p className="break-words text-lg">
+            {line.description}
+            {line.lineKind === "reimbursement" && !/reimbursement/i.test(line.description) ? (
+              <span className="mt-1 block text-base font-normal text-muted-foreground">
+                Reimbursement (pass-through)
+              </span>
+            ) : null}
+          </p>
           <p className="text-base md:text-right">
             <span className="md:hidden">Lessons: </span>
             {line.qty}
