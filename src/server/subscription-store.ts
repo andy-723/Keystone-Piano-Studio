@@ -15,6 +15,8 @@ import {
  */
 export interface SubscriptionStore {
   get(studioId: string): Promise<StudioSubscription | null>;
+  /** One read for many studios (admin studio list, account resolution). */
+  getMany(studioIds: string[]): Promise<Map<string, StudioSubscription>>;
   findByStripe(ids: {
     customerId?: string | null | undefined;
     subscriptionId?: string | null | undefined;
@@ -56,6 +58,14 @@ const mockStore: SubscriptionStore = {
   async get(studioId) {
     const row = mockSubscriptions.get(studioId);
     return row ? { ...row } : null;
+  },
+  async getMany(studioIds) {
+    const result = new Map<string, StudioSubscription>();
+    for (const id of studioIds) {
+      const row = mockSubscriptions.get(id);
+      if (row) result.set(id, { ...row });
+    }
+    return result;
   },
   async findByStripe({ customerId, subscriptionId }) {
     for (const row of mockSubscriptions.values()) {
@@ -158,6 +168,18 @@ const supabaseStore: SubscriptionStore = {
     if (error) throw new ProblemError(500, "Subscription lookup failed", error.message);
     return data ? fromRow(data as Row) : null;
   },
+  async getMany(studioIds) {
+    const result = new Map<string, StudioSubscription>();
+    const ids = [...new Set(studioIds)];
+    if (ids.length === 0) return result;
+    const { data, error } = await createServiceSupabase()
+      .from("studio_subscription")
+      .select(COLUMNS)
+      .in("studio_id", ids);
+    if (error) throw new ProblemError(500, "Subscription lookup failed", error.message);
+    for (const row of (data ?? []) as Row[]) result.set(row.studio_id, fromRow(row));
+    return result;
+  },
   async findByStripe({ customerId, subscriptionId }) {
     const supabase = createServiceSupabase();
     if (subscriptionId) {
@@ -228,4 +250,22 @@ export async function getStudioAccess(
   const subscription = await getSubscriptionStore().get(studioId);
   if (!subscription && isMockOnboarding()) return { level: "full", subscription: null };
   return { level: accessLevel(subscription, now), subscription };
+}
+
+/** getStudioAccess for several studios in one database read. */
+export async function getStudioAccessMany(
+  studioIds: string[],
+  now: Date = new Date(),
+): Promise<Map<string, { level: AccessLevel; subscription: StudioSubscription | null }>> {
+  const subscriptions = await getSubscriptionStore().getMany(studioIds);
+  const result = new Map<string, { level: AccessLevel; subscription: StudioSubscription | null }>();
+  for (const studioId of studioIds) {
+    const subscription = subscriptions.get(studioId) ?? null;
+    if (!subscription && isMockOnboarding()) {
+      result.set(studioId, { level: "full", subscription: null });
+    } else {
+      result.set(studioId, { level: accessLevel(subscription, now), subscription });
+    }
+  }
+  return result;
 }

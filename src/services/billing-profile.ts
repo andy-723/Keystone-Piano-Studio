@@ -1,14 +1,10 @@
-import {
-  billingAuditLog,
-  billingProfileState,
-  seedBillingExtras,
-} from "@/mocks/billing-profile";
+import { billingAuditLog, billingProfileState, seedBillingExtras } from "@/mocks/billing-profile";
 import type { IntegrationScope } from "@/mocks/integrations";
 import { newsState } from "@/mocks/news";
 import { studio, teacher } from "@/mocks/data";
 import type { StudioBillingProfile, StudioPayTo } from "@/mocks/types";
 import { melbourneIso, PROTOTYPE_TODAY } from "@/lib/calendar";
-import { getEmailProvider } from "@/server/email";
+import { emailProvider } from "./_lazy";
 import { payToChangedEmail } from "@/server/email/templates/billing";
 import { integrationState } from "@/mocks/integrations";
 import { respond } from "./_delay";
@@ -22,7 +18,10 @@ function profile(scope: IntegrationScope): StudioBillingProfile {
 }
 
 /** Sync live studio identity fields onto the demo billing profile on every read. */
-function syncFromStudio(scope: IntegrationScope, current: StudioBillingProfile): StudioBillingProfile {
+function syncFromStudio(
+  scope: IntegrationScope,
+  current: StudioBillingProfile,
+): StudioBillingProfile {
   if (scope !== "demo") return { ...current, payTo: { ...current.payTo } };
   const synced: StudioBillingProfile = {
     ...current,
@@ -65,7 +64,9 @@ export function readBillingProfile(scope: IntegrationScope = "demo"): StudioBill
   return { ...synced, payTo: { ...synced.payTo } };
 }
 
-export async function getBillingProfile(scope: IntegrationScope = "demo"): Promise<StudioBillingProfile> {
+export async function getBillingProfile(
+  scope: IntegrationScope = "demo",
+): Promise<StudioBillingProfile> {
   return respond(readBillingProfile(scope));
 }
 
@@ -77,9 +78,12 @@ export async function saveBillingProfile(
   if (current.numberingLockedAt) {
     if (
       (patch.invoicePrefix !== undefined && patch.invoicePrefix !== current.invoicePrefix) ||
-      (patch.creditNotePrefix !== undefined && patch.creditNotePrefix !== current.creditNotePrefix) ||
-      (patch.nextInvoiceNumber !== undefined && patch.nextInvoiceNumber !== current.nextInvoiceNumber) ||
-      (patch.nextCreditNoteNumber !== undefined && patch.nextCreditNoteNumber !== current.nextCreditNoteNumber)
+      (patch.creditNotePrefix !== undefined &&
+        patch.creditNotePrefix !== current.creditNotePrefix) ||
+      (patch.nextInvoiceNumber !== undefined &&
+        patch.nextInvoiceNumber !== current.nextInvoiceNumber) ||
+      (patch.nextCreditNoteNumber !== undefined &&
+        patch.nextCreditNoteNumber !== current.nextCreditNoteNumber)
     ) {
       throw new Error("Invoice numbering is locked after the first send.");
     }
@@ -124,7 +128,8 @@ export async function savePayTo(
 ): Promise<StudioBillingProfile> {
   if (mfaCode !== MFA_CODE) throw new Error("Enter the six-digit code from your authenticator.");
   const membership = newsState[scope].membership;
-  if (membership.role !== "owner") throw new Error("Only the studio owner can change pay-to details.");
+  if (membership.role !== "owner")
+    throw new Error("Only the studio owner can change pay-to details.");
   if (payTo.bsb && !validateBsb(payTo.bsb)) throw new Error("Enter a valid 6-digit BSB.");
   if (payTo.accountNumber && !validateAccountNumber(payTo.accountNumber)) {
     throw new Error("Enter a valid account number (6–10 digits).");
@@ -146,7 +151,8 @@ export async function savePayTo(
     detail,
   });
 
-  const ownerEmail = scope === "demo" ? studio.email ?? teacher.name : studio.email ?? "owner@studio.example";
+  const ownerEmail =
+    scope === "demo" ? (studio.email ?? teacher.name) : (studio.email ?? "owner@studio.example");
   const from = `${studio.name} <studio@keystone.example>`;
   const mail = payToChangedEmail({
     studioName: current.tradingName || current.legalName || studio.name,
@@ -155,7 +161,9 @@ export async function savePayTo(
     accountMasked: masked || "not set",
     ...(nextPayTo.payId ? { payId: nextPayTo.payId } : {}),
   });
-  await getEmailProvider().send({
+  await (
+    await emailProvider()
+  ).send({
     to: ownerEmail.includes("@") ? ownerEmail : "owner@studio.example",
     from,
     subject: mail.subject,

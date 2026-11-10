@@ -20,6 +20,8 @@ import {
   runSubscriptionEnforcement,
 } from "@/server/subscription";
 import {
+  getStudioAccess,
+  getStudioAccessMany,
   getSubscriptionStore,
   mockSubscription,
   resetMockSubscriptions,
@@ -454,5 +456,25 @@ describe("sign-in access gate", () => {
         ],
       }),
     ).toEqual({ kind: "paused", ownerStudioId: "a", ended: true });
+  });
+});
+
+describe("batched studio access (speed fix)", () => {
+  it("matches getStudioAccess for every studio in one call", async () => {
+    resetMockSubscriptions([
+      mockSubscription("a", { status: "active" }),
+      mockSubscription("b", { status: "suspended", reminderSentAt: "2026-10-01T00:00:00Z" }),
+    ]);
+    const ids = ["a", "b", "no-row"];
+    const many = await getStudioAccessMany(ids, NOW);
+    expect([...many.keys()]).toEqual(ids);
+    for (const id of ids) {
+      expect(many.get(id)).toEqual(await getStudioAccess(id, NOW));
+    }
+    resetMockSubscriptions();
+  });
+
+  it("returns an empty map for no studios", async () => {
+    expect((await getSubscriptionStore().getMany([])).size).toBe(0);
   });
 });

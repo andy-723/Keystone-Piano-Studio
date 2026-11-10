@@ -20,8 +20,7 @@ import {
   allocateInvoiceNumber,
   readBillingProfile,
 } from "./billing-profile";
-import { renderInvoicePdf } from "@/lib/invoice-pdf";
-import { getEmailProvider } from "@/server/email";
+import { emailProvider, renderInvoicePdf } from "./_lazy";
 import {
   creditNoteEmail,
   invoiceSentEmail,
@@ -487,7 +486,7 @@ async function issueInvoice(id: string, opts: { notify: boolean }): Promise<Invo
               },
             ]
           : undefined;
-      await getEmailProvider().send({
+      await (await emailProvider()).send({
         to: guardian.email,
         from: `${studio.name} <studio@keystone.example>`,
         subject: mail.subject,
@@ -582,7 +581,7 @@ export async function recordPayment(
         methodLabel: method,
         receivedOn: payment.receivedOn,
       });
-      await getEmailProvider().send({
+      await (await emailProvider()).send({
         to: guardian.email,
         from: `${studio.name} <studio@keystone.example>`,
         subject: mail.subject,
@@ -691,7 +690,7 @@ export async function issueCreditNote(input: {
       amountCents: note.amountCents,
       reason: note.reason,
     });
-    await getEmailProvider().send({
+    await (await emailProvider()).send({
       to: guardian.email,
       from: `${studio.name} <studio@keystone.example>`,
       subject: mail.subject,

@@ -6,7 +6,7 @@ import { respond } from "./_delay";
 import { createInvoice, enrichInvoice, getInvoice, sendInvoice } from "./billing";
 import { readBillingProfile } from "./billing-profile";
 import { lateFeeForInvoice } from "./terms";
-import { getEmailProvider } from "@/server/email";
+import { emailProvider } from "./_lazy";
 import {
   lateFeeNoticeEmail,
   pauseNoticeEmail,
@@ -84,7 +84,7 @@ export async function runBillingSchedule(scope: IntegrationScope = "demo", today
           dueDate: enriched.dueDate,
           kind: "pre_due",
         });
-        await getEmailProvider().send({
+        await (await emailProvider()).send({
           to: email,
           from: `${studio.name} <studio@keystone.example>`,
           subject: mail.subject,
@@ -107,7 +107,7 @@ export async function runBillingSchedule(scope: IntegrationScope = "demo", today
           dueDate: enriched.dueDate,
           kind: "overdue",
         });
-        await getEmailProvider().send({
+        await (await emailProvider()).send({
           to: email,
           from: `${studio.name} <studio@keystone.example>`,
           subject: mail.subject,
@@ -136,7 +136,7 @@ export async function runBillingSchedule(scope: IntegrationScope = "demo", today
           invoiceNumber: enriched.number ?? enriched.id,
           feeCents,
         });
-        await getEmailProvider().send({
+        await (await emailProvider()).send({
           to: email,
           from: `${studio.name} <studio@keystone.example>`,
           subject: mail.subject,
@@ -228,7 +228,7 @@ export async function sendPauseNotice(invoiceId: string) {
       familyName: familyName(invoice.familyId),
       invoiceNumber: invoice.number ?? invoice.id,
     });
-    await getEmailProvider().send({
+    await (await emailProvider()).send({
       to: email,
       from: `${studio.name} <studio@keystone.example>`,
       subject: mail.subject,

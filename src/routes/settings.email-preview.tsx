@@ -1,7 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { render } from "@react-email/components";
-import { InviteEmail, inviteSubject } from "@/emails/InviteEmail";
 import { teacher, studio, families, students } from "@/mocks/data";
 
 export const Route = createFileRoute("/settings/email-preview")({
@@ -12,6 +10,12 @@ export const Route = createFileRoute("/settings/email-preview")({
 });
 
 async function loadPreview() {
+  // Route loaders stay in the main bundle, so the React Email renderer (with prettier) is
+  // imported here on demand instead of at the top of the file.
+  const [{ render }, { InviteEmail, inviteSubject }] = await Promise.all([
+    import("@react-email/components"),
+    import("@/emails/InviteEmail"),
+  ]);
   const family = families[0]!;
   const kids = students.filter((s) => s.familyId === family.id);
   const childNames = kids.map((k) => k.firstName).join(" and ");
