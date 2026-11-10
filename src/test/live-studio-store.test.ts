@@ -13,6 +13,8 @@ import { newsState } from "@/mocks/news";
 import { studentCourses } from "@/mocks/curriculum";
 import { clientNotes } from "@/mocks/notes";
 import { opusInvoices } from "@/mocks/plans";
+import { taxLiteExpenses } from "@/mocks/tax-lite";
+import { proCfoTeachers, proCfoXeroQueue } from "@/mocks/pro-cfo";
 import {
   chooseStudioWorkspace,
   loadLiveStudio,
@@ -250,6 +252,9 @@ describe("live studio data (0011)", () => {
       clientNotes,
       newsState.demo.posts,
       opusInvoices,
+      taxLiteExpenses,
+      proCfoTeachers,
+      proCfoXeroQueue,
     ]) {
       expect(list).toHaveLength(0);
     }

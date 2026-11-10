@@ -220,6 +220,47 @@ Make-up credits are kept as a running balance for each family. When a make-up is
     ],
   },
   {
+    id: "studio-snapshot",
+    audience: "studio",
+    topic: "using-the-app",
+    title: { en: "Studio snapshot for owners and admins" },
+    body: {
+      en: `Open Snapshot in the main menu. Owners and admins see a week or month view (Australia/Sydney) with tiles for revenue collected, overdue invoices, active students, incomplete enrolment invites, practice at risk, and lessons delivered.
+
+Tap a tile to open the list underneath. Export CSV exports the list you're looking at. Links at the bottom open Invoices and Students. Teachers without owner or admin access stay on Today and don't see whole-studio revenue.
+
+Below the snapshot, Pro CFO shows a cash and margin ribbon (net after Stripe fees, studio margin after teacher splits or Tax Lite expenses, unearned prepaid tuition, and a Xero + GST health badge), earned versus collected with at-risk students and make-up credit dollar liability, a Xero reconciliation queue with retry, teacher remittance export, overdue chase into family chat with a payment link, and a rolling 12-month GST radar versus $75k. Mock Xero is fine when live sync is off. This is not two-way Xero, BAS lodging or a general ledger.
+
+Tax Lite (Accounting Lite) shows year-to-date or full financial year (1 July–30 June) figures for myTax: billable client expenses you can pass on to a student's next draft invoice as a reimbursement, Stripe gross tuition versus merchant fees, home-studio hours at the ATO Fixed Rate of 70c per hour, an optional kilometre log, and an EOFY tax pack CSV.`,
+    },
+    keywords: [
+      "snapshot",
+      "dashboard",
+      "report",
+      "revenue",
+      "overdue",
+      "practice",
+      "csv",
+      "export",
+      "owner",
+      "admin",
+      "tax",
+      "tax lite",
+      "stripe fees",
+      "pass-through",
+      "home studio",
+      "eofy",
+      "mytax",
+      "pro cfo",
+      "xero",
+      "gst",
+      "unearned",
+      "makeup",
+      "churn",
+      "margin",
+    ],
+  },
+  {
     id: "studio-calendar",
     audience: "studio",
     topic: "lessons-teaching",
