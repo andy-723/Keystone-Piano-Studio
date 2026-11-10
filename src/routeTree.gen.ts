@@ -21,6 +21,7 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as StudentsRouteImport } from './routes/students'
 import { Route as StudioEnquiryRouteImport } from './routes/studio-enquiry'
+import { Route as SupportRouteImport } from './routes/support'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
@@ -109,6 +110,11 @@ const StudentsRoute = StudentsRouteImport.update({
 const StudioEnquiryRoute = StudioEnquiryRouteImport.update({
   id: '/studio-enquiry',
   path: '/studio-enquiry',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SupportRoute = SupportRouteImport.update({
+  id: '/support',
+  path: '/support',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TermsRoute = TermsRouteImport.update({
@@ -271,6 +277,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRouteWithChildren
   '/students': typeof StudentsRouteWithChildren
   '/studio-enquiry': typeof StudioEnquiryRoute
+  '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
   '/api/health': typeof ApiHealthRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -310,6 +317,7 @@ export interface FileRoutesByTo {
   '/news': typeof NewsRoute
   '/privacy': typeof PrivacyRoute
   '/studio-enquiry': typeof StudioEnquiryRoute
+  '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
   '/api/health': typeof ApiHealthRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -354,6 +362,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRouteWithChildren
   '/students': typeof StudentsRouteWithChildren
   '/studio-enquiry': typeof StudioEnquiryRoute
+  '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
   '/api/health': typeof ApiHealthRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -399,6 +408,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/students'
     | '/studio-enquiry'
+    | '/support'
     | '/terms'
     | '/api/health'
     | '/auth/callback'
@@ -438,6 +448,7 @@ export interface FileRouteTypes {
     | '/news'
     | '/privacy'
     | '/studio-enquiry'
+    | '/support'
     | '/terms'
     | '/api/health'
     | '/auth/callback'
@@ -481,6 +492,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/students'
     | '/studio-enquiry'
+    | '/support'
     | '/terms'
     | '/api/health'
     | '/auth/callback'
@@ -525,6 +537,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRouteWithChildren
   StudentsRoute: typeof StudentsRouteWithChildren
   StudioEnquiryRoute: typeof StudioEnquiryRoute
+  SupportRoute: typeof SupportRoute
   TermsRoute: typeof TermsRoute
   ApiHealthRoute: typeof ApiHealthRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
@@ -625,6 +638,13 @@ declare module '@tanstack/react-router' {
       path: '/studio-enquiry'
       fullPath: '/studio-enquiry'
       preLoaderRoute: typeof StudioEnquiryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/support': {
+      id: '/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof SupportRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/terms': {
@@ -914,6 +934,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRouteWithChildren,
   StudentsRoute: StudentsRouteWithChildren,
   StudioEnquiryRoute: StudioEnquiryRoute,
+  SupportRoute: SupportRoute,
   TermsRoute: TermsRoute,
   ApiHealthRoute: ApiHealthRoute,
   AuthCallbackRoute: AuthCallbackRoute,

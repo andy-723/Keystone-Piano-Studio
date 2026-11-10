@@ -1,7 +1,7 @@
 import { Suspense, useState } from "react";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { getReacceptanceStatus } from "@/services/terms";
-import { Home, MessageCircle, ChartNoAxesColumnIncreasing, Receipt, Megaphone } from "lucide-react";
+import { Home, MessageCircle, ChartNoAxesColumnIncreasing, Receipt, Megaphone, LifeBuoy } from "lucide-react";
 import { FamilyNews } from './StudioNews';
 import { newsText } from '@/i18n/news';
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,9 @@ import { ReacceptanceCard } from "@/components/terms/ReacceptanceCard";
 import { BrandLogo } from "@/components/BrandLogo";
 import { teacherProfileQuery } from "@/lib/community-queries";
 import { isLiveAuthConfigured } from "@/lib/auth-client";
+import { HelpCentre } from "@/components/help/HelpCentre";
+import { helpText } from "@/lib/help/ui-text";
+import { publicSupportEmail } from "@/components/public/PublicPage";
 import { TourHelpButton, TourProvider } from "@/components/tour/Tour";
 import { FAMILY_TOUR } from "@/lib/tour-steps";
 
@@ -26,7 +29,7 @@ export function ParentPortal() {
 function ParentViews() {
   const { t, lang, setLang } = useParentLanguage();
   const { data: profile } = useSuspenseQuery(teacherProfileQuery());
-  const [view, setView] = useState<"news" | "home" | "chat" | "progress" | "invoices">("news");
+  const [view, setView] = useState<"news" | "home" | "chat" | "progress" | "invoices" | "help">("news");
   const [quote, setQuote] = useState('');
   const [deferReaccept, setDeferReaccept] = useState(false);
   // Same query as ReacceptanceCard: a terms update comes before the tour.
@@ -61,6 +64,9 @@ function ParentViews() {
             <p className="mt-1 text-base text-muted-foreground">{t("family")}</p>
           </div>
           <div className="flex items-center gap-2">
+            <Button variant={view === "help" ? "secondary" : "outline"} aria-pressed={view === "help"} className="min-h-11" onClick={() => { setView("help"); setQuote(''); window.scrollTo({ top: 0 }); }}>
+              <LifeBuoy aria-hidden />{helpText(lang, "help")}
+            </Button>
             <TourHelpButton />
             <div
               role="group"
@@ -93,7 +99,12 @@ function ParentViews() {
           </Suspense>
         )}
         <Suspense fallback={<p className="py-8 text-base">{t("loading")}</p>}>
-          {view === 'news' ? <FamilyNews onMessage={openNewsChat} /> : view === "home" ? (
+          {view === "help" ? (
+            <div>
+              <h2 className="mb-4 font-display text-2xl font-semibold">{helpText(lang, "helpCentre")}</h2>
+              <HelpCentre audience="family" lang={lang} mode={isLiveAuthConfigured() ? "live" : "demo"} supportEmail={publicSupportEmail()} onMessageTeacher={(prefill) => { setQuote(prefill); setView("chat"); window.scrollTo({ top: 0 }); }} />
+            </div>
+          ) : view === 'news' ? <FamilyNews onMessage={openNewsChat} /> : view === "home" ? (
             <ParentHome openNewsChat={openNewsChat} openChat={() => { setQuote(''); setView("chat"); }} openInvoice={(id) => { setInvoiceId(id); setView("invoices"); }} />
           ) : view === "chat" ? (
             <ParentChat initialText={quote} />

@@ -13,13 +13,18 @@ import {
   resetMfaFn,
 } from "@/server/platform";
 import { setStudioAccessFn } from "@/server/subscription";
+import {
+  listSupportRequestsFn,
+  setSupportRequestStatusFn,
+  type SupportListRow,
+} from "@/server/support";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
   head: () => ({ meta: [{ title: "Keystone admin — Keystone Music HQ" }] }),
 });
 
-type Tab = "studios" | "new" | "team" | "audit";
+type Tab = "studios" | "new" | "support" | "team" | "audit";
 
 function AdminPage() {
   const live = isLiveAuthConfigured();
@@ -75,6 +80,7 @@ function AdminPage() {
           [
             ["studios", "Studios"],
             ["new", "New studio"],
+            ["support", "Support"],
             ["team", "Team"],
             ["audit", "Audit"],
           ] as const
@@ -103,6 +109,7 @@ function AdminPage() {
         {!token && <p className="text-sm text-[#5A4F43]">Checking session…</p>}
         {token && tab === "studios" && <StudiosTab token={token} onError={setError} />}
         {token && tab === "new" && <NewStudioTab token={token} onError={setError} />}
+        {token && tab === "support" && <SupportTab token={token} onError={setError} />}
         {token && tab === "team" && <TeamTab token={token} onError={setError} />}
         {token && tab === "audit" && <AuditTab token={token} onError={setError} />}
         <p className="mt-8 text-sm text-[#5A4F43]">
@@ -723,6 +730,76 @@ function AuditTab({ token, onError }: { token: string; onError: (m: string | nul
           Next
         </button>
       </div>
+    </div>
+  );
+}
+
+/** Support requests from the help centre. Each one was also emailed to SUPPORT_EMAIL. */
+function SupportTab({ token, onError }: { token: string; onError: (m: string | null) => void }) {
+  const [status, setStatus] = useState<"open" | "closed" | "all">("open");
+  const [rows, setRows] = useState<SupportListRow[]>([]);
+  const [reload, setReload] = useState(0);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const result = await listSupportRequestsFn({ data: { accessToken: token, status } });
+        setRows(result.rows);
+        onError(null);
+      } catch (e) {
+        onError(e instanceof Error ? e.message : "Support requests failed to load");
+      }
+    })();
+  }, [token, status, reload, onError]);
+
+  async function setRowStatus(id: string, next: "open" | "closed") {
+    try {
+      await setSupportRequestStatusFn({ data: { accessToken: token, id, status: next } });
+      setReload((n) => n + 1);
+    } catch (e) {
+      onError(e instanceof Error ? e.message : "Update failed");
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <select
+          value={status}
+          onChange={(e) => setStatus(e.target.value as typeof status)}
+          className="min-h-11 rounded-[10px] border border-[#CDBF9F] bg-[#FBF7EE] px-3 text-sm"
+          aria-label="Status"
+        >
+          <option value="open">Open</option>
+          <option value="closed">Closed</option>
+          <option value="all">All</option>
+        </select>
+        <p className="text-sm text-[#5A4F43]">Reply from your email: each request was sent there with Reply-To set to the requester.</p>
+      </div>
+      {rows.length === 0 && <p className="text-sm text-[#5A4F43]">No support requests.</p>}
+      {rows.map((row) => (
+        <article key={row.id} className="rounded-[16px] border border-[#D9C79E] bg-[#FBF7EE] p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="font-semibold">
+              {row.urgent && <span className="mr-2 rounded bg-[#8B1E1E] px-2 py-0.5 text-xs text-white">URGENT</span>}
+              {row.reference} · {row.subject}
+            </p>
+            <button
+              type="button"
+              className="min-h-11 rounded-[10px] border border-[#CDBF9F] bg-white px-4 text-sm"
+              onClick={() => void setRowStatus(row.id, row.status === "open" ? "closed" : "open")}
+            >
+              {row.status === "open" ? "Close" : "Reopen"}
+            </button>
+          </div>
+          <p className="mt-1 text-xs text-[#5A4F43]">
+            {new Date(row.createdAt).toLocaleString("en-AU")} · {row.audience} · {row.category} · {row.role} · {row.requesterEmail}
+            {row.studioId ? ` · studio ${row.studioId}` : ""}
+            {row.emailSentAt ? "" : " · email NOT sent"}
+          </p>
+          <p className="mt-3 whitespace-pre-wrap text-sm">{row.message}</p>
+        </article>
+      ))}
     </div>
   );
 }
