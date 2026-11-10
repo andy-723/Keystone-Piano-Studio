@@ -117,9 +117,9 @@ alter table public.lesson_series enable row level security;
 alter table public.lesson_exception enable row level security;
 alter table public.calendar_connection enable row level security;
 
-revoke all on table public.lesson_series from anon, public;
-revoke all on table public.lesson_exception from anon, public;
-revoke all on table public.calendar_connection from anon, public;
+revoke all on table public.lesson_series from anon, authenticated, public;
+revoke all on table public.lesson_exception from anon, authenticated, public;
+revoke all on table public.calendar_connection from anon, authenticated, public;
 
 grant select, insert, update, delete on table public.lesson_series to authenticated;
 grant select, insert, update, delete on table public.lesson_exception to authenticated;
