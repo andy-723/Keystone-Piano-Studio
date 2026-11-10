@@ -3,7 +3,8 @@ import { useState } from "react";
 import { MfaCodeInputs } from "@/components/auth/MfaCodeInputs";
 import { getAuthClient } from "@/lib/auth-client";
 import { safeNextPath } from "@/lib/auth-paths";
-import { destinationForAccount } from "@/lib/post-login";
+import { rememberVerifiedAccess } from "@/lib/live-auth-cache";
+import { decideStudioAccessGate, destinationForAccount } from "@/lib/post-login";
 import { resolveAccountFn } from "@/server/account";
 
 export const Route = createFileRoute("/auth/mfa")({
@@ -61,6 +62,8 @@ function MfaChallengePage() {
       return;
     }
     const account = await resolveAccountFn({ data: { accessToken: token } });
+    // aal2 session is verified — seed the guard cache so /admin (or studio) skips a second round-trip.
+    rememberVerifiedAccess(token, decideStudioAccessGate(account));
     window.location.replace(destinationForAccount(account, safeNextPath(next)));
   }
 

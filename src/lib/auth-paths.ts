@@ -39,6 +39,18 @@ export function isAuthExemptPath(pathname: string): boolean {
 }
 
 /**
+ * Routes that render without the teacher/parent AppShell and do not need studio fixture priming.
+ * Includes platform admin (`/admin`) so staff land without waiting on mock studio/parent loaders.
+ */
+export function isFocusFlowPath(pathname: string): boolean {
+  if (pathname === "/login" || pathname === "/studio-enquiry" || pathname === "/admin") return true;
+  if (pathname.startsWith("/join/") || pathname.startsWith("/intake/") || pathname.startsWith("/auth/")) {
+    return true;
+  }
+  return isPublicPagePath(pathname);
+}
+
+/**
  * Email link types our branded Supabase Auth templates send to /auth/callback
  * as ?token_hash=…&type=…. Anything else is ignored.
  */

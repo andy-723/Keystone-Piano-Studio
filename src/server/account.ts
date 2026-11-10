@@ -93,6 +93,25 @@ export async function resolveAccountForUser(
     role: row.role as string,
   }));
   const guardianFamilyIds = (guardianRes.data ?? []).map((row) => row.family_id as string);
+  const platformStaff = staffRes.data
+    ? {
+        role: staffRes.data.role as "platform_admin" | "support",
+        displayName: staffRes.data.display_name as string,
+      }
+    : null;
+
+  // Platform-only staff never hit subscription gates — skip studio access lookups.
+  if (platformStaff && memberships.length === 0 && guardianFamilyIds.length === 0) {
+    return {
+      userId,
+      email,
+      aal,
+      studioAccess: [],
+      platformStaff,
+      memberships,
+      guardianFamilyIds,
+    };
+  }
 
   // Guardian families → their studios (service-key read, same verified user).
   let guardianStudios: string[] = [];
@@ -120,12 +139,7 @@ export async function resolveAccountForUser(
     email,
     aal,
     studioAccess,
-    platformStaff: staffRes.data
-      ? {
-          role: staffRes.data.role as "platform_admin" | "support",
-          displayName: staffRes.data.display_name as string,
-        }
-      : null,
+    platformStaff,
     memberships,
     guardianFamilyIds,
   };

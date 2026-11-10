@@ -21,15 +21,8 @@ import appCss from "../styles.css?url";
 import { AppSettingsProvider, useAppSettings } from "@/lib/app-settings";
 import { AppShell } from "@/components/AppShell";
 import { LiveAuthGuard } from "@/components/LiveAuthGuard";
-import { isPublicPagePath } from "@/lib/auth-paths";
+import { isFocusFlowPath } from "@/lib/auth-paths";
 import { ParentPortal } from "@/components/ParentPortal";
-import {
-  parentSessionQuery,
-  parentHomeQuery,
-  parentChatQuery,
-  parentProgressQuery,
-  parentInvoicesQuery,
-} from "@/lib/parent-queries";
 import { Toaster } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
 import { getStudio } from "@/services/roster";
@@ -94,18 +87,16 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  loader: async ({ context }) => {
+  loader: async ({ context, location }) => {
+    // Admin, auth, join/intake and public pages do not need studio/parent fixture priming.
+    // Parent portal queries load when ParentPortal mounts (avoids ~0.8s mock delay on every boot).
+    if (isFocusFlowPath(location.pathname)) return;
     await Promise.all([
       context.queryClient.ensureQueryData(teacherProfileQuery()),
       context.queryClient.ensureQueryData(teacherProfileQuery("new-studio")),
       context.queryClient.ensureQueryData(planBillingQuery()),
       context.queryClient.ensureQueryData(planBillingQuery("new-studio")),
       context.queryClient.ensureQueryData(studioQuery),
-      context.queryClient.ensureQueryData(parentSessionQuery),
-      context.queryClient.ensureQueryData(parentHomeQuery),
-      context.queryClient.ensureQueryData(parentChatQuery),
-      context.queryClient.ensureQueryData(parentProgressQuery),
-      context.queryClient.ensureQueryData(parentInvoicesQuery),
     ]);
   },
   head: () => ({
@@ -180,17 +171,9 @@ function RootComponent() {
 
 function RoleGate() {
   const { role } = useAppSettings();
-  const { data: studio } = useSuspenseQuery(studioQuery);
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const focusFlow =
-    pathname === "/login" ||
-    pathname === "/studio-enquiry" ||
-    pathname === "/admin" ||
-    pathname.startsWith("/join/") ||
-    pathname.startsWith("/intake/") ||
-    pathname.startsWith("/auth/") ||
-    isPublicPagePath(pathname);
-  if (focusFlow) {
+  // Focus flows (incl. /admin) must not wait on studio fixture suspense.
+  if (isFocusFlowPath(pathname)) {
     return (
       <LiveAuthGuard>
         <Suspense fallback={<p className="p-6">Opening…</p>}>
@@ -209,19 +192,26 @@ function RoleGate() {
     );
   return (
     <LiveAuthGuard>
-      <StudioTour enabled={role === "teacher"}>
-        <AppShell studio={studio}>
-          {role === "parent" ? (
-            <Suspense fallback={<p>Opening your family portal…</p>}>
-              <ParentPortal />
-            </Suspense>
-          ) : (
-            /* Required: nested routes render here. */
-            <Outlet />
-          )}
-        </AppShell>
-      </StudioTour>
+      <StudioShell role={role} />
     </LiveAuthGuard>
+  );
+}
+
+function StudioShell({ role }: { role: "teacher" | "parent" }) {
+  const { data: studio } = useSuspenseQuery(studioQuery);
+  return (
+    <StudioTour enabled={role === "teacher"}>
+      <AppShell studio={studio}>
+        {role === "parent" ? (
+          <Suspense fallback={<p>Opening your family portal…</p>}>
+            <ParentPortal />
+          </Suspense>
+        ) : (
+          /* Required: nested routes render here. */
+          <Outlet />
+        )}
+      </AppShell>
+    </StudioTour>
   );
 }
 

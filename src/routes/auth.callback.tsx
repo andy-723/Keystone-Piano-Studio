@@ -2,7 +2,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { getAuthClient, isLiveAuthConfigured } from "@/lib/auth-client";
 import { parseEmailLink, safeNextPath } from "@/lib/auth-paths";
-import { decideMfaGate, destinationForAccount, NO_ACCOUNT_MESSAGE } from "@/lib/post-login";
+import { rememberVerifiedAccess } from "@/lib/live-auth-cache";
+import {
+  decideMfaGate,
+  decideStudioAccessGate,
+  destinationForAccount,
+  NO_ACCOUNT_MESSAGE,
+} from "@/lib/post-login";
 import { resolveAccountFn, recordNoAccountFn } from "@/server/account";
 import { Button } from "@/components/ui/button";
 
@@ -103,9 +109,11 @@ function AuthCallbackPage() {
         return;
       }
 
-      const account = await resolveAccountFn({
-        data: { accessToken: session.access_token },
-      });
+      // Account resolve and MFA factor list are independent — fetch in parallel.
+      const [account, factors] = await Promise.all([
+        resolveAccountFn({ data: { accessToken: session.access_token } }),
+        client.auth.mfa.listFactors(),
+      ]);
 
       const hasAccount =
         Boolean(account.platformStaff) ||
@@ -127,7 +135,6 @@ function AuthCallbackPage() {
         return;
       }
 
-      const factors = await client.auth.mfa.listFactors();
       const hasVerifiedTotp = (factors.data?.totp ?? []).some(
         (factor) => factor.status === "verified",
       );
@@ -149,6 +156,7 @@ function AuthCallbackPage() {
         );
         return;
       }
+      rememberVerifiedAccess(session.access_token, decideStudioAccessGate(account));
       window.location.replace(destinationForAccount(account, nextSafe));
     }
     void run();
