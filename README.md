@@ -42,7 +42,7 @@ Project region: Sydney (`ap-southeast-2`). Apply `supabase/migrations/0001_famil
 
 Do **not** apply `supabase/migrations/0003_tenant_hardening.sql` to the production Supabase project until Andrew reviews. First run the read-only inventory in `scripts/inventory-real-data.sql` in the live SQL editor (row counts only — no names or content). Record results in the incident log; do not paste them anywhere public.
 
-`0003_tenant_hardening.rollback.sql` restores 0001 RLS behaviour for **local rehearsal** only (`supabase start`).
+`supabase/rollbacks/0003_tenant_hardening.rollback.sql` restores 0001 RLS behaviour for **local rehearsal** only (`supabase start`).
 
 Native family invoicing lives in `supabase/migrations/0004_native_invoicing.sql` (named 0004 because 0003 already shipped; the ADR prompt originally called this 0002). It is not wired in mock mode.
 
@@ -64,3 +64,7 @@ Requires `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `PLATFORM_ADMIN_EMAIL`, an
 ## Deploy
 
 `main` deploys to Vercel (Nitro preset `vercel`). Pull requests get Vercel preview deployments.
+
+## Releasing
+
+Every change goes through a pull request with green CI, and database migrations go out before the code that needs them (expand, then contract). Rollback files live in `supabase/rollbacks/`, not `supabase/migrations/`. Full process: [`docs/release-process.md`](docs/release-process.md).
