@@ -22,6 +22,13 @@
   --color-deco-ink: oklch(0.22 0.012 70);
   --color-deco-cream: oklch(0.96 0.02 85);
   --color-deco-gold: oklch(0.72 0.11 80);
+  --color-mk-cream: #F5EBD6;
+  --color-mk-paper: #FBF7EE;
+  --color-mk-ink: #15100D;
+  --color-mk-bronze: #604A19;
+  --color-mk-gold: #C2A259;
+  --font-mk-serif: "Source Serif 4", Georgia, serif;
+  --font-mk-sans: "Instrument Sans", system-ui, sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
