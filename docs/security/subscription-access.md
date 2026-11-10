@@ -63,6 +63,12 @@ This is Keystone's own billing, **separate from Stripe Connect** (teachers' fami
 
 ## Before applying 0006 to production
 
+- Apply it in the Supabase SQL editor (paste the whole file and run it once). It ends with
+  `notify pgrst, 'reload schema'` so the API sees the new tables straight away. The app code from
+  PR #22 expects these tables, so the admin console's studio list fails until 0006 is applied.
+- If 0004 (native invoicing) is not applied yet, 0006 skips the invoice tables and prints a notice.
+  After applying 0004 later, re-run section c of 0006 (the `do $$ … $$` block): it is safe to repeat.
+
 - Every existing studio becomes `comp` on Pro. Set the real status in the admin console afterwards
   (Edison's teacher: Pilot, Pro, end date from the Order Form).
 - New studios created after 0006 start `incomplete`: give them a pilot or have the owner pay.

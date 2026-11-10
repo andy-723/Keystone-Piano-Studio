@@ -25,6 +25,9 @@ begin
     'terms_acceptance', 'consent_record', 'email_log', 'auth_audit', 'oauth_connection',
     'studio_billing_profile', 'invoice', 'invoice_line', 'payment', 'credit_note', 'invoice_event'
   ] loop
+    if to_regclass(format('public.%I', t)) is null then
+      continue;
+    end if;
     execute format('drop policy if exists access_gate_select on public.%I', t);
     execute format('drop policy if exists access_gate_insert on public.%I', t);
     execute format('drop policy if exists access_gate_update on public.%I', t);
@@ -45,3 +48,5 @@ drop function if exists app_private.touch_updated_at();
 
 drop table if exists public.billing_webhook_event;
 drop table if exists public.studio_subscription;
+
+notify pgrst, 'reload schema';
