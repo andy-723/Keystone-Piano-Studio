@@ -581,6 +581,13 @@ async function recordPaymentImpl(
   }
 
   const method = mapPaymentMethod(input.method);
+  const isStripe =
+    method === "stripe_card" || method === "stripe_becs" || method === "stripe_payto";
+  const stripeFeeCents = isStripe
+    ? method === "stripe_card"
+      ? Math.round(input.amountCents * 0.017) + 30
+      : Math.round(input.amountCents * 0.01) + 30
+    : 0;
   const payment: Payment = {
     id: newRecordId("payment"),
     invoiceId: id,
@@ -592,6 +599,13 @@ async function recordPaymentImpl(
     recordedBy: input.recordedBy ?? teacher.id,
     ...(input.reference ? { reference: input.reference } : {}),
     ...(input.stripePaymentIntentId ? { stripePaymentIntentId: input.stripePaymentIntentId } : {}),
+    ...(isStripe
+      ? {
+          grossAmountCents: input.amountCents,
+          stripeFeeCents,
+          netPayoutCents: input.amountCents - stripeFeeCents,
+        }
+      : {}),
   };
   payments.push(payment);
   syncStatusFromBalance(invoice);

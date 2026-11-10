@@ -48,6 +48,8 @@ import { newsState } from "./news";
 import { clientNotes } from "./notes";
 import { enrolmentDrafts } from "./onboarding";
 import { parentPayments } from "./parent";
+import { proCfoTeachers, proCfoXeroQueue, proCfoXeroStickyFails } from "./pro-cfo";
+import { taxLiteAdminHoursByFy, taxLiteExpenses, taxLiteKmEntries } from "./tax-lite";
 import { opusInvoices } from "./plans";
 import { getRenewalState, renewalState } from "./renewals";
 import { importBatches } from "./roster-import";
@@ -141,8 +143,14 @@ export function emptyDemoFixtures(input: { studioId: string; studioName: string 
     billingAuditLog,
     parentPayments,
     opusInvoices,
+    proCfoTeachers,
+    proCfoXeroQueue,
+    taxLiteExpenses,
+    taxLiteKmEntries,
   ] as unknown[][])
     list.length = 0;
+  proCfoXeroStickyFails.clear();
+  for (const key of Object.keys(taxLiteAdminHoursByFy)) delete taxLiteAdminHoursByFy[key];
 
   for (const map of [
     attendanceMarks,
