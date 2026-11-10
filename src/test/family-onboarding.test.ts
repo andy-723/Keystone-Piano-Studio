@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { inviteSubject, invitePlainText, InviteEmail } from "@/emails/InviteEmail";
@@ -6,13 +6,14 @@ import { render } from "@react-email/components";
 import { families, students, teacher } from "@/mocks/data";
 import { invitationState, resetInvitationState } from "@/mocks/invitations";
 import { enrolmentDrafts } from "@/mocks/onboarding";
-import { clearEmailOutbox, getEmailOutbox } from "@/server/email";
+import { clearEmailOutbox, getEmailOutbox, setEmailProviderForTests } from "@/server/email";
 import { isIpLocked, recordAuthFailure } from "@/server/rate-limit";
 import { buildSteps } from "@/lib/onboarding/steps";
 import { sha256Hex } from "@/lib/onboarding/crypto";
 import {
   autosaveJoinAnswers,
   createInvitation,
+  deliverInviteEmail,
   getAuthAudit,
   loadJoinSession,
   requestFamilyMagicLink,
@@ -27,8 +28,13 @@ import { ensureTermsState } from "@/mocks/terms";
 beforeEach(async () => {
   resetInvitationState();
   clearEmailOutbox();
+  setEmailProviderForTests(null);
   enrolmentDrafts.length = 0;
   await ensureTermsState();
+});
+
+afterEach(() => {
+  setEmailProviderForTests(null);
 });
 
 describe("family onboarding invites", () => {
@@ -317,6 +323,70 @@ describe("email and security", () => {
     await requestFamilyMagicLink({ email: "wei.chen@example.com" });
     expect(getEmailOutbox().length).toBeGreaterThanOrEqual(2);
     expect(getEmailOutbox().some((e) => e.subject.includes("Keystone Music HQ"))).toBe(true);
+  });
+
+  it("live invite path invokes the email provider and fails visibly when send fails", async () => {
+    const sent: Array<{ to: string; subject: string }> = [];
+    setEmailProviderForTests({
+      async send(input) {
+        sent.push({ to: input.to, subject: input.subject });
+        return { id: "provider-test-1" };
+      },
+    });
+    await deliverInviteEmail({
+      to: "mesubbox@gmail.com",
+      kind: "invite",
+      context: {
+        language: "en",
+        teacherName: "Andrew",
+        guardianFirstName: "Joe",
+        childNames: "Ricky",
+        studioName: "Keystone Music HQ",
+        replyTo: "studio@keystone.example",
+        joinUrl: "https://example.test/join/token",
+        expiresAt: "2027-04-01T23:59:59+11:00",
+      },
+    });
+    expect(sent).toEqual([
+      expect.objectContaining({
+        to: "mesubbox@gmail.com",
+        subject: expect.stringContaining("Andrew"),
+      }),
+    ]);
+
+    setEmailProviderForTests({
+      async send() {
+        throw new Error("Resend rejected");
+      },
+    });
+    await expect(
+      deliverInviteEmail({
+        to: "mesubbox@gmail.com",
+        kind: "invite",
+        context: {
+          language: "en",
+          teacherName: "Andrew",
+          guardianFirstName: "Joe",
+          childNames: "Ricky",
+          studioName: "Keystone Music HQ",
+          replyTo: "studio@keystone.example",
+          joinUrl: "https://example.test/join/token",
+          expiresAt: "2027-04-01T23:59:59+11:00",
+        },
+      }),
+    ).rejects.toThrow(/Could not send the invite email/);
+
+    await expect(
+      createInvitation({ familyId: families[0]!.id, studentIds: [students[0]!.id] }),
+    ).rejects.toThrow(/Could not send the invite email/);
+    expect(invitationState.invitations.at(-1)?.status).toBe("revoked");
+  });
+
+  it("EnrolStudent live enrol goes through enrolAndInviteFn (server Resend path)", () => {
+    const src = readFileSync(join(process.cwd(), "src/components/EnrolStudent.tsx"), "utf8");
+    expect(src).toContain("enrolAndInviteFn");
+    expect(src).toContain("isLiveAuthConfigured");
+    expect(src).toContain("resendInvitationFn");
   });
 
   it("hash helper produces sha256 hex", async () => {

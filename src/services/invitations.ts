@@ -91,31 +91,41 @@ async function hashToken(token: string) {
   return sha256Hex(token);
 }
 
-async function sendInviteEmail(
-  invite: InvitationRecord,
-  token: string,
-  kind: "invite" | "reminder",
-  day?: 3 | 7,
+export type InviteEmailContext = {
+  language: Lang;
+  teacherName: string;
+  guardianFirstName: string;
+  childNames: string;
+  studioName: string;
+  replyTo: string;
+  joinUrl: string;
+  expiresAt: string;
+  logoUrl?: string | null;
+};
+
+/** Renders and sends an invite/reminder through the configured EmailProvider (Resend when live). */
+export async function deliverInviteEmail(
+  input: {
+    to: string;
+    kind: "invite" | "reminder";
+    day?: 3 | 7;
+    context: InviteEmailContext;
+  },
 ) {
-  const family = families.find((entry) => entry.id === invite.familyId);
-  const guardian =
-    family?.guardians.find((g) => g.email.toLowerCase() === invite.email.toLowerCase()) ??
-    family?.guardians[0];
   const env = getServerEnv();
-  const joinUrl = `${env.appUrl}/join/${token}`;
   const expiresLabel = new Intl.DateTimeFormat("en-AU", {
     dateStyle: "medium",
     timeZone: "Australia/Melbourne",
-  }).format(new Date(invite.expiresAt));
+  }).format(new Date(input.context.expiresAt));
   const props = {
-    language: invite.language,
-    teacherName: teacher.name,
-    guardianFirstName: guardianFirstName(guardian?.name ?? "there"),
-    childNames: childNamesLabel(invite.studentIds),
-    studioName: studio.name,
-    joinUrl,
+    language: input.context.language,
+    teacherName: input.context.teacherName,
+    guardianFirstName: input.context.guardianFirstName,
+    childNames: input.context.childNames,
+    studioName: input.context.studioName,
+    joinUrl: input.context.joinUrl,
     expiresLabel,
-    logoUrl: null as string | null,
+    logoUrl: input.context.logoUrl ?? null,
   };
   const {
     InviteEmail,
@@ -127,25 +137,64 @@ async function sendInviteEmail(
     renderEmailHtml,
   } = await loadInviteEmails();
   const html =
-    kind === "invite"
+    input.kind === "invite"
       ? await renderEmailHtml(InviteEmail(props))
-      : await renderEmailHtml(ReminderEmail({ ...props, day: day ?? 3 }));
+      : await renderEmailHtml(ReminderEmail({ ...props, day: input.day ?? 3 }));
   const text =
-    kind === "invite" ? invitePlainText(props) : reminderPlainText({ ...props, day: day ?? 3 });
+    input.kind === "invite"
+      ? invitePlainText(props)
+      : reminderPlainText({ ...props, day: input.day ?? 3 });
   const subject =
-    kind === "invite"
-      ? inviteSubject(invite.language, teacher.name, props.childNames)
-      : reminderSubject(invite.language, teacher.name, props.childNames);
-  const from = `${teacher.name} via Keystone Music HQ <${env.emailFrom.includes("<") ? env.emailFrom.replace(/^.*<([^>]+)>.*$/, "$1") : "invites@mail.example.com"}>`;
+    input.kind === "invite"
+      ? inviteSubject(input.context.language, input.context.teacherName, input.context.childNames)
+      : reminderSubject(input.context.language, input.context.teacherName, input.context.childNames);
+  const fromAddress = env.emailFrom.includes("<")
+    ? env.emailFrom.replace(/^.*<([^>]+)>.*$/, "$1")
+    : "invites@mail.example.com";
+  const from = `${input.context.teacherName} via Keystone Music HQ <${fromAddress}>`;
   const provider = await emailProvider();
-  const result = await provider.send({
+  try {
+    return await provider.send({
+      to: input.to,
+      from,
+      replyTo: input.context.replyTo,
+      subject,
+      html,
+      text,
+      tags: [{ name: "kind", value: input.kind }],
+    });
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : "Email provider failed";
+    throw new Error(`Could not send the invite email. ${detail}`);
+  }
+}
+
+async function sendInviteEmail(
+  invite: InvitationRecord,
+  token: string,
+  kind: "invite" | "reminder",
+  day?: 3 | 7,
+) {
+  const family = families.find((entry) => entry.id === invite.familyId);
+  const guardian =
+    family?.guardians.find((g) => g.email.toLowerCase() === invite.email.toLowerCase()) ??
+    family?.guardians[0];
+  const env = getServerEnv();
+  const result = await deliverInviteEmail({
     to: invite.email,
-    from,
-    replyTo: studio.email ?? "studio@keystone.example",
-    subject,
-    html,
-    text,
-    tags: [{ name: "kind", value: kind }],
+    kind,
+    ...(day ? { day } : {}),
+    context: {
+      language: invite.language,
+      teacherName: teacher.name,
+      guardianFirstName: guardianFirstName(guardian?.name ?? "there"),
+      childNames: childNamesLabel(invite.studentIds),
+      studioName: studio.name,
+      replyTo: studio.email ?? "studio@keystone.example",
+      joinUrl: `${env.appUrl}/join/${token}`,
+      expiresAt: invite.expiresAt,
+      logoUrl: null,
+    },
   });
   invitationState.emailLogs.push({
     id: crypto.randomUUID(),
@@ -227,7 +276,13 @@ export async function createInvitation(input: {
     createdAt: sentAt,
   });
 
-  await sendInviteEmail(invite, raw, "invite");
+  try {
+    await sendInviteEmail(invite, raw, "invite");
+  } catch (error) {
+    invite.status = "revoked";
+    delete invite._rawToken;
+    throw error;
+  }
   const conv = await getOrCreateFamilyConversation(family.id);
   await sendMessage({
     conversationId: conv.id,
@@ -274,7 +329,14 @@ export async function resendInvitation(invitationId: string) {
     updatedAt: sentAt,
     createdAt: sentAt,
   });
-  await sendInviteEmail(next, raw, "invite");
+  try {
+    await sendInviteEmail(next, raw, "invite");
+  } catch (error) {
+    next.status = "revoked";
+    delete next._rawToken;
+    invite.status = "sent";
+    throw error;
+  }
   await writeAudit({ studioId: next.studioId, event: "invite_resent", actorUserId: teacher.id });
   return respond({ status: "sent" as const, invitationId: next.id });
 }

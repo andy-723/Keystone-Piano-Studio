@@ -80,6 +80,7 @@ GitHub Release with the same text. See `docs/release-process.md`.
   empty for a real studio and are saved in the next releases. The demo studio keeps the demo data.
 - Fixed: studios created in the admin console no longer start read-only ("your studio is
   paused"). The console now asks for starting access (complimentary, pilot or none).
+- Fixed: studio student/family invites now send through Resend on the server when live keys are present (they previously stayed in the mock outbox); email failures show in the enrol UI.
 - Faster: platform admin and support reach `/admin` without waiting on studio/parent mock loaders; sign-in reuse skips a repeat account check after MFA.
 - Faster: server code now runs in Sydney next to the database, the first page download is about
   40% smaller, and the admin studio list makes far fewer database round trips.
