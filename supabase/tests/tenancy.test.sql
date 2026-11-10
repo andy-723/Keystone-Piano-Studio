@@ -500,5 +500,85 @@ select is(
   'platform admin cannot read studio A invoice'
 );
 
+-- ---------------------------------------------------------------------------
+-- 0010 lesson calendar: staff of the studio only; no cross-studio students; tokens hidden
+-- ---------------------------------------------------------------------------
+select test_reset_role();
+insert into auth.users (instance_id, id, aud, role, email, created_at, updated_at)
+values
+  ('00000000-0000-0000-0000-000000000000', current_setting('test.owner_a')::uuid, 'authenticated', 'authenticated', 'owner-a@example.com', now(), now()),
+  ('00000000-0000-0000-0000-000000000000', current_setting('test.owner_b')::uuid, 'authenticated', 'authenticated', 'owner-b@example.com', now(), now())
+on conflict (id) do nothing;
+
+select test_as(current_setting('test.teacher_a')::uuid);
+select lives_ok(
+  format($i$insert into public.lesson_series (studio_id, student_id, teacher_user_id, repeat, first_date, start_time, duration_min)
+            values (%L, %L, %L, 'weekly', '2026-11-17', '16:00', 30)$i$,
+         current_setting('test.studio_a'), current_setting('test.student_a'), current_setting('test.owner_a')),
+  'teacher A can add a lesson for a studio A student'
+);
+select throws_ok(
+  format($i$insert into public.lesson_series (studio_id, student_id, teacher_user_id, repeat, first_date, start_time, duration_min)
+            values (%L, %L, %L, 'weekly', '2026-11-17', '16:00', 30)$i$,
+         current_setting('test.studio_a'), current_setting('test.student_b'), current_setting('test.owner_a')),
+  null,
+  null,
+  'studio A cannot book a studio B student'
+);
+select throws_ok(
+  format($i$insert into public.lesson_series (studio_id, student_id, teacher_user_id, repeat, first_date, start_time, duration_min)
+            values (%L, %L, %L, 'weekly', '2026-11-17', '16:00', 30)$i$,
+         current_setting('test.studio_b'), current_setting('test.student_b'), current_setting('test.owner_b')),
+  null,
+  null,
+  'teacher A cannot add lessons to studio B'
+);
+select is(
+  (select count(*)::int from public.lesson_series where studio_id = current_setting('test.studio_a')::uuid),
+  1,
+  'teacher A reads studio A lessons'
+);
+
+select test_as(current_setting('test.owner_b')::uuid);
+select is(
+  (select count(*)::int from public.lesson_series where studio_id = current_setting('test.studio_a')::uuid),
+  0,
+  'owner B cannot read studio A lessons'
+);
+
+select test_as(current_setting('test.guardian_a')::uuid);
+select is(
+  (select count(*)::int from public.lesson_series where student_id = current_setting('test.student_a')::uuid),
+  1,
+  'guardian A reads their own student''s lessons'
+);
+select is_empty(
+  format($i$update public.lesson_series set start_time = '17:00' where studio_id = %L returning id$i$, current_setting('test.studio_a')),
+  'guardian A cannot change lessons'
+);
+
+select test_as(current_setting('test.removed_a')::uuid);
+select is(
+  (select count(*)::int from public.lesson_series where studio_id = current_setting('test.studio_a')::uuid),
+  0,
+  'removed teacher cannot read studio A lessons'
+);
+
+select test_as(current_setting('test.owner_a')::uuid);
+select throws_ok(
+  $i$select refresh_token_secret_id from public.calendar_connection$i$,
+  '42501',
+  null,
+  'staff cannot read the Vault secret id of a calendar connection'
+);
+select throws_ok(
+  format($i$select public.calendar_connection_refresh_token(%L::uuid)$i$, gen_random_uuid()),
+  '42501',
+  null,
+  'authenticated cannot call the refresh-token reader'
+);
+
+select test_reset_role();
+
 select finish();
 rollback;

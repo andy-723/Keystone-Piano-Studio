@@ -220,6 +220,42 @@ Make-up credits are kept as a running balance for each family. When a make-up is
     ],
   },
   {
+    id: "studio-calendar",
+    audience: "studio",
+    topic: "lessons-teaching",
+    title: { en: "Give students lesson times in the Calendar" },
+    body: {
+      en: `Open Calendar to see your week. Click an empty time, or Add lesson, then choose the student, the day and time, the length, and whether it repeats every week or happens once. Weekly lessons keep going until you stop them or set a last lesson date.
+
+Keystone warns you if the time overlaps another of your lessons. Choose Save anyway if you really do want to double-book.
+
+Click a lesson to change it:
+- Move this week only, for one-off swaps.
+- Cancel this week, for holidays or sickness. Put back to the usual time undoes it.
+- Change day or time from this week on, when a student moves to a new regular slot. Earlier weeks stay as they were.
+- Stop weekly lessons, when a student finishes.
+
+Cancelling in the Calendar doesn't give a make-up credit or change invoices yet.
+
+To see your lessons in Google Calendar, choose Connect Google Calendar and sign in to Google. Keystone makes a separate calendar called "Keystone lessons" and keeps it up to date whenever you change a lesson here. It only shows the student's first name and last initial. Keystone can't see or change your other Google calendars, and changes you make in Google aren't copied back, so always change lessons in Keystone. Stop syncing removes Keystone's access; the "Keystone lessons" calendar stays in Google until you delete it there.`,
+    },
+    keywords: [
+      "calendar",
+      "google calendar",
+      "gcal",
+      "schedule",
+      "timetable",
+      "add student",
+      "time slot",
+      "weekly",
+      "recurring",
+      "repeat",
+      "move lesson",
+      "cancel lesson",
+      "sync",
+    ],
+  },
+  {
     id: "studio-library",
     audience: "studio",
     topic: "lessons-teaching",

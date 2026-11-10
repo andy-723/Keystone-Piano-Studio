@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { BookOpen, LifeBuoy, MessageCircle, Receipt, Settings, Users, Megaphone } from "lucide-react";
+import { BookOpen, CalendarDays, LifeBuoy, MessageCircle, Receipt, Settings, Users, Megaphone } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { chatThreadsQuery } from "@/lib/chat-queries";
@@ -21,6 +21,7 @@ import { TourHelpButton } from "@/components/tour/Tour";
 
 const NAV = [
   { to: "/", label: "Today", icon: BookOpen },
+  { to: "/calendar", label: "Calendar", icon: CalendarDays },
   { to: "/news", label: "News", icon: Megaphone },
   { to: "/students", label: "Students", icon: Users },
   { to: "/chat", label: "Chat", icon: MessageCircle },
@@ -133,7 +134,7 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
       </div>
 
       {/* Bottom tab bar on phones (teacher only) */}
-      {isTeacher && <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-3 sm:grid-cols-6 border-t border-sidebar-border bg-sidebar pb-[env(safe-area-inset-bottom)] md:hidden">
+      {isTeacher && <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-4 sm:grid-cols-7 border-t border-sidebar-border bg-sidebar pb-[env(safe-area-inset-bottom)] md:hidden">
         {NAV.map(({ to, label, icon: Icon }) => (
           <Link
             key={to}
