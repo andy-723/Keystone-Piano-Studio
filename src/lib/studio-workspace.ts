@@ -14,6 +14,8 @@ export type StudioWorkspace =
   | {
       mode: "live";
       studioId: string;
+      /** The signed-in person (auth.users id); RLS checks it on what they post. */
+      userId: string;
       role: "owner" | "admin" | "teacher" | "guardian";
       /** Guardians only: the signed-in guardian's own row. */
       guardianId?: string;
@@ -56,4 +58,8 @@ export function markWorkspaceLoaded(workspace: StudioWorkspace | null) {
 export function resetStudioWorkspaceForTests() {
   current = { mode: "mock" };
   loadedKey = null;
+}
+
+export function liveUserId(): string | null {
+  return current.mode === "live" ? current.userId : null;
 }
