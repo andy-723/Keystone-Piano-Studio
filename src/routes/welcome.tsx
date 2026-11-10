@@ -10,7 +10,7 @@ export const Route = createFileRoute("/welcome")({
   head: () => ({
     meta: [
       { title: "Keystone Music HQ — The calm operating system for music studios" },
-      { name: "description", content: "Lessons, invite-only enrolment, family chat, invoices and agreements in one Sydney-hosted workspace for Australian music studios." },
+      { name: "description", content: "Designed for simplicity, built for scalability. Lessons, family chat, studio news, invoices and agreements in one Sydney-hosted workspace for Australian music studios." },
       { property: "og:title", content: "Keystone Music HQ — The calm operating system for music studios" },
       { property: "og:description", content: "Run lessons, enrolments, chat, invoices and agreements in one calm Australian-hosted workspace." },
       { property: "og:type", content: "website" },
