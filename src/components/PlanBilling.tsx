@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/
 import { planBillingQuery } from "@/lib/plan-queries";
 import { baseStudentLimitExceeded } from "@/lib/plans";
 import { setStudioPlan } from "@/services/plans";
+import { isLiveStudio } from "@/lib/studio-workspace";
 import type { IntegrationScope } from "@/mocks/integrations";
 import { formatAUD } from "@/lib/format";
 
@@ -18,6 +19,8 @@ export function PlanBilling({ scope = "demo" }: { scope?: IntegrationScope }) {
   const client = useQueryClient();
   const [confirm, setConfirm] = useState(false);
   const base = data.plan === "base";
+  // A real studio's plan is its Keystone subscription, not a switch on this page.
+  const live = scope === "demo" && isLiveStudio();
   const label = data.plan === "academy" ? "Academy" : base ? "Base" : "Pro";
   const change = useMutation({ mutationFn: () => setStudioPlan(base ? "pro" : "base", scope), onSuccess: async () => {
     setConfirm(false);
@@ -32,9 +35,9 @@ export function PlanBilling({ scope = "demo" }: { scope?: IntegrationScope }) {
       {data.plan !== "academy" && <p className="mt-3 text-lg">A${base ? "29" : "49"} a month + GST (A${base ? "31.90" : "53.90"} including GST)</p>}
       {data.renewal && <p className="mt-3">Renews {data.renewal}</p>}
       {data.card && <p className="mt-3 flex items-center gap-3"><CreditCard aria-hidden className="size-6 text-muted-foreground" />{data.card}</p>}
-      <Button className="mt-5" onClick={() => { change.reset(); setConfirm(true); }}>{base ? "Upgrade to Pro" : "Switch to Base"}<ArrowRight aria-hidden /></Button>
+      {!live && <Button className="mt-5" onClick={() => { change.reset(); setConfirm(true); }}>{base ? "Upgrade to Pro" : "Switch to Base"}<ArrowRight aria-hidden /></Button>}
     </div>
-    <p className="mt-3 text-base text-muted-foreground">Prototype: plan changes are simulated. No charge is made.</p>
+    <p className="mt-3 text-base text-muted-foreground">{live ? "Your plan comes from your Keystone Music HQ subscription. To change it, contact Keystone support." : "Prototype: plan changes are simulated. No charge is made."}</p>
     <div className="mt-7 grid gap-5 sm:grid-cols-2">{(["base", "pro"] as const).map(plan => <article key={plan} className={`min-w-0 rounded-md border bg-card p-5 ${data.plan === plan ? "border-primary" : "border-border"}`}>
       <header className="flex flex-wrap items-center justify-between gap-2"><h3 className="text-2xl font-semibold">{plan === "base" ? "Base" : "Pro"}</h3>{data.plan === plan && <Badge className="text-base">Current plan</Badge>}</header>
       <p className="mt-3 font-semibold">A${plan === "base" ? "29" : "49"} a month + GST</p>

@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useContext, useEffect, useState, type ReactNode } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { getAuthClient, isDemoModeAllowed, isLiveAuthConfigured } from "@/lib/auth-client";
 import { isAuthExemptPath } from "@/lib/auth-paths";
@@ -11,11 +11,19 @@ import {
 import { decideMfaGate, decideStudioAccessGate, type StudioAccessGate } from "@/lib/post-login";
 import { StudioPausedScreen, StudioReadOnlyBanner } from "@/components/StudioAccessNotice";
 import { resolveAccountFn } from "@/server/account";
+import { QueryClientContext } from "@tanstack/react-query";
+import { chooseStudioWorkspace, loadLiveStudio } from "@/services/live/studio-store";
+import { markWorkspaceLoaded, resetStudioWorkspaceForTests } from "@/lib/studio-workspace";
 
-type GuardState = "checking" | "ok" | "unavailable";
+/** Set once this tab has decided between demo data and the signed-in studio's own data. */
+let workspaceReady = false;
+
+type GuardState = "checking" | "ok" | "unavailable" | "studio_error";
 
 export function resetLiveAuthGuardForTests() {
   resetLiveAuthCacheForTests();
+  workspaceReady = false;
+  resetStudioWorkspaceForTests();
 }
 
 function loginUrl(next: string) {
@@ -36,6 +44,8 @@ export function LiveAuthGuard({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const search = useRouterState({ select: (state) => state.location.searchStr });
   const exempt = isAuthExemptPath(pathname);
+  // Optional: tests render the guard without a query client.
+  const queryClient = useContext(QueryClientContext);
   const [accessGate, setAccessGate] = useState<StudioAccessGate>({ kind: "ok" });
   const [state, setState] = useState<GuardState>(() => {
     if (exempt) return "ok";
@@ -69,7 +79,8 @@ export function LiveAuthGuard({ children }: { children: ReactNode }) {
         return;
       }
       const known = getVerifiedAccess(session.access_token);
-      if (known) {
+      // A full reload empties the in-memory store, so the studio's data must load again.
+      if (known && workspaceReady) {
         setAccessGate(known);
         setState("ok");
         return;
@@ -105,6 +116,26 @@ export function LiveAuthGuard({ children }: { children: ReactNode }) {
         // Subscription gate (0006). The database enforces the same rule through RLS; this is
         // only so people see a clear screen instead of empty pages.
         const access = decideStudioAccessGate(account);
+        // Real studios get their own data; the demo studio and platform staff keep the demo.
+        // Runs before any studio screen mounts, then drops anything a loader cached earlier.
+        if (!workspaceReady) {
+          try {
+            const choice = await chooseStudioWorkspace(account);
+            if (cancelled) return;
+            if (choice.workspace.mode === "live" && choice.row) {
+              await loadLiveStudio(choice.workspace, choice.row, choice.plan);
+            } else {
+              markWorkspaceLoaded(choice.workspace);
+            }
+          } catch (err) {
+            console.error("[live-auth] studio data failed to load", err);
+            if (!cancelled) setState("studio_error");
+            return;
+          }
+          if (cancelled) return;
+          queryClient?.removeQueries();
+          workspaceReady = true;
+        }
         rememberVerifiedAccess(session.access_token, access);
         setAccessGate(access);
         setState("ok");
@@ -115,7 +146,7 @@ export function LiveAuthGuard({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [pathname, search]);
+  }, [pathname, search, queryClient]);
 
   if (exempt) return children;
   if (state === "unavailable") {
@@ -128,6 +159,24 @@ export function LiveAuthGuard({ children }: { children: ReactNode }) {
         <a className="mt-6 text-[#604A19] underline" href="/help">
           Get help
         </a>
+      </main>
+    );
+  }
+  if (state === "studio_error") {
+    return (
+      <main className="flex min-h-[100dvh] flex-col items-center justify-center bg-[#F5EBD6] px-4 text-center text-[#15100D]">
+        <h1 className="text-2xl font-semibold">Your studio didn&apos;t load</h1>
+        <p className="mt-3 max-w-md text-base text-[#5A4F43]" role="alert">
+          We couldn&apos;t load your studio&apos;s details. Check your connection and reload the
+          page.
+        </p>
+        <button
+          type="button"
+          className="mt-6 min-h-11 rounded-[10px] bg-[#604A19] px-4 text-sm font-semibold text-[#FBF7EE]"
+          onClick={() => window.location.reload()}
+        >
+          Reload
+        </button>
       </main>
     );
   }

@@ -1,3 +1,4 @@
+import { saveLiveStudioDetails, studioSnapshot } from "./live/studio-store";
 import { communityState, type CommunityScope } from "@/mocks/community";
 import { students, teacher, studio } from "@/mocks/data";
 import { newStudioRoster } from "@/mocks/roster-import";
@@ -34,6 +35,7 @@ export async function saveTeacherProfile(
   const name = input.name.trim(), studioName = input.studioName.trim();
   if (!name || !studioName) throw new Error("Enter your name and studio name.");
   if (scope === "demo") {
+    const before = studioSnapshot();
     teacher.name = name;
     studio.name = studioName;
     if (input.childSafety) {
@@ -44,6 +46,7 @@ export async function saveTeacherProfile(
         expiry: input.childSafety.expiry.trim(),
       };
     }
+    await saveLiveStudioDetails(before);
   } else {
     setupSession.studio.teacherName = name;
     setupSession.studio.name = studioName;

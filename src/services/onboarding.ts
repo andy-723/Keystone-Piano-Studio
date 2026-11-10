@@ -16,6 +16,7 @@ import { ensureTermsState, type TermsScope } from "@/mocks/terms";
 import { getPublishedStudioTerms } from "./terms";
 import { createInvitation } from "./invitations";
 import { buildCourseSnapshot } from "@/lib/course-snapshot";
+import { insertLiveFamily, insertLiveStudents } from "./live/studio-store";
 const store = (scope: ImportScope) => scope === "demo" ? { families, students } : newStudioRoster;
 
 async function requireTermsAcceptance(studentId: string, scope: TermsScope) {
@@ -47,8 +48,9 @@ export async function startEnrolment(input: { firstName: string; lastName: strin
     if (!input.firstName.trim() || !input.lastName.trim() || !Number.isInteger(input.birthYear) || input.birthYear < 1900 || input.birthYear > enrolmentYear) throw new Error("Enter the student’s name and a valid birth year.");
     if (!contactName || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error(selfContact ? "Enter a valid student email." : "Enter a guardian name and valid email.");
     let family = data.families.find((entry) => entry.guardians.some((guardian) => guardian.email.toLowerCase() === email));
-    if (!family) { family = { id: crypto.randomUUID(), displayName: selfContact ? contactName : `${input.lastName.trim()} family`, guardians: [{ id: crypto.randomUUID(), name: contactName, email, mobile, preferredLanguage: input.language }] }; data.families.push(family); }
-    student = { id: crypto.randomUUID(), familyId: family.id, firstName: input.firstName.trim(), lastName: input.lastName.trim(), birthYear: input.birthYear }; data.students.push(student);
+    // Live studio: save to Supabase first, so the roster only shows what was really saved.
+    if (!family) { family = { id: crypto.randomUUID(), displayName: selfContact ? contactName : `${input.lastName.trim()} family`, guardians: [{ id: crypto.randomUUID(), name: contactName, email, mobile, preferredLanguage: input.language }] }; if (scope === "demo") await insertLiveFamily(family); data.families.push(family); }
+    student = { id: crypto.randomUUID(), familyId: family.id, firstName: input.firstName.trim(), lastName: input.lastName.trim(), birthYear: input.birthYear }; if (scope === "demo") await insertLiveStudents([student]); data.students.push(student);
   }
   const draft: EnrolmentDraft = { id: crypto.randomUUID(), studentId: student.id, scope, intake: null, diagnostic: {}, startingStages: {}, welcomeChecks: [], practiceGoal: 75, status: "intake_sent", step: 1, templateId: "opus-beginner", targetTerm: "2027-T3", gradeHours: 40, lessonMinutes: 30, strengths: "", workOn: "" };
   enrolmentDrafts.push(draft);

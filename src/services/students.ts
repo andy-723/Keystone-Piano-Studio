@@ -1,3 +1,5 @@
+import { teacher as rosterTeacher, families as rosterFamilies, students as rosterStudents, weeklySlots as rosterSlots } from "@/mocks/data";
+import { deleteLiveExampleFamily } from "./live/studio-store";
 import { getStudent, getFamily, getStudents } from "./roster";
 import { getCredits, getDayLessons } from "./schedule";
 import { getPracticeLogs, getRequirements, getStudentProgress, getStudentCourse } from "./curriculum";
@@ -41,5 +43,21 @@ export async function getStudentCheckInTemplate(id: string, conversationId: stri
   if (!student || student.risk.band !== "red" || thread?.conversation.familyId !== student.familyId) throw new Error("Check-in does not belong to this family");
   const family = await getFamily(student.familyId);
   const greeting = family?.guardians.map((guardian) => guardian.name.split(" ")[0]).join(" and ") || "there";
-  return `Hi ${greeting}, I wanted to check in and see how ${student.firstName} is feeling about piano at the moment. Is there anything I can do to help make lessons or practice a little easier? We can find a small, manageable goal together. Please let me know how things are going.\n\nWarmly,\nMs Clarke`;
+  return `Hi ${greeting}, I wanted to check in and see how ${student.firstName} is feeling about piano at the moment. Is there anything I can do to help make lessons or practice a little easier? We can find a small, manageable goal together. Please let me know how things are going.\n\nWarmly,\n${rosterTeacher.name || "Your teacher"}`;
+}
+/**
+ * A new studio starts with one example family and student (0011). The owner can delete it; only
+ * rows marked as the example can be deleted this way.
+ */
+export async function deleteExampleStudent(id: string) {
+  const student = rosterStudents.find((entry) => entry.id === id);
+  if (!student?.isExample) throw new Error("Only the example student can be deleted here.");
+  const family = rosterFamilies.find((entry) => entry.id === student.familyId);
+  if (!family?.isExample) throw new Error("Only the example student can be deleted here.");
+  await deleteLiveExampleFamily(family.id);
+  const removedIds = new Set(rosterStudents.filter((entry) => entry.familyId === family.id).map((entry) => entry.id));
+  for (let i = rosterStudents.length - 1; i >= 0; i--) if (removedIds.has(rosterStudents[i]!.id)) rosterStudents.splice(i, 1);
+  for (let i = rosterSlots.length - 1; i >= 0; i--) if (removedIds.has(rosterSlots[i]!.studentId)) rosterSlots.splice(i, 1);
+  rosterFamilies.splice(rosterFamilies.indexOf(family), 1);
+  return { deletedStudentIds: [...removedIds] };
 }

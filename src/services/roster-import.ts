@@ -4,7 +4,9 @@ import { setupSession } from '@/mocks/setup';
 import { familyKey, groupSiblings, studentKey, validateRoster, parseLessonTime, lessonWeekday, type ImportRow } from '@/lib/roster-import';
 import { getOrCreateFamilyConversation, sendMessage } from './chat';
 import { respond } from './_delay';
-import type { Lang } from '@/mocks/types';
+import type { Family, Lang, LessonType, Student, WeeklySlot } from '@/mocks/types';
+import { insertLiveFamily, insertLiveStudents, newRecordId, saveLiveStudioDetails } from './live/studio-store';
+import { isLiveStudio } from '@/lib/studio-workspace';
 function store(scope: ImportScope) { return scope === 'demo' ? { families, students, weeklySlots, lessonTypes } : newStudioRoster; }
 export async function getImportContext(scope: ImportScope) {
   const data = store(scope);
@@ -21,29 +23,44 @@ export async function confirmRosterImport(scope: ImportScope, rows: ImportRow[],
   const checks = validateRoster(rows, context.existingKeys, context.durations);
   if (!rows.length || checks.some((check) => check.status !== 'Ready')) throw new Error('Fix or remove every problem and duplicate before adding students.');
   const data = store(scope); const studentIds: string[] = []; const familyIds: string[] = [];
+  // Live studio: build the whole import first, save it to Supabase, then show it.
+  const live = scope === 'demo' && isLiveStudio();
+  const newFamilies: Family[] = []; const newStudents: Student[] = [];
+  const pending = { families: [...data.families], students: [] as Student[], weeklySlots: [] as WeeklySlot[], lessonTypes: [] as LessonType[] };
   for (const siblings of groupSiblings(rows)) {
     const first = siblings[0]; if (!first) continue;
-    let family = data.families.find((entry) => entry.guardians.some((guardian) => familyKey(guardian.email) === familyKey(first.guardian_email)));
+    let family = pending.families.find((entry) => entry.guardians.some((guardian) => familyKey(guardian.email) === familyKey(first.guardian_email)));
     if (!family) {
-      const id = `import-family-${crypto.randomUUID()}`;
-      family = { id, displayName: `${first.student_last_name} family`, guardians: [{ id: `import-guardian-${crypto.randomUUID()}`, name: first.guardian_name.trim(), email: familyKey(first.guardian_email), mobile: first.guardian_mobile.trim(), preferredLanguage: first.preferred_language as Lang }] };
-      data.families.push(family);
+      const id = newRecordId('import-family');
+      family = { id, displayName: `${first.student_last_name} family`, guardians: [{ id: newRecordId('import-guardian'), name: first.guardian_name.trim(), email: familyKey(first.guardian_email), mobile: first.guardian_mobile.trim(), preferredLanguage: first.preferred_language as Lang }] };
+      pending.families.push(family); newFamilies.push(family);
     }
     familyIds.push(family.id);
     for (const row of siblings) {
-      const id = `import-student-${crypto.randomUUID()}`;
+      const id = newRecordId('import-student');
       const duration = Number(row.lesson_length_min);
-      let lessonType = data.lessonTypes.find((entry) => entry.durationMin === duration);
+      let lessonType = [...data.lessonTypes, ...pending.lessonTypes].find((entry) => entry.durationMin === duration);
       if (!lessonType) {
         const configured = setupSession.lessons.find((entry) => entry.durationMin === duration);
         lessonType = { id: `import-lesson-${duration}`, name: `${duration} min lesson`, durationMin: duration, priceCents: configured?.priceCents ?? 0 };
-        data.lessonTypes.push(lessonType);
+        pending.lessonTypes.push(lessonType);
       }
-      data.students.push({ id, familyId: family.id, firstName: row.student_first_name.trim(), lastName: row.student_last_name.trim(), birthYear: Number(row.birth_year) });
-      data.weeklySlots.push({ studentId: id, weekday: lessonWeekday(row.lesson_day), time: parseLessonTime(row.lesson_time) ?? '', lessonTypeId: lessonType.id, gradeGoal: row.grade_goal.trim() });
+      const student: Student = { id, familyId: family.id, firstName: row.student_first_name.trim(), lastName: row.student_last_name.trim(), birthYear: Number(row.birth_year), ...(row.grade_goal.trim() ? { gradeGoal: row.grade_goal.trim() } : {}) };
+      pending.students.push(student); newStudents.push(student);
+      pending.weeklySlots.push({ studentId: id, weekday: lessonWeekday(row.lesson_day), time: parseLessonTime(row.lesson_time) ?? '', lessonTypeId: lessonType.id, gradeGoal: row.grade_goal.trim() });
       studentIds.push(id);
     }
   }
+  if (live) {
+    for (const family of newFamilies) await insertLiveFamily(family);
+    await insertLiveStudents(newStudents);
+  }
+  data.families.push(...newFamilies);
+  data.students.push(...pending.students);
+  data.weeklySlots.push(...pending.weeklySlots);
+  data.lessonTypes.push(...pending.lessonTypes);
+  // New lesson lengths become part of the studio's saved lesson prices.
+  if (live && pending.lessonTypes.length) await saveLiveStudioDetails();
   importBatches.set(batchId, { scope, studentIds, familyIds, invitedFamilyIds: [] });
   return getImportResult(batchId);
 }

@@ -30,6 +30,8 @@ import { respond } from "./_delay";
 import { getOrCreateFamilyConversation, sendMessage } from "./chat";
 import { getParentSession } from "./parent";
 import { paymentMethodsLabel } from "./billing-profile";
+import { insertLiveTermsVersion, saveLiveStudioDetails, studioSnapshot } from "./live/studio-store";
+import { isLiveStudio } from "@/lib/studio-workspace";
 
 async function draftPatch(scope: TermsScope): Promise<StudioTermsStudioPatch> {
   const state = await ensureTermsState();
@@ -316,6 +318,8 @@ export async function saveStudioTermsDraft(
   },
 ) {
   const state = await ensureTermsState();
+  // Live studio: undo this save in memory if Supabase refuses it.
+  const before = scope === "demo" && isLiveStudio() ? { ...studioSnapshot(), draft: structuredClone(state.drafts.demo) } : null;
   const draft = state.drafts[scope];
   if (input.switches) draft.switches = { ...draft.switches, ...input.switches };
   if (input.clauseEdits) draft.clauseEdits = { ...draft.clauseEdits, ...input.clauseEdits };
@@ -398,6 +402,14 @@ export async function saveStudioTermsDraft(
       if (input.studio.childSafety !== undefined) teacher.childSafety = input.studio.childSafety;
     }
   }
+  if (before) {
+    try {
+      await saveLiveStudioDetails(before);
+    } catch (error) {
+      state.drafts.demo = before.draft;
+      throw error;
+    }
+  }
   return getStudioTermsDraft(scope);
 }
 export async function publishStudioTerms(
@@ -445,11 +457,14 @@ export async function publishStudioTerms(
     publishedBy: data.teacher.name || "Teacher",
     editedClauseIds: Object.keys(state.drafts[scope].clauseEdits),
   };
+  // Live studio: the published version is a legal record, so it must be saved before it counts.
+  if (scope === "demo") await insertLiveTermsVersion(version);
   state.versions.push(version);
   state.drafts[scope].studioPatch = { ...state.drafts[scope].studioPatch, onboardingCompleted: true };
   if (scope === "demo" && studio.pendingBilling) {
     studio.pendingBilling.effectiveAt = input.effectiveAt;
   }
+  if (scope === "demo") await saveLiveStudioDetails();
   return respond(freeze(version));
 }
 export async function getPublishedStudioTerms(scope: TermsScope = "demo") {

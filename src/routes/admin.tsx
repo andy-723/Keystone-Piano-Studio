@@ -351,6 +351,9 @@ function NewStudioTab({ token, onError }: { token: string; onError: (m: string |
   const [timezone, setTimezone] = useState("Australia/Melbourne");
   const [ownerName, setOwnerName] = useState("");
   const [ownerEmail, setOwnerEmail] = useState("");
+  const [accessStatus, setAccessStatus] = useState<"pilot" | "comp" | "none">("comp");
+  const [accessPlan, setAccessPlan] = useState<"base" | "pro">("pro");
+  const [accessEndsOn, setAccessEndsOn] = useState("");
   const [done, setDone] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -366,6 +369,11 @@ function NewStudioTab({ token, onError }: { token: string; onError: (m: string |
           timezone,
           ownerName,
           ownerEmail,
+          startingAccess: {
+            status: accessStatus,
+            plan: accessPlan,
+            accessEndsOn: accessEndsOn || null,
+          },
           userAgent: navigator.userAgent,
         },
       });
@@ -378,6 +386,7 @@ function NewStudioTab({ token, onError }: { token: string; onError: (m: string |
       setName("");
       setOwnerName("");
       setOwnerEmail("");
+      setAccessEndsOn("");
     } catch (err) {
       onError(err instanceof Error ? err.message : "Could not create studio");
     } finally {
@@ -445,6 +454,49 @@ function NewStudioTab({ token, onError }: { token: string; onError: (m: string |
           className="mt-1 min-h-11 w-full rounded-[10px] border border-[#CDBF9F] bg-white px-3"
         />
       </div>
+      <fieldset className="space-y-3 border-t border-[#D9C79E] pt-4">
+        <legend className="text-sm font-medium">Starting access</legend>
+        <label className="block text-sm font-medium">
+          Free access
+          <select
+            value={accessStatus}
+            onChange={(e) => setAccessStatus(e.target.value as "pilot" | "comp" | "none")}
+            className="mt-1 min-h-11 w-full rounded-[10px] border border-[#CDBF9F] bg-white px-3"
+          >
+            <option value="comp">Complimentary (test or internal studio)</option>
+            <option value="pilot">Pilot (Order Form, free until end date)</option>
+            <option value="none">None, the studio pays before it can use Keystone</option>
+          </select>
+        </label>
+        <label className="block text-sm font-medium">
+          Plan
+          <select
+            value={accessPlan}
+            onChange={(e) => setAccessPlan(e.target.value as "base" | "pro")}
+            className="mt-1 min-h-11 w-full rounded-[10px] border border-[#CDBF9F] bg-white px-3"
+          >
+            <option value="pro">Pro (unlimited students)</option>
+            <option value="base">Base (up to 35 students)</option>
+          </select>
+        </label>
+        {accessStatus !== "none" && (
+          <label className="block text-sm font-medium">
+            Free access ends on {accessStatus === "pilot" ? "(required)" : "(blank = no end)"}
+            <input
+              type="date"
+              required={accessStatus === "pilot"}
+              value={accessEndsOn}
+              onChange={(e) => setAccessEndsOn(e.target.value)}
+              className="mt-1 min-h-11 w-full rounded-[10px] border border-[#CDBF9F] bg-white px-3"
+            />
+          </label>
+        )}
+        {accessStatus === "none" && (
+          <p className="text-sm text-[#5A4F43]">
+            The owner can sign in but sees their studio as paused until a subscription starts.
+          </p>
+        )}
+      </fieldset>
       <button
         type="submit"
         disabled={busy}
@@ -776,14 +828,20 @@ function SupportTab({ token, onError }: { token: string; onError: (m: string | n
           <option value="closed">Closed</option>
           <option value="all">All</option>
         </select>
-        <p className="text-sm text-[#5A4F43]">Reply from your email: each request was sent there with Reply-To set to the requester.</p>
+        <p className="text-sm text-[#5A4F43]">
+          Reply from your email: each request was sent there with Reply-To set to the requester.
+        </p>
       </div>
       {rows.length === 0 && <p className="text-sm text-[#5A4F43]">No support requests.</p>}
       {rows.map((row) => (
         <article key={row.id} className="rounded-[16px] border border-[#D9C79E] bg-[#FBF7EE] p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="font-semibold">
-              {row.urgent && <span className="mr-2 rounded bg-[#8B1E1E] px-2 py-0.5 text-xs text-white">URGENT</span>}
+              {row.urgent && (
+                <span className="mr-2 rounded bg-[#8B1E1E] px-2 py-0.5 text-xs text-white">
+                  URGENT
+                </span>
+              )}
               {row.reference} · {row.subject}
             </p>
             <button
@@ -795,7 +853,8 @@ function SupportTab({ token, onError }: { token: string; onError: (m: string | n
             </button>
           </div>
           <p className="mt-1 text-xs text-[#5A4F43]">
-            {new Date(row.createdAt).toLocaleString("en-AU")} · {row.audience} · {row.category} · {row.role} · {row.requesterEmail}
+            {new Date(row.createdAt).toLocaleString("en-AU")} · {row.audience} · {row.category} ·{" "}
+            {row.role} · {row.requesterEmail}
             {row.studioId ? ` · studio ${row.studioId}` : ""}
             {row.emailSentAt ? "" : " · email NOT sent"}
           </p>

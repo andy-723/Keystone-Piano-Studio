@@ -2,13 +2,14 @@ import { families, lessonTypes, riskScores, students, studio, teacher, weeklySlo
 import type { Family, RiskScore, Student, Studio, Teacher } from "@/mocks/types";
 import { readStudioPlan } from "./plans";
 import { respond } from "./_delay";
+import { saveLiveStudioDetails, studioSnapshot } from "./live/studio-store";
 
 export type StudentSummary = Student & { gradeGoal: string; durationMin: number; familyName: string; risk: RiskScore };
 
 function summarise(s: Student): StudentSummary {
   return {
     ...s,
-    gradeGoal: weeklySlots.find((w) => w.studentId === s.id)?.gradeGoal ?? "",
+    gradeGoal: weeklySlots.find((w) => w.studentId === s.id)?.gradeGoal ?? s.gradeGoal ?? "",
     durationMin: lessonTypes.find((type) => type.id === weeklySlots.find((slot) => slot.studentId === s.id)?.lessonTypeId)?.durationMin ?? 30,
     familyName: families.find((f) => f.id === s.familyId)?.displayName ?? "",
     risk: riskScores.find((r) => r.studentId === s.id) ?? { studentId: s.id, score: 100, band: "green", reasons: [] },
@@ -19,7 +20,9 @@ export const getStudio = (): Promise<Studio> => respond({ ...studio, plan: readS
 export const getTeacher = (): Promise<Teacher> => respond(teacher, 0);
 
 export async function setGstRegistered(value: boolean): Promise<Studio> {
+  const before = studioSnapshot();
   studio.gstRegistered = value;
+  await saveLiveStudioDetails(before);
   return respond(studio);
 }
 

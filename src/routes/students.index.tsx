@@ -10,6 +10,9 @@ import { StudentCheckIn } from "@/components/StudentCheckIn";
 import { studentsQuery } from "@/lib/student-queries";
 import { ProfilePicture } from "@/components/ProfilePicture";
 import { filterStudents } from "@/lib/student-insights";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { deleteExampleStudent } from "@/services/students";
 
 export const Route = createFileRoute("/students/")({
   loader: ({ context }) => context.queryClient.ensureQueryData(studentsQuery),
@@ -34,10 +37,26 @@ function Students() {
     </div>
     <p className="mb-4 text-base text-muted-foreground" aria-live="polite">{shown.length} {shown.length === 1 ? "student" : "students"}{attention ? " needing attention" : ""}</p>
     <div className="space-y-4">{shown.map((student) => <article key={student.id} aria-label={`${student.firstName} ${student.lastName}`} className="rounded-md border border-border bg-card p-5 md:p-6">
-      <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><div className="mb-3"><ProfilePicture id={student.id} name={`${student.firstName} ${student.lastName}`}/></div><h2 className="break-words text-2xl font-semibold">{student.firstName} {student.lastName}</h2><p className="mt-1 text-base text-muted-foreground">{student.gradeGoal} · {student.familyName}</p></div><StudentRiskBadge band={student.risk.band} /></div>
+      <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><div className="mb-3"><ProfilePicture id={student.id} name={`${student.firstName} ${student.lastName}`}/></div><h2 className="break-words text-2xl font-semibold">{student.firstName} {student.lastName}</h2><p className="mt-1 text-base text-muted-foreground">{student.gradeGoal} · {student.familyName}</p>{student.isExample && <ExampleStudentNote id={student.id} name={student.firstName} />}</div><StudentRiskBadge band={student.risk.band} /></div>
       {student.risk.band !== "green" && (pro || student.risk.band !== "red") && <ul className="mt-4 space-y-1 border-l-2 border-border pl-4 text-base">{student.risk.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul>}
       <div className="mt-5 flex flex-wrap items-center gap-3">{pro && student.risk.band === "red" && <StudentCheckIn studentId={student.id} />}<Button asChild variant="ghost" className="ml-auto"><Link to="/students/$studentId" params={{ studentId: student.id }}>Open profile <ArrowRight aria-hidden /></Link></Button></div>
     </article>)}</div>
     {shown.length === 0 && <p className="border-t border-border py-10 text-muted-foreground">No students match this search.</p>}
+  </div>;
+}
+/** The example a new studio starts with: say so, and let the owner delete it. */
+function ExampleStudentNote({ id, name }: { id: string; name: string }) {
+  const queryClient = useQueryClient();
+  const remove = useMutation({
+    mutationFn: () => deleteExampleStudent(id),
+    onSuccess: async () => {
+      toast.success("Example student deleted");
+      await queryClient.invalidateQueries();
+    },
+    onError: (error) => toast.error(error instanceof Error ? error.message : "Couldn't delete the example."),
+  });
+  return <div className="mt-3 rounded-md border-l-4 border-border bg-muted/40 p-3 text-base">
+    <p><strong>Example student.</strong> {name} shows you how a student looks in Keystone. Families are never invited from this example.</p>
+    <Button type="button" variant="outline" className="mt-3" disabled={remove.isPending} onClick={() => { if (window.confirm(`Delete the example student ${name} and the example family?`)) remove.mutate(); }}>{remove.isPending ? "Deleting…" : "Delete example"}</Button>
   </div>;
 }

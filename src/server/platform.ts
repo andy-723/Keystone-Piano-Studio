@@ -11,6 +11,7 @@ import { ownerWelcomeEmail } from "./email/templates/owner-welcome";
 import { maskEmail } from "@/lib/auth-paths";
 import { getSubscriptionStore } from "./subscription-store";
 import { accessLevel, statusLabel } from "@/lib/subscription";
+import { applyStudioAccessUpdate } from "./subscription";
 
 const AU_TIMEZONES = [
   "Australia/Melbourne",
@@ -114,6 +115,33 @@ export const listStudiosFn = createServerFn({ method: "POST" })
     return { studios: rows, mock: false as const };
   });
 
+export type StartingAccess = {
+  status: "pilot" | "comp" | "none";
+  plan: "base" | "pro";
+  /** yyyy-mm-dd, last day of free access. Required for a pilot; optional for complimentary. */
+  accessEndsOn?: string | null;
+};
+
+/** Defaults to complimentary Pro, so a studio made from the console can be used straight away. */
+export function validateStartingAccess(
+  input: StartingAccess | undefined,
+): Required<StartingAccess> {
+  const status = input?.status ?? "comp";
+  const plan = input?.plan ?? "pro";
+  const accessEndsOn = input?.accessEndsOn?.trim() || null;
+  if (!["pilot", "comp", "none"].includes(status)) throw new ProblemError(400, "Invalid access");
+  if (plan !== "base" && plan !== "pro") throw new ProblemError(400, "Invalid plan");
+  if (accessEndsOn && !/^\d{4}-\d{2}-\d{2}$/.test(accessEndsOn))
+    throw new ProblemError(400, "Invalid date", "Use yyyy-mm-dd.");
+  if (status === "pilot" && !accessEndsOn)
+    throw new ProblemError(
+      400,
+      "Pilot end date needed",
+      "A pilot needs the last day of free access (Order Form).",
+    );
+  return { status, plan, accessEndsOn };
+}
+
 export const createStudioFn = createServerFn({ method: "POST" })
   .validator(
     (data: {
@@ -122,6 +150,11 @@ export const createStudioFn = createServerFn({ method: "POST" })
       timezone: string;
       ownerName: string;
       ownerEmail: string;
+      /**
+       * Free access the studio starts with. Without it a new studio has no subscription yet
+       * ("incomplete"), which is owner read-only, so the owner would see the paused banner.
+       */
+      startingAccess?: StartingAccess;
       ip?: string;
       userAgent?: string;
     }) => data,
@@ -130,6 +163,7 @@ export const createStudioFn = createServerFn({ method: "POST" })
     if (isMockOnboarding()) {
       throw new ProblemError(400, "Mock mode", "Admin console needs live mode.");
     }
+    const starting = validateStartingAccess(data.startingAccess);
     const session = await gateAdmin(data.accessToken, data.ip);
     const name = data.name.trim();
     const ownerName = data.ownerName.trim();
@@ -185,6 +219,31 @@ export const createStudioFn = createServerFn({ method: "POST" })
       );
     }
     const resolvedStudioId = studioId as string;
+
+    if (starting.status !== "none") {
+      // requirePlatformAdmin (gateAdmin above) guards this service-key write.
+      const saved = await applyStudioAccessUpdate(resolvedStudioId, {
+        status: starting.status,
+        plan: starting.plan,
+        accessEndsOn: starting.accessEndsOn,
+        note:
+          starting.status === "pilot"
+            ? "Pilot access set when the studio was created"
+            : "Complimentary access set when the studio was created",
+      });
+      await writePlatformAudit({
+        actorUserId: session.userId,
+        event: "studio_access_changed",
+        targetStudioId: resolvedStudioId,
+        detail: {
+          status: saved.status,
+          plan: saved.plan,
+          access_ends_at: saved.accessEndsAt,
+          at_creation: true,
+        },
+        ...(data.ip ? { ip: data.ip } : {}),
+      });
+    }
 
     await writePlatformAudit({
       actorUserId: session.userId,
