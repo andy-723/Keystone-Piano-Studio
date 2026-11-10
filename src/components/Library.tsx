@@ -65,6 +65,7 @@ export function Library({ scope = "demo" }: { scope?: ImportScope }) {
         className="my-7 flex flex-wrap gap-2 border-y border-border py-4"
         role="tablist"
         aria-label="Library"
+        data-tour="library-tabs"
       >
         {(
           [

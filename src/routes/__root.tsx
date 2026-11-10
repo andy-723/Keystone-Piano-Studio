@@ -8,6 +8,7 @@ import {
   Outlet,
   Link,
   createRootRouteWithContext,
+  useNavigate,
   useRouter,
   useRouterState,
   HeadContent,
@@ -36,6 +37,8 @@ import { setupQuery } from "@/lib/setup-queries";
 import { planBillingQuery } from "@/lib/plan-queries";
 import { NewTeacherSetup } from "@/components/NewTeacherSetup";
 import { teacherProfileQuery } from "@/lib/community-queries";
+import { TourProvider } from "@/components/tour/Tour";
+import { STUDIO_TOUR } from "@/lib/tour-steps";
 
 const studioQuery = queryOptions({ queryKey: ["studio"], queryFn: getStudio });
 
@@ -206,17 +209,38 @@ function RoleGate() {
     );
   return (
     <LiveAuthGuard>
-      <AppShell studio={studio}>
-        {role === "parent" ? (
-          <Suspense fallback={<p>Opening your family portal…</p>}>
-            <ParentPortal />
-          </Suspense>
-        ) : (
-          /* Required: nested routes render here. */
-          <Outlet />
-        )}
-      </AppShell>
+      <StudioTour enabled={role === "teacher"}>
+        <AppShell studio={studio}>
+          {role === "parent" ? (
+            <Suspense fallback={<p>Opening your family portal…</p>}>
+              <ParentPortal />
+            </Suspense>
+          ) : (
+            /* Required: nested routes render here. */
+            <Outlet />
+          )}
+        </AppShell>
+      </StudioTour>
     </LiveAuthGuard>
+  );
+}
+
+/** Studio tour for owners and teachers; the family portal mounts its own tour. */
+function StudioTour({ enabled, children }: { enabled: boolean; children: ReactNode }) {
+  const navigate = useNavigate();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  if (!enabled) return <>{children}</>;
+  return (
+    <TourProvider
+      tourId="studio"
+      steps={STUDIO_TOUR}
+      cardBottomClass="bottom-[calc(9rem+env(safe-area-inset-bottom))] sm:bottom-[calc(5rem+env(safe-area-inset-bottom))]"
+      onStep={(step) => {
+        if (step.route && step.route !== pathname) void navigate({ to: step.route });
+      }}
+    >
+      {children}
+    </TourProvider>
   );
 }
 
