@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { BookOpen, CalendarDays, Check, CheckCircle2, FileText, Laptop, MessageCircle, Send, Tablet } from "lucide-react";
 
 type Screen = "day" | "week" | "chat" | "invoices";
@@ -34,7 +35,7 @@ function DayBook() {
           const on = !!done[l.name];
           return (
             <li key={l.name}>
-              <button
+              <Button variant="ghost"
                 type="button"
                 onClick={() => setDone((d) => ({ ...d, [l.name]: !d[l.name] }))}
                 className={`flex min-h-14 w-full items-center gap-3 rounded-2xl border px-4 text-left text-base transition ${on ? "border-mk-bronze/50 bg-mk-cream" : "border-mk-gold/40 bg-mk-paper hover:border-mk-bronze"}`}
@@ -44,7 +45,7 @@ function DayBook() {
                 <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 font-medium ${on ? "bg-mk-bronze text-mk-paper" : "border border-mk-ink/20 text-mk-ink/70"}`}>
                   {on ? <><Check className="h-4 w-4" aria-hidden /> Attended</> : "Mark"}
                 </span>
-              </button>
+              </Button>
             </li>
           );
         })}
@@ -71,13 +72,13 @@ function Week() {
         {week.map(([d, n, items]) => {
           const hol = items[0] === "Public holiday";
           return (
-            <button key={d} type="button" onClick={() => setSel(d)}
-              className={`min-h-32 rounded-2xl border p-2 text-left text-base transition ${sel === d ? "border-mk-bronze bg-mk-cream" : "border-mk-gold/40 bg-mk-paper"} ${hol ? "bg-mk-ink/5" : ""}`}>
+            <Button variant="ghost" key={d} type="button" onClick={() => setSel(d)}
+              className={`block h-auto min-h-32 whitespace-normal rounded-lg border p-2 text-left text-base transition ${sel === d ? "border-mk-bronze bg-mk-cream" : "border-mk-gold/40 bg-mk-paper"} ${hol ? "bg-mk-ink/5" : ""}`}>
               <span className="block font-semibold">{d} {n}</span>
               {items.map((i) => (
                 <span key={i} className={`mt-1 block truncate rounded-lg px-1.5 py-0.5 ${hol ? "italic text-mk-ink/60" : "bg-mk-bronze/15"}`}>{i}</span>
               ))}
-            </button>
+            </Button>
           );
         })}
       </div>
@@ -108,7 +109,7 @@ function Chat() {
         <label className="sr-only" htmlFor="demo-msg">Message</label>
         <input id="demo-msg" value={text} onChange={(e) => setText(e.target.value)} placeholder="Write a message…"
           className="min-h-12 min-w-0 flex-1 rounded-full border border-mk-gold/60 bg-mk-paper px-4 text-base outline-none focus:border-mk-bronze" />
-        <button type="submit" aria-label="Send" className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-mk-ink text-mk-paper"><Send className="h-5 w-5" aria-hidden /></button>
+        <Button type="submit" aria-label="Send" className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-mk-ink text-mk-paper"><Send className="h-5 w-5" aria-hidden /></Button>
       </form>
     </div>
   );
@@ -127,7 +128,7 @@ function Invoices() {
             <span className="min-w-0 flex-1 truncate">{f} family · {amt}</span>
             {sent[f]
               ? <span className="rounded-full bg-mk-cream px-3 py-1 font-medium">Sent ✓</span>
-              : <button type="button" onClick={() => setSent((s) => ({ ...s, [f]: true }))} className="min-h-11 rounded-full bg-mk-bronze px-4 font-medium text-mk-paper">Send</button>}
+              : <Button type="button" onClick={() => setSent((s) => ({ ...s, [f]: true }))} className="min-h-12 rounded-full bg-mk-bronze px-4 font-medium text-mk-paper">Send</Button>}
           </li>
         ))}
       </ul>
@@ -143,13 +144,13 @@ function AppScreen({ screen, device, onNav }: { screen: Screen; device: Device; 
       <nav className={device === "laptop" ? "hidden w-44 shrink-0 flex-col gap-1 border-r border-mk-gold/40 p-3 sm:flex" : "grid grid-cols-4 border-t border-mk-gold/40"}>
         {device === "laptop" && <p className="mb-3 px-2 font-mk-serif text-lg font-semibold tracking-wide">KEYSTONE</p>}
         {nav.map(([id, label, I]) => (
-          <button key={id} type="button" onClick={() => onNav(id)}
+          <Button variant="ghost" key={id} type="button" onClick={() => onNav(id)}
             className={`flex min-h-12 items-center gap-2 rounded-xl px-3 text-base transition ${device === "ipad" ? "flex-col justify-center gap-0.5 rounded-none py-1" : ""} ${screen === id ? "bg-mk-cream font-semibold text-mk-bronze" : "text-mk-ink/70 hover:text-mk-ink"}`}>
             <I className="h-5 w-5" aria-hidden />{label}
-          </button>
+          </Button>
         ))}
       </nav>
-      <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">{body}</div>
+      <div key={screen} className="mk-screen min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">{body}</div>
     </div>
   );
 }
@@ -157,16 +158,16 @@ function AppScreen({ screen, device, onNav }: { screen: Screen; device: Device; 
 export function DeviceShowcase() {
   const [device, setDevice] = useState<Device>("laptop");
   const [screen, setScreen] = useState<Screen>("day");
-  const hint = screens.find((s) => s.id === screen)!.hint;
+  const hint = screens.find((s) => s.id === screen)?.hint ?? "";
   return (
     <div className="mt-12">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div role="tablist" aria-label="Device" className="inline-flex rounded-full border border-mk-gold/60 bg-mk-paper p-1">
           {([["laptop", "Laptop", Laptop], ["ipad", "iPad", Tablet]] as const).map(([id, label, I]) => (
-            <button key={id} role="tab" aria-selected={device === id} type="button" onClick={() => setDevice(id)}
+            <Button variant="ghost" key={id} role="tab" aria-selected={device === id} type="button" onClick={() => setDevice(id)}
               className={`inline-flex min-h-12 items-center gap-2 rounded-full px-5 text-base font-medium transition ${device === id ? "bg-mk-ink text-mk-paper" : "text-mk-ink/75"}`}>
               <I className="h-5 w-5" aria-hidden />{label}
-            </button>
+            </Button>
           ))}
         </div>
         <p className="text-lg text-mk-ink/75" aria-live="polite">Try it: {hint}</p>
@@ -175,13 +176,13 @@ export function DeviceShowcase() {
       <div className="mt-8 flex justify-center">
         {device === "laptop" ? (
           <div className="w-full max-w-5xl">
-            <div className="rounded-t-[1.75rem] border-[10px] border-mk-ink bg-mk-ink shadow-[0_30px_80px_-30px_rgba(28,25,23,0.45)]">
+            <div className="mk-device rounded-t-[1.75rem] border-[10px] border-mk-ink bg-mk-ink">
               <div className="h-[460px] overflow-hidden rounded-xl sm:h-[520px]"><AppScreen screen={screen} device="laptop" onNav={setScreen} /></div>
             </div>
             <div className="mx-auto h-4 w-[106%] -translate-x-[3%] rounded-b-2xl bg-mk-ink/85" aria-hidden />
           </div>
         ) : (
-          <div className="w-full max-w-2xl rounded-[2.5rem] border-[14px] border-mk-ink bg-mk-ink shadow-[0_30px_80px_-30px_rgba(28,25,23,0.45)]">
+          <div className="mk-device w-full max-w-2xl rounded-[2.5rem] border-[14px] border-mk-ink bg-mk-ink">
             <div className="h-[560px] overflow-hidden rounded-[1.5rem] sm:h-[640px]"><AppScreen screen={screen} device="ipad" onNav={setScreen} /></div>
           </div>
         )}
@@ -190,10 +191,10 @@ export function DeviceShowcase() {
       <ul className="mt-8 flex flex-wrap justify-center gap-3">
         {screens.map(({ id, label, Icon }) => (
           <li key={id}>
-            <button type="button" onClick={() => setScreen(id)} aria-pressed={screen === id}
+            <Button variant="ghost" type="button" onClick={() => setScreen(id)} aria-pressed={screen === id}
               className={`inline-flex min-h-12 items-center gap-2 rounded-full border px-5 text-base font-medium transition ${screen === id ? "border-mk-bronze bg-mk-bronze text-mk-paper" : "border-mk-gold/60 bg-mk-paper text-mk-ink hover:border-mk-bronze"}`}>
               <Icon className="h-5 w-5" aria-hidden />{label}
-            </button>
+            </Button>
           </li>
         ))}
       </ul>
