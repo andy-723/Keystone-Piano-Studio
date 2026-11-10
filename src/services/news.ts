@@ -1,3 +1,5 @@
+import { isLiveStudio } from '@/lib/studio-workspace';
+import { saveLivePost } from './live/news-store';
 import { families, students, studio, teacher } from '@/mocks/data';
 import { newStudioRoster } from '@/mocks/roster-import';
 import { setupSession } from '@/mocks/setup';
@@ -11,7 +13,8 @@ import { respond } from './_delay';
 
 const clone = <T,>(value: T): T => structuredClone(value);
 function roster(scope: CommunityScope) { return scope === 'demo' ? { families, students } : newStudioRoster; }
-export function newsNow(scope: CommunityScope = 'demo') { return newsState[scope].now; }
+// A real studio runs on real time; the demo keeps its fixture clock.
+export function newsNow(scope: CommunityScope = 'demo') { return scope === 'demo' && isLiveStudio() ? new Date().toISOString() : newsState[scope].now; }
 export async function getNewsClock(scope: CommunityScope = 'demo') { return respond(newsNow(scope)); }
 function ownedIds(scope: CommunityScope) { return scope === 'new-studio' ? roster(scope).students.map(s => s.id) : newsState[scope].membership.studentIds; }
 export function audienceFamilies(post: Announcement, scope: CommunityScope = 'demo') {
@@ -91,6 +94,7 @@ export async function saveAnnouncement(input: AnnouncementInput, scope: Communit
   if (post.audience.kind === 'my_students') post.audience.familyIds = [...new Set(roster(scope).students.filter(s=>ownedIds(scope).includes(s.id)).map(s=>s.familyId))];
   if (post.status !== 'draft') post.attachments.forEach(a => validateAttachment(a,scope));
   if (old?.status === 'published') post.editedAt = newsNow(scope);
+  if (scope === 'demo') await saveLivePost(post, !old);
   if (old) state.posts[state.posts.indexOf(old)] = post; else state.posts.push(post);
   if (isVisible(post,newsNow(scope))) dispatch(post,scope);
   return respond(clone(post));
@@ -98,6 +102,7 @@ export async function saveAnnouncement(input: AnnouncementInput, scope: Communit
 export async function archiveAnnouncement(id: string, scope: CommunityScope = 'demo') {
   const post = newsState[scope].posts.find(p => p.id === id);
   if (!post || post.authorMembershipId !== newsState[scope].membership.id) throw new Error('You can archive only your own posts.');
+  if (scope === 'demo') await saveLivePost({ ...post, status: 'archived' }, false);
   post.status = 'archived'; return respond(clone(post));
 }
 export function newsCounts(post: Announcement, scope: CommunityScope = 'demo') {
