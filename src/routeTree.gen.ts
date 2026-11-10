@@ -19,6 +19,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as NewsRouteImport } from './routes/news'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SnapshotRouteImport } from './routes/snapshot'
 import { Route as StudentsRouteImport } from './routes/students'
 import { Route as StudioEnquiryRouteImport } from './routes/studio-enquiry'
 import { Route as SupportRouteImport } from './routes/support'
@@ -102,6 +103,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SnapshotRoute = SnapshotRouteImport.update({
+  id: '/snapshot',
+  path: '/snapshot',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StudentsRoute = StudentsRouteImport.update({
@@ -287,6 +293,7 @@ export interface FileRoutesByFullPath {
   '/news': typeof NewsRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRouteWithChildren
+  '/snapshot': typeof SnapshotRoute
   '/students': typeof StudentsRouteWithChildren
   '/studio-enquiry': typeof StudioEnquiryRoute
   '/support': typeof SupportRoute
@@ -330,6 +337,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/news': typeof NewsRoute
   '/privacy': typeof PrivacyRoute
+  '/snapshot': typeof SnapshotRoute
   '/studio-enquiry': typeof StudioEnquiryRoute
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
@@ -376,6 +384,7 @@ export interface FileRoutesById {
   '/news': typeof NewsRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRouteWithChildren
+  '/snapshot': typeof SnapshotRoute
   '/students': typeof StudentsRouteWithChildren
   '/studio-enquiry': typeof StudioEnquiryRoute
   '/support': typeof SupportRoute
@@ -424,6 +433,7 @@ export interface FileRouteTypes {
     | '/news'
     | '/privacy'
     | '/settings'
+    | '/snapshot'
     | '/students'
     | '/studio-enquiry'
     | '/support'
@@ -467,6 +477,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/news'
     | '/privacy'
+    | '/snapshot'
     | '/studio-enquiry'
     | '/support'
     | '/terms'
@@ -512,6 +523,7 @@ export interface FileRouteTypes {
     | '/news'
     | '/privacy'
     | '/settings'
+    | '/snapshot'
     | '/students'
     | '/studio-enquiry'
     | '/support'
@@ -559,6 +571,7 @@ export interface RootRouteChildren {
   NewsRoute: typeof NewsRoute
   PrivacyRoute: typeof PrivacyRoute
   SettingsRoute: typeof SettingsRouteWithChildren
+  SnapshotRoute: typeof SnapshotRoute
   StudentsRoute: typeof StudentsRouteWithChildren
   StudioEnquiryRoute: typeof StudioEnquiryRoute
   SupportRoute: typeof SupportRoute
@@ -650,6 +663,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/snapshot': {
+      id: '/snapshot'
+      path: '/snapshot'
+      fullPath: '/snapshot'
+      preLoaderRoute: typeof SnapshotRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/students': {
@@ -972,6 +992,7 @@ const rootRouteChildren: RootRouteChildren = {
   NewsRoute: NewsRoute,
   PrivacyRoute: PrivacyRoute,
   SettingsRoute: SettingsRouteWithChildren,
+  SnapshotRoute: SnapshotRoute,
   StudentsRoute: StudentsRouteWithChildren,
   StudioEnquiryRoute: StudioEnquiryRoute,
   SupportRoute: SupportRoute,

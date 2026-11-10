@@ -289,14 +289,17 @@ invoices.forEach((invoice, index) => {
   if (invoice.status !== "paid" && invoice.status !== "partially_paid") return;
   const method = index % 3 === 0 ? "stripe_payto" : index % 3 === 1 ? "stripe_becs" : "stripe_card";
   const amountCents = invoice.status === "paid" ? invoice.totalCents : Math.round(invoice.totalCents / 2);
+  // Spread received dates across Feb and March so Studio snapshot week/month tiles have cash in.
+  const receivedOn =
+    index % 3 === 0 ? "2027-03-15" : index % 3 === 1 ? "2027-03-08" : "2027-02-05";
   payments.push({
     id: `payment-${payments.length + 1}`,
     invoiceId: invoice.id,
     familyId: invoice.familyId,
     method,
     amountCents,
-    receivedOn: "2027-02-05",
-    date: "2027-02-05",
+    receivedOn,
+    date: receivedOn,
     recordedBy: "teacher-1",
   });
 });

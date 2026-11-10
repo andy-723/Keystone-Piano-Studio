@@ -6,6 +6,9 @@ GitHub Release with the same text. See `docs/release-process.md`.
 
 ## Unreleased
 
+- New: Studio snapshot for owners and admins — week/month tiles for revenue collected, overdue,
+  active students, incomplete invites, practice at risk and lessons delivered, with list drill-downs
+  and CSV export (Australia/Sydney). Teachers keep Today without whole-studio revenue.
 - New: Calendar. Give students weekly or one-off lesson times, then move or cancel a single week,
   change the regular time from a given week, or stop lessons. Optional one-way sync to a
   "Keystone lessons" calendar in Google Calendar (migration 0010).

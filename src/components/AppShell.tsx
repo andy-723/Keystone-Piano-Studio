@@ -1,5 +1,15 @@
 import { Link } from "@tanstack/react-router";
-import { BookOpen, CalendarDays, LifeBuoy, MessageCircle, Receipt, Settings, Users, Megaphone } from "lucide-react";
+import {
+  BookOpen,
+  CalendarDays,
+  LayoutDashboard,
+  LifeBuoy,
+  MessageCircle,
+  Receipt,
+  Settings,
+  Users,
+  Megaphone,
+} from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { chatThreadsQuery } from "@/lib/chat-queries";
@@ -12,7 +22,12 @@ import { PlanBilling } from "./PlanBilling";
 import { planBillingQuery } from "@/lib/plan-queries";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { useAppSettings, type Role } from "@/lib/app-settings";
+import {
+  canViewStudioSnapshot,
+  useAppSettings,
+  type Role,
+  type StudioStaffRole,
+} from "@/lib/app-settings";
 import type { Studio } from "@/mocks/types";
 import { translate } from "@/i18n/parent";
 import { BrandLogo } from "@/components/BrandLogo";
@@ -21,6 +36,7 @@ import { TourHelpButton } from "@/components/tour/Tour";
 
 const NAV = [
   { to: "/", label: "Today", icon: BookOpen },
+  { to: "/snapshot", label: "Snapshot", icon: LayoutDashboard, ownerAdminOnly: true },
   { to: "/calendar", label: "Calendar", icon: CalendarDays },
   { to: "/news", label: "News", icon: Megaphone },
   { to: "/students", label: "Students", icon: Users },
@@ -30,7 +46,8 @@ const NAV = [
 ] as const;
 
 export function AppShell({ children, studio }: { children: ReactNode; studio: Studio }) {
-  const { role, setRole, largeText, setLargeText } = useAppSettings();
+  const { role, setRole, studioStaffRole, setStudioStaffRole, largeText, setLargeText, parentLang } =
+    useAppSettings();
   const { data: subscription } = useSuspenseQuery(planBillingQuery(role === "new-teacher" ? "new-studio" : "demo"));
   const { data: profile } = useSuspenseQuery(teacherProfileQuery(role === "new-teacher" ? "new-studio" : "demo"));
   const [newNewsOpen, setNewNewsOpen] = useState(false);
@@ -38,10 +55,13 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
   const planLabel = subscription.plan === "base" ? "Base plan" : subscription.plan === "academy" ? "Academy plan" : "Pro plan";
   const planBadge = <Button asChild={role === "teacher"} variant={subscription.plan === "base" ? "outline" : "default"} className="min-h-12 h-auto rounded-full px-3 text-base" onClick={() => role === "new-teacher" && setNewPlanOpen(true)}>{role === "teacher" ? <Link to="/settings" hash="plan-and-billing">{planLabel}</Link> : planLabel}</Button>;
   const isTeacher = role === "teacher";
+  const showSnapshot = isTeacher && canViewStudioSnapshot(studioStaffRole);
+  const navItems = NAV.filter((item) =>
+    "ownerAdminOnly" in item && item.ownerAdminOnly ? showSnapshot : true,
+  );
   const { data: chatThreads } = useQuery({ ...chatThreadsQuery, enabled: isTeacher });
   const unread = chatThreads?.reduce((total, thread) => total + thread.unreadCount, 0) ?? 0;
   const chatNotification = unread > 0 ? <span role="status" aria-label={`${unread} unread chat messages`} className="absolute -right-5 -top-2 flex min-h-7 min-w-7 items-center justify-center rounded-full bg-destructive px-1.5 text-base font-semibold text-destructive-foreground">{unread > 99 ? "99+" : unread}</span> : null;
-  const { parentLang } = useAppSettings();
   const shellText = (key: "largerText" | "viewingAs") => translate(role === "parent" ? parentLang : "en", key);
 
   return (
@@ -52,7 +72,7 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
           <BrandLogo variant="stacked" alt="Keystone Music HQ" />
         </div>
         <div className="mb-3 mt-4 flex flex-col items-start gap-3 border-t border-sidebar-border px-1 pt-3"><p className="break-words text-base font-semibold">{profile?.studioName || studio.name}</p>{planBadge}</div>
-        {NAV.map(({ to, label, icon: Icon }) => (
+        {navItems.map(({ to, label, icon: Icon }) => (
           <Link
             key={to}
             to={to}
@@ -99,18 +119,35 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
               </Button>
             )}
             {!isLiveAuthConfigured() && (
-              <label className="flex min-w-0 max-w-full items-center gap-2 text-base">
-                <span className="sr-only sm:not-sr-only sm:text-muted-foreground">{shellText("viewingAs")}</span>
-                <select
-                  value={role}
-                  onChange={(e) => setRole(e.target.value as Role)}
-                  className="min-h-12 w-full min-w-0 max-w-full rounded-lg border-2 border-input bg-card px-2 min-readable font-semibold sm:w-auto sm:px-3"
-                >
-                  <option value="teacher">Teacher ({profile?.name || "Ms Clarke"})</option>
-                  <option value="parent">Parent (Wei Chen)</option>
-                  <option value="new-teacher">New teacher (empty studio)</option>
-                </select>
-              </label>
+              <>
+                <label className="flex min-w-0 max-w-full items-center gap-2 text-base">
+                  <span className="sr-only sm:not-sr-only sm:text-muted-foreground">{shellText("viewingAs")}</span>
+                  <select
+                    value={role}
+                    onChange={(e) => setRole(e.target.value as Role)}
+                    className="min-h-12 w-full min-w-0 max-w-full rounded-lg border-2 border-input bg-card px-2 min-readable font-semibold sm:w-auto sm:px-3"
+                  >
+                    <option value="teacher">Teacher ({profile?.name || "Ms Clarke"})</option>
+                    <option value="parent">Parent (Wei Chen)</option>
+                    <option value="new-teacher">New teacher (empty studio)</option>
+                  </select>
+                </label>
+                {isTeacher && (
+                  <label className="flex min-w-0 max-w-full items-center gap-2 text-base">
+                    <span className="sr-only sm:not-sr-only sm:text-muted-foreground">Studio role</span>
+                    <select
+                      aria-label="Studio role"
+                      value={studioStaffRole}
+                      onChange={(e) => setStudioStaffRole(e.target.value as StudioStaffRole)}
+                      className="min-h-12 w-full min-w-0 max-w-full rounded-lg border-2 border-input bg-card px-2 min-readable font-semibold sm:w-auto sm:px-3"
+                    >
+                      <option value="owner">Owner</option>
+                      <option value="admin">Admin</option>
+                      <option value="teacher">Teacher (no snapshot)</option>
+                    </select>
+                  </label>
+                )}
+              </>
             )}
             {isLiveAuthConfigured() && (
               <Button
@@ -134,8 +171,8 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
       </div>
 
       {/* Bottom tab bar on phones (teacher only) */}
-      {isTeacher && <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-4 sm:grid-cols-7 border-t border-sidebar-border bg-sidebar pb-[env(safe-area-inset-bottom)] md:hidden">
-        {NAV.map(({ to, label, icon: Icon }) => (
+      {isTeacher && <nav aria-label="Main" className={`fixed inset-x-0 bottom-0 z-20 grid grid-cols-4 ${navItems.length > 7 ? "sm:grid-cols-4" : "sm:grid-cols-7"} border-t border-sidebar-border bg-sidebar pb-[env(safe-area-inset-bottom)] md:hidden`}>
+        {navItems.map(({ to, label, icon: Icon }) => (
           <Link
             key={to}
             to={to}

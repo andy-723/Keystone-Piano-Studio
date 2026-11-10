@@ -301,6 +301,70 @@ export async function listInvitationsForFamily(familyId: string) {
   );
 }
 
+export type PublicInvitationStatus = ReturnType<typeof publicInvitationStatus>;
+
+/** Studio-wide incomplete enrolment invites (sent or opened, not finished). */
+export async function listIncompleteInvitations(): Promise<PublicInvitationStatus[]> {
+  ensureDemoIncompleteInvites();
+  return respond(
+    invitationState.invitations
+      .filter((entry) => entry.status === "sent" || entry.status === "opened")
+      .map(publicInvitationStatus)
+      .sort((a, b) => b.sentAt.localeCompare(a.sentAt)),
+  );
+}
+
+/** Seeds a couple of incomplete invites so the Studio snapshot demo has a drill list. */
+export function ensureDemoIncompleteInvites() {
+  if (invitationState.invitations.some((entry) => entry.id.startsWith("demo-invite-"))) return;
+  const samples: Array<{
+    id: string;
+    familyId: string;
+    studentIds: string[];
+    status: InvitationStatus;
+    openedAt: string | null;
+  }> = [
+    {
+      id: "demo-invite-sent",
+      familyId: "fam-8",
+      studentIds: students.filter((student) => student.familyId === "fam-8").map((student) => student.id),
+      status: "sent",
+      openedAt: null,
+    },
+    {
+      id: "demo-invite-opened",
+      familyId: "fam-12",
+      studentIds: students.filter((student) => student.familyId === "fam-12").map((student) => student.id),
+      status: "opened",
+      openedAt: `${PROTOTYPE_TODAY}T09:30:00+11:00`,
+    },
+  ];
+  for (const sample of samples) {
+    const family = families.find((entry) => entry.id === sample.familyId);
+    const email = family?.guardians[0]?.email;
+    if (!family || !email || sample.studentIds.length === 0) continue;
+    invitationState.invitations.push({
+      id: sample.id,
+      studioId: DEMO_STUDIO_ID,
+      familyId: sample.familyId,
+      email,
+      language: family.guardians[0]?.preferredLanguage ?? "en",
+      tokenHash: `demo-hash-${sample.id}`,
+      status: sample.status,
+      expiresAt: `${addDays(PROTOTYPE_TODAY, 14)}T23:59:59+11:00`,
+      sentAt: `${addDays(PROTOTYPE_TODAY, -3)}T10:00:00+11:00`,
+      openedAt: sample.openedAt,
+      completedAt: null,
+      reminderCount: 0,
+      lastReminderAt: null,
+      createdBy: teacher.id,
+      studentIds: sample.studentIds,
+      enrolmentDraftIds: [],
+      createdAt: `${addDays(PROTOTYPE_TODAY, -3)}T10:00:00+11:00`,
+    });
+  }
+}
+
 const opaqueError = {
   state: "unavailable" as const,
   message: "This link has expired. Ask your teacher to send a new one.",

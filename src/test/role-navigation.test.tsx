@@ -21,9 +21,29 @@ describe("teacher navigation permissions", () => {
     client.setQueryData(['teacher-profile','demo'],await getTeacherProfile());
     render(<QueryClientProvider client={client}><AppSettingsProvider><AppShell studio={studio}><p>Day-book</p></AppShell></AppSettingsProvider></QueryClientProvider>);
     expect(screen.getAllByRole("navigation", { name: "Main" })).toHaveLength(2);
-    fireEvent.change(screen.getByRole("combobox"), { target: { value: "parent" } });
+    const viewingAs = screen.getAllByRole("combobox")[0]!;
+    fireEvent.change(viewingAs, { target: { value: "parent" } });
     expect(screen.queryAllByRole("navigation", { name: "Main" })).toHaveLength(0);
-    fireEvent.change(screen.getByRole("combobox"), { target: { value: "teacher" } });
+    fireEvent.change(viewingAs, { target: { value: "teacher" } });
     expect(screen.getAllByRole("navigation", { name: "Main" })).toHaveLength(2);
+  });
+
+  it("shows Snapshot for owners and hides it for teacher staff", async () => {
+    const studio = await getStudio();
+    const client = new QueryClient();
+    client.setQueryData(["plan-billing", "demo"], await getPlanBilling());
+    client.setQueryData(["teacher-profile", "demo"], await getTeacherProfile());
+    render(
+      <QueryClientProvider client={client}>
+        <AppSettingsProvider>
+          <AppShell studio={studio}>
+            <p>Day-book</p>
+          </AppShell>
+        </AppSettingsProvider>
+      </QueryClientProvider>,
+    );
+    expect(screen.getAllByText("Snapshot").length).toBeGreaterThan(0);
+    fireEvent.change(screen.getByLabelText("Studio role"), { target: { value: "teacher" } });
+    expect(screen.queryAllByText("Snapshot")).toHaveLength(0);
   });
 });
