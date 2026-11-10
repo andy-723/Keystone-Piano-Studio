@@ -12,8 +12,10 @@ import {
   decideMfaGate,
   decideStudioAccessGate,
   passwordSessionRefused,
+  shellRoleForAccount,
   type StudioAccessGate,
 } from "@/lib/post-login";
+import { useOptionalAppSettings } from "@/lib/app-settings";
 import { StudioPausedScreen, StudioReadOnlyBanner } from "@/components/StudioAccessNotice";
 import { resolveAccountFn } from "@/server/account";
 import { QueryClientContext } from "@tanstack/react-query";
@@ -31,6 +33,8 @@ export function resetLiveAuthGuardForTests() {
   resetStudioWorkspaceForTests();
 }
 
+const noRole = () => {};
+
 function loginUrl(next: string) {
   return `/login?next=${encodeURIComponent(next)}`;
 }
@@ -42,6 +46,9 @@ function loginUrl(next: string) {
  * Keystone account (platform staff, studio member or guardian) AND has passed the MFA
  * gate (aal2 for staff roles). Anything else goes to /login, /auth/mfa-setup or /auth/mfa.
  *
+ * Guardians with no studio membership get the family portal shell; studio members and
+ * platform staff keep the teacher screens.
+ *
  * No Supabase keys: the mock demo renders only in local dev or with VITE_ALLOW_DEMO=true.
  * A production build without keys shows "sign-in unavailable" instead of the demo app.
  */
@@ -51,6 +58,7 @@ export function LiveAuthGuard({ children }: { children: ReactNode }) {
   const exempt = isAuthExemptPath(pathname);
   // Optional: tests render the guard without a query client.
   const queryClient = useContext(QueryClientContext);
+  const setRole = useOptionalAppSettings()?.setRole ?? noRole;
   const [accessGate, setAccessGate] = useState<StudioAccessGate>({ kind: "ok" });
   const [state, setState] = useState<GuardState>(() => {
     if (exempt) return "ok";
@@ -86,7 +94,8 @@ export function LiveAuthGuard({ children }: { children: ReactNode }) {
       const known = getVerifiedAccess(session.access_token);
       // A full reload empties the in-memory store, so the studio's data must load again.
       if (known && workspaceReady) {
-        setAccessGate(known);
+        setRole(known.shellRole);
+        setAccessGate(known.access);
         setState("ok");
         return;
       }
@@ -148,7 +157,10 @@ export function LiveAuthGuard({ children }: { children: ReactNode }) {
           queryClient?.removeQueries();
           workspaceReady = true;
         }
-        rememberVerifiedAccess(session.access_token, access);
+        // Guardians get the family portal (and its tour); the studio screens never render for them.
+        const shellRole = shellRoleForAccount(account);
+        rememberVerifiedAccess(session.access_token, access, shellRole);
+        setRole(shellRole);
         setAccessGate(access);
         setState("ok");
       } catch {
@@ -158,7 +170,7 @@ export function LiveAuthGuard({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [pathname, search, queryClient]);
+  }, [pathname, search, queryClient, setRole]);
 
   if (exempt) return children;
   if (state === "unavailable") {

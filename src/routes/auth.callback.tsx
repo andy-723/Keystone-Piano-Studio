@@ -6,6 +6,7 @@ import { rememberVerifiedAccess } from "@/lib/live-auth-cache";
 import {
   decideMfaGate,
   decideStudioAccessGate,
+  shellRoleForAccount,
   destinationForAccount,
   NO_ACCOUNT_MESSAGE,
 } from "@/lib/post-login";
@@ -156,7 +157,7 @@ function AuthCallbackPage() {
         );
         return;
       }
-      rememberVerifiedAccess(session.access_token, decideStudioAccessGate(account));
+      rememberVerifiedAccess(session.access_token, decideStudioAccessGate(account), shellRoleForAccount(account));
       window.location.replace(destinationForAccount(account, nextSafe));
     }
     void run();

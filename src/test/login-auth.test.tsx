@@ -149,20 +149,20 @@ describe("route guard helpers", () => {
 
 describe("live auth verified-access cache", () => {
   it("survives a memory clear via sessionStorage for the same token", () => {
-    rememberVerifiedAccess("tok-admin", { kind: "ok" });
-    expect(getVerifiedAccess("tok-admin")).toEqual({ kind: "ok" });
+    rememberVerifiedAccess("tok-admin", { kind: "ok" }, "teacher");
+    expect(getVerifiedAccess("tok-admin")).toEqual({ access: { kind: "ok" }, shellRole: "teacher" });
     clearVerifiedAccess();
     expect(getVerifiedAccess("tok-admin")).toBeUndefined();
-    rememberVerifiedAccess("tok-admin", { kind: "ok" });
+    rememberVerifiedAccess("tok-admin", { kind: "ok" }, "teacher");
     // Simulate a full document reload: memory map empty, sessionStorage still set.
     resetLiveAuthGuardForTests();
     // reset clears storage too — re-seed storage-only path:
     sessionStorage.setItem(
-      "kmhq.live-auth.verified.v1",
-      JSON.stringify({ token: "tok-admin", gate: { kind: "ok" } }),
+      "kmhq.live-auth.verified.v2",
+      JSON.stringify({ token: "tok-admin", gate: { kind: "ok" }, shellRole: "teacher" }),
     );
     expect(getVerifiedAccess("tok-other")).toBeUndefined();
-    expect(getVerifiedAccess("tok-admin")).toEqual({ kind: "ok" });
+    expect(getVerifiedAccess("tok-admin")).toEqual({ access: { kind: "ok" }, shellRole: "teacher" });
   });
 
   it("sends platform staff to /admin by default", () => {
