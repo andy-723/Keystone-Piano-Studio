@@ -39,12 +39,13 @@ function PrimaryCta({ className = "" }: { className?: string }) {
 }
 
 const studioPoints = [
-  ["One studio HQ", "Today view, students, family chat, invoices and settings — one place instead of five tools."],
+  ["A digital day book", "A clean, simple view focused on lessons. See your day book or your week, and mark attendance, add notes to student files, and manage courses, exams and templates with simple clicks."],
+  ["Chat, all in one place", "Families and teachers interact through built-in chat — every message on one platform. Upload videos of a student's performance or an area needing help, or send a quick note about upcoming payments."],
+  ["News and notices, organised", "Send notices and news feeds to the right groups — school-holiday closures, recitals, away schedules and more. Organise students into the categories that matter, from Grade 1 to Grade 6, and control how important newsletters reach families."],
+  ["No student forgotten", "Visibility into every student's performance, with a built-in red flag for students who need assistance — so teachers can follow through."],
+  ["No more invoice nightmares", "Prepare invoices for each family, get reminded each term and trigger the next reminder. Better yet, plug in Stripe and Xero for simple payments and bookkeeping."],
   ["Invite-only enrolment", "Send a branded invite; families complete a guided form. No stray sign-ups on your roll."],
   ["Agreements that stick", "Studio agreement and app terms accepted at enrolment with a typed name and guardian rules for minors."],
-  ["Practice and chat in context", "Conversations sit next to the student, not lost in personal messaging apps."],
-  ["Invoicing in the flow", "Native term invoices, with Stripe and Xero ready to plug in when you go live."],
-  ["No passwords to babysit", "Sign in with Google, Microsoft or an emailed link — plus an authenticator for staff."],
 ];
 
 function Welcome() {
@@ -69,7 +70,7 @@ function Welcome() {
               Your studio, <em className="font-normal italic">in tune.</em>
             </h1>
             <p className="mt-6 max-w-xl text-xl leading-relaxed text-mk-paper/85">
-              Lessons, enrolments, practice, chat, invoices and agreements — in one calm, Australian-hosted workspace for independent music studios and the families they teach.
+              Designed for simplicity, built for scalability — one studio, 40+ students. Lessons, chat, news, invoices and agreements in one calm, Australian-hosted workspace.
             </p>
             <div className="mt-10 flex flex-wrap items-center gap-4">
               <PrimaryCta className="bg-mk-paper !text-mk-ink hover:!bg-mk-cream" />
