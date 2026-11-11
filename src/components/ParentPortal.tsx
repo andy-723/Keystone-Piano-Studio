@@ -17,6 +17,7 @@ import { teacherProfileQuery } from "@/lib/community-queries";
 import { isLiveAuthConfigured } from "@/lib/auth-client";
 import { HelpCentre } from "@/components/help/HelpCentre";
 import { helpText } from "@/lib/help/ui-text";
+import { EmailNotificationSettings } from "@/components/EmailNotificationSettings";
 import { publicSupportEmail } from "@/components/public/PublicPage";
 import { TourHelpButton, TourProvider } from "@/components/tour/Tour";
 import { FAMILY_TOUR } from "@/lib/tour-steps";
@@ -104,6 +105,7 @@ function ParentViews() {
             <div>
               <h2 className="mb-4 font-display text-2xl font-semibold">{helpText(lang, "helpCentre")}</h2>
               <HelpCentre audience="family" lang={lang} mode={isLiveAuthConfigured() ? "live" : "demo"} supportEmail={publicSupportEmail()} onMessageTeacher={(prefill) => { setQuote(prefill); setView("chat"); window.scrollTo({ top: 0 }); }} />
+              <EmailNotificationSettings audience="family" lang={lang} />
             </div>
           ) : view === 'news' ? <FamilyNews onMessage={openNewsChat} /> : view === "home" ? (
             <ParentHome openNewsChat={openNewsChat} openChat={() => { setQuote(''); setView("chat"); }} openInvoice={(id) => { setInvoiceId(id); setView("invoices"); }} />

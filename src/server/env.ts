@@ -39,6 +39,9 @@ export function getServerEnv() {
     turnstileSiteKey: read("VITE_TURNSTILE_SITE_KEY") ?? "",
     turnstileSecretKey: read("TURNSTILE_SECRET_KEY") ?? "",
     supportEmail: read("SUPPORT_EMAIL") ?? "support@example.com",
+    // Notification emails sent per rolling 24 hours. Resend's free plan allows 100 a day and
+    // sign-in emails share that, so the default leaves 30 for them. Raise it on a paid plan.
+    notifyDailyLimit: Number(read("NOTIFY_DAILY_LIMIT") ?? "70") || 70,
     // Keystone's own subscription billing (Synoratech → studios). Not Stripe Connect.
     stripeSecretKey: read("STRIPE_SECRET_KEY") ?? "",
     stripeBillingWebhookSecret: read("STRIPE_BILLING_WEBHOOK_SECRET") ?? "",

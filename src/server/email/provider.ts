@@ -14,6 +14,8 @@ export type SendEmailInput = {
   text: string;
   tags?: { name: string; value: string }[];
   attachments?: EmailAttachment[];
+  /** Extra headers, e.g. List-Unsubscribe on notification emails. */
+  headers?: Record<string, string>;
 };
 
 export type SendEmailResult = { id: string };
