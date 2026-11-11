@@ -6,6 +6,14 @@ GitHub Release with the same text. See `docs/release-process.md`.
 
 ## Unreleased
 
+- Email notifications, in the same branded look as the sign-in emails. Families get an email when
+  a teacher's chat message has been unread for 15 minutes, straight away for news posts marked
+  important, and a 7am daily update for other news and teacher feedback shared with them. Studio
+  owners and teachers get an email when a family's message has been unread for 15 minutes. One
+  email per chat until it's read, nothing between 9pm and 7am studio time, and emails never
+  include the message text or a child's name. Everyone can switch each kind off (Settings for
+  studios, Help for families, or the unsubscribe link in every email). Needs migration 0018 and
+  the 15-minute schedule in `docs/security/notifications.md`.
 - The public website and the family portal can now be read in English, 中文 or Tiếng Việt. Legal documents stay in English.
 - The calendar now works on the demo studio (Clarke Piano Studio), including for platform staff:
   it shows the demo timetable, and lessons you add, move or cancel there stay in that browser tab

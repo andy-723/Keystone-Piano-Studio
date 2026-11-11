@@ -56,7 +56,9 @@ import { Route as StudentsGroupsRouteImport } from './routes/students.groups'
 import { Route as StudentsImportRouteImport } from './routes/students.import'
 import { Route as ApiCronBillingRemindersRouteImport } from './routes/api/cron/billing-reminders'
 import { Route as ApiCronInviteRemindersRouteImport } from './routes/api/cron/invite-reminders'
+import { Route as ApiCronNotificationsRouteImport } from './routes/api/cron/notifications'
 import { Route as ApiCronSubscriptionEnforcementRouteImport } from './routes/api/cron/subscription-enforcement'
+import { Route as ApiNotificationsUnsubscribeRouteImport } from './routes/api/notifications/unsubscribe'
 import { Route as ApiStripeBillingWebhookRouteImport } from './routes/api/stripe/billing-webhook'
 import { Route as ApiTermsPdfRouteImport } from './routes/api/terms/pdf'
 
@@ -295,10 +297,21 @@ const ApiCronInviteRemindersRoute = ApiCronInviteRemindersRouteImport.update({
   path: '/api/cron/invite-reminders',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCronNotificationsRoute = ApiCronNotificationsRouteImport.update({
+  id: '/api/cron/notifications',
+  path: '/api/cron/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiCronSubscriptionEnforcementRoute =
   ApiCronSubscriptionEnforcementRouteImport.update({
     id: '/api/cron/subscription-enforcement',
     path: '/api/cron/subscription-enforcement',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiNotificationsUnsubscribeRoute =
+  ApiNotificationsUnsubscribeRouteImport.update({
+    id: '/api/notifications/unsubscribe',
+    path: '/api/notifications/unsubscribe',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiStripeBillingWebhookRoute = ApiStripeBillingWebhookRouteImport.update({
@@ -360,7 +373,9 @@ export interface FileRoutesByFullPath {
   '/students/': typeof StudentsIndexRoute
   '/api/cron/billing-reminders': typeof ApiCronBillingRemindersRoute
   '/api/cron/invite-reminders': typeof ApiCronInviteRemindersRoute
+  '/api/cron/notifications': typeof ApiCronNotificationsRoute
   '/api/cron/subscription-enforcement': typeof ApiCronSubscriptionEnforcementRoute
+  '/api/notifications/unsubscribe': typeof ApiNotificationsUnsubscribeRoute
   '/api/stripe/billing-webhook': typeof ApiStripeBillingWebhookRoute
   '/api/terms/pdf': typeof ApiTermsPdfRoute
 }
@@ -408,7 +423,9 @@ export interface FileRoutesByTo {
   '/students': typeof StudentsIndexRoute
   '/api/cron/billing-reminders': typeof ApiCronBillingRemindersRoute
   '/api/cron/invite-reminders': typeof ApiCronInviteRemindersRoute
+  '/api/cron/notifications': typeof ApiCronNotificationsRoute
   '/api/cron/subscription-enforcement': typeof ApiCronSubscriptionEnforcementRoute
+  '/api/notifications/unsubscribe': typeof ApiNotificationsUnsubscribeRoute
   '/api/stripe/billing-webhook': typeof ApiStripeBillingWebhookRoute
   '/api/terms/pdf': typeof ApiTermsPdfRoute
 }
@@ -461,7 +478,9 @@ export interface FileRoutesById {
   '/students/': typeof StudentsIndexRoute
   '/api/cron/billing-reminders': typeof ApiCronBillingRemindersRoute
   '/api/cron/invite-reminders': typeof ApiCronInviteRemindersRoute
+  '/api/cron/notifications': typeof ApiCronNotificationsRoute
   '/api/cron/subscription-enforcement': typeof ApiCronSubscriptionEnforcementRoute
+  '/api/notifications/unsubscribe': typeof ApiNotificationsUnsubscribeRoute
   '/api/stripe/billing-webhook': typeof ApiStripeBillingWebhookRoute
   '/api/terms/pdf': typeof ApiTermsPdfRoute
 }
@@ -515,7 +534,9 @@ export interface FileRouteTypes {
     | '/students/'
     | '/api/cron/billing-reminders'
     | '/api/cron/invite-reminders'
+    | '/api/cron/notifications'
     | '/api/cron/subscription-enforcement'
+    | '/api/notifications/unsubscribe'
     | '/api/stripe/billing-webhook'
     | '/api/terms/pdf'
   fileRoutesByTo: FileRoutesByTo
@@ -563,7 +584,9 @@ export interface FileRouteTypes {
     | '/students'
     | '/api/cron/billing-reminders'
     | '/api/cron/invite-reminders'
+    | '/api/cron/notifications'
     | '/api/cron/subscription-enforcement'
+    | '/api/notifications/unsubscribe'
     | '/api/stripe/billing-webhook'
     | '/api/terms/pdf'
   id:
@@ -615,7 +638,9 @@ export interface FileRouteTypes {
     | '/students/'
     | '/api/cron/billing-reminders'
     | '/api/cron/invite-reminders'
+    | '/api/cron/notifications'
     | '/api/cron/subscription-enforcement'
+    | '/api/notifications/unsubscribe'
     | '/api/stripe/billing-webhook'
     | '/api/terms/pdf'
   fileRoutesById: FileRoutesById
@@ -653,7 +678,9 @@ export interface RootRouteChildren {
   CalendarIndexRoute: typeof CalendarIndexRoute
   ApiCronBillingRemindersRoute: typeof ApiCronBillingRemindersRoute
   ApiCronInviteRemindersRoute: typeof ApiCronInviteRemindersRoute
+  ApiCronNotificationsRoute: typeof ApiCronNotificationsRoute
   ApiCronSubscriptionEnforcementRoute: typeof ApiCronSubscriptionEnforcementRoute
+  ApiNotificationsUnsubscribeRoute: typeof ApiNotificationsUnsubscribeRoute
   ApiStripeBillingWebhookRoute: typeof ApiStripeBillingWebhookRoute
   ApiTermsPdfRoute: typeof ApiTermsPdfRoute
 }
@@ -989,11 +1016,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiCronInviteRemindersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/cron/notifications': {
+      id: '/api/cron/notifications'
+      path: '/api/cron/notifications'
+      fullPath: '/api/cron/notifications'
+      preLoaderRoute: typeof ApiCronNotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/cron/subscription-enforcement': {
       id: '/api/cron/subscription-enforcement'
       path: '/api/cron/subscription-enforcement'
       fullPath: '/api/cron/subscription-enforcement'
       preLoaderRoute: typeof ApiCronSubscriptionEnforcementRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/notifications/unsubscribe': {
+      id: '/api/notifications/unsubscribe'
+      path: '/api/notifications/unsubscribe'
+      fullPath: '/api/notifications/unsubscribe'
+      preLoaderRoute: typeof ApiNotificationsUnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/stripe/billing-webhook': {
@@ -1114,7 +1155,9 @@ const rootRouteChildren: RootRouteChildren = {
   CalendarIndexRoute: CalendarIndexRoute,
   ApiCronBillingRemindersRoute: ApiCronBillingRemindersRoute,
   ApiCronInviteRemindersRoute: ApiCronInviteRemindersRoute,
+  ApiCronNotificationsRoute: ApiCronNotificationsRoute,
   ApiCronSubscriptionEnforcementRoute: ApiCronSubscriptionEnforcementRoute,
+  ApiNotificationsUnsubscribeRoute: ApiNotificationsUnsubscribeRoute,
   ApiStripeBillingWebhookRoute: ApiStripeBillingWebhookRoute,
   ApiTermsPdfRoute: ApiTermsPdfRoute,
 }
