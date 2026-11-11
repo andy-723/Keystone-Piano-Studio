@@ -167,8 +167,8 @@ export function TaxLitePanel({
             variant={fy === "ytd" ? "default" : "outline"}
             className={
               fy === "ytd"
-                ? "bg-[#604A19] text-[#FBF7EE] hover:bg-[#604A19]/90"
-                : "border-[#CDBF9F] bg-[#F5EBD6] text-[#15100D]"
+                ? "bg-bronze text-[#FBF7EE] hover:bg-bronze-hover"
+                : "border-[#CDBF9F] bg-paper text-[#15100D] hover:bg-paper-hover"
             }
             onClick={() => onFyChange("ytd")}
           >
@@ -179,8 +179,8 @@ export function TaxLitePanel({
             variant={fy === "fy" ? "default" : "outline"}
             className={
               fy === "fy"
-                ? "bg-[#604A19] text-[#FBF7EE] hover:bg-[#604A19]/90"
-                : "border-[#CDBF9F] bg-[#F5EBD6] text-[#15100D]"
+                ? "bg-bronze text-[#FBF7EE] hover:bg-bronze-hover"
+                : "border-[#CDBF9F] bg-paper text-[#15100D] hover:bg-paper-hover"
             }
             onClick={() => onFyChange("fy")}
           >
@@ -351,7 +351,7 @@ export function TaxLitePanel({
           )}
           <Button
             type="submit"
-            className="bg-[#604A19] text-[#FBF7EE] hover:bg-[#604A19]/90"
+            className="bg-bronze text-[#FBF7EE] hover:bg-bronze-hover"
             disabled={logExpense.isPending}
           >
             <Plus aria-hidden />
@@ -515,7 +515,7 @@ export function TaxLitePanel({
       <footer className="mt-8 flex flex-wrap gap-3 border-t border-[#D9C79E] pt-5">
         <Button
           type="button"
-          className="bg-[#604A19] text-[#FBF7EE] hover:bg-[#604A19]/90"
+          className="bg-bronze text-[#FBF7EE] hover:bg-bronze-hover"
           onClick={() => {
             const file = taxLiteEofyCsv(pack);
             downloadCsv(file.filename, file.csv);

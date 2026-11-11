@@ -66,9 +66,9 @@ function Sunburst() {
 }
 
 const btnSecondary =
-  "flex w-full min-h-12 items-center justify-center gap-3 rounded-[10px] border border-[#CDBF9F] bg-white text-[15px] font-medium text-[#15100D] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#604A19]";
+  "flex w-full min-h-12 items-center justify-center gap-3 rounded-[10px] border border-[#CDBF9F] bg-white text-[15px] font-medium text-[#15100D] transition-[background-color,border-color,transform] duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#604A19] fine-hover:hover:border-[#604A19] fine-hover:hover:bg-[#F5EBD6] fine-hover:active:scale-[0.98] disabled:opacity-60";
 const btnPrimary =
-  "min-h-[50px] w-full rounded-[10px] border-0 bg-[#604A19] text-[15px] font-semibold text-[#FBF7EE] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#604A19] disabled:opacity-60";
+  "min-h-[50px] w-full rounded-[10px] border-0 bg-[#604A19] text-[15px] font-semibold text-[#FBF7EE] transition-[background-color,transform] duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#604A19] fine-hover:hover:bg-[#4E3C14] fine-hover:active:scale-[0.98] disabled:opacity-60";
 
 type Props = {
   nextPath?: string | null;
