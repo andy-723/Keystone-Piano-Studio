@@ -8,6 +8,7 @@ import teachingMoment from "@/assets/keystone-teaching-moment.jpg";
 import { MarketingNavbar } from "@/components/MarketingNavbar";
 import { MarketingFooter } from "@/components/MarketingFooter";
 import { ZoomHero } from "@/components/ZoomHero";
+import { FounderVideo } from "@/components/FounderVideo";
 import {
   ArrowRight,
   Lock,
@@ -150,6 +151,7 @@ function Welcome() {
         </ZoomHero>
 
         <main>
+          <FounderVideo />
           <section aria-labelledby="snapshot-title" className="bg-mk-paper">
             <div className="mx-auto max-w-7xl px-5 py-12 md:px-10 md:py-16">
               <Eyebrow>A look inside Keystone</Eyebrow>
