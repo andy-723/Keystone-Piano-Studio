@@ -115,7 +115,7 @@ export function IntakeForm({
           </label>
         </div>
         <label className="block font-semibold">
-          {lang === "zh-CN" ? "健康或学习备注（可选）" : "Health or learning notes (optional)"}
+          {lang === "zh-CN" ? "健康或学习备注（可选）" : lang === "vi" ? "Ghi chú sức khỏe hoặc học tập (không bắt buộc)" : "Health or learning notes (optional)"}
           <textarea
             className={intakeField}
             rows={3}
@@ -130,7 +130,7 @@ export function IntakeForm({
         </p>
       )}
       <Button disabled={pending} type="submit" className="w-full">
-        {lang === "zh-CN" ? "继续到条款" : "Continue to terms"}
+        {lang === "zh-CN" ? "继续到条款" : lang === "vi" ? "Tiếp tục đến điều khoản" : "Continue to terms"}
       </Button>
     </form>
   );
