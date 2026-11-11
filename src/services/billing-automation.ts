@@ -4,7 +4,7 @@ import { billingInternals } from "./billing";
 import { withLiveBillingSave } from "./live/billing-store";
 import { hasFeature } from "./plans";
 
-const PRO_MESSAGE = "Available on Pro. Pro is A$49 a month + GST.";
+const PRO_MESSAGE = "Available on Pro. Pro is A$49 a month.";
 
 function requireBillingAutomation(scope: IntegrationScope) {
   if (!hasFeature("billing_automation", scope)) throw new Error(PRO_MESSAGE);

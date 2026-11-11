@@ -10,10 +10,10 @@ describe("isolated marketing finance examples", () => {
   it("illustrates 480 home studio hours at 70 cents as $336", () => {
     expect(homeOfficeEstimateCents(480, 70)).toBe(33600);
   });
-  it("keeps pass-throughs separate from gross tuition in the example export", () => {
+  it("records on-charged costs as income with the cost as an expense in the example export", () => {
     const csv = marketingTaxCsv();
     expect(csv).toContain("Gross tuition,33600.00");
-    expect(csv).toContain("Pass-through reimbursement (not tuition),35.00");
+    expect(csv).toContain("Book on-charged to family (income; cost recorded as expense),35.00");
   });
   it("exports the selected period's values", () => {
     expect(marketingSnapshotCsv("week")).toContain('Revenue collected,"$1,680",week');

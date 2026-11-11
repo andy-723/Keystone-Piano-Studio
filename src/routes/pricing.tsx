@@ -30,7 +30,8 @@ import { MarketingMotion } from "@/components/MarketingMotion";
 import teachingMoment from "@/assets/keystone-teaching-moment.jpg";
 import { useState } from "react";
 import NumberFlow from "@number-flow/react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { KEYSTONE_PRICE_GST_LINE, TAX_DISCLAIMER } from "@/lib/tax-copy";
+import { useReducedMotion } from "framer-motion";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({
@@ -39,7 +40,7 @@ export const Route = createFileRoute("/pricing")({
       {
         name: "description",
         content:
-          "Keystone Music HQ Base: A$29/month plus GST for 30 students. Pro: A$49/month plus GST for unlimited students, video review and Xero. Compare teaching and studio finance features.",
+          "Keystone Music HQ Base: A$29 a month for up to 30 students. Pro: A$49 a month for unlimited students, video review and Xero. Keystone is not registered for GST, so no GST is charged.",
       },
       { property: "og:title", content: "Base & Pro pricing — Keystone Music HQ" },
       {
@@ -123,9 +124,9 @@ const comparison = [
     title: "Invoicing & payments",
     Icon: Receipt,
     rows: [
-      { label: "Term invoices, GST & reminders", base: "Included", pro: "Included" },
+      { label: "Tax invoices, GST & reminders", base: "Included", pro: "Included" },
       { label: "Stripe: PayTo, BECS direct debit & card", base: "Included", pro: "Included" },
-      { label: "Books & exam fee reimbursements", base: "Included", pro: "Included" },
+      { label: "Books & exam fees passed on to families", base: "Included", pro: "Included" },
     ],
   },
   {
@@ -151,14 +152,14 @@ const financials = [
     Icon: Receipt,
     title: "Student expenses",
     tag: "Base & Pro",
-    body: "Books and exam fees recorded once, then passed to family invoices as reimbursements — not tuition profit.",
+    body: "Books and exam fees recorded once, then added to family invoices. The charge is recorded as income and your cost as an expense, so they offset.",
     extra: "Pro adds receipt forwarding and Xero cost sync.",
   },
   {
     Icon: ArrowDownToLine,
-    title: "Tax Lite & EOFY",
+    title: "Tax records & EOFY summary",
     tag: "Base & Pro",
-    body: "Gross tuition, Stripe fees, home-studio hours and optional travel records, together in an accountant-ready CSV.",
+    body: "Gross tuition, actual Stripe fees, confirmed home-studio hours and optional travel records, in an EOFY summary for your accountant.",
     extra: "Simple record preparation for Australian studio owners.",
   },
   {
@@ -176,7 +177,7 @@ const faqs = [
   ],
   [
     "Do I need Pro if I’m GST registered?",
-    "No. Term invoices with GST are included in both plans. Choose Pro for Xero sync, deeper financial visibility and advanced teaching tools. GST registration depends on your circumstances, not your Keystone plan.",
+    "No. Tax invoices with GST are included in both plans. Choose Pro for Xero sync, deeper financial visibility and advanced teaching tools. Whether you must register for GST depends on your GST turnover, not your Keystone plan.",
   ],
   [
     "Can I change plans without losing records?",
@@ -184,7 +185,7 @@ const faqs = [
   ],
   [
     "What’s included in Tax Lite?",
-    "Tax Lite brings together gross tuition, merchant fees, student expenses and home-studio hours, with optional travel records and an EOFY CSV. It prepares records for review; it is not a general ledger, BAS lodgement service or a replacement for your accountant. Check eligibility and rates against current ATO guidance.",
+    "Tax Lite brings together gross tuition, actual Stripe fees, student expenses and the home-studio hours you confirm, with optional travel records and an EOFY summary for your accountant. You review the figures before you export them. Keystone is not a registered tax or BAS agent and does not decide what is deductible. Figures are estimates based on your data. Confirm with a registered tax agent.",
   ],
   [
     "How do Stripe and Xero fit into the plans?",
@@ -197,7 +198,6 @@ const faqs = [
 ];
 
 function Pricing() {
-  const [includeGst, setIncludeGst] = useState(false);
   const reduceMotion = useReducedMotion();
   return (
     <MarketingMotion>
@@ -250,39 +250,7 @@ function Pricing() {
             <div className="mx-auto max-w-7xl">
               <div className="mb-8 flex flex-wrap items-center justify-between gap-5">
                 <p className="text-lg font-medium text-mk-bronze">Two plans. Billed monthly.</p>
-                <div className="flex flex-wrap items-center gap-3 text-base">
-                  <span className={includeGst ? "text-mk-ink/65" : "font-semibold text-mk-bronze"}>
-                    Excluding GST
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    role="switch"
-                    aria-checked={includeGst}
-                    aria-label="Show prices including GST"
-                    onClick={() => setIncludeGst((value) => !value)}
-                    className="relative w-16 shrink-0 rounded-full border border-mk-gold/60 bg-mk-paper shadow-none hover:bg-mk-paper"
-                  >
-                    <span
-                      aria-hidden
-                      className="absolute inset-x-1.5 h-7 rounded-full bg-mk-bronze"
-                    />
-                    <motion.span
-                      aria-hidden
-                      initial={false}
-                      animate={{ x: includeGst ? 25 : 0 }}
-                      transition={
-                        reduceMotion
-                          ? { duration: 0 }
-                          : { type: "spring", stiffness: 450, damping: 30 }
-                      }
-                      className="absolute left-2 size-5 rounded-full bg-mk-paper"
-                    />
-                  </Button>
-                  <span className={includeGst ? "font-semibold text-mk-bronze" : "text-mk-ink/65"}>
-                    Including GST
-                  </span>
-                </div>
+                <p className="text-base text-mk-ink/75">{KEYSTONE_PRICE_GST_LINE}</p>
               </div>
               <div className="grid gap-6 md:grid-cols-2">
                 {PUBLIC_PLANS.map((plan) => (
@@ -316,16 +284,16 @@ function Pricing() {
                     <div className="mt-6 min-h-28">
                       <p
                         className="flex flex-wrap items-baseline gap-x-2 gap-y-1"
-                        aria-label={`A$${((includeGst ? plan.gstInclusiveCents : plan.monthlyCents) / 100).toFixed(includeGst ? 2 : 0)} per month ${includeGst ? "including GST" : "plus GST"}`}
+                        aria-label={`A$${plan.monthlyCents / 100} per month`}
                       >
                         <NumberFlow
                           aria-hidden
                           animated={!reduceMotion}
-                          value={(includeGst ? plan.gstInclusiveCents : plan.monthlyCents) / 100}
+                          value={plan.monthlyCents / 100}
                           locales="en-AU"
                           prefix="A$"
                           format={{
-                            minimumFractionDigits: includeGst ? 2 : 0,
+                            minimumFractionDigits: 0,
                             maximumFractionDigits: 2,
                           }}
                           transformTiming={{
@@ -341,9 +309,7 @@ function Pricing() {
                       <p
                         className={`mt-2 text-base ${plan.id === "pro" ? "text-mk-paper/75" : "text-mk-ink/70"}`}
                       >
-                        {includeGst
-                          ? `A$${plan.monthlyCents / 100} excluding GST`
-                          : `A$${(plan.gstInclusiveCents / 100).toFixed(2)} including GST`}
+                        Total price · no GST charged
                       </p>
                     </div>
                     <Button
@@ -358,19 +324,7 @@ function Pricing() {
                     <div
                       className={`relative mt-3 h-7 overflow-hidden text-center text-base ${plan.id === "pro" ? "text-mk-paper/75" : "text-mk-ink/70"}`}
                     >
-                      <AnimatePresence initial={false} mode="wait">
-                        <motion.p
-                          key={String(includeGst)}
-                          initial={{ y: reduceMotion ? 0 : 20, opacity: reduceMotion ? 1 : 0 }}
-                          animate={{ y: 0, opacity: 1 }}
-                          exit={{ y: reduceMotion ? 0 : -20, opacity: reduceMotion ? 1 : 0 }}
-                          transition={{ duration: reduceMotion ? 0 : 0.18 }}
-                        >
-                          {includeGst
-                            ? "Billed monthly · GST included"
-                            : "Billed monthly · plus GST"}
-                        </motion.p>
-                      </AnimatePresence>
+                      <p>Billed monthly</p>
                     </div>
                     <h3 className="mt-7 text-lg font-semibold">
                       {plan.id === "base" ? "The essentials, together" : "Your Pro additions"}
@@ -397,7 +351,7 @@ function Pricing() {
                       className={`mt-7 border-t pt-5 text-base ${plan.id === "pro" ? "border-mk-gold/40 text-mk-paper/80" : "border-mk-gold/40 text-mk-ink/75"}`}
                     >
                       {plan.id === "pro"
-                        ? "A$20 more per month + GST — keep the workflow you know, with room for every student."
+                        ? "A$20 more per month — keep the workflow you know, with room for every student."
                         : "Studio Snapshot and Tax Lite included. No separate finance add-on."}
                     </p>
                   </article>
@@ -450,9 +404,9 @@ function Pricing() {
                 ))}
               </div>
               <p className="mt-7 max-w-4xl text-base leading-relaxed text-mk-paper/75">
-                Tax Lite prepares records; it does not lodge returns, prepare BAS or replace
-                professional advice. Estimates depend on current ATO rates and eligibility. Your GST
-                obligations are independent of your Keystone plan.
+                Tax Lite prepares records for you to review; it does not lodge returns, prepare BAS or
+                replace professional advice. {TAX_DISCLAIMER} Your GST obligations depend on your GST
+                turnover, not your Keystone plan.
               </p>
             </div>
           </section>

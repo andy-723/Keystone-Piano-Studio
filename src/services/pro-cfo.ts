@@ -1,5 +1,5 @@
 /**
- * Pro CFO pack — margin, unearned tuition, churn, Xero ops UI, GST radar.
+ * Pro CFO pack — margin, unearned tuition, churn, Xero ops UI, GST threshold monitor.
  * Composes billing / schedule / Tax Lite / integrations mocks. Not a ledger or live Xero API.
  */
 
@@ -19,6 +19,7 @@ import {
 import { integrationState } from "@/mocks/integrations";
 import {
   GST_TURNOVER_THRESHOLD_CENTS,
+  proCfoGstProjection,
   proCfoTeachers,
   proCfoXeroQueue,
   proCfoXeroStickyFails,
@@ -63,7 +64,9 @@ export type ProCfoXeroHealth = {
   gstRegistered: boolean;
   gstCollectedCents: number;
   gstCreditsCents: number;
+  /** Estimated net GST (collected less credits), cash basis. GST only, not a BAS figure (T-07). */
   basEstimateCents: number;
+  basis: "cash";
   label: string;
 };
 
@@ -127,11 +130,19 @@ export type ProCfoOverdueChaseRow = {
   dueDate: string;
 };
 
+/** GST threshold monitor (T-01): past 12 months from payments, next 12 months from the owner's estimate. */
 export type ProCfoGstRadar = {
   rolling12mTurnoverCents: number;
+  /** Owner's estimate of the next 12 months, or null when not entered. */
+  projectedNext12mCents: number | null;
   thresholdCents: number;
   percentOfThreshold: number;
+  /** Past 12 months reached the threshold. */
   overThreshold: boolean;
+  /** Projected next 12 months reaches the threshold. */
+  projectedOverThreshold: boolean;
+  /** Within 10% of the threshold on either test, or over it. */
+  nearThreshold: boolean;
   softPreview: boolean;
 };
 
@@ -355,6 +366,7 @@ function buildXeroHealth(today: string): ProCfoXeroHealth {
     gstCollectedCents,
     gstCreditsCents,
     basEstimateCents,
+    basis: "cash",
     label: connected
       ? `Xero connected · ${xero.organisationName ?? "organisation"}`
       : "Xero connected (mock) · GST health OK",
@@ -446,15 +458,29 @@ function buildGstRadar(start: string, end: string, softPreview: boolean): ProCfo
         inRange(payment.receivedOn ?? payment.date ?? "", start, end),
     )
     .reduce((sum, payment) => sum + (payment.grossAmountCents ?? payment.amountCents), 0);
+  const projectedNext12mCents = proCfoGstProjection.next12mCents;
+  const highest = Math.max(rolling12mTurnoverCents, projectedNext12mCents ?? 0);
   const percentOfThreshold =
     Math.round((rolling12mTurnoverCents / GST_TURNOVER_THRESHOLD_CENTS) * 1000) / 10;
   return {
     rolling12mTurnoverCents,
+    projectedNext12mCents,
     thresholdCents: GST_TURNOVER_THRESHOLD_CENTS,
     percentOfThreshold,
     overThreshold: rolling12mTurnoverCents >= GST_TURNOVER_THRESHOLD_CENTS,
+    projectedOverThreshold: (projectedNext12mCents ?? 0) >= GST_TURNOVER_THRESHOLD_CENTS,
+    nearThreshold: highest >= GST_TURNOVER_THRESHOLD_CENTS * 0.9,
     softPreview,
   };
+}
+
+/** Owner enters what they expect to earn over the next 12 months (T-01: projected turnover test). */
+export async function setProCfoProjectedTurnover(cents: number | null): Promise<number | null> {
+  if (cents !== null && (!Number.isFinite(cents) || cents < 0)) {
+    throw new Error("Enter a dollar amount of zero or more");
+  }
+  proCfoGstProjection.next12mCents = cents === null ? null : Math.round(cents);
+  return respond(proCfoGstProjection.next12mCents);
 }
 
 export async function getProCfoPack(today = PROTOTYPE_TODAY): Promise<ProCfoPack> {

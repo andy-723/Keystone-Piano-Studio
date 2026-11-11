@@ -10,14 +10,25 @@ import {
   Scale,
   BadgeCheck,
 } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { formatAUD, formatNumericDate } from "@/lib/format";
 import { proCfoPackQuery } from "@/lib/pro-cfo-queries";
 import {
+  AT_RISK_NOTE,
+  GST_ALERT,
+  GST_REGISTRATION_RULE,
+  NET_GST_NOTE,
+  NO_SURCHARGE_NOTE,
+  SUPER_NOTE,
+  TAX_DISCLAIMER,
+} from "@/lib/tax-copy";
+import {
   pushTeacherBillsToXero,
   retryXeroQueueItem,
   sendOverdueChase,
+  setProCfoProjectedTurnover,
   teacherRemittanceCsv,
   type ProCfoPack,
 } from "@/services/pro-cfo";
@@ -59,21 +70,38 @@ function PulseTile({
 
 function GstBar({ pack }: { pack: ProCfoPack }) {
   const { gstRadar } = pack;
+  const client = useQueryClient();
+  const [projection, setProjection] = useState(
+    gstRadar.projectedNext12mCents === null ? "" : String(gstRadar.projectedNext12mCents / 100),
+  );
+  const saveProjection = useMutation({
+    mutationFn: (value: string) => {
+      const trimmed = value.trim().replace(/[$,\s]/g, "");
+      return setProCfoProjectedTurnover(trimmed === "" ? null : Math.round(Number(trimmed) * 100));
+    },
+    onSuccess: async () => {
+      await client.invalidateQueries({ queryKey: ["pro-cfo"] });
+      toast.success("Projected turnover saved");
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
   const width = Math.min(100, Math.max(2, gstRadar.percentOfThreshold));
+  const alert = gstRadar.nearThreshold || gstRadar.overThreshold || gstRadar.projectedOverThreshold;
   return (
-    <div className={card} aria-label="GST radar">
+    <div className={card} aria-label="GST threshold monitor">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
-          <p className="text-base font-semibold text-[#604A19]">GST radar</p>
+          <p className="text-base font-semibold text-[#604A19]">GST threshold monitor</p>
           <p className="mt-1 font-display text-2xl font-semibold text-[#15100D]">
             {formatAUD(gstRadar.rolling12mTurnoverCents)}
             <span className={`ml-2 text-lg font-normal ${muted}`}>
               / {formatAUD(gstRadar.thresholdCents)}
             </span>
           </p>
+          <p className={muted}>Estimated GST turnover, past 12 months (payments received)</p>
         </div>
         <p className={muted}>
-          {gstRadar.percentOfThreshold}% of $75k
+          {gstRadar.percentOfThreshold}% of $75,000
           {gstRadar.softPreview ? " · Pro preview" : ""}
         </p>
       </div>
@@ -83,17 +111,45 @@ function GstBar({ pack }: { pack: ProCfoPack }) {
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={Math.min(100, Math.round(gstRadar.percentOfThreshold))}
-        aria-label="Rolling 12-month turnover versus $75,000 GST threshold"
+        aria-label="Estimated GST turnover for the past 12 months versus the $75,000 threshold"
       >
         <div
           className={`h-full ${gstRadar.overThreshold ? "bg-[#8B3A2A]" : "bg-[#604A19]"}`}
           style={{ width: `${width}%` }}
         />
       </div>
-      <p className={`mt-3 ${muted}`}>
-        {gstRadar.overThreshold
-          ? "Rolling turnover is at or above the $75k GST registration line — keep Xero tax codes tidy for BAS."
-          : "Informational only. Starter studios can watch this bar; Pro keeps the live BAS estimate beside Xero health."}
+      <form
+        className="mt-4 flex flex-wrap items-end gap-2"
+        onSubmit={(event) => {
+          event.preventDefault();
+          saveProjection.mutate(projection);
+        }}
+      >
+        <label className="grid gap-1 text-base">
+          <span className="font-semibold text-[#15100D]">What you expect over the next 12 months ($)</span>
+          <input
+            inputMode="decimal"
+            className="h-11 w-48 rounded-[2px] border border-[#CDBF9F] bg-[#FBF7EE] px-3"
+            value={projection}
+            onChange={(event) => setProjection(event.target.value)}
+            placeholder="e.g. 72000"
+          />
+        </label>
+        <Button type="submit" variant="outline" className="border-[#CDBF9F]" disabled={saveProjection.isPending}>
+          Save estimate
+        </Button>
+      </form>
+      {gstRadar.projectedNext12mCents !== null ? (
+        <p className={`mt-2 ${muted}`}>
+          Next 12 months (your estimate): {formatAUD(gstRadar.projectedNext12mCents)}
+        </p>
+      ) : null}
+      <p className={`mt-3 ${alert ? "font-semibold text-[#8B3A2A]" : muted}`}>
+        {alert ? GST_ALERT : GST_REGISTRATION_RULE}
+      </p>
+      <p className={`mt-2 ${muted}`}>
+        This is an estimate from payments recorded in Keystone and your own projection. It may not
+        include all of your GST turnover. {TAX_DISCLAIMER}
       </p>
     </div>
   );
@@ -152,7 +208,7 @@ export function ProCfoPanel() {
             <h2 className={`mt-2 ${title}`}>Cash, margin and Xero ops</h2>
             <p className={`mt-2 max-w-2xl ${muted}`}>
               Rolling {formatNumericDate(pack.windowStart)}–{formatNumericDate(pack.windowEnd)}{" "}
-              pulse for owners — not a second ledger.{" "}
+              pulse for owners — not a second ledger. {TAX_DISCLAIMER}{" "}
               {pack.proEnabled
                 ? "Pro tools are unlocked on this studio."
                 : "Soft Pro preview — upgrade unlocks Xero retry and remittance push."}
@@ -194,7 +250,7 @@ export function ProCfoPanel() {
         <PulseTile
           label="Xero + GST"
           value={pack.xeroHealth.gstRegistered ? "GST on" : "GST off"}
-          hint={`Collected ${formatAUD(pack.xeroHealth.gstCollectedCents)} · credits ${formatAUD(pack.xeroHealth.gstCreditsCents)} · BAS est. ${formatAUD(pack.xeroHealth.basEstimateCents)}`}
+          hint={`Collected ${formatAUD(pack.xeroHealth.gstCollectedCents)} · credits ${formatAUD(pack.xeroHealth.gstCreditsCents)} · est. net GST ${formatAUD(pack.xeroHealth.basEstimateCents)} (cash basis). ${NET_GST_NOTE}`}
         />
       </ul>
 
@@ -224,13 +280,14 @@ export function ProCfoPanel() {
           </dl>
 
           <h4 className="mt-6 text-lg font-semibold text-[#15100D]">
-            At-risk students
+            Students who may need a check-in
             <span className={`ml-2 font-normal ${muted}`}>
               ({pack.revenueChurn.atRisk.length})
             </span>
           </h4>
+          <p className={`mt-1 ${muted}`}>{AT_RISK_NOTE}</p>
           {pack.revenueChurn.atRisk.length === 0 ? (
-            <p className={`mt-3 ${muted}`}>No missed-lesson + quiet-practice combo right now.</p>
+            <p className={`mt-3 ${muted}`}>No one with missed lessons and quiet practice right now.</p>
           ) : (
             <ul className="mt-3 divide-y divide-[#E6D7B8]">
               {pack.revenueChurn.atRisk.map((row) => (
@@ -358,6 +415,7 @@ export function ProCfoPanel() {
               </li>
             ))}
           </ul>
+          <p className={`mt-4 ${muted}`}>{SUPER_NOTE}</p>
           <div className="mt-4 flex flex-wrap gap-2">
             <Button
               type="button"
@@ -392,6 +450,7 @@ export function ProCfoPanel() {
           <p className={`mt-2 ${muted}`}>
             Sends a family chat reminder with a mock payment link. Does not email or charge cards.
           </p>
+          <p className={`mt-1 ${muted}`}>{NO_SURCHARGE_NOTE}</p>
           {pack.overdue.length === 0 ? (
             <p className={`mt-4 ${muted}`}>Nothing overdue to chase.</p>
           ) : (

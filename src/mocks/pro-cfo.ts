@@ -78,7 +78,11 @@ export const proCfoXeroQueue: ProCfoXeroQueueItem[] = [
 /** Ids that should keep failing until cleared — simulates sticky fail then success on second retry. */
 export const proCfoXeroStickyFails = new Set<string>(["inv-2"]);
 
+/** Owner's own estimate of GST turnover for the next 12 months (T-01). null = not entered. */
+export const proCfoGstProjection: { next12mCents: number | null } = { next12mCents: null };
+
 export function resetProCfoState(): void {
+  proCfoGstProjection.next12mCents = null;
   proCfoTeachers.splice(
     0,
     proCfoTeachers.length,

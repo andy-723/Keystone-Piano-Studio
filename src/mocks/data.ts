@@ -330,7 +330,7 @@ invoices.forEach((invoice, index) => {
     dueDate: addDays(PROTOTYPE_TODAY, 14),
     lines: [
       {
-        description: "AMEB exam entry fee (reimbursement)",
+        description: "AMEB exam entry fee",
         qty: 1,
         unitCents: 9500,
         lineTotalCents: 9500,

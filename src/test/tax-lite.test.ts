@@ -5,8 +5,11 @@ import { taxLiteFyBounds } from "@/lib/tax-lite-fy";
 import { invoices, payments } from "@/mocks/data";
 import { resetTaxLiteState, taxLiteExpenses } from "@/mocks/tax-lite";
 import {
+  addTaxLiteAdminSession,
+  confirmTaxLiteLessons,
   getTaxLiteHomeStudioHours,
   getTaxLitePack,
+  listTaxLitePendingWeeks,
   getTaxLiteStripeSummary,
   logTaxLiteExpense,
   taxLiteEofyCsv,
@@ -49,19 +52,47 @@ describe("stripe gross vs fees", () => {
     expect(summary.merchantFeesCents).toBeGreaterThan(0);
     expect(summary.netCents).toBe(summary.grossTuitionCents - summary.merchantFeesCents);
     expect(summary.storedFeeCount).toBe(summary.paymentCount);
-    expect(summary.derivedFeeCount).toBe(0);
+    expect(summary.missingFeeCount).toBe(0);
     expect(payments.some((payment) => typeof payment.stripeFeeCents === "number")).toBe(true);
   });
 });
 
 describe("home studio hours", () => {
-  it("estimates Fixed Rate dollars from timetable + admin hours", async () => {
+  it("counts no teaching hours until the teacher confirms them", async () => {
     const hours = await getTaxLiteHomeStudioHours("ytd");
-    expect(hours.teachingHours).toBeGreaterThan(0);
+    expect(hours.teachingHours).toBe(0);
+    expect(hours.scheduledHours).toBeGreaterThan(0);
+    expect(hours.pendingLessonCount).toBeGreaterThan(0);
     expect(hours.adminHours).toBe(2.5);
-    expect(hours.totalHours).toBeGreaterThan(hours.teachingHours);
+    expect(hours.totalHours).toBe(2.5);
     expect(hours.centsPerHour).toBe(70);
+  });
+
+  it("counts only lessons confirmed as taught from home", async () => {
+    const [week] = await listTaxLitePendingWeeks("ytd", 1);
+    expect(week?.lessons.length).toBeGreaterThan(1);
+    const [home, ...away] = week!.lessons;
+    await confirmTaxLiteLessons({
+      taughtFromHome: [home!.lessonId],
+      notFromHome: away.map((lesson) => lesson.lessonId),
+    });
+    const hours = await getTaxLiteHomeStudioHours("ytd");
+    expect(hours.teachingHours).toBe(Math.round((home!.minutes / 60) * 100) / 100);
+    expect(hours.lessonCount).toBe(1);
     expect(hours.estimateCents).toBe(Math.round(hours.totalHours * 70));
+    const after = await listTaxLitePendingWeeks("ytd", 4);
+    expect(after.some((row) => row.weekStart === week!.weekStart)).toBe(false);
+  });
+
+  it("logs admin sessions and rejects future or empty entries", async () => {
+    await addTaxLiteAdminSession({ date: PROTOTYPE_TODAY, hours: 1.5, note: "Invoices" });
+    const hours = await getTaxLiteHomeStudioHours("ytd");
+    expect(hours.adminHours).toBe(4);
+    expect(hours.adminSessions).toHaveLength(2);
+    await expect(
+      addTaxLiteAdminSession({ date: "2099-01-01", hours: 1, note: "x" }),
+    ).rejects.toThrow();
+    await expect(addTaxLiteAdminSession({ date: PROTOTYPE_TODAY, hours: 1, note: " " })).rejects.toThrow();
   });
 });
 
@@ -101,6 +132,9 @@ describe("EOFY tax pack CSV", () => {
     expect(file.csv).toContain("merchant_fees_cents");
     expect(file.csv).toContain("teaching_hours");
     expect(file.csv).toContain("expense_id");
+    expect(file.csv).toContain("reviewed_by_user");
+    expect(file.csv).toContain("not a registered tax or BAS agent");
+    expect(file.filename).toContain("eofy-summary");
     expect(file.csv.split("\n").length).toBeGreaterThan(10);
   });
 });

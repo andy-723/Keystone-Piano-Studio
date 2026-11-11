@@ -1,3 +1,4 @@
+import { KEYSTONE_GST_REGISTERED, KEYSTONE_PRICE_GST_LINE } from "@/lib/tax-copy";
 import { afterEach, expect, it, vi } from "vitest";
 vi.mock("@/services/_delay", () => ({ respond: async <T,>(value: T) => structuredClone(value) }));
 import { studio, students, invoices } from "@/mocks/data";
@@ -31,9 +32,10 @@ it("Base includes 30 students and warns from the 31st, without limiting Pro or A
   expect(baseStudentLimitExceeded("base", 30)).toBe(false); expect(baseStudentLimitExceeded("base", 31)).toBe(true); expect(baseStudentLimitExceeded("base", 38)).toBe(true);
   expect(baseStudentLimitExceeded("pro", 38)).toBe(false); expect(baseStudentLimitExceeded("academy", 38)).toBe(false);
 });
-it("public monthly prices are A$29 Base and A$49 Pro plus GST", () => {
+it("public monthly prices are A$29 Base and A$49 Pro, total price with no GST added", () => {
   expect(PUBLIC_PLANS.map(plan => plan.monthlyCents)).toEqual([2900, 4900]);
-  expect(PUBLIC_PLANS.map(plan => plan.gstInclusiveCents)).toEqual([3190, 5390]);
+  expect(KEYSTONE_GST_REGISTERED).toBe(false);
+  expect(KEYSTONE_PRICE_GST_LINE).toMatch(/not registered for GST/);
 });
 it("public capacity is 30 students for Base and unlimited for Pro", () => {
   expect(PUBLIC_PLANS.map(plan => plan.studentLimit)).toEqual([30, null]);

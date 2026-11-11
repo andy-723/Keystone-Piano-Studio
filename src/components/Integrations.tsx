@@ -1,3 +1,4 @@
+import { NO_SURCHARGE_NOTE, XERO_DISCLOSURE } from "@/lib/tax-copy";
 import { ProSheet } from "./ProSheet";
 import { planBillingQuery } from "@/lib/plan-queries";
 import { useState } from "react";
@@ -90,6 +91,7 @@ export function Integrations({
             Families pay your studio directly through your own Stripe account. Online payments are
             not switched on yet.
           </p>
+          <p className="mt-2 text-base text-muted-foreground">{NO_SURCHARGE_NOTE}</p>
           {data.stripe.status === "connected" && (
             <p role="status" className="mt-4 flex items-start gap-2 text-lg text-success">
               <Check aria-hidden className="mt-1 size-5 shrink-0" />
@@ -145,6 +147,7 @@ export function Integrations({
               </Badge>
             </header>
             <p className="mt-3 text-lg">Send invoices and payments to Xero automatically</p>
+            <p className="mt-2 text-base text-muted-foreground">{XERO_DISCLOSURE}</p>
             <p
               role="status"
               className={`mt-4 text-lg ${data.xero.status === "connected" ? "text-success" : "text-muted-foreground"}`}

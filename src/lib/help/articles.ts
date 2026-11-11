@@ -229,9 +229,9 @@ Make-up credits are kept as a running balance for each family. When a make-up is
 
 Tap a tile to open the list underneath. Export CSV exports the list you're looking at. Links at the bottom open Invoices and Students. Teachers without owner or admin access stay on Today and don't see whole-studio revenue.
 
-Below the snapshot, Pro CFO shows a cash and margin ribbon (net after Stripe fees, studio margin after teacher splits or Tax Lite expenses, unearned prepaid tuition, and a Xero + GST health badge), earned versus collected with at-risk students and make-up credit dollar liability, a Xero reconciliation queue with retry, teacher remittance export, overdue chase into family chat with a payment link, and a rolling 12-month GST radar versus $75k. Mock Xero is fine when live sync is off. This is not two-way Xero, BAS lodging or a general ledger.
+Below the snapshot, Pro CFO shows a cash and margin ribbon (net after Stripe fees, studio margin after teacher splits or Tax Lite expenses, unearned prepaid tuition, and a Xero + GST health badge), earned versus collected with students who may need a check-in and make-up credit dollar liability, a Xero reconciliation queue with retry, teacher remittance export, overdue reminders in family chat with a payment link, and a GST threshold monitor. The monitor shows estimated GST turnover for the past 12 months and lets you enter what you expect over the next 12 months, because you must register for GST within 21 days of either reaching $75,000. The Xero + GST badge shows estimated net GST on a cash basis; that is GST only, and your BAS may include other amounts. Mock Xero is fine when live sync is off. This is not two-way Xero, BAS lodging or a general ledger. Keystone is not a registered tax or BAS agent. Figures are estimates based on your data. Confirm with a registered tax agent.
 
-Tax Lite (Accounting Lite) shows year-to-date or full financial year (1 July–30 June) figures for myTax: billable client expenses you can pass on to a student's next draft invoice as a reimbursement, Stripe gross tuition versus merchant fees, home-studio hours at the ATO Fixed Rate of 70c per hour, an optional kilometre log, and an EOFY tax pack CSV.`,
+Tax Lite shows year-to-date or full financial year (1 July–30 June) records: costs you can pass on to the family on their next draft invoice (the charge is income and your cost is an expense, so they offset), Stripe gross tuition versus the actual fees Stripe reports, and home-studio hours. Scheduled lessons are pre-filled from your calendar, but only lessons you confirm you taught from home count, plus admin time you log as you go; the fixed rate method is 70c per hour. There is also an optional kilometre log (91c per km for 2026–27, up to 5,000 km, sole traders only). You review the figures, then export an EOFY summary CSV for your accountant. Keystone does not decide what is deductible.`,
     },
     keywords: [
       "snapshot",
@@ -247,7 +247,9 @@ Tax Lite (Accounting Lite) shows year-to-date or full financial year (1 July–3
       "tax",
       "tax lite",
       "stripe fees",
-      "pass-through",
+      "pass on",
+      "on-charge",
+      "gst threshold",
       "home studio",
       "eofy",
       "mytax",
@@ -468,7 +470,7 @@ Your studio terms are your agreement with each family. Keystone provides a templ
     topic: "subscription",
     title: { en: "Base and Pro plans" },
     body: {
-      en: `Base is A$29 a month and includes up to 30 active students. Pro is A$49 a month with no limit on active students, and adds billing automation, Xero sync, video lessons and the review queue, Red Risk alerts and exam board rules. GST is added only while Keystone is registered for GST.
+      en: `Base is A$29 a month and includes up to 30 active students. Pro is A$49 a month with no limit on active students, and adds billing automation, Xero sync, video lessons and the review queue, Red Risk alerts and exam board rules. Keystone is not registered for GST, so no GST is charged.
 
 One subscription covers your whole studio, including all your teachers. You can see and change your plan under Settings, Plan and billing. Moving from Pro to Base never deletes anything: Pro features switch off and your data stays.`,
     },
