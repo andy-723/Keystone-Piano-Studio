@@ -32,7 +32,7 @@ export function ChatComposer({ conversationId, parentLang, initialText = "", onS
   async function attach(file?: File) {
     if (!file) return;
     const kind = mediaKindFromFile(file);
-    if (!kind) { toast.error(describeUnsupportedMedia(file, parentLang === "zh-CN")); return; }
+    if (!kind) { toast.error(describeUnsupportedMedia(file, parentLang)); return; }
     const url = URL.createObjectURL(file);
     let durationSeconds: number | undefined;
     let thumbnailUrl: string | undefined;

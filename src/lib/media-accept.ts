@@ -54,8 +54,9 @@ export function mediaKindFromFile(file: File): "image" | "video" | null {
   return null;
 }
 
-export function describeUnsupportedMedia(file: File, zh = false) {
-  return zh
+export function describeUnsupportedMedia(file: File, lang: "en" | "zh-CN" | "vi" | boolean = "en") {
+  if (lang === "vi") return `Không dùng được “${file.name}”. Hãy chọn ảnh (kể cả HEIC) hoặc video (MOV/MP4) từ thư viện điện thoại.`;
+  return lang === true || lang === "zh-CN"
     ? `无法使用「${file.name}」。请从相册选择照片、HEIC 或视频（如 MOV/MP4）。`
     : `Couldn’t use “${file.name}”. Choose a photo (including HEIC) or video (MOV/MP4) from the phone gallery.`;
 }

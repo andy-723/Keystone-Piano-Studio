@@ -36,6 +36,7 @@ export function ParentAssignments() {
   const { data } = useSuspenseQuery(parentTasksQuery);
   const { lang } = useParentLanguage();
   const zh = lang === "zh-CN";
+  const viet = lang === "vi";
   const refresh = useRefreshAssignments();
   const [minutesTask, setMinutesTask] = useState<string | null>(null);
   const [minutes, setMinutes] = useState(15);
@@ -66,7 +67,7 @@ export function ParentAssignments() {
   const record = useMutation({
     mutationFn: () => {
       if (!recordTask) throw new Error("Choose a task.");
-      if (!upload) throw new Error(zh ? "请从手机相册选择视频或照片。" : "Choose a video or photo from the phone gallery.");
+      if (!upload) throw new Error(zh ? "请从手机相册选择视频或照片。" : viet ? "Chọn video hoặc ảnh từ thư viện điện thoại." : "Choose a video or photo from the phone gallery.");
       const { previewKind: _previewKind, ...media } = upload;
       void _previewKind;
       return submitRecording(recordTask, studentAuthor ? "student" : "guardian", media);
@@ -83,12 +84,12 @@ export function ParentAssignments() {
   async function onPickMedia(file?: File) {
     if (!file) return;
     if (!isPhoneMediaFile(file)) {
-      toast.error(describeUnsupportedMedia(file, zh));
+      toast.error(describeUnsupportedMedia(file, lang));
       return;
     }
     const kind = mediaKindFromFile(file);
     if (!kind) {
-      toast.error(describeUnsupportedMedia(file, zh));
+      toast.error(describeUnsupportedMedia(file, lang));
       return;
     }
     const mediaUrl = URL.createObjectURL(file);
@@ -120,34 +121,34 @@ export function ParentAssignments() {
     });
   }
 
-  return <section className="mt-6 border-y border-border py-6"><h2 className="text-2xl font-semibold">{zh?'本周':'This week'}</h2>{data.assignments.length===0&&<p className="mt-3">{zh?'暂无作业':'No assignments yet.'}</p>}{data.assignments.map(assignment=><div className="mt-5 border-b border-border pb-5" key={assignment.id}><h3 className="text-xl font-semibold">{data.children.find(child=>child.id===assignment.studentId)?.firstName} · {zh?'截止':'Due'} {assignment.dueDate}</h3>{assignment.tasks.map(task=><div key={task.id} className="mt-4"><label className="flex min-h-12 cursor-pointer items-center gap-3"><input className="size-7 shrink-0 accent-primary" type="checkbox" checked={task.done} disabled={task.done} onChange={()=>{setMinutesTask(task.id);mark.reset();}}/><span className="break-words font-semibold">{task.text}</span></label><p className="ml-10 text-muted-foreground">{task.daysPerWeek} × {task.minutesPerDay} {zh?'分钟':'min'}</p>{task.contentItemId&&(()=>{const attachment=data.attachments.find(item=>item.id===task.contentItemId);if(!attachment)return null;return <p className="ml-10 mt-1 break-words" data-testid="task-attachment">{zh?'附件：':'Attached: '}{attachment.url?<a className="text-primary underline" href={attachment.url} target="_blank" rel="noreferrer">{attachment.title}</a>:<span className="font-semibold">{attachment.title}</span>}</p>;})()}{task.submissionRequested!=='none'&&<Button className="mt-2" variant="outline" onClick={()=>{if(!data.pro){setPro(true);return;}record.reset();setRecordTask(task.id);}}><Video aria-hidden/>{zh?'录制':'Record'} {task.submissionRequested}{!data.pro&&' · Pro'}</Button>}{data.submissions.filter(entry=>entry.assignmentTaskId===task.id).map(entry=><div className="mt-3 border-l-2 border-border pl-4" key={entry.id}><p>0:20 · {entry.kind} · {entry.status==='reviewed'?(zh?'反馈已就绪':'Feedback ready'):entry.guardianApproved?(zh?'等待老师审核':'Waiting for teacher review'):(zh?'等待家长批准':'Waiting for guardian approval')}</p>{!entry.guardianApproved&&<Button className="mt-2" variant="outline" onClick={()=>approve.mutate(entry.id)}>{zh?'家长批准':'Approve as guardian'}</Button>}{entry.comment&&<p className="mt-2">{entry.comment}</p>}</div>)}</div>)}{assignment.demoClip&&<p className="mt-3">▶ 0:20 · Teacher demo clip placeholder</p>}<Button className="mt-4" variant="ghost" onClick={()=>data.pro?sick.mutate(assignment.studentId):setPro(true)}>{zh?'生病了？发送视频代替':'Child sick? Send a video instead'}{!data.pro&&' · Pro'}</Button></div>)}{sick.isSuccess&&<p className="mt-3 text-success">{zh?'请求已发送给老师':'Request sent to your teacher.'}</p>}
- <Dialog open={Boolean(minutesTask)} onOpenChange={()=>setMinutesTask(null)}><DialogContent><DialogHeader><DialogTitle>{zh?'练习分钟数':'Practice minutes'}</DialogTitle></DialogHeader><label>{zh?'分钟':'Minutes'}<Input className={intakeField} type="number" min={1} value={minutes} onChange={event=>setMinutes(Number(event.target.value))}/></label><Button disabled={mark.isPending} onClick={()=>mark.mutate()}><Check aria-hidden/>{zh?'保存练习':'Save practice'}</Button>{mark.error&&<p role="alert">{mark.error.message}</p>}</DialogContent></Dialog>
+  return <section className="mt-6 border-y border-border py-6"><h2 className="text-2xl font-semibold">{zh?'本周' : viet ? 'Tuần này':'This week'}</h2>{data.assignments.length===0&&<p className="mt-3">{zh?'暂无作业' : viet ? 'Chưa có bài tập.':'No assignments yet.'}</p>}{data.assignments.map(assignment=><div className="mt-5 border-b border-border pb-5" key={assignment.id}><h3 className="text-xl font-semibold">{data.children.find(child=>child.id===assignment.studentId)?.firstName} · {zh?'截止' : viet ? 'Hạn':'Due'} {assignment.dueDate}</h3>{assignment.tasks.map(task=><div key={task.id} className="mt-4"><label className="flex min-h-12 cursor-pointer items-center gap-3"><input className="size-7 shrink-0 accent-primary" type="checkbox" checked={task.done} disabled={task.done} onChange={()=>{setMinutesTask(task.id);mark.reset();}}/><span className="break-words font-semibold">{task.text}</span></label><p className="ml-10 text-muted-foreground">{task.daysPerWeek} × {task.minutesPerDay} {zh?'分钟' : viet ? 'phút':'min'}</p>{task.contentItemId&&(()=>{const attachment=data.attachments.find(item=>item.id===task.contentItemId);if(!attachment)return null;return <p className="ml-10 mt-1 break-words" data-testid="task-attachment">{zh?'附件：' : viet ? 'Đã đính kèm: ':'Attached: '}{attachment.url?<a className="text-primary underline" href={attachment.url} target="_blank" rel="noreferrer">{attachment.title}</a>:<span className="font-semibold">{attachment.title}</span>}</p>;})()}{task.submissionRequested!=='none'&&<Button className="mt-2" variant="outline" onClick={()=>{if(!data.pro){setPro(true);return;}record.reset();setRecordTask(task.id);}}><Video aria-hidden/>{zh?'录制' : viet ? 'Ghi hình':'Record'} {task.submissionRequested}{!data.pro&&' · Pro'}</Button>}{data.submissions.filter(entry=>entry.assignmentTaskId===task.id).map(entry=><div className="mt-3 border-l-2 border-border pl-4" key={entry.id}><p>0:20 · {entry.kind} · {entry.status==='reviewed'?(zh?'反馈已就绪' : viet ? 'Đã có nhận xét':'Feedback ready'):entry.guardianApproved?(zh?'等待老师审核' : viet ? 'Đang chờ giáo viên duyệt':'Waiting for teacher review'):(zh?'等待家长批准' : viet ? 'Đang chờ phụ huynh duyệt':'Waiting for guardian approval')}</p>{!entry.guardianApproved&&<Button className="mt-2" variant="outline" onClick={()=>approve.mutate(entry.id)}>{zh?'家长批准' : viet ? 'Duyệt với tư cách phụ huynh':'Approve as guardian'}</Button>}{entry.comment&&<p className="mt-2">{entry.comment}</p>}</div>)}</div>)}{assignment.demoClip&&<p className="mt-3">▶ 0:20 · Teacher demo clip placeholder</p>}<Button className="mt-4" variant="ghost" onClick={()=>data.pro?sick.mutate(assignment.studentId):setPro(true)}>{zh?'生病了？发送视频代替' : viet ? 'Con bị ốm? Gửi video thay thế':'Child sick? Send a video instead'}{!data.pro&&' · Pro'}</Button></div>)}{sick.isSuccess&&<p className="mt-3 text-success">{zh?'请求已发送给老师' : viet ? 'Đã gửi yêu cầu cho giáo viên.':'Request sent to your teacher.'}</p>}
+ <Dialog open={Boolean(minutesTask)} onOpenChange={()=>setMinutesTask(null)}><DialogContent><DialogHeader><DialogTitle>{zh?'练习分钟数' : viet ? 'Số phút luyện tập':'Practice minutes'}</DialogTitle></DialogHeader><label>{zh?'分钟' : viet ? 'Số phút':'Minutes'}<Input className={intakeField} type="number" min={1} value={minutes} onChange={event=>setMinutes(Number(event.target.value))}/></label><Button disabled={mark.isPending} onClick={()=>mark.mutate()}><Check aria-hidden/>{zh?'保存练习' : viet ? 'Lưu luyện tập':'Save practice'}</Button>{mark.error&&<p role="alert">{mark.error.message}</p>}</DialogContent></Dialog>
  <Dialog open={Boolean(recordTask)} onOpenChange={(open) => { if (!open) { setRecordTask(null); setUpload(null); setTipRead(false); } }}>
  <DialogContent>
- <DialogHeader><DialogTitle>{zh ? '提交录制' : 'Submit recording'}</DialogTitle></DialogHeader>
+ <DialogHeader><DialogTitle>{zh ? '提交录制' : viet ? 'Gửi bản ghi' : 'Submit recording'}</DialogTitle></DialogHeader>
  {!data.mediaConsent ? <>
-   <p>{zh ? '家长同意后才能录制。只拍手和琴键，不需要脸部或校服。' : 'Guardian consent is needed before recording. Film hands and keys only; faces and school uniforms aren’t needed.'}</p>
-   <label className="flex min-h-12 items-center gap-3"><input className="size-6 accent-primary" type="checkbox" checked={consentChecked} onChange={(event) => setConsentChecked(event.target.checked)} />{zh ? '我是家长，同意分享练习媒体' : 'I am the guardian and consent to sharing practice media'}</label>
-   <Button disabled={!consentChecked || consent.isPending} onClick={() => consent.mutate()}>{zh ? '同意' : 'Give consent'}</Button>
+   <p>{zh ? '家长同意后才能录制。只拍手和琴键，不需要脸部或校服。' : viet ? 'Cần phụ huynh đồng ý trước khi ghi hình. Chỉ quay tay và phím đàn; không cần quay mặt hay đồng phục học sinh.' : 'Guardian consent is needed before recording. Film hands and keys only; faces and school uniforms aren’t needed.'}</p>
+   <label className="flex min-h-12 items-center gap-3"><input className="size-6 accent-primary" type="checkbox" checked={consentChecked} onChange={(event) => setConsentChecked(event.target.checked)} />{zh ? '我是家长，同意分享练习媒体' : viet ? 'Tôi là phụ huynh và đồng ý chia sẻ video/ảnh luyện tập' : 'I am the guardian and consent to sharing practice media'}</label>
+   <Button disabled={!consentChecked || consent.isPending} onClick={() => consent.mutate()}>{zh ? '同意' : viet ? 'Đồng ý' : 'Give consent'}</Button>
  </> : !tipRead ? <>
-   <p>{zh ? '只拍手和琴键，不需要脸部或校服。' : 'Film hands and keys only. Faces and school uniforms aren’t needed.'}</p>
-   <Button onClick={() => setTipRead(true)}>{zh ? '知道了' : 'Got it'}</Button>
+   <p>{zh ? '只拍手和琴键，不需要脸部或校服。' : viet ? 'Chỉ quay tay và phím đàn. Không cần quay mặt hay đồng phục học sinh.' : 'Film hands and keys only. Faces and school uniforms aren’t needed.'}</p>
+   <Button onClick={() => setTipRead(true)}>{zh ? '知道了' : viet ? 'Đã hiểu' : 'Got it'}</Button>
  </> : <div className="space-y-4">
    <div className="flex min-h-40 flex-col items-center justify-center border border-border bg-muted p-4 text-center">
      {upload ? (upload.previewKind === 'video' ? <video src={upload.mediaUrl} controls playsInline className="max-h-48 max-w-full" /> : <img src={upload.mediaUrl} alt={upload.fileName} className="max-h-48 max-w-full object-contain" />) : <>
        <Video aria-hidden className="size-10 text-primary" />
-       <p className="mt-3">{zh ? '从手机相册上传视频或照片（含 HEIC / MOV）' : 'Upload a phone video or photo (HEIC, MOV, MP4)'}</p>
+       <p className="mt-3">{zh ? '从手机相册上传视频或照片（含 HEIC / MOV）' : viet ? 'Tải lên video hoặc ảnh từ điện thoại (HEIC, MOV, MP4)' : 'Upload a phone video or photo (HEIC, MOV, MP4)'}</p>
      </>}
    </div>
-   <input ref={fileInput} type="file" accept={PHONE_MEDIA_ACCEPT} capture="environment" className="hidden" aria-label={zh ? '选择手机媒体' : 'Choose phone media'} onChange={(event) => { void onPickMedia(event.target.files?.[0]); event.target.value = ''; }} />
+   <input ref={fileInput} type="file" accept={PHONE_MEDIA_ACCEPT} capture="environment" className="hidden" aria-label={zh ? '选择手机媒体' : viet ? 'Chọn tệp từ điện thoại' : 'Choose phone media'} onChange={(event) => { void onPickMedia(event.target.files?.[0]); event.target.value = ''; }} />
    <div className="flex flex-wrap gap-2">
-     <Button type="button" variant="outline" onClick={() => fileInput.current?.click()}>{zh ? '从相册选择' : 'Choose from gallery'}</Button>
-     {upload && <Button type="button" variant="ghost" onClick={() => { URL.revokeObjectURL(upload.mediaUrl); setUpload(null); }}>{zh ? '清除' : 'Clear'}</Button>}
+     <Button type="button" variant="outline" onClick={() => fileInput.current?.click()}>{zh ? '从相册选择' : viet ? 'Chọn từ thư viện' : 'Choose from gallery'}</Button>
+     {upload && <Button type="button" variant="ghost" onClick={() => { URL.revokeObjectURL(upload.mediaUrl); setUpload(null); }}>{zh ? '清除' : viet ? 'Xóa' : 'Clear'}</Button>}
    </div>
    {upload && <p className="break-all text-base text-muted-foreground">{upload.fileName}</p>}
-   <label className="flex min-h-12 items-center gap-3"><input className="size-6 accent-primary" type="checkbox" checked={studentAuthor} onChange={(event) => setStudentAuthor(event.target.checked)} />{zh ? '以学生身份提交' : 'Submit as student'}</label>
-   <Button disabled={!upload || record.isPending || record.isSuccess} onClick={() => record.mutate()}>{zh ? '提交媒体' : 'Submit media'}</Button>
-   {record.isSuccess && <p role="status" className="text-success">{record.data.guardianApproved ? (zh ? '已提交审核' : 'Submitted for review') : (zh ? '等待家长批准' : 'Waiting for guardian approval')}</p>}
+   <label className="flex min-h-12 items-center gap-3"><input className="size-6 accent-primary" type="checkbox" checked={studentAuthor} onChange={(event) => setStudentAuthor(event.target.checked)} />{zh ? '以学生身份提交' : viet ? 'Gửi với tư cách học sinh' : 'Submit as student'}</label>
+   <Button disabled={!upload || record.isPending || record.isSuccess} onClick={() => record.mutate()}>{zh ? '提交媒体' : viet ? 'Gửi tệp' : 'Submit media'}</Button>
+   {record.isSuccess && <p role="status" className="text-success">{record.data.guardianApproved ? (zh ? '已提交审核' : viet ? 'Đã gửi để duyệt' : 'Submitted for review') : (zh ? '等待家长批准' : viet ? 'Đang chờ phụ huynh duyệt' : 'Waiting for guardian approval')}</p>}
  </div>}
  {record.error && <p role="alert">{record.error.message}</p>}
  </DialogContent>
