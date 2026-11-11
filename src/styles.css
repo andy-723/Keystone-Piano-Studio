@@ -186,6 +186,45 @@
 }
 
 /* Marketing motion is scoped away from the studio workspace. */
+.mk-navbar-header { position: relative; z-index: 30; width: calc(100% - 40px); max-width: 1240px; margin: 20px auto; }
+.mk-navbar-bar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 10px 20px; border: 1px solid var(--color-mk-gold); border-radius: 40px; background: var(--color-mk-paper); box-shadow: var(--shadow-mk-lift); }
+.mk-navbar-links { display: flex; align-items: center; gap: 8px; }
+.mk-navbar-menu { position: relative; }
+.mk-navbar-list { display: flex; align-items: center; gap: 4px; list-style: none; margin: 0; padding: 0; }
+.mk-navbar-trigger[data-state=open] { background: var(--color-mk-cream); }
+.mk-navbar-trigger svg { transition: transform 200ms ease; }
+.mk-navbar-trigger[data-state=open] svg { transform: rotate(180deg); }
+.mk-navbar-viewport-position { position: absolute; top: 100%; right: 0; padding-top: 18px; perspective: 1200px; }
+.mk-navbar-viewport { position: relative; overflow: hidden; width: var(--radix-navigation-menu-viewport-width); height: var(--radix-navigation-menu-viewport-height); border: 1px solid var(--color-mk-gold); border-radius: 8px; background: var(--color-mk-paper); box-shadow: var(--shadow-mk-device); transform-origin: top center; transition: width 300ms ease, height 300ms ease; }
+.mk-navbar-viewport[data-state=open] { animation: mk-screen-in 200ms ease-out; }
+.mk-navbar-viewport[data-state=closed] { opacity: 0; pointer-events: none; }
+.mk-navbar-content { position: absolute; inset: 0 auto auto 0; }
+.mk-navbar-panel { padding: 12px; width: max-content; max-width: min(640px, calc(100vw - 64px)); }
+.mk-navbar-products { display: grid; gap: 4px; width: 520px; max-width: 100%; }
+.mk-navbar-product { display: flex; gap: 16px; padding: 16px; border-radius: 6px; align-items: start; }
+.mk-navbar-product:hover, .mk-navbar-simple a:hover { background: var(--color-mk-cream); }
+.mk-navbar-simple { display: grid; gap: 4px; min-width: 260px; }
+.mk-navbar-simple a { display: block; padding: 16px; min-height: 48px; border-radius: 6px; font-size: 18px; }
+@media (max-width: 1023px) {
+  .mk-navbar-header { width: calc(100% - 24px); margin-block: 12px; }
+  .mk-navbar-bar { border-radius: 24px; padding: 8px 14px; }
+  .mk-navbar-links { display: none; width: 100%; align-items: stretch; }
+  .mk-navbar-expanded { display: flex; flex-direction: column; }
+  .mk-navbar-list { justify-content: space-between; flex-wrap: wrap; }
+  .mk-navbar-list > li { flex: 1; }
+  .mk-navbar-trigger { width: 100%; padding-inline: 8px; }
+  .mk-navbar-viewport-position { position: relative; padding-top: 8px; }
+  .mk-navbar-viewport { width: 100%; }
+  .mk-navbar-content { width: 100%; }
+  .mk-navbar-panel { width: 100%; max-width: 100%; }
+  .mk-navbar-products { width: 100%; }
+  .mk-navbar-simple { min-width: 0; }
+}
+@media (max-width: 479px) {
+  .mk-navbar-list { flex-direction: column; align-items: stretch; }
+  .mk-navbar-trigger { justify-content: space-between; }
+  .mk-navbar-product { gap: 12px; padding: 12px 4px; }
+}
 .marketing-site { overflow-x: clip; }
 .marketing-site h1, .marketing-site h2, .marketing-site h3, .marketing-site p { letter-spacing: 0; }
 .mk-teaching-photo { height: 420px; }

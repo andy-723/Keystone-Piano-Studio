@@ -5,7 +5,7 @@ import { marketingFinanceQuery } from "@/components/FinanceShowcase";
 import { StudioShowcase } from "@/components/StudioShowcase";
 import { MarketingMotion } from "@/components/MarketingMotion";
 import teachingMoment from "@/assets/keystone-teaching-moment.jpg";
-import logo from "@/assets/keystone-logo.jpg";
+import { MarketingNavbar } from "@/components/MarketingNavbar";
 import { ArrowRight, Lock, MapPin, MailOpen, FileSignature, BookOpen, Receipt, Clock, Wallet, Car, ArrowDownToLine } from "lucide-react";
 
 const SIGN_IN = "https://keystonemusichq.com/login";
@@ -55,15 +55,7 @@ function Welcome() {
       <section className="relative isolate flex min-h-[min(760px,88svh)] flex-col overflow-hidden bg-mk-ink text-mk-paper">
         <img src={hero} alt="Grand piano on an Art Deco stage under a gold sunburst" width={1600} height={1008} className="mk-stage-image absolute inset-0 -z-10 h-full w-full object-cover" />
         <div className="absolute inset-0 -z-10 bg-gradient-to-r from-mk-ink/95 via-mk-ink/80 to-mk-ink/30" aria-hidden />
-        <header className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-3 px-5 py-5 md:px-10">
-          <Link to="/welcome" className="shrink-0 rounded-lg bg-mk-paper px-3 py-1.5"><img src={logo} alt="Keystone Music HQ" className="h-10 w-auto max-w-[120px] sm:max-w-[180px]" /></Link>
-          <nav className="flex items-center gap-2">
-            <Button asChild variant="ghost" className="px-2 text-mk-paper hover:bg-mk-paper/10 hover:text-mk-paper"><Link to="/pricing">Pricing</Link></Button>
-            <a href="#enrolment" className="hidden min-h-12 items-center px-4 text-base text-mk-paper/85 hover:text-mk-paper md:inline-flex">How it works</a>
-            <a href="#trust" className="hidden min-h-12 items-center px-4 text-base text-mk-paper/85 hover:text-mk-paper md:inline-flex">Trust</a>
-            <Button asChild variant="ghost" className="border border-mk-paper/40 px-3 text-mk-paper hover:bg-mk-paper/10 hover:text-mk-paper"><a href={SIGN_IN}>Sign in</a></Button>
-          </nav>
-        </header>
+        <MarketingNavbar />
         <div id="top" className="mx-auto flex w-full max-w-7xl flex-1 items-center px-5 pb-12 pt-6 md:px-10">
           <div className="mk-hero-copy max-w-3xl">
             <p className="font-mk-serif text-3xl font-semibold text-mk-paper">Keystone Music HQ</p>
