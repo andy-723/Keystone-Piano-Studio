@@ -7,7 +7,7 @@ import { MarketingMotion } from "@/components/MarketingMotion";
 import teachingMoment from "@/assets/keystone-teaching-moment.jpg";
 import { MarketingNavbar } from "@/components/MarketingNavbar";
 import { ZoomHero } from "@/components/ZoomHero";
-import { ArrowRight, Lock, MapPin, MailOpen, FileSignature, BookOpen, Receipt, Clock, Wallet, Car, ArrowDownToLine } from "lucide-react";
+import { ArrowRight, Lock, MapPin, MailOpen, FileSignature, BookOpen, Receipt, Clock, Wallet, Car, ArrowDownToLine, CalendarDays, MessageCircle, LayoutDashboard } from "lucide-react";
 
 const SIGN_IN = "https://keystonemusichq.com/login";
 const ENQUIRE = "mailto:support@keystonemusichq.com?subject=Request%20a%20studio";
@@ -90,25 +90,30 @@ function Welcome() {
         </div>
       </section>
 
-      <section aria-labelledby="features-title" className="mx-auto max-w-7xl px-5 py-12 md:px-10 md:py-16">
+      <section aria-labelledby="features-title" className="mk-essentials-band">
+        <div className="mx-auto max-w-7xl px-5 py-12 md:px-10 md:py-20">
         <Eyebrow>The everyday essentials</Eyebrow>
         <h2 id="features-title" className="mt-4 font-mk-serif text-3xl font-semibold md:text-4xl">Less admin. More attention to each student.</h2>
-        <dl className="mt-8 grid gap-x-12 md:grid-cols-2">
+        <dl className="mt-8 grid gap-5 md:grid-cols-2">
           {[
-            ["Studio Snapshot · planned", "Unpaid, unenrolled, not practising — one calm view of the week. Lists for the detail, CSV for your own notes. Studio-wide finances for owners and admins; teachers keep their own caseload."],
-            ["A digital day book", "Your teaching week in one place, with one-tap attendance and a clear roll. Keep lessons organised at your desk or beside the piano."],
-            ["Family chat, together", "Conversations stay beside the student, with practice updates and lesson feedback in one place instead of scattered messages."],
-            ["Clear term invoices", "See who has paid and who needs a follow-up. Prepare family invoices without piecing together another spreadsheet."],
-          ].map(([title, body]) => <div key={title} className="border-t border-mk-gold/50 py-6"><dt className="font-mk-serif text-2xl font-semibold">{title}</dt><dd className="mt-3 text-lg leading-relaxed text-mk-ink/75">{body}</dd></div>)}
+            { Icon: LayoutDashboard, title: "Studio Snapshot · planned", body: "Unpaid, unenrolled, not practising — one calm view of the week. Lists for the detail, CSV for your own notes. Studio-wide finances for owners and admins; teachers keep their own caseload." },
+            { Icon: CalendarDays, title: "A digital day book", body: "Your teaching week in one place, with one-tap attendance and a clear roll. Keep lessons organised at your desk or beside the piano." },
+            { Icon: MessageCircle, title: "Family chat, together", body: "Conversations stay beside the student, with practice updates and lesson feedback in one place instead of scattered messages." },
+            { Icon: Receipt, title: "Clear term invoices", body: "See who has paid and who needs a follow-up. Prepare family invoices without piecing together another spreadsheet." },
+          ].map(({ Icon, title, body }) => <div key={title} className="mk-gloss-card rounded-lg border border-mk-gold/40 bg-mk-paper p-6 md:p-8"><dt className="flex flex-col items-start gap-5 font-mk-serif text-2xl font-semibold"><span className="flex size-12 items-center justify-center rounded-md border border-mk-gold/40 bg-mk-cream text-mk-bronze"><Icon aria-hidden className="size-6" /></span>{title}</dt><dd className="mt-3 text-lg leading-relaxed text-mk-ink/75">{body}</dd></div>)}
         </dl>
+        </div>
       </section>
 
-      <section aria-labelledby="tax-title" className="mx-auto max-w-7xl px-5 py-12 md:px-10 md:py-16">
-        <Eyebrow>Tax Lite · planned</Eyebrow>
+      <section aria-labelledby="tax-title" className="mk-tax-band bg-mk-ink text-mk-paper">
+        <div className="mk-deco-divider" aria-hidden><span /></div>
+        <div className="mx-auto max-w-7xl px-5 py-12 md:px-10 md:py-20">
+        <p className="flex flex-wrap items-center gap-3 text-base font-medium uppercase text-mk-gold"><span className="h-px w-10 bg-mk-gold" aria-hidden />Tax Lite <span className="border-l border-mk-gold/50 pl-3 text-mk-paper/75">Planned</span></p>
         <h2 id="tax-title" className="mt-4 max-w-3xl font-mk-serif text-3xl font-semibold leading-tight md:text-4xl">EOFY without rebuilding<br />the year in a spreadsheet.</h2>
-        <p className="mt-4 max-w-3xl text-lg leading-relaxed text-mk-ink/75">Studio-specific numbers before you ever open Xero. For solo teachers preparing cash-basis myTax records: gross tuition, merchant fees and home-studio hours, together.</p>
-        <dl className="mt-6 grid gap-x-12 md:grid-cols-2">{taxFeatures.map(({ Icon, title, body }) => <div key={title} className="grid grid-cols-[2rem_1fr] gap-x-4 border-t border-mk-gold/50 py-5"><Icon aria-hidden className="mt-1 size-6 text-mk-bronze" /><dt className="font-mk-serif text-2xl font-semibold">{title}</dt><dd className="col-start-2 mt-2 text-lg leading-relaxed text-mk-ink/75">{body}</dd></div>)}</dl>
-        <p className="mt-7 max-w-4xl border-t border-mk-gold/50 pt-5 text-base text-mk-ink/70">Tax Lite is record preparation, not a general ledger or tax lodgement. Rent, utilities and bank feeds stay in Xero when you grow; Keystone doesn’t replace your accountant. Estimates are illustrative, not ATO advice.</p>
+        <p className="mt-4 max-w-3xl text-lg leading-relaxed text-mk-paper/80">Studio-specific numbers before you ever open Xero. For solo teachers preparing cash-basis myTax records: gross tuition, merchant fees and home-studio hours, together.</p>
+        <dl className="mt-10 grid gap-x-12 md:grid-cols-2">{taxFeatures.map(({ Icon, title, body }) => <div key={title} className="mk-tax-feature grid grid-cols-[2rem_minmax(0,1fr)] gap-x-4 border-t border-mk-gold/40 py-6"><Icon aria-hidden className="mt-1 size-6 text-mk-gold" /><dt className="font-mk-serif text-2xl font-semibold">{title}</dt><dd className="col-start-2 mt-2 text-lg leading-relaxed text-mk-paper/80">{body}</dd></div>)}</dl>
+        <p className="mt-7 max-w-4xl border-t border-mk-gold/40 pt-5 text-base text-mk-paper/70">Tax Lite is record preparation, not a general ledger or tax lodgement. Rent, utilities and bank feeds stay in Xero when you grow; Keystone doesn’t replace your accountant. Estimates are illustrative, not ATO advice.</p>
+        </div>
       </section>
 
       {/* How enrolment works */}
