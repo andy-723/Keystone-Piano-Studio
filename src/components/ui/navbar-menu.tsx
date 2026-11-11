@@ -14,7 +14,7 @@ export function Menu({ children, onSelect }: { children: ReactNode; onSelect: ()
 export function MenuItem({ item, children }: { item: string; children: ReactNode }) {
   const reduced = useReducedMotion();
   return <Navigation.Item>
-    <Navigation.Trigger asChild><Button variant="ghost" type="button" className="mk-navbar-trigger min-h-12 text-base text-mk-ink hover:bg-mk-cream"><span>{item}</span><ChevronDown className="size-4" aria-hidden /></Button></Navigation.Trigger>
+    <Navigation.Trigger asChild onPointerMove={event => { if (window.matchMedia("(max-width: 1023px)").matches) event.preventDefault(); }}><Button variant="ghost" type="button" className="mk-navbar-trigger min-h-12 text-base text-mk-ink hover:bg-mk-cream"><span>{item}</span><ChevronDown className="size-4" aria-hidden /></Button></Navigation.Trigger>
     <Navigation.Content className="mk-navbar-content"><motion.div initial={reduced ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .2 }} className="mk-navbar-panel">{children}</motion.div></Navigation.Content>
   </Navigation.Item>;
 }
