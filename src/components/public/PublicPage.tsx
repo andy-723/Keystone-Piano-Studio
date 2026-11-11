@@ -64,7 +64,7 @@ export function PublicPage({
 export function LegalMarkdown({ markdown }: { markdown: string }) {
   const blocks = markdown.trim().split(/\n{2,}/);
   return (
-    <>
+    <div data-no-translate className="contents">
       {blocks.map((block, index) => {
         const lines = block.split("\n");
         const out: ReactNode[] = [];
