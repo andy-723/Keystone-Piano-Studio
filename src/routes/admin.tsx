@@ -71,7 +71,7 @@ function AdminPage() {
         <button
           type="button"
           onClick={() => void signOut()}
-          className="min-h-11 rounded-[10px] border border-[#CDBF9F] bg-white px-4 text-sm font-medium"
+          className="ks-btn ks-btn-secondary"
         >
           Sign out
         </button>
@@ -91,11 +91,8 @@ function AdminPage() {
             key={id}
             type="button"
             onClick={() => setTab(id)}
-            className={`min-h-11 rounded-[10px] px-4 text-sm font-medium ${
-              tab === id
-                ? "bg-[#604A19] text-[#FBF7EE]"
-                : "bg-[#FBF7EE] text-[#15100D] border border-[#CDBF9F]"
-            }`}
+            aria-pressed={tab === id}
+            className="ks-btn ks-btn-tab"
           >
             {label}
           </button>
@@ -195,7 +192,7 @@ function StudiosTab({ token, onError }: { token: string; onError: (m: string | n
                   <button
                     type="button"
                     onClick={() => setEditing(editing === row.id ? null : row.id)}
-                    className="min-h-11 rounded-[10px] border border-[#CDBF9F] bg-white px-3 text-sm"
+                    className="ks-btn ks-btn-secondary px-3"
                   >
                     {editing === row.id ? "Close" : "Change"}
                   </button>
@@ -337,7 +334,7 @@ function StudioAccessForm({
         <button
           type="submit"
           disabled={busy}
-          className="min-h-11 rounded-[10px] bg-[#604A19] px-4 text-sm font-semibold text-[#FBF7EE] disabled:opacity-60"
+          className="ks-btn ks-btn-primary"
         >
           Save access
         </button>
@@ -500,7 +497,7 @@ function NewStudioTab({ token, onError }: { token: string; onError: (m: string |
       <button
         type="submit"
         disabled={busy}
-        className="min-h-11 rounded-[10px] bg-[#604A19] px-4 text-sm font-semibold text-[#FBF7EE] disabled:opacity-60"
+        className="ks-btn ks-btn-primary"
       >
         Create studio and invite owner
       </button>
@@ -555,7 +552,7 @@ function TeamTab({ token, onError }: { token: string; onError: (m: string | null
                 <td className="px-3 py-3">
                   <button
                     type="button"
-                    className="min-h-11 text-[#604A19] underline-offset-2 hover:underline"
+                    className="ks-btn ks-btn-link"
                     onClick={() =>
                       void removePlatformStaffFn({
                         data: { accessToken: token, targetUserId: row.userId },
@@ -612,10 +609,7 @@ function TeamTab({ token, onError }: { token: string; onError: (m: string | null
           <option value="support">support</option>
           <option value="platform_admin">platform_admin</option>
         </select>
-        <button
-          type="submit"
-          className="min-h-11 rounded-[10px] bg-[#604A19] px-4 text-sm font-semibold text-[#FBF7EE]"
-        >
+        <button type="submit" className="ks-btn ks-btn-primary">
           Invite staff
         </button>
       </form>
@@ -658,10 +652,7 @@ function TeamTab({ token, onError }: { token: string; onError: (m: string | null
           onChange={(e) => setConfirmEmail(e.target.value)}
           className="min-h-11 w-full rounded-[10px] border border-[#CDBF9F] px-3"
         />
-        <button
-          type="submit"
-          className="min-h-11 rounded-[10px] border border-[#8B1E1E] px-4 text-sm font-semibold text-[#8B1E1E]"
-        >
+        <button type="submit" className="ks-btn ks-btn-danger">
           Reset authenticator
         </button>
       </form>
@@ -770,7 +761,7 @@ function AuditTab({ token, onError }: { token: string; onError: (m: string | nul
       <div className="flex gap-2">
         <button
           type="button"
-          className="min-h-11 rounded-[10px] border border-[#CDBF9F] bg-[#FBF7EE] px-4 text-sm disabled:opacity-50"
+          className="ks-btn ks-btn-paper"
           disabled={page <= 1}
           onClick={() => setPage((p) => Math.max(1, p - 1))}
         >
@@ -778,7 +769,7 @@ function AuditTab({ token, onError }: { token: string; onError: (m: string | nul
         </button>
         <button
           type="button"
-          className="min-h-11 rounded-[10px] border border-[#CDBF9F] bg-[#FBF7EE] px-4 text-sm"
+          className="ks-btn ks-btn-paper"
           onClick={() => setPage((p) => p + 1)}
         >
           Next
@@ -846,7 +837,7 @@ function SupportTab({ token, onError }: { token: string; onError: (m: string | n
             </p>
             <button
               type="button"
-              className="min-h-11 rounded-[10px] border border-[#CDBF9F] bg-white px-4 text-sm"
+              className="ks-btn ks-btn-secondary"
               onClick={() => void setRowStatus(row.id, row.status === "open" ? "closed" : "open")}
             >
               {row.status === "open" ? "Close" : "Reopen"}

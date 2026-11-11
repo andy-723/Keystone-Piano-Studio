@@ -25,7 +25,7 @@ export function PublicPage({ title, children }: { title: string; children: React
           </a>
           <a
             href="/login"
-            className="rounded-[10px] border border-[#CDBF9F] bg-white px-4 py-2 text-sm font-medium text-[#15100D] hover:bg-[#FBF7EE]"
+            className="ks-btn ks-btn-secondary"
           >
             Sign in
           </a>

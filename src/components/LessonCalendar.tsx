@@ -233,7 +233,7 @@ function WeekGrid({ week, days, onAdd, onSelect }: GridProps) {
                 key={m}
                 type="button"
                 style={{ height: ROW_PX }}
-                className={`block w-full border-t ${m % 60 === 0 ? "border-border" : "border-border/40"} hover:bg-accent focus-visible:bg-accent focus-visible:outline-none`}
+                className={`block w-full border-t transition-colors ${m % 60 === 0 ? "border-border" : "border-border/40"} hover:bg-accent-hover focus-visible:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring`}
                 aria-label={`Add lesson ${formatShortDate(day)} ${formatClock(fromMinutes(m))}`}
                 onClick={() => onAdd({ date: day, startTime: fromMinutes(m) })}
               />
@@ -250,7 +250,7 @@ function WeekGrid({ week, days, onAdd, onSelect }: GridProps) {
                     top: ((toMinutes(lesson.startTime) - startMin) / SLOT_MIN) * ROW_PX + 1,
                     height: Math.max((lesson.durationMin / SLOT_MIN) * ROW_PX - 2, 28),
                   }}
-                  className={`absolute inset-x-1 z-10 overflow-hidden rounded-md border-l-4 border px-2 py-1 text-left text-sm leading-tight shadow-sm ${lessonClasses(lesson)}`}
+                  className={`absolute inset-x-1 z-10 overflow-hidden rounded-md border-l-4 border px-2 py-1 text-left text-sm leading-tight shadow-sm transition-[filter,box-shadow] hover:brightness-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 ${lessonClasses(lesson)}`}
                 >
                   <span className="block truncate font-semibold">{lesson.studentName}</span>
                   <span className="block truncate">

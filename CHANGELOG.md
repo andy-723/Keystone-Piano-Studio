@@ -6,6 +6,9 @@ GitHub Release with the same text. See `docs/release-process.md`.
 
 ## Unreleased
 
+- Art Deco admin / studio / family controls now share the same hover and focus styles (`ks-btn`
+  classes): admin console (Studios and other tabs), studio pause/pay CTAs, public Sign in, and
+  clearer family portal tab hover.
 - CI Database checks clear leftover Supabase containers/ports before `supabase start`, so a
   stuck `:54322` bind does not fail the job.
 - Clearer button hover and keyboard focus across the app (shared Button tokens, nav, login CTAs,
