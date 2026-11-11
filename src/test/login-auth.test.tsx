@@ -10,7 +10,13 @@ import {
 } from "@tanstack/react-router";
 import { LoginCard } from "@/components/login/LoginCard";
 import { MfaCodeInputs } from "@/components/auth/MfaCodeInputs";
-import { isAuthExemptPath, isFocusFlowPath, parseEmailLink, safeNextPath } from "@/lib/auth-paths";
+import {
+  isAuthExemptPath,
+  isFocusFlowPath,
+  parseEmailLink,
+  safeNextPath,
+  signedOutRedirect,
+} from "@/lib/auth-paths";
 import {
   LOGIN_ANIM_CYCLE_MS,
   LOGIN_ANIM_DURATION_MS,
@@ -107,6 +113,13 @@ describe("route guard helpers", () => {
     expect(isAuthExemptPath("/studio-enquiry")).toBe(true);
     expect(isAuthExemptPath("/api/health")).toBe(true);
     expect(isAuthExemptPath("/students")).toBe(false);
+  });
+
+  it("sends signed-out visitors on the home page to /welcome, and app pages to /login", () => {
+    expect(signedOutRedirect("/")).toBe("/welcome");
+    expect(signedOutRedirect("", "?utm_source=x")).toBe("/welcome");
+    expect(signedOutRedirect("/students", "?tab=all")).toBe("/login?next=%2Fstudents%3Ftab%3Dall");
+    expect(signedOutRedirect("/settings/terms")).toBe("/login?next=%2Fsettings%2Fterms");
   });
 
   it("treats Help, Privacy, Terms, Welcome and Pricing as public pages, but not in-app settings", () => {

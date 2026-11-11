@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState, type ReactNode } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { getAuthClient, isDemoModeAllowed, isLiveAuthConfigured } from "@/lib/auth-client";
-import { isAuthExemptPath } from "@/lib/auth-paths";
+import { isAuthExemptPath, signedOutRedirect } from "@/lib/auth-paths";
 import {
   clearVerifiedAccess,
   getVerifiedAccess,
@@ -67,7 +67,7 @@ export function LiveAuthGuard({ children }: { children: ReactNode }) {
     void (async () => {
       const client = getAuthClient();
       if (!client) {
-        window.location.replace(loginUrl(next));
+        window.location.replace(signedOutRedirect(pathname, search || ""));
         return;
       }
       const { data } = await client.auth.getSession();
@@ -75,7 +75,7 @@ export function LiveAuthGuard({ children }: { children: ReactNode }) {
       const session = data.session;
       if (!session) {
         clearVerifiedAccess();
-        window.location.replace(loginUrl(next));
+        window.location.replace(signedOutRedirect(pathname, search || ""));
         return;
       }
       const known = getVerifiedAccess(session.access_token);

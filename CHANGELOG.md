@@ -6,6 +6,9 @@ GitHub Release with the same text. See `docs/release-process.md`.
 
 ## Unreleased
 
+- Visitors who aren't signed in and open keystonemusichq.com now land on the welcome page
+  (`/welcome`); signed-in people still go straight to their studio, and other app links still go
+  to sign-in first.
 - Art Deco admin / studio / family controls now share the same hover and focus styles (`ks-btn`
   classes): admin console (Studios and other tabs), studio pause/pay CTAs, public Sign in, and
   clearer family portal tab hover.
