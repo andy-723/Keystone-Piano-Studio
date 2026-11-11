@@ -1,5 +1,5 @@
 // Data shapes match the future REST API names. Money is always integer cents.
-export type Lang = "en" | "zh-CN";
+export type Lang = "en" | "zh-CN" | "vi";
 export type StudioPlan = "base" | "pro" | "academy";
 export type StudioEntityType = "sole_trader" | "partnership" | "company" | "trust";
 export type MakeUpPeriod = "term" | "month";
