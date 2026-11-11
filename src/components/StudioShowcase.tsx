@@ -17,10 +17,10 @@ const features = [
 
 function DeviceContent({ device, initial }: { device: "laptop" | "ipad"; initial: Feature }) {
   const [feature, setFeature] = useState<Feature>(initial);
-  return <div className="flex h-[580px] min-w-0 flex-col overflow-hidden bg-mk-paper text-mk-ink">
+  return <div className="@container flex h-[580px] min-w-0 flex-col overflow-hidden bg-mk-paper text-mk-ink">
     <div className="border-b border-mk-gold/40 px-3 py-3">
       <p className="mb-3 font-mk-serif text-xl font-semibold">Keystone Music HQ</p>
-      <div role="tablist" aria-label={`${device === "laptop" ? "Laptop" : "iPad"} features`} className="grid grid-cols-3 gap-1">
+      <div role="tablist" aria-label={`${device === "laptop" ? "Laptop" : "iPad"} features`} className="grid grid-cols-2 gap-1 @min-[360px]:grid-cols-3">
         {features.map(({ id, label, Icon }) => <Button key={id} id={`${device}-${id}`} role="tab" aria-selected={feature === id} aria-controls={`${device}-panel`} variant="ghost" type="button" onClick={() => setFeature(id)} className={`h-auto min-h-14 flex-col gap-1 whitespace-normal rounded-md px-1 py-2 text-base ${feature === id ? "bg-mk-bronze text-mk-paper hover:bg-mk-ink hover:text-mk-paper" : "text-mk-ink hover:bg-mk-cream"}`}><Icon className="size-5 shrink-0" aria-hidden />{label}</Button>)}
       </div>
     </div>
@@ -31,7 +31,7 @@ function DeviceContent({ device, initial }: { device: "laptop" | "ipad"; initial
 }
 
 export function StudioShowcase() {
-  return <div className="mt-10 grid min-w-0 items-start gap-10 lg:grid-cols-[1.2fr_1fr] lg:gap-6">
+  return <div className="mt-10 grid min-w-0 items-start gap-10 min-[960px]:grid-cols-[1.2fr_1fr] min-[960px]:gap-6">
     <div role="region" aria-label="Laptop preview" className="min-w-0">
       <p className="mb-4 text-center text-lg font-medium text-mk-bronze">On your laptop</p>
       <LaptopFrame><DeviceContent device="laptop" initial="snapshot" /></LaptopFrame>
