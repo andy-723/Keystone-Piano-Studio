@@ -30,22 +30,21 @@ function ContactPage() {
   const support = publicSupportEmail();
 
   return (
-    <PublicPage title="Contact us">
-      <p>
-        Studio accounts are set up by the Keystone team; there is no self-sign-up yet. Tell us a
-        little about your studio and we'll reply by email, usually within one business day.
-      </p>
+    <PublicPage
+      title={studio ? "Request a studio" : "Contact us"}
+      intro="Studio accounts are set up by the Keystone team. Tell us a little about your studio and we'll reply by email, usually within one business day."
+    >
       <ul className="list-disc space-y-1 pl-6">
         <li>
           Studios, plans and support:{" "}
-          <a className="text-[#604A19] underline underline-offset-2" href={`mailto:${support}`}>
+          <a className="text-mk-bronze underline underline-offset-2" href={`mailto:${support}`}>
             {support}
           </a>
         </li>
         <li>
           Privacy questions:{" "}
           <a
-            className="text-[#604A19] underline underline-offset-2"
+            className="text-mk-bronze underline underline-offset-2"
             href={`mailto:${KEYSTONE_PRIVACY_EMAIL}`}
           >
             {KEYSTONE_PRIVACY_EMAIL}
@@ -57,7 +56,7 @@ function ContactPage() {
         </li>
       </ul>
       <section aria-labelledby="contact-form" className="pt-4">
-        <h2 id="contact-form" className="font-serif text-2xl font-semibold">
+        <h2 id="contact-form" className="font-mk-serif text-2xl font-semibold">
           Send us a message
         </h2>
         <SupportRequestForm

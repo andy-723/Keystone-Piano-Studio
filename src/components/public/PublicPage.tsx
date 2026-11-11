@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import { BrandLogo } from "@/components/BrandLogo";
-import { HomeLogoLink } from "@/components/HomeLogoLink";
+import { MarketingNavbar } from "@/components/MarketingNavbar";
+import { MarketingFooter } from "@/components/MarketingFooter";
 
 /** Support address shown on public pages. Set VITE_SUPPORT_EMAIL in Vercel. */
 export function publicSupportEmail(): string {
@@ -12,45 +12,58 @@ export function publicSupportEmail(): string {
   return value || "support@keystonemusichq.com";
 }
 
+const SECTION_LABELS: Record<string, string> = {
+  "/help": "SUPPORT",
+  "/contact": "GET IN TOUCH",
+  "/privacy": "LEGAL",
+  "/terms": "LEGAL",
+  "/disclaimer": "LEGAL",
+};
+
 /**
- * Standalone public web page (Help, Privacy, Terms). Renders outside the app shell,
- * needs no session and loads no studio data. The logo goes to /welcome (or the studio when signed in).
+ * Standalone public web page (Help, Contact, Privacy, Terms, Disclaimer) in the marketing
+ * theme: shared navbar, ink hero band, paper content card and marketing footer.
+ * Needs no session and loads no studio data.
  */
-export function PublicPage({ title, children }: { title: string; children: ReactNode }) {
+export function PublicPage({
+  title,
+  intro,
+  children,
+}: {
+  title: string;
+  intro?: string;
+  children: ReactNode;
+}) {
+  const path = typeof window !== "undefined" ? window.location.pathname : "";
+  const label = SECTION_LABELS[path] ?? "KEYSTONE MUSIC HQ";
   return (
-    <div className="min-h-[100dvh] bg-[#F5EBD6] text-[#15100D]">
-      <header className="border-b border-[#DDD0B4] bg-[#FBF7EE]">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-5 py-4">
-          <HomeLogoLink>
-            <BrandLogo variant="horizontal" alt="Keystone Music HQ" />
-          </HomeLogoLink>
-          <a href="/login" className="ks-btn ks-btn-secondary">
-            Sign in
-          </a>
+    <div className="min-h-[100dvh] bg-mk-cream font-mk-sans text-mk-ink antialiased">
+      <MarketingNavbar />
+      <section className="relative isolate overflow-hidden bg-mk-ink text-mk-paper">
+        <div
+          aria-hidden
+          className="absolute inset-0 -z-10 opacity-40"
+          style={{ background: "var(--mk-essentials-pattern)" }}
+        />
+        <div className="mx-auto max-w-4xl px-5 py-12 md:px-10 md:py-16">
+          <p className="flex items-center gap-3 text-base font-medium text-mk-gold" suppressHydrationWarning>
+            <span className="h-px w-8 bg-mk-gold" aria-hidden />
+            {label}
+          </p>
+          <h1 className="mt-4 font-mk-serif text-4xl font-semibold leading-tight md:text-5xl">
+            {title}
+          </h1>
+          {intro ? (
+            <p className="mt-4 max-w-2xl text-xl leading-relaxed text-mk-paper/85">{intro}</p>
+          ) : null}
         </div>
-      </header>
-      <main className="mx-auto max-w-3xl px-5 py-10">
-        <h1 className="m-0 font-serif text-4xl font-semibold">{title}</h1>
-        <div className="mt-6 space-y-4 text-base leading-relaxed text-[#2E261F]">{children}</div>
+      </section>
+      <main className="mx-auto -mt-6 max-w-4xl px-5 pb-16 md:px-10">
+        <div className="mk-public-card rounded-2xl border border-mk-gold/50 bg-mk-paper p-6 shadow-[var(--shadow-mk-lift)] md:p-10">
+          <div className="space-y-4 text-lg leading-relaxed text-mk-ink/85">{children}</div>
+        </div>
       </main>
-      <footer className="mx-auto flex max-w-3xl flex-wrap gap-x-4 gap-y-1 px-5 pb-10 text-sm text-[#6B6052]">
-        <a href="/help" className="text-[#604A19] hover:text-[#15100D]">
-          Help
-        </a>
-        <a href="/contact" className="text-[#604A19] hover:text-[#15100D]">
-          Contact us
-        </a>
-        <a href="/privacy" className="text-[#604A19] hover:text-[#15100D]">
-          Privacy
-        </a>
-        <a href="/terms" className="text-[#604A19] hover:text-[#15100D]">
-          Terms
-        </a>
-        <a href="/disclaimer" className="text-[#604A19] hover:text-[#15100D]">
-          Disclaimer
-        </a>
-        <span>Data hosted in Sydney, Australia</span>
-      </footer>
+      <MarketingFooter />
     </div>
   );
 }
@@ -72,7 +85,7 @@ export function LegalMarkdown({ markdown }: { markdown: string }) {
           }
           if (list.length) {
             out.push(
-              <ul key={`u${out.length}`} className="list-disc space-y-1 pl-6">
+              <ul key={`u${out.length}`} className="list-disc space-y-1 pl-6 marker:text-mk-gold">
                 {list.map((item, i) => (
                   <li key={i}>{item}</li>
                 ))}
@@ -90,11 +103,11 @@ export function LegalMarkdown({ markdown }: { markdown: string }) {
             if (level === 1) continue; // page title is rendered by PublicPage
             out.push(
               level === 2 ? (
-                <h2 key={`h${out.length}`} className="pt-4 text-2xl font-semibold">
+                <h2 key={`h${out.length}`} className="mt-6 border-t border-mk-gold/40 pt-6 font-mk-serif text-2xl font-semibold text-mk-ink first:mt-0 first:border-0 first:pt-0">
                   {text}
                 </h2>
               ) : (
-                <h3 key={`h${out.length}`} className="pt-2 text-lg font-semibold">
+                <h3 key={`h${out.length}`} className="pt-2 text-xl font-semibold text-mk-bronze">
                   {text}
                 </h3>
               ),
