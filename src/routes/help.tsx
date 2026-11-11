@@ -48,7 +48,7 @@ function HelpPage() {
           </Button>
         </div>
       </div>
-      <div data-no-translate={audience === "family" ? "" : undefined}>
+      <div data-no-translate>
       <HelpCentre
         key={audience}
         audience={audience}
