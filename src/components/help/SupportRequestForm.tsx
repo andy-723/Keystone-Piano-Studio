@@ -29,6 +29,9 @@ type Props = {
   /** What the person typed in the help search, used to prefill the subject. */
   searchQuery?: string | undefined;
   supportEmail?: string | undefined;
+  /** Preselected category and subject, e.g. the public Contact page's "Request a studio". */
+  initialCategory?: string | undefined;
+  initialSubject?: string | undefined;
 };
 
 type ErrorCode =
@@ -57,10 +60,12 @@ export function SupportRequestForm({
   onMessageTeacher,
   searchQuery,
   supportEmail,
+  initialCategory,
+  initialSubject,
 }: Props) {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const [categoryId, setCategoryId] = useState("");
-  const [subject, setSubject] = useState("");
+  const [categoryId, setCategoryId] = useState(initialCategory ?? "");
+  const [subject, setSubject] = useState(initialSubject ?? "");
   const [message, setMessage] = useState("");
   const [contactName, setContactName] = useState("");
   const [contactEmail, setContactEmail] = useState("");
@@ -232,9 +237,13 @@ export function SupportRequestForm({
           </div>
           <div>
             <label htmlFor={`support-message-${audience}`} className="block font-semibold">
-              {t("message")}
+              {categoryId === "new_studio" ? "Tell us about your studio" : t("message")}
             </label>
-            <p className="text-sm text-muted-foreground">{t("messageHint")}</p>
+            <p className="text-sm text-muted-foreground">
+              {categoryId === "new_studio"
+                ? "Roughly how many students and teachers, where you teach, and anything you'd like to know."
+                : t("messageHint")}
+            </p>
             <Textarea
               id={`support-message-${audience}`}
               className="mt-2 min-h-32 text-base"

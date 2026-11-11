@@ -54,8 +54,7 @@ export const Route = createFileRoute("/pricing")({
   component: Pricing,
 });
 
-const enquire = (plan: string) =>
-  `mailto:support@keystonemusichq.com?subject=${encodeURIComponent(`Request a studio — ${plan}`)}`;
+const enquire = (plan: string) => `/contact?topic=studio&plan=${encodeURIComponent(plan)}`;
 const shared = [
   {
     Icon: CalendarDays,

@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 
 const SIGN_IN = "/login";
-const ENQUIRE = "mailto:support@keystonemusichq.com?subject=Request%20a%20studio";
+const ENQUIRE = "/contact?topic=studio";
 
 export const Route = createFileRoute("/welcome")({
   loader: ({ context }) => context.queryClient.ensureQueryData(marketingFinanceQuery),

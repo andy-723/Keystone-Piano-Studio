@@ -36,6 +36,9 @@ export function PublicPage({ title, children }: { title: string; children: React
         <a href="/help" className="text-[#604A19] hover:text-[#15100D]">
           Help
         </a>
+        <a href="/contact" className="text-[#604A19] hover:text-[#15100D]">
+          Contact us
+        </a>
         <a href="/privacy" className="text-[#604A19] hover:text-[#15100D]">
           Privacy
         </a>

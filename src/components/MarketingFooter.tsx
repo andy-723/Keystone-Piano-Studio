@@ -7,6 +7,7 @@ import { Link } from "@tanstack/react-router";
 const LINKS = [
   { to: "/pricing", label: "Pricing" },
   { to: "/help", label: "Help" },
+  { to: "/contact", label: "Contact us" },
   { to: "/terms", label: "Terms of use" },
   { to: "/privacy", label: "Privacy" },
   { to: "/disclaimer", label: "Disclaimer" },

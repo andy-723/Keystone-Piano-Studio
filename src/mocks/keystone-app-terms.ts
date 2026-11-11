@@ -12,7 +12,7 @@ export const reviewed = true;
 export const FAMILY_APP_TERMS_VERSION = 1;
 export const FAMILY_APP_TERMS_EFFECTIVE_AT = "2026-11-08";
 
-export const KEYSTONE_PRIVACY_EMAIL = "privacy@keystone.example";
+export const KEYSTONE_PRIVACY_EMAIL = "privacy@keystonemusichq.com";
 
 /** Part C — Privacy notice (also linked from the acceptance scrolling panel). */
 export const PRIVACY_NOTICE_MARKDOWN = `## Part C — Privacy notice
