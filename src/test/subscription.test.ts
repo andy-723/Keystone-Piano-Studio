@@ -66,9 +66,9 @@ describe("access levels (mirror of app_private.studio_access_level)", () => {
     expect(canWrite("full")).toBe(true);
   });
 
-  it("Base caps at 35 students, Pro does not", () => {
-    expect(baseCapReached("base", 34)).toBe(false);
-    expect(baseCapReached("base", 35)).toBe(true);
+  it("Base caps at 30 students, Pro does not", () => {
+    expect(baseCapReached("base", 29)).toBe(false);
+    expect(baseCapReached("base", 30)).toBe(true);
     expect(baseCapReached("pro", 500)).toBe(false);
   });
 });

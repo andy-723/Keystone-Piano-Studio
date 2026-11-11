@@ -16,7 +16,7 @@ export type StudioRoleName = "owner" | "admin" | "teacher" | "guardian";
 
 export const SUSPEND_AFTER_REMINDER_DAYS = 14;
 export const EXPORT_WINDOW_DAYS = 30;
-export const BASE_STUDENT_CAP = 35;
+export const BASE_STUDENT_CAP = 30;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 

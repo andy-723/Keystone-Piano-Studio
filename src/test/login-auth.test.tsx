@@ -109,8 +109,10 @@ describe("route guard helpers", () => {
     expect(isAuthExemptPath("/students")).toBe(false);
   });
 
-  it("treats Help, Privacy and Terms as public pages, but not in-app settings", () => {
+  it("treats Help, Privacy, Terms, Welcome and Pricing as public pages, but not in-app settings", () => {
     expect(isAuthExemptPath("/help")).toBe(true);
+    expect(isAuthExemptPath("/welcome")).toBe(true);
+    expect(isAuthExemptPath("/pricing")).toBe(true);
     expect(isAuthExemptPath("/privacy")).toBe(true);
     expect(isAuthExemptPath("/terms")).toBe(true);
     expect(isAuthExemptPath("/settings/terms")).toBe(false);

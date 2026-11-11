@@ -5,7 +5,7 @@ import { newStudioSubscription } from "@/mocks/plans";
 import { getStudio } from "@/services/roster";
 import { getPlanBilling, setStudioPlan, proFeaturesEnabled } from "@/services/plans";
 import { getAssignmentSettings, requirePro } from "@/services/assignments";
-import { normalisePlan, baseStudentLimitExceeded } from "@/lib/plans";
+import { normalisePlan, baseStudentLimitExceeded, PUBLIC_PLANS } from "@/lib/plans";
 import { connectXero, pushInvoiceToXero } from "@/services/integrations";
 import { initialIntegrations, integrationState } from "@/mocks/integrations";
 afterEach(() => { studio.plan = "pro"; newStudioSubscription.plan = "base"; integrationState.demo = initialIntegrations(); });
@@ -27,9 +27,16 @@ it("switching plans disables and restores Pro capabilities without removing anyt
   expect(students.length).toBe(count); expect(invoices.length).toBe(invoiceCount);
   await setStudioPlan("academy"); expect(proFeaturesEnabled()).toBe(true);
 });
-it("Base limit banner rule is only above 35, and never applies to Pro or Academy", () => {
-  expect(baseStudentLimitExceeded("base", 35)).toBe(false); expect(baseStudentLimitExceeded("base", 36)).toBe(true); expect(baseStudentLimitExceeded("base", 38)).toBe(true);
+it("Base includes 30 students and warns from the 31st, without limiting Pro or Academy", () => {
+  expect(baseStudentLimitExceeded("base", 30)).toBe(false); expect(baseStudentLimitExceeded("base", 31)).toBe(true); expect(baseStudentLimitExceeded("base", 38)).toBe(true);
   expect(baseStudentLimitExceeded("pro", 38)).toBe(false); expect(baseStudentLimitExceeded("academy", 38)).toBe(false);
+});
+it("public monthly prices are A$29 Base and A$49 Pro plus GST", () => {
+  expect(PUBLIC_PLANS.map(plan => plan.monthlyCents)).toEqual([2900, 4900]);
+  expect(PUBLIC_PLANS.map(plan => plan.gstInclusiveCents)).toEqual([3190, 5390]);
+});
+it("public capacity is 30 students for Base and unlimited for Pro", () => {
+  expect(PUBLIC_PLANS.map(plan => plan.studentLimit)).toEqual([30, null]);
 });
 it("billing keeps the supplied Pro prices and history separate from family invoices", async () => {
   const data = await getPlanBilling(); expect(data.renewal).toBe("1 Dec 2026"); expect(data.card).toBe("Visa ending 4242");
