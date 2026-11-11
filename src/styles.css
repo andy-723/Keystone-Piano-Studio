@@ -31,6 +31,9 @@
   --font-mk-sans: "Instrument Sans", system-ui, sans-serif;
   --shadow-mk-device: 0 30px 80px -30px oklch(0.22 0.012 70 / 45%);
   --shadow-mk-lift: 0 18px 40px -24px oklch(0.3 0.035 80 / 35%);
+  --shadow-mk-feature: 0 8px 24px -16px oklch(0.3 0.035 80 / 22%);
+  --mk-essentials-pattern: repeating-linear-gradient(90deg, transparent 0 95px, color-mix(in oklab, var(--color-mk-gold) 10%, transparent) 95px 96px);
+  --mk-gloss-sheen: linear-gradient(110deg, transparent 20%, color-mix(in oklab, var(--color-mk-gold) 9%, transparent) 40%, color-mix(in oklab, var(--color-mk-paper) 85%, transparent) 50%, color-mix(in oklab, var(--color-mk-gold) 9%, transparent) 60%, transparent 80%);
   --color-device-metal: oklch(0.78 0.008 85);
   --color-device-highlight: oklch(0.91 0.006 85);
   --color-device-edge: oklch(0.55 0.008 85);
@@ -324,6 +327,26 @@
 }
 
 /* Scroll zoom hero */
+.mk-essentials-band { background: var(--color-mk-cream); background-image: var(--mk-essentials-pattern); }
+.mk-gloss-card { position: relative; isolation: isolate; overflow: hidden; box-shadow: var(--shadow-mk-feature); transition: transform 300ms ease, box-shadow 300ms ease, border-color 300ms ease; }
+.mk-gloss-card::after { content: ""; position: absolute; z-index: -1; inset: -30% -60%; background: var(--mk-gloss-sheen); transform: translateX(-75%); pointer-events: none; }
+.mk-gloss-card > * { position: relative; z-index: 1; }
+.mk-tax-band { position: relative; }
+.mk-deco-divider { display: flex; align-items: center; gap: 18px; height: 24px; padding-inline: max(20px, calc((100% - 1188px) / 2)); }
+.mk-deco-divider::before, .mk-deco-divider::after { content: ""; height: 1px; flex: 1; background: var(--color-mk-gold); opacity: .55; }
+.mk-deco-divider span { width: 18px; height: 18px; border: 1px solid var(--color-mk-gold); background: var(--color-mk-ink); transform: rotate(45deg); }
+.mk-tax-feature { transition: border-color 300ms ease; }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .mk-gloss-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-mk-lift); border-color: var(--color-mk-gold); }
+  .mk-gloss-card:hover::after { animation: mk-gloss-sweep 1000ms ease-out both; }
+  .mk-tax-feature:hover { border-color: var(--color-mk-gold); }
+}
+@keyframes mk-gloss-sweep { from { transform: translateX(-75%); } to { transform: translateX(75%); } }
+@media (prefers-reduced-motion: reduce) {
+  .mk-gloss-card, .mk-tax-feature { transition: none; }
+  .mk-gloss-card::after { display: none; }
+}
+
 .mk-zoom-track { --zoom-p: 0; height: 230svh; }
 .mk-zoom-image { transform: scale(calc(1 + var(--zoom-p) * 1.5)); transform-origin: 42% 58%; will-change: transform; }
 .mk-zoom-shade { opacity: calc(1 - var(--zoom-p) * 0.9); }
