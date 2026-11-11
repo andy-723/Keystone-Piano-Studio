@@ -17,7 +17,7 @@ are, and access follows `public.studio_subscription.status`.
 | `suspended` (MSA 12.2) | daily job, 14 days after the reminder | read-only + export, can pay | no access | no access |
 | `canceled` | Stripe | read-only for 30 days after the end (MSA 12.5), then none | no access | no access |
 
-Base allows 35 students (the 36th insert is refused). Pro has no cap. Downgrading never deletes anyone.
+Base allows 30 students (the 31st insert is refused; 0017 lowered it from 35). Pro has no cap. Downgrading never deletes anyone.
 
 ## Where it is enforced
 
