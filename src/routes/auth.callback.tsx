@@ -14,8 +14,8 @@ import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/auth/callback")({
   validateSearch: (search: Record<string, unknown>) => ({
-    next: typeof search.next === "string" ? search.next : undefined,
-    code: typeof search.code === "string" ? search.code : undefined,
+    next: typeof search["next"] === "string" ? search["next"] : undefined,
+    code: typeof search["code"] === "string" ? search["code"] : undefined,
     token_hash: typeof search["token_hash"] === "string" ? search["token_hash"] : undefined,
     type: typeof search["type"] === "string" ? search["type"] : undefined,
   }),
@@ -192,7 +192,7 @@ function AuthCallbackPage() {
       )}
       {failed && (
         <Button className="mt-6" asChild>
-          <Link to="/login">Back to sign in</Link>
+          <Link to="/login" search={{ next: undefined }}>Back to sign in</Link>
         </Button>
       )}
     </div>

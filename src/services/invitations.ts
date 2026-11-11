@@ -165,8 +165,8 @@ async function sendInviteEmail(
 export async function createInvitation(input: {
   familyId: string;
   studentIds: string[];
-  enrolmentDraftIds?: string[];
-  language?: Lang;
+  enrolmentDraftIds?: string[] | undefined;
+  language?: Lang | undefined;
 }) {
   const family = families.find((entry) => entry.id === input.familyId);
   if (!family) throw new Error("Family not found.");

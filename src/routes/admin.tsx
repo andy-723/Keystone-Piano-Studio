@@ -112,7 +112,7 @@ function AdminPage() {
         {token && tab === "team" && <TeamTab token={token} onError={setError} />}
         {token && tab === "audit" && <AuditTab token={token} onError={setError} />}
         <p className="mt-8 text-sm text-[#5A4F43]">
-          <Link to="/login" className="text-[#604A19] hover:underline">
+          <Link to="/login" search={{ next: undefined }} className="text-[#604A19] hover:underline">
             Sign-in page
           </Link>
         </p>

@@ -17,7 +17,7 @@ export default defineConfig({
     ],
   },
   plugins: [
-    ...(process.env.NODE_ENV !== "production" ? [devtools()] : []),
+    ...(process.env["NODE_ENV"] !== "production" ? [devtools()] : []),
     tsConfigPaths({ projects: ["./tsconfig.json"] }),
     tailwindcss(),
     tanstackStart({

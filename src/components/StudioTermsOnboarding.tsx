@@ -42,7 +42,6 @@ function readField(
     const services = (studio["services"] ?? {}) as Record<string, unknown>;
     return String(services[step.field.slice("services.".length)] ?? "");
   }
-  if (step.field === "childSafety") return teacher.childSafety?.number ?? "";
   return String(studio[step.field] ?? "");
 }
 
@@ -53,7 +52,7 @@ export function StudioTermsOnboarding({
 }: {
   scope?: TermsScope;
   onComplete?: () => void;
-  plan?: string;
+  plan?: string | undefined;
 }) {
   const client = useQueryClient();
   const draftQuery = useQuery({ queryKey: ["terms-draft", scope], queryFn: () => getStudioTermsDraft(scope) });
@@ -124,7 +123,7 @@ export function StudioTermsOnboarding({
       } else {
         billing[path] = numeric;
       }
-      return { studio: { billing: billing as NonNullable<typeof draftQuery.data.studio.billing> }, onboardingStep: step.id };
+      return { studio: { billing: billing as unknown as NonNullable<typeof draftQuery.data.studio.billing> }, onboardingStep: step.id };
     }
     if (step.field.startsWith("policies.")) {
       const key = step.field.slice("policies.".length);
@@ -133,7 +132,7 @@ export function StudioTermsOnboarding({
           policies: {
             ...(draftQuery.data.studio.policies as object),
             [key]: numeric,
-          } as NonNullable<typeof draftQuery.data.studio.policies>,
+          } as unknown as NonNullable<typeof draftQuery.data.studio.policies>,
         },
         onboardingStep: step.id,
       };
@@ -145,13 +144,13 @@ export function StudioTermsOnboarding({
           services: {
             ...(draftQuery.data.studio.services as object),
             [key]: value,
-          } as NonNullable<typeof draftQuery.data.studio.services>,
+          } as unknown as NonNullable<typeof draftQuery.data.studio.services>,
         },
         onboardingStep: step.id,
       };
     }
     return {
-      studio: { [step.field]: numeric } as Parameters<typeof saveStudioTermsDraft>[1]["studio"],
+      studio: { [step.field]: numeric } as unknown as NonNullable<Parameters<typeof saveStudioTermsDraft>[1]["studio"]>,
       onboardingStep: step.id,
     };
   };

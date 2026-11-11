@@ -13,8 +13,8 @@ export const Route = createFileRoute("/snapshot")({
     search: Record<string, unknown>,
   ): { range?: SnapshotRangeKey; tax?: TaxLiteFyKey } => {
     const next: { range?: SnapshotRangeKey; tax?: TaxLiteFyKey } = {};
-    if (search.range === "week" || search.range === "month") next.range = search.range;
-    if (search.tax === "ytd" || search.tax === "fy") next.tax = search.tax;
+    if (search["range"] === "week" || search["range"] === "month") next.range = search["range"];
+    if (search["tax"] === "ytd" || search["tax"] === "fy") next.tax = search["tax"];
     return next;
   },
   loaderDeps: ({ search }) => ({

@@ -4,7 +4,7 @@ export class ProblemError extends Error {
   readonly status: number;
   readonly type: string;
   readonly title: string;
-  readonly code?: string;
+  readonly code?: string | undefined;
 
   constructor(status: number, title: string, detail?: string, type = "about:blank", code?: string) {
     super(detail ?? title);

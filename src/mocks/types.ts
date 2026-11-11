@@ -53,7 +53,7 @@ export interface Studio {
   abn?: string;
   gstRegistered: boolean;
   timezone: "Australia/Melbourne";
-  plan?: StudioPlan;
+  plan?: StudioPlan | undefined;
   asyncLessonPolicy?: "makeup_credit" | "counts_as_lesson";
   legalName?: string;
   address?: string;
@@ -146,18 +146,18 @@ export interface Invoice {
   status: InvoiceStatus;
   kind?: InvoiceKind;
   relatedInvoiceId?: string;
-  billToGuardianId?: string;
+  billToGuardianId?: string | undefined;
   ccGuardianIds?: string[];
   billingPeriod?: { start: string; end: string };
   termsVersionId?: string;
   snapshot?: InvoiceSnapshot;
   pdf?: { path: string; sha256: string };
   collection?: "manual" | "stripe";
-  queriedAt?: string;
-  queryResolvedAt?: string;
-  voidedAt?: string;
-  voidReason?: string;
-  sentAt?: string;
+  queriedAt?: string | undefined;
+  queryResolvedAt?: string | undefined;
+  voidedAt?: string | undefined;
+  voidReason?: string | undefined;
+  sentAt?: string | undefined;
   issueDate: string;
   dueDate: string;
   lines: InvoiceLine[];
@@ -267,7 +267,7 @@ export interface StudioBillingProfile {
   nextInvoiceNumber: number;
   creditNotePrefix: string;
   nextCreditNoteNumber: number;
-  numberingLockedAt?: string;
+  numberingLockedAt?: string | undefined;
   payTo: StudioPayTo;
   attachPdf: boolean;
   /** Days before due for pre-due reminder; null = off. */

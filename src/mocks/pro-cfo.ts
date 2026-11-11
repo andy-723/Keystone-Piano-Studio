@@ -24,7 +24,7 @@ export type ProCfoXeroQueueItem = {
   id: string;
   invoiceId: string;
   status: ProCfoXeroQueueStatus;
-  lastError?: string;
+  lastError?: string | undefined;
   attemptedAt?: string;
 };
 

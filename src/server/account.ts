@@ -151,8 +151,8 @@ export async function writePlatformAudit(input: {
   targetStudioId?: string | null;
   targetUserId?: string | null;
   detail?: Record<string, unknown>;
-  ip?: string;
-  userAgent?: string;
+  ip?: string | undefined;
+  userAgent?: string | undefined;
 }) {
   if (isMockOnboarding()) return;
   // Service-key insert into platform_audit — callers must already gate with requirePlatformAdmin
@@ -173,8 +173,8 @@ export async function writeAuthAudit(input: {
   studioId: string;
   actorUserId: string | null;
   event: "mfa_enrolled" | "sign_in";
-  ip?: string;
-  userAgent?: string;
+  ip?: string | undefined;
+  userAgent?: string | undefined;
 }) {
   if (isMockOnboarding()) return;
   // Service-key insert into auth_audit — guarded by prior studio membership resolution.

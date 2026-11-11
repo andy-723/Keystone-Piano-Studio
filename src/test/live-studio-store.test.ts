@@ -53,7 +53,54 @@ import {
   sendMessage,
 } from "@/services/chat";
 
-type Row = Record<string, unknown>;
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// Declared props keep dot access legal under noPropertyAccessFromIndexSignature;
+// the index signature covers every other column the mocks touch.
+type Row = Record<string, any> & {
+  [K in
+    | "id"
+    | "status"
+    | "number"
+    | "name"
+    | "email"
+    | "kind"
+    | "profile"
+    | "is_demo"
+    | "display_name"
+    | "first_name"
+    | "family_id"
+    | "studio_id"
+    | "sent_at"
+    | "read_at"
+    | "metadata"
+    | "snapshot"
+    | "data"
+    | "invoice_prefix"
+    | "next_invoice_number"
+    | "credit_note_prefix"
+    | "next_credit_note_number"
+    | "p_invoice_id"]?: any;
+};
+type Tables = Record<string, Row[]> & {
+  [K in
+    | "studio"
+    | "invoice"
+    | "invoice_line"
+    | "invoice_event"
+    | "credit_note"
+    | "payment"
+    | "family"
+    | "guardian"
+    | "student"
+    | "student_course"
+    | "student_group"
+    | "library_item"
+    | "news_post"
+    | "conversation"
+    | "message"
+    | "snapshot"
+    | "studio_billing_profile"]?: Row[];
+};
 type Call = {
   table: string;
   op: string;
@@ -63,7 +110,7 @@ type Call = {
 };
 
 /** Just enough of the Supabase query builder for the studio store. */
-function fakeSupabase(tables: Record<string, Row[]>, options: { failOn?: string } = {}) {
+function fakeSupabase(tables: Tables, options: { failOn?: string } = {}) {
   const calls: Call[] = [];
   const from = (table: string) => {
     const call: Call = { table, op: "select", filters: [], other: [] };
@@ -151,7 +198,7 @@ function fakeSupabase(tables: Record<string, Row[]>, options: { failOn?: string 
     return builder;
   };
   const rpcCalls: Array<[string, Record<string, unknown>]> = [];
-  const rpc = async (name: string, args: Record<string, unknown>) => {
+  const rpc = async (name: string, args: Row) => {
     rpcCalls.push([name, args]);
     if (options.failOn === `rpc.${name}`)
       return { data: null, error: { message: "not allowed", code: "42501" } };
@@ -189,7 +236,7 @@ const STUDIO_ID = "5f1c7e0e-1111-4111-8111-000000000001";
 const EXAMPLE_FAMILY = "5f1c7e0e-2222-4222-8222-000000000001";
 const EXAMPLE_STUDENT = "5f1c7e0e-3333-4333-8333-000000000001";
 
-function liveTables(): Record<string, Row[]> {
+function liveTables(): Tables {
   return {
     studio: [{ id: STUDIO_ID, name: "Andrew Test Studio", is_demo: false, profile: {} }],
     family: [

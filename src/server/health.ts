@@ -9,8 +9,8 @@ export function healthStatus() {
   const env = typeof process !== "undefined" ? process.env : {};
   return {
     ok: true as const,
-    commit: env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? "local",
-    env: env.VERCEL_ENV ?? "local",
+    commit: env["VERCEL_GIT_COMMIT_SHA"]?.slice(0, 7) ?? "local",
+    env: env["VERCEL_ENV"] ?? "local",
   };
 }
 

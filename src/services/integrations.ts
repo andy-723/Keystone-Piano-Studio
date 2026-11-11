@@ -47,7 +47,7 @@ export async function disconnectXero(scope: IntegrationScope = "demo") {
   };
   return respond(integrationState[scope].xero);
 }
-export async function pushInvoiceToXero(invoiceId: string) {
+export async function pushInvoiceToXero(invoiceId: string): Promise<{ synced: boolean; syncedAt?: string }> {
   const xero = integrationState.demo.xero;
   if (!proFeaturesEnabled() || xero.status !== "connected") return respond({ synced: false });
   const invoice = invoices.find((entry) => entry.id === invoiceId);

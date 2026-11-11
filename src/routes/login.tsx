@@ -11,7 +11,7 @@ const StreetScene = lazy(() =>
 
 export const Route = createFileRoute("/login")({
   validateSearch: (search: Record<string, unknown>) => ({
-    next: typeof search.next === "string" ? search.next : undefined,
+    next: typeof search["next"] === "string" ? search["next"] : undefined,
   }),
   component: LoginPage,
   head: () => ({
@@ -30,7 +30,7 @@ function LoginPage() {
   const nextPath = safeNextPath(next);
   const siteKey =
     (typeof import.meta !== "undefined" &&
-      (import.meta.env?.VITE_TURNSTILE_SITE_KEY as string | undefined)) ||
+      (import.meta.env?.["VITE_TURNSTILE_SITE_KEY"] as string | undefined)) ||
     "";
 
   return (
