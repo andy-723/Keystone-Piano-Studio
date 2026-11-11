@@ -1,5 +1,5 @@
 # Teacher day-book
-- [ ] Adapt the supplied animated navigation to welcome/pricing with working Keystone links and mobile/touch controls; verify navigation and reduced motion.
+- [x] Adapt the supplied animated navigation to welcome/pricing with working Keystone links and mobile/touch controls; verify navigation and reduced motion.
 - [x] Simplify device previews and bring the selected laptop or iPad forward into a large interactive view; verify phone sizing, dismissal and screen actions.
 - [x] Combine welcome previews into one interactive laptop and one iPad, followed by feature breakdowns; verify device controls and narrow layouts.
 - [x] Make interactive laptop previews recognisable with a screen bezel, camera, hinge, keyboard and trackpad; verify phone and laptop interactions.
