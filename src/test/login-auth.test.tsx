@@ -32,6 +32,7 @@ import { requirePlatformAdmin, resetMockPlatformStaff, ProblemError } from "@/se
 import { bootstrapPlatformAdmin, maskEmailForLog } from "@/lib/bootstrap-platform-admin";
 import { isDemoModeAllowed, resetAuthClientForTests } from "@/lib/auth-client";
 import { LiveAuthGuard, resetLiveAuthGuardForTests } from "@/components/LiveAuthGuard";
+import { HomeLogoLink } from "@/components/HomeLogoLink";
 
 afterEach(() => {
   cleanup();
@@ -399,5 +400,14 @@ describe("branded email links (token_hash)", () => {
     expect(
       parseEmailLink(new URLSearchParams("token_hash=<script>xx</script>&type=email")),
     ).toBeNull();
+  });
+});
+
+describe("logo link", () => {
+  it("goes to the public welcome page when nobody is signed in to a live account", () => {
+    render(<HomeLogoLink>Keystone</HomeLogoLink>);
+    expect(screen.getByRole("link", { name: "Keystone Music HQ home" }).getAttribute("href")).toBe(
+      "/welcome",
+    );
   });
 });

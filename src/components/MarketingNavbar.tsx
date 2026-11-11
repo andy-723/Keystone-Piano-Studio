@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
+import { HomeLogoLink } from "@/components/HomeLogoLink";
 import { Menu, MenuItem, MenuLink } from "@/components/ui/navbar-menu";
 import logo from "@/assets/brand/keystone-lockup-tagline-360@3x.png";
 import {
@@ -17,12 +18,7 @@ export function MarketingNavbar() {
   return (
     <header className="mk-navbar-header font-mk-sans text-mk-ink">
       <div className="mk-navbar-bar">
-        <Link
-          to="/welcome"
-          aria-label="Keystone Music HQ home"
-          onClick={() => setExpanded(false)}
-          className="min-w-0 shrink"
-        >
+        <HomeLogoLink onClick={() => setExpanded(false)} className="min-w-0 shrink">
           <img
             src={logo}
             alt="Keystone Music HQ — Studio OS & LMS management platform"
@@ -30,7 +26,7 @@ export function MarketingNavbar() {
             height={307}
             className="h-auto w-[250px] max-w-full sm:w-[280px]"
           />
-        </Link>
+        </HomeLogoLink>
         <Button
           type="button"
           variant="ghost"

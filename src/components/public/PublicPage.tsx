@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { BrandLogo } from "@/components/BrandLogo";
+import { HomeLogoLink } from "@/components/HomeLogoLink";
 
 /** Support address shown on public pages. Set VITE_SUPPORT_EMAIL in Vercel. */
 export function publicSupportEmail(): string {
@@ -13,16 +14,16 @@ export function publicSupportEmail(): string {
 
 /**
  * Standalone public web page (Help, Privacy, Terms). Renders outside the app shell,
- * needs no session and loads no studio data. Every link goes back to /login, never into the app.
+ * needs no session and loads no studio data. The logo goes to /welcome (or the studio when signed in).
  */
 export function PublicPage({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="min-h-[100dvh] bg-[#F5EBD6] text-[#15100D]">
       <header className="border-b border-[#DDD0B4] bg-[#FBF7EE]">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-5 py-4">
-          <a href="/login" aria-label="Keystone Music HQ sign in">
+          <HomeLogoLink>
             <BrandLogo variant="horizontal" alt="Keystone Music HQ" />
-          </a>
+          </HomeLogoLink>
           <a href="/login" className="ks-btn ks-btn-secondary">
             Sign in
           </a>

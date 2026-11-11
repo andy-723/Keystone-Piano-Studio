@@ -6,6 +6,9 @@ GitHub Release with the same text. See `docs/release-process.md`.
 
 ## Unreleased
 
+- The Keystone logo on public pages (sign-in, help, terms, privacy, disclaimer, contact, welcome,
+  pricing) now goes to the welcome page, or to your studio if you're already signed in. It never
+  opens the demo app.
 - New public Contact us page (`/contact`). "Request a studio" on the welcome and pricing pages now
   opens it with "Set up a new studio" and the plan preselected; messages go through the same
   support request path as the help centre. Keystone's privacy contact is now
