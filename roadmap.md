@@ -105,3 +105,4 @@
 - [x] Add Students → Groups page, profile Groups field, and News composer Manage groups / empty state.
 - [x] Compute smart grade and competition classifications from the roster; seed editable Saturday and Young beginners manuals; new studios start with no manuals.
 - [x] Cover service rules and news targeting of a newly created group with tests.
+- [x] Welcome hero scroll zoom toward the piano

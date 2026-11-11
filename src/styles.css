@@ -325,7 +325,7 @@
 
 /* Scroll zoom hero */
 .mk-zoom-track { --zoom-p: 0; height: 230svh; }
-.mk-zoom-image { transform: scale(calc(1 + var(--zoom-p) * 1.5)); transform-origin: 55% 62%; will-change: transform; }
+.mk-zoom-image { transform: scale(calc(1 + var(--zoom-p) * 1.5)); transform-origin: 42% 58%; will-change: transform; }
 .mk-zoom-shade { opacity: calc(1 - var(--zoom-p) * 0.9); }
 .mk-zoom-copy { transform: scale(calc(1 + var(--zoom-p) * 0.9)); opacity: calc(1 - var(--zoom-p) * 2.2); filter: blur(calc(var(--zoom-p) * 14px)); transform-origin: 30% 50%; will-change: transform, opacity; }
 .mk-zoom-nav { opacity: calc(1 - var(--zoom-p) * 3); }
