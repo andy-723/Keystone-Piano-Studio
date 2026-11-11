@@ -172,7 +172,7 @@ export function LiveAuthGuard({ children }: { children: ReactNode }) {
         </p>
         <button
           type="button"
-          className="mt-6 min-h-11 rounded-[10px] bg-[#604A19] px-4 text-sm font-semibold text-[#FBF7EE] transition-[background-color,transform] duration-150 hover:bg-[#4E3C14] active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#604A19]"
+          className="ks-btn ks-btn-primary mt-6"
           onClick={() => window.location.reload()}
         >
           Reload

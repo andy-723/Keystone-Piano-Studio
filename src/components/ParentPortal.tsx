@@ -123,7 +123,7 @@ function ParentViews() {
                 variant="ghost"
                 aria-pressed={view === key}
                 onClick={() => { setView(key); setQuote(''); setInvoiceId(null); window.scrollTo({ top: 0 }); }}
-                className={`min-h-20 min-w-0 flex-col gap-1 whitespace-normal rounded-none px-1 text-base ${view === key ? "bg-secondary text-primary" : "text-muted-foreground"}`}
+                className={`min-h-20 min-w-0 flex-col gap-1 whitespace-normal rounded-none px-1 text-base transition-[background-color,color] duration-150 focus-visible:ring-inset ${view === key ? "bg-secondary text-primary" : "text-muted-foreground hover:bg-accent-hover hover:text-accent-foreground"}`}
               >
                 <Icon className="size-6" aria-hidden />
                 {key === 'news' ? newsText(lang, 'news') : t(key)}
