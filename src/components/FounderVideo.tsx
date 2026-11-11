@@ -22,7 +22,7 @@ export function FounderVideo() {
   const media = embedUrl(FOUNDER_VIDEO_URL);
 
   return (
-    <section aria-labelledby="founder-video-title" className="bg-mk-ink">
+    <section aria-labelledby="founder-video-title" className="mk-founder-overlap">
       <div className="mx-auto max-w-6xl px-5 pb-16 pt-6 md:px-10 md:pb-24 md:pt-8">
         <p className="flex items-center gap-3 text-base font-medium uppercase tracking-[0.18em] text-mk-gold">
           <span className="h-px w-10 bg-mk-gold" aria-hidden />

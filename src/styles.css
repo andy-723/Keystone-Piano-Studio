@@ -515,11 +515,14 @@
 .mk-zoom-shade { opacity: calc(1 - var(--zoom-p) * 0.9); }
 .mk-zoom-copy { transform: scale(calc(1 + var(--zoom-p) * 0.9)); opacity: calc(1 - var(--zoom-p) * 2.2); filter: blur(calc(var(--zoom-p) * 14px)); transform-origin: 30% 50%; will-change: transform, opacity; }
 .mk-zoom-nav { opacity: calc(1 - var(--zoom-p) * 3); }
-.mk-zoom-fade { opacity: clamp(0, calc((var(--zoom-p) - 0.75) * 4), 1); }
+.mk-zoom-fade { opacity: clamp(0, calc((var(--zoom-p) - 0.45) * 1.5), 0.6); }
+.mk-founder-overlap { position: relative; z-index: 10; margin-top: -60svh; padding-top: 30svh; background: linear-gradient(to bottom, transparent 0, color-mix(in oklab, var(--color-mk-ink) 45%, transparent) 30svh, var(--color-mk-ink) 60svh); }
+body:has(.mk-zoom-track[data-static="true"]) .mk-founder-overlap { margin-top: 0; padding-top: 0; }
 .mk-zoom-track[data-static="true"] { height: auto; }
 .mk-zoom-track[data-static="true"] .mk-zoom-stage { position: relative; min-height: min(760px, 88svh); height: auto; }
 @media (prefers-reduced-motion: reduce) {
   .mk-zoom-track { height: auto; }
   .mk-zoom-image, .mk-zoom-copy, .mk-zoom-shade, .mk-zoom-nav, .mk-zoom-fade { transform: none; opacity: 1; filter: none; }
   .mk-zoom-fade { opacity: 0; }
+  .mk-founder-overlap { margin-top: 0; padding-top: 0; }
 }
