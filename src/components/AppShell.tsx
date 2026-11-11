@@ -15,10 +15,8 @@ import { Label } from "@/components/ui/label";
 import { useAppSettings, type Role } from "@/lib/app-settings";
 import type { Studio } from "@/mocks/types";
 import { translate } from "@/i18n/parent";
-import logoMark from "@/assets/keystone-mark.png";
-import logoWordmark from "@/assets/keystone-logo.jpg";
-
-const LOGO_CREAM = "#f5f1e6";
+import logoMark from "@/assets/keystone-symbol.png.asset.json";
+import logoWordmark from "@/assets/keystone-lockup-tagline.png.asset.json";
 
 const NAV = [
   { to: "/", label: "Today", icon: BookOpen },
@@ -49,7 +47,7 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
       {/* Left rail on tablet and up (teacher only) */}
       {isTeacher && <nav aria-label="Main" className="hidden md:flex md:w-32 lg:w-40 shrink-0 flex-col gap-2 border-r border-sidebar-border bg-sidebar p-3 sticky top-0 h-screen">
         <div className="px-1 py-3">
-          <img src={logoMark} alt="" className="mx-auto size-16 rounded-md object-contain" style={{ backgroundColor: LOGO_CREAM }} />
+          <img src={logoMark.url} alt="" className="mx-auto size-16 object-contain" />
           <p className="mt-2 break-words text-center font-display text-base font-semibold text-sidebar-primary">Keystone<br />Music HQ</p>
         </div>
         <div className="mb-3 flex flex-col items-start gap-3 px-1"><p className="break-words text-base font-semibold">{profile?.studioName || studio.name}</p>{planBadge}</div>
@@ -70,7 +68,7 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
       <div className={`flex min-w-0 flex-1 flex-col ${isTeacher ? "pb-[calc(9rem+env(safe-area-inset-bottom))] sm:pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0" : ""}`}>
         <header className="grid min-w-0 gap-2 border-b border-border bg-background/95 px-4 py-3 lg:flex lg:items-center lg:justify-between md:px-8">
           <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-3 sm:flex sm:flex-wrap">
-            <img src={logoWordmark} alt="Keystone Music HQ" className="h-12 w-auto max-w-[14rem] shrink-0 rounded-md object-contain sm:h-14 sm:max-w-[20rem] lg:max-w-[24rem]" style={{ backgroundColor: LOGO_CREAM }} />
+            <img src={logoWordmark.url} alt="Keystone Music HQ" width={1988} height={565} className="h-auto w-[14rem] max-w-full shrink-0 object-contain sm:w-[20rem] lg:w-[24rem]" />
             <div className="min-w-0 break-words font-display text-xl font-semibold sm:flex-1 md:sr-only">{profile.studioName || studio.name}</div>
             {role !== "parent" && <ProfilePicture id="teacher" name={profile.name || "Teacher"} scope={role === "new-teacher" ? "new-studio" : "demo"} />}
             {role !== "parent" && <div className={isTeacher ? "md:hidden" : ""}>{planBadge}</div>}
