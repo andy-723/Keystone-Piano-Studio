@@ -339,4 +339,8 @@ export const viSite: Record<string, string> = {
   "preview": "xem trước",
   "the year in a spreadsheet.": "làm lại cả năm trong bảng tính.",
   "· Sydney": "· Sydney",
+  "$210 · 3 days overdue": "$210 · quá hạn 3 ngày",
+  "$210 · 7 days overdue": "$210 · quá hạn 7 ngày",
+  "Security or privacy concern": "Lo ngại về bảo mật hoặc quyền riêng tư",
+  "9–15 November 2026": "9–15 tháng 11 năm 2026",
 };

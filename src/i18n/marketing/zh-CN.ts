@@ -339,4 +339,8 @@ export const zhSite: Record<string, string> = {
   "preview": "预览",
   "the year in a spreadsheet.": "在电子表格里重做一整年。",
   "· Sydney": "· 悉尼",
+  "$210 · 3 days overdue": "$210 · 逾期 3 天",
+  "$210 · 7 days overdue": "$210 · 逾期 7 天",
+  "Security or privacy concern": "安全或隐私问题",
+  "9–15 November 2026": "2026 年 11 月 9–15 日",
 };
