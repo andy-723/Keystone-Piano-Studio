@@ -63,7 +63,7 @@ function ParentViews() {
             <h1 className="mt-3 font-display text-2xl font-semibold">{profile.studioName}</h1>
             <p className="mt-1 text-base text-muted-foreground">{t("family")}</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button variant={view === "help" ? "secondary" : "outline"} aria-pressed={view === "help"} className="min-h-11" onClick={() => { setView("help"); setQuote(''); window.scrollTo({ top: 0 }); }}>
               <LifeBuoy aria-hidden />{helpText(lang, "help")}
             </Button>
@@ -75,7 +75,7 @@ function ParentViews() {
               data-tour="family-language"
             >
               <Button variant={lang === "en" ? "secondary" : "ghost"} aria-pressed={lang === "en"} onClick={() => setLang("en")}>EN</Button>
-              <Button variant={lang === "zh-CN" ? "secondary" : "ghost"} aria-pressed={lang === "zh-CN"} onClick={() => setLang("zh-CN")}>中文</Button>
+              <Button variant={lang === "zh-CN" ? "secondary" : "ghost"} aria-pressed={lang === "zh-CN"} onClick={() => setLang("zh-CN")} className="whitespace-nowrap">中文</Button>
               <Button variant={lang === "vi" ? "secondary" : "ghost"} aria-pressed={lang === "vi"} onClick={() => setLang("vi")} lang="vi" aria-label="Tiếng Việt">VI</Button>
             </div>
           </div>

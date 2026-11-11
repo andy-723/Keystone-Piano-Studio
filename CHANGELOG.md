@@ -6,6 +6,7 @@ GitHub Release with the same text. See `docs/release-process.md`.
 
 ## Unreleased
 
+- The public website and the family portal can now be read in English, 中文 or Tiếng Việt. Legal documents stay in English.
 - The calendar now works on the demo studio (Clarke Piano Studio), including for platform staff:
   it shows the demo timetable, and lessons you add, move or cancel there stay in that browser tab
   and reset on reload. Google Calendar is not offered on the demo. Demo data now shows a
