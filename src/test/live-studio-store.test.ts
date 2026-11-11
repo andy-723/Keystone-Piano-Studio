@@ -110,7 +110,7 @@ type Call = {
 };
 
 /** Just enough of the Supabase query builder for the studio store. */
-function fakeSupabase(tables: Record<string, Row[]>, options: { failOn?: string } = {}) {
+function fakeSupabase(tables: Tables, options: { failOn?: string } = {}) {
   const calls: Call[] = [];
   const from = (table: string) => {
     const call: Call = { table, op: "select", filters: [], other: [] };
@@ -236,7 +236,7 @@ const STUDIO_ID = "5f1c7e0e-1111-4111-8111-000000000001";
 const EXAMPLE_FAMILY = "5f1c7e0e-2222-4222-8222-000000000001";
 const EXAMPLE_STUDENT = "5f1c7e0e-3333-4333-8333-000000000001";
 
-function liveTables(): Record<string, Row[]> {
+function liveTables(): Tables {
   return {
     studio: [{ id: STUDIO_ID, name: "Andrew Test Studio", is_demo: false, profile: {} }],
     family: [
