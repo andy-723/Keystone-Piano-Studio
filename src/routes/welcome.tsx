@@ -132,8 +132,7 @@ function Welcome() {
                 <em className="font-normal italic">money, roll and practice.</em>
               </h1>
               <p className="mt-6 max-w-xl text-xl leading-relaxed text-mk-paper/85">
-                Snapshot for the teaching week. Tax Lite for EOFY. Not another spreadsheet or a
-                second ledger.
+                “Less Paperwork, More Passion – Your Studio, Unified”
               </p>
               <div className="mt-10 flex flex-wrap items-center gap-4">
                 <PrimaryCta className="bg-mk-paper text-mk-ink hover:bg-mk-cream" />
