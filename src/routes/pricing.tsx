@@ -6,6 +6,9 @@ import { PUBLIC_PLANS } from "@/lib/plans";
 import { MarketingNavbar } from "@/components/MarketingNavbar";
 import { MarketingMotion } from "@/components/MarketingMotion";
 import teachingMoment from "@/assets/keystone-teaching-moment.jpg";
+import { useState } from "react";
+import NumberFlow from "@number-flow/react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({ meta: [
@@ -72,6 +75,8 @@ const faqs = [
 ];
 
 function Pricing() {
+  const [includeGst, setIncludeGst] = useState(false);
+  const reduceMotion = useReducedMotion();
   return <MarketingMotion><div className="min-h-screen bg-mk-cream font-mk-sans text-mk-ink antialiased">
     <MarketingNavbar />
     <main>
@@ -92,14 +97,35 @@ function Pricing() {
 
       <section aria-label="Monthly plans" className="mk-essentials-band px-5 py-12 md:px-10 md:py-16">
         <div className="mx-auto max-w-7xl">
+          <div className="mb-8 flex flex-wrap items-center justify-between gap-5">
+            <p className="text-lg font-medium text-mk-bronze">Two plans. Billed monthly.</p>
+            <div className="flex flex-wrap items-center gap-3 text-base">
+              <span className={includeGst ? "text-mk-ink/65" : "font-semibold text-mk-bronze"}>Excluding GST</span>
+              <Button variant="ghost" size="icon" role="switch" aria-checked={includeGst} aria-label="Show prices including GST" onClick={() => setIncludeGst(value => !value)} className="relative w-16 shrink-0 rounded-full border border-mk-gold/60 bg-mk-paper shadow-none hover:bg-mk-paper">
+                <span aria-hidden className="absolute inset-x-1.5 h-7 rounded-full bg-mk-bronze" />
+                <motion.span aria-hidden initial={false} animate={{ x: includeGst ? 25 : 0 }} transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 450, damping: 30 }} className="absolute left-2 size-5 rounded-full bg-mk-paper" />
+              </Button>
+              <span className={includeGst ? "font-semibold text-mk-bronze" : "text-mk-ink/65"}>Including GST</span>
+            </div>
+          </div>
           <div className="grid gap-6 md:grid-cols-2">
             {PUBLIC_PLANS.map(plan => <article key={plan.id} className={`mk-plan relative flex min-w-0 flex-col overflow-hidden rounded-lg border p-6 md:p-8 ${plan.id === "pro" ? "mk-pricing-pro border-mk-gold bg-mk-ink text-mk-paper" : "border-mk-gold/50 bg-mk-paper"}`}>
               <p className={`flex items-center gap-2 text-base font-medium ${plan.id === "pro" ? "text-mk-gold" : "text-mk-bronze"}`}><span className="h-px w-6 bg-mk-gold" aria-hidden />{plan.id === "base" ? "THE SOLO STUDIO" : "THE GROWING STUDIO"}</p>
               <div className="mt-5 flex flex-wrap items-center justify-between gap-3"><h2 className="font-mk-serif text-4xl font-semibold">{plan.name}</h2><span className={`border-b pb-1 text-base ${plan.id === "pro" ? "border-mk-gold/50 text-mk-paper/85" : "border-mk-gold/50 text-mk-bronze"}`}>{plan.studentLimit ? `Up to ${plan.studentLimit} students` : "Unlimited students"}</span></div>
               <p className={`mt-3 text-lg ${plan.id === "pro" ? "text-mk-paper/75" : "text-mk-ink/75"}`}>{plan.id === "base" ? "Everything for a well-run teaching week." : "Everything in Base. More space, more insight."}</p>
-              <p className="mt-6 flex flex-wrap items-baseline gap-2"><span className="font-mk-serif text-6xl font-semibold">A${plan.monthlyCents / 100}</span><span className="text-lg">/ month + GST</span></p>
-              <p className={`mt-2 text-base ${plan.id === "pro" ? "text-mk-paper/75" : "text-mk-ink/70"}`}>A${(plan.gstInclusiveCents / 100).toFixed(2)} including GST</p>
+              <div className="mt-6 min-h-28">
+                <p className="flex flex-wrap items-baseline gap-x-2 gap-y-1" aria-label={`A$${((includeGst ? plan.gstInclusiveCents : plan.monthlyCents) / 100).toFixed(includeGst ? 2 : 0)} per month ${includeGst ? "including GST" : "plus GST"}`}>
+                  <NumberFlow aria-hidden animated={!reduceMotion} value={(includeGst ? plan.gstInclusiveCents : plan.monthlyCents) / 100} locales="en-AU" prefix="A$" format={{ minimumFractionDigits: includeGst ? 2 : 0, maximumFractionDigits: 2 }} transformTiming={{ duration: 550, easing: "cubic-bezier(0.2, 0.7, 0.2, 1)" }} className="font-mk-serif text-4xl font-semibold tabular-nums sm:text-6xl" />
+                  <span aria-hidden className="text-lg">/ month</span>
+                </p>
+                <p className={`mt-2 text-base ${plan.id === "pro" ? "text-mk-paper/75" : "text-mk-ink/70"}`}>{includeGst ? `A$${plan.monthlyCents / 100} excluding GST` : `A$${(plan.gstInclusiveCents / 100).toFixed(2)} including GST`}</p>
+              </div>
               <Button asChild size="lg" className={`mt-6 min-h-12 w-full shadow-none ${plan.id === "pro" ? "bg-mk-paper text-mk-ink hover:bg-mk-cream" : "bg-mk-bronze text-mk-paper hover:bg-mk-ink"}`}><a href={enquire(plan.name)}>Request a studio <ArrowRight aria-hidden /></a></Button>
+              <div className={`relative mt-3 h-7 overflow-hidden text-center text-base ${plan.id === "pro" ? "text-mk-paper/75" : "text-mk-ink/70"}`}>
+                <AnimatePresence initial={false} mode="wait">
+                  <motion.p key={String(includeGst)} initial={{ y: reduceMotion ? 0 : 20, opacity: reduceMotion ? 1 : 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: reduceMotion ? 0 : -20, opacity: reduceMotion ? 1 : 0 }} transition={{ duration: reduceMotion ? 0 : 0.18 }}>{includeGst ? "Billed monthly · GST included" : "Billed monthly · plus GST"}</motion.p>
+                </AnimatePresence>
+              </div>
               <h3 className="mt-7 text-lg font-semibold">{plan.id === "base" ? "The essentials, together" : "Your Pro additions"}</h3>
               <ul className="mt-4 space-y-5">{(plan.id === "base" ? shared : pro).map(({ Icon, title, detail }) => <li key={title} className="flex items-start gap-3"><Icon aria-hidden className={`mt-1 size-6 shrink-0 ${plan.id === "pro" ? "text-mk-gold" : "text-mk-bronze"}`} /><div><p className="text-lg font-semibold">{title}</p><p className={`mt-1 text-base leading-relaxed ${plan.id === "pro" ? "text-mk-paper/75" : "text-mk-ink/75"}`}>{detail}</p></div></li>)}</ul>
               <p className={`mt-7 border-t pt-5 text-base ${plan.id === "pro" ? "border-mk-gold/40 text-mk-paper/80" : "border-mk-gold/40 text-mk-ink/75"}`}>{plan.id === "pro" ? "A$20 more per month + GST — keep the workflow you know, with room for every student." : "Studio Snapshot and Tax Lite included. No separate finance add-on."}</p>
