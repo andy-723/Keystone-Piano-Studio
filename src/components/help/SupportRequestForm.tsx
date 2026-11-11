@@ -262,7 +262,7 @@ export function SupportRequestForm({
               data-testid="support-suggestions"
             >
               <p className="font-semibold">{t("suggestionsTitle")}</p>
-              <div className="mt-1">
+              <div className="mt-1" data-no-translate>
                 {suggestions.map(({ article }) => (
                   <ArticleItem
                     key={article.id}
