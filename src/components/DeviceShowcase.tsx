@@ -137,12 +137,12 @@ function Invoices() {
   );
 }
 
-function AppScreen({ screen, device, onNav }: { screen: Screen; device: Device; onNav: (s: Screen) => void }) {
+export function AppScreen({ screen, device, onNav, embedded = false }: { screen: Screen; device: Device; onNav: (s: Screen) => void; embedded?: boolean }) {
   const nav: [Screen, string, typeof BookOpen][] = [["day", "Today", BookOpen], ["week", "Week", CalendarDays], ["chat", "Chat", MessageCircle], ["invoices", "Invoices", FileText]];
   const body = screen === "day" ? <DayBook /> : screen === "week" ? <Week /> : screen === "chat" ? <Chat /> : <Invoices />;
   return (
     <div className={`flex h-full bg-mk-paper text-mk-ink ${device === "ipad" ? "flex-col-reverse" : ""}`}>
-      <nav className={device === "laptop" ? "hidden w-44 shrink-0 flex-col gap-1 border-r border-mk-gold/40 p-3 sm:flex" : "grid grid-cols-4 border-t border-mk-gold/40"}>
+      {!embedded && <nav className={device === "laptop" ? "hidden w-44 shrink-0 flex-col gap-1 border-r border-mk-gold/40 p-3 sm:flex" : "grid grid-cols-4 border-t border-mk-gold/40"}>
         {device === "laptop" && <p className="mb-3 px-2 font-mk-serif text-lg font-semibold tracking-wide">KEYSTONE</p>}
         {nav.map(([id, label, I]) => (
           <Button variant="ghost" key={id} type="button" onClick={() => onNav(id)}
@@ -150,7 +150,7 @@ function AppScreen({ screen, device, onNav }: { screen: Screen; device: Device; 
             <I className="h-5 w-5" aria-hidden />{label}
           </Button>
         ))}
-      </nav>
+      </nav>}
       <div key={screen} className="mk-screen min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">{body}</div>
     </div>
   );
