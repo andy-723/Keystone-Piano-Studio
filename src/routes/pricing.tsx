@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Check, Minus, Laptop, Tablet, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PUBLIC_PLANS } from "@/lib/plans";
-import logo from "@/assets/keystone-logo.jpg";
+import { MarketingNavbar } from "@/components/MarketingNavbar";
 import { MarketingMotion } from "@/components/MarketingMotion";
 
 export const Route = createFileRoute("/pricing")({
@@ -37,16 +37,7 @@ const financialRoadmap = [
 
 function Pricing() {
   return <MarketingMotion><div className="min-h-screen bg-mk-cream font-mk-sans text-mk-ink antialiased">
-    <header className="border-b border-mk-gold/50 bg-mk-paper">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-5 py-5 md:px-10">
-        <Link to="/welcome" aria-label="Keystone Music HQ home"><img src={logo} alt="Keystone Music HQ" className="h-12 w-auto max-w-[190px]" /></Link>
-        <nav aria-label="Main navigation" className="flex flex-wrap items-center gap-1">
-          <Button asChild variant="ghost" className="text-mk-ink hover:bg-mk-cream"><Link to="/welcome">Overview</Link></Button>
-          <Button asChild variant="ghost" className="text-mk-bronze hover:bg-mk-cream"><Link to="/pricing" aria-current="page">Pricing</Link></Button>
-          <Button asChild variant="outline" className="border-mk-bronze bg-transparent text-mk-bronze hover:bg-mk-cream hover:text-mk-ink"><a href="https://keystonemusichq.com/login">Sign in</a></Button>
-        </nav>
-      </div>
-    </header>
+    <MarketingNavbar />
 
     <main>
       <section className="mk-pricing-intro relative mx-auto max-w-7xl overflow-hidden px-5 pb-12 pt-14 md:px-10 md:pt-20">
