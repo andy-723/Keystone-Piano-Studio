@@ -53,8 +53,8 @@ function Welcome() {
       {/* Hero */}
       <section className="relative isolate flex min-h-[min(760px,88svh)] flex-col overflow-hidden bg-mk-ink text-mk-paper">
         <img src={hero} alt="Grand piano on an Art Deco stage under a gold sunburst" width={1600} height={1008} className="mk-stage-image absolute inset-0 -z-10 h-full w-full object-cover" />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-mk-ink/90 via-mk-ink/60 to-mk-ink/10" aria-hidden />
-        <header className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-5 py-5 md:px-10">
+        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-mk-ink/95 via-mk-ink/80 to-mk-ink/30" aria-hidden />
+        <header className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-3 px-5 py-5 md:px-10">
           <Link to="/welcome" className="shrink-0 rounded-lg bg-mk-paper px-3 py-1.5"><img src={logo} alt="Keystone Music HQ" className="h-10 w-auto max-w-[120px] sm:max-w-[180px]" /></Link>
           <nav className="flex items-center gap-2">
             <Button asChild variant="ghost" className="px-2 text-mk-paper hover:bg-mk-paper/10 hover:text-mk-paper"><Link to="/pricing">Pricing</Link></Button>
@@ -88,6 +88,7 @@ function Welcome() {
             <h2 id="snapshot-title" className="font-mk-serif text-3xl font-semibold leading-tight md:text-4xl">Unpaid, unenrolled, not practising.<br /><em className="font-normal">One calm screen.</em></h2>
             <p className="text-lg leading-relaxed text-mk-ink/75">What came in. Who needs a follow-up. How the teaching week went. A studio snapshot, not another spreadsheet — designed for solo owners, with room to grow.</p>
           </div>
+          <div className="mt-5 border-y border-mk-gold/50 py-4"><p className="text-lg text-mk-ink"><strong className="text-mk-bronze">Tax Lite for EOFY.</strong> Gross tuition, Stripe fees and home-studio hours — ready to review for myTax.</p><p className="mt-1 text-base text-mk-ink/70">Planned finance tools. Explore the examples below.</p></div>
           <FinanceShowcase mode="snapshot" />
           <p className="mt-5 text-base text-mk-ink/70">Lists when you need detail. CSV when you need your own notes. Studio-wide finances for owners and admins; teachers keep their own caseload.</p>
         </div>
