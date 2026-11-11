@@ -6,6 +6,9 @@ GitHub Release with the same text. See `docs/release-process.md`.
 
 ## Unreleased
 
+- Visitors who aren't signed in and open keystonemusichq.com now land on the welcome page
+  (`/welcome`); signed-in people still go straight to their studio, and other app links still go
+  to sign-in first.
 - Public `/welcome` and `/pricing` pages (designed in Lovable, ported onto current main). Base is
   A$29/month for up to 30 students; Pro is A$49/month, unlimited. Base cap lowered from 35 to 30
   in the app, help centre, admin console and database (migration 0017, new students only).

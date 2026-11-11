@@ -27,6 +27,16 @@ export function isPublicPagePath(pathname: string): boolean {
   return (PUBLIC_PAGE_PATHS as readonly string[]).includes(path);
 }
 
+/**
+ * Where a visitor with no session goes. The bare home page (keystonemusichq.com/) shows the public
+ * welcome page, which links to sign-in; every other app page goes to /login and comes back after.
+ */
+export function signedOutRedirect(pathname: string, search = ""): string {
+  const path = pathname.replace(/\/+$/, "") || "/";
+  if (path === "/") return "/welcome";
+  return `/login?next=${encodeURIComponent(`${pathname}${search}`)}`;
+}
+
 /** Public routes that do not require a live session. */
 export function isAuthExemptPath(pathname: string): boolean {
   if (pathname === "/login" || pathname === "/studio-enquiry") return true;
@@ -44,7 +54,11 @@ export function isAuthExemptPath(pathname: string): boolean {
  */
 export function isFocusFlowPath(pathname: string): boolean {
   if (pathname === "/login" || pathname === "/studio-enquiry" || pathname === "/admin") return true;
-  if (pathname.startsWith("/join/") || pathname.startsWith("/intake/") || pathname.startsWith("/auth/")) {
+  if (
+    pathname.startsWith("/join/") ||
+    pathname.startsWith("/intake/") ||
+    pathname.startsWith("/auth/")
+  ) {
     return true;
   }
   return isPublicPagePath(pathname);
