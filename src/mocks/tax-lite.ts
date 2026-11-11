@@ -4,8 +4,9 @@
  */
 
 import { PROTOTYPE_TODAY, addDays } from "@/lib/calendar";
+import { CENTS_PER_KM_RATE } from "@/lib/tax-copy";
 
-/** ATO-ish deduction buckets for solo music studios (blueprint §1). */
+/** Record categories for solo music studios. Keystone does not decide what is deductible. */
 export const TAX_LITE_CATEGORIES = [
   "Teaching materials & pass-throughs",
   "Instruments & gear",
@@ -88,13 +89,39 @@ export const taxLiteKmEntries: TaxLiteKmEntry[] = [
   },
 ];
 
-/** Manual admin hours claimed for Fixed Rate WFH (in addition to scheduled teaching). */
-export let taxLiteAdminHoursByFy: Record<string, number> = {
-  "2026-27": 2.5,
+/** Admin sessions worked from home, logged as they happen (T-05: actual hours, kept at the time). */
+export type TaxLiteAdminSession = {
+  id: string;
+  date: string;
+  hours: number;
+  note: string;
+  createdAt: string;
 };
 
-/** ATO cents-per-km rate used for the optional light log (display only). */
-export const TAX_LITE_CENTS_PER_KM = 88;
+export const taxLiteAdminSessions: TaxLiteAdminSession[] = [
+  {
+    id: "tax-admin-1",
+    date: "2026-09-30",
+    hours: 2.5,
+    note: "Term 4 invoices and lesson planning",
+    createdAt: "2026-09-30T20:00:00+10:00",
+  },
+];
+
+/**
+ * Teacher confirmations of scheduled lessons (T-05). Keyed by lesson occurrence id.
+ * fromHome false = the teacher said it was not taught from home, so it is not counted.
+ */
+export type TaxLiteLessonConfirmation = {
+  date: string;
+  minutes: number;
+  fromHome: boolean;
+  confirmedAt: string;
+};
+export const taxLiteLessonConfirmations: Record<string, TaxLiteLessonConfirmation> = {};
+
+/** Cents-per-km rate for 2026–27 (individuals only, up to 5,000 business km). See src/lib/tax-copy.ts. */
+export const TAX_LITE_CENTS_PER_KM = CENTS_PER_KM_RATE;
 
 /** ATO Fixed Rate Method: 70c per hour worked from home. */
 export const TAX_LITE_WFH_CENTS_PER_HOUR = 70;
@@ -144,5 +171,12 @@ export function resetTaxLiteState(): void {
     purpose: "School visit — group lesson setup",
     createdAt: `${addDays(PROTOTYPE_TODAY, -29)}T18:00:00+11:00`,
   });
-  taxLiteAdminHoursByFy = { "2026-27": 2.5 };
+  taxLiteAdminSessions.splice(0, taxLiteAdminSessions.length, {
+    id: "tax-admin-1",
+    date: "2026-09-30",
+    hours: 2.5,
+    note: "Term 4 invoices and lesson planning",
+    createdAt: "2026-09-30T20:00:00+10:00",
+  });
+  for (const key of Object.keys(taxLiteLessonConfirmations)) delete taxLiteLessonConfirmations[key];
 }

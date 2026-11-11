@@ -7,6 +7,7 @@ import { studio } from "@/mocks/data";
 import {
   getProCfoPack,
   pushTeacherBillsToXero,
+  setProCfoProjectedTurnover,
   retryXeroQueueItem,
   sendOverdueChase,
   teacherRemittanceCsv,
@@ -66,6 +67,8 @@ describe("revenue churn and gst radar", () => {
     expect(pack.gstRadar.thresholdCents).toBe(GST_TURNOVER_THRESHOLD_CENTS);
     expect(pack.gstRadar.rolling12mTurnoverCents).toBeGreaterThan(0);
     expect(pack.gstRadar.softPreview).toBe(false);
+    expect(pack.gstRadar.projectedNext12mCents).toBeNull();
+    expect(pack.xeroHealth.basis).toBe("cash");
     expect(pack.xeroQueue.some((row) => row.status === "failed")).toBe(true);
     expect(pack.overdue.length).toBeGreaterThan(0);
   });
@@ -104,5 +107,16 @@ describe("ops actions", () => {
     expect(pack.gstRadar.softPreview).toBe(true);
     expect(pack.pulse.netCashCents).toBeGreaterThan(0);
     await expect(retryXeroQueueItem("inv-1")).rejects.toThrow("Pro");
+  });
+});
+
+describe("GST threshold monitor", () => {
+  it("flags the projected next-12-months test as well as the past 12 months", async () => {
+    await setProCfoProjectedTurnover(GST_TURNOVER_THRESHOLD_CENTS + 100);
+    const pack = await getProCfoPack();
+    expect(pack.gstRadar.projectedNext12mCents).toBe(GST_TURNOVER_THRESHOLD_CENTS + 100);
+    expect(pack.gstRadar.projectedOverThreshold).toBe(true);
+    expect(pack.gstRadar.nearThreshold).toBe(true);
+    await expect(setProCfoProjectedTurnover(-1)).rejects.toThrow();
   });
 });

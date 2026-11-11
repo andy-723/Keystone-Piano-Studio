@@ -82,7 +82,7 @@ const taxFeatures = [
   {
     Icon: Receipt,
     title: "Books and exam fees, passed on properly",
-    body: "Log an AMEB book or exam fee, then pass it to the student’s next invoice as a reimbursement — not fake tuition profit.",
+    body: "Log an AMEB book or exam fee, then add it to the family’s next invoice. The charge is recorded as income and your cost as an expense, so they offset.",
   },
   {
     Icon: Wallet,
@@ -92,7 +92,7 @@ const taxFeatures = [
   {
     Icon: Clock,
     title: "Home-studio hours, in one place",
-    body: "Teaching and admin hours from the calendar, with an illustrative 70¢/hr home-office estimate. Check the applicable ATO rate and eligibility.",
+    body: "Scheduled lessons are pre-filled from the calendar; you confirm the hours you actually worked from home and add admin time as you go. Illustrative 70¢/hr fixed-rate estimate.",
   },
   {
     Icon: Car,
@@ -274,7 +274,8 @@ function Welcome() {
               <p className="mt-7 max-w-4xl border-t border-mk-gold/40 pt-5 text-base text-mk-paper/70">
                 Tax Lite is record preparation, not a general ledger or tax lodgement. Rent,
                 utilities and bank feeds stay in Xero when you grow; Keystone doesn’t replace your
-                accountant. Estimates are illustrative, not ATO advice.
+                accountant. Keystone is not a registered tax or BAS agent. Figures are estimates
+                based on your data. Confirm with a registered tax agent.
               </p>
             </div>
           </section>
@@ -337,8 +338,9 @@ function Welcome() {
                   payouts.
                 </p>
                 <p className="mt-4 text-lg text-mk-ink/75">
-                  Approaching the $75,000 GST turnover threshold? Explore a calm path to Xero-ready
-                  Pro. Your registration obligations are separate from your plan.
+                  Getting close to $75,000 in GST turnover? You must register for GST within 21
+                  days of reaching it, counting the past 12 months or the next 12. Pro adds Xero
+                  sync; your registration obligations are separate from your plan.
                 </p>
                 <Button asChild variant="ghost" className="mt-5 text-mk-bronze hover:bg-mk-paper">
                   <Link to="/pricing">

@@ -4,7 +4,15 @@ import {
   getTaxLitePack,
   listTaxLiteCategories,
   listTaxLitePassThroughStudents,
+  listTaxLitePendingWeeks,
 } from "@/services/tax-lite";
+
+export function taxLitePendingWeeksQuery(fy: TaxLiteFyKey) {
+  return queryOptions({
+    queryKey: ["tax-lite", "pending-weeks", fy] as const,
+    queryFn: () => listTaxLitePendingWeeks(fy),
+  });
+}
 
 export function taxLitePackQuery(fy: TaxLiteFyKey) {
   return queryOptions({

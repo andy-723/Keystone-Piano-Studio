@@ -105,9 +105,9 @@ export function InvoicePaper({
         <div key={index} className="grid gap-3 border-b border-border py-5 md:grid-cols-[minmax(0,1fr)_4rem_6rem_7rem]">
           <p className="break-words text-lg">
             {line.description}
-            {line.lineKind === "reimbursement" && !/reimbursement/i.test(line.description) ? (
+            {line.lineKind === "reimbursement" ? (
               <span className="mt-1 block text-base font-normal text-muted-foreground">
-                Reimbursement (pass-through)
+                Cost passed on
               </span>
             ) : null}
           </p>

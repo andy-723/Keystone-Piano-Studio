@@ -6,6 +6,7 @@ GitHub Release with the same text. See `docs/release-process.md`.
 
 ## Unreleased
 
+- Tax and GST wording fixed after the tax review. Prices now show the total (Keystone is not registered for GST, so no GST is charged). Tax Lite counts only home hours you confirm plus admin time you log, uses the actual fees Stripe reports, records on-charged costs as income, uses 91c/km up to 5,000 km, and asks you to review figures before exporting an EOFY summary. Pro CFO has a GST threshold monitor with a next-12-months estimate, shows estimated net GST (not BAS), and adds super and card-surcharge notes.
 - The public website and the family portal can now be read in English, 中文 or Tiếng Việt. Legal documents stay in English.
 - The calendar now works on the demo studio (Clarke Piano Studio), including for platform staff:
   it shows the demo timetable, and lessons you add, move or cancel there stay in that browser tab

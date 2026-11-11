@@ -246,7 +246,7 @@ export function FinanceShowcase({
                       </h4>
                       <p className="mt-2 text-lg">{money(data.tax.bookCents)} paid by the studio</p>
                       <p className="mt-3 text-base text-mk-ink/70">
-                        Reimbursement · separate from tuition income
+                        Charged to the family as income · your cost recorded as an expense
                       </p>
                       <Button
                         className="mt-5 bg-mk-bronze text-mk-paper hover:bg-mk-ink"
@@ -254,7 +254,7 @@ export function FinanceShowcase({
                         onClick={() => setPassed(true)}
                       >
                         {passed ? <Check aria-hidden /> : <ArrowRight aria-hidden />}
-                        {passed ? "Added to next example invoice" : "Pass on to student"}
+                        {passed ? "Added to next example invoice" : "Pass on to the family"}
                       </Button>
                     </div>
                   ) : (
@@ -265,8 +265,8 @@ export function FinanceShowcase({
                       </h4>
                       <p className="mt-4 text-3xl font-semibold">480 hrs × 70¢ = $336</p>
                       <p className="mt-4 text-lg text-mk-ink/70">
-                        Teaching and admin, together. An illustrative fixed-rate estimate; check
-                        eligibility and the applicable ATO rate.
+                        Confirmed teaching hours and admin time you logged. An illustrative
+                        fixed-rate estimate; confirm with a registered tax agent.
                       </p>
                     </div>
                   )}
@@ -274,10 +274,10 @@ export function FinanceShowcase({
                 <Button
                   variant="ghost"
                   className="mt-3 text-mk-bronze hover:bg-mk-cream"
-                  onClick={() => download(marketingTaxCsv(), "keystone-illustrative-tax-pack.csv")}
+                  onClick={() => download(marketingTaxCsv(), "keystone-illustrative-eofy-summary.csv")}
                 >
                   <ArrowDownToLine aria-hidden />
-                  Export example tax pack
+                  Export example EOFY summary
                 </Button>
               </>
             )}

@@ -32,7 +32,7 @@ export async function disconnectStripe(scope: IntegrationScope = "demo") {
   return respond(integrationState[scope].stripe);
 }
 export async function connectXero(scope: IntegrationScope = "demo") {
-  if (!proFeaturesEnabled(scope)) throw new Error("Available on Pro. Pro is A$49 a month + GST.");
+  if (!proFeaturesEnabled(scope)) throw new Error("Available on Pro. Pro is A$49 a month.");
   const xero = integrationState[scope].xero;
   xero.status = "connected";
   xero.organisationName =

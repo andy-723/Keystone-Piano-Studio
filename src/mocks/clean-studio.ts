@@ -49,7 +49,7 @@ import { clientNotes } from "./notes";
 import { enrolmentDrafts } from "./onboarding";
 import { parentPayments } from "./parent";
 import { proCfoTeachers, proCfoXeroQueue, proCfoXeroStickyFails } from "./pro-cfo";
-import { taxLiteAdminHoursByFy, taxLiteExpenses, taxLiteKmEntries } from "./tax-lite";
+import { taxLiteAdminSessions, taxLiteExpenses, taxLiteKmEntries, taxLiteLessonConfirmations } from "./tax-lite";
 import { opusInvoices } from "./plans";
 import { getRenewalState, renewalState } from "./renewals";
 import { importBatches } from "./roster-import";
@@ -147,10 +147,11 @@ export function emptyDemoFixtures(input: { studioId: string; studioName: string 
     proCfoXeroQueue,
     taxLiteExpenses,
     taxLiteKmEntries,
+    taxLiteAdminSessions,
   ] as unknown[][])
     list.length = 0;
   proCfoXeroStickyFails.clear();
-  for (const key of Object.keys(taxLiteAdminHoursByFy)) delete taxLiteAdminHoursByFy[key];
+  for (const key of Object.keys(taxLiteLessonConfirmations)) delete taxLiteLessonConfirmations[key];
 
   for (const map of [
     attendanceMarks,

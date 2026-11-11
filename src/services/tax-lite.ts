@@ -1,6 +1,7 @@
 /**
  * Tax Lite — Starter Accounting Lite (not a second Xero / general ledger).
- * Pass-through expenses, Stripe gross vs fees, home-studio hours, EOFY CSV.
+ * On-charged costs, Stripe gross vs actual fees, confirmed home-studio hours, EOFY summary CSV.
+ * Keystone is not a registered tax or BAS agent: figures are estimates from the studio's own data.
  */
 
 import { PROTOTYPE_TODAY } from "@/lib/calendar";
@@ -12,26 +13,30 @@ import {
   type TaxLiteFyBounds,
   type TaxLiteFyKey,
 } from "@/lib/tax-lite-fy";
-import { families, payments, students } from "@/mocks/data";
+import { families, payments, students, studio } from "@/mocks/data";
+import { CENTS_PER_KM_CAP_KM, TAX_DISCLAIMER } from "@/lib/tax-copy";
 import {
   TAX_LITE_CATEGORIES,
   TAX_LITE_CENTS_PER_KM,
   TAX_LITE_WFH_CENTS_PER_HOUR,
-  taxLiteAdminHoursByFy,
+  taxLiteAdminSessions,
   taxLiteExpenses,
   taxLiteKmEntries,
+  taxLiteLessonConfirmations,
+  type TaxLiteAdminSession,
   type TaxLiteCategory,
   type TaxLiteExpense,
   type TaxLiteKmEntry,
 } from "@/mocks/tax-lite";
 import type { Invoice, InvoiceLine, Payment, PaymentMethod } from "@/mocks/types";
 import { createInvoice, getInvoices, updateDraft } from "@/services/billing";
-import { listDayLessonsSync } from "@/services/schedule";
+import { listDayLessonsSync, weekMonday } from "@/services/schedule";
 import { respond } from "./_delay";
 
 const STRIPE_METHODS: PaymentMethod[] = ["stripe_card", "stripe_becs", "stripe_payto"];
 
-export type StripeFeeSource = "stored" | "derived";
+/** "missing" = Stripe has not reported a fee for this payment yet; Keystone never models one (T-06). */
+export type StripeFeeSource = "stored" | "missing";
 
 export type TaxLiteStripeRow = {
   paymentId: string;
@@ -51,18 +56,40 @@ export type TaxLiteStripeSummary = {
   netCents: number;
   paymentCount: number;
   storedFeeCount: number;
-  derivedFeeCount: number;
+  missingFeeCount: number;
+  /** GST included in reported Stripe fees (fee / 11); shown to GST-registered studios as a possible credit. */
+  feeGstCents: number;
+  gstRegistered: boolean;
   rows: TaxLiteStripeRow[];
 };
 
 export type TaxLiteHomeStudioHours = {
   bounds: TaxLiteFyBounds;
+  /** Confirmed by the teacher as taught from home. Only these count (T-05). */
   teachingHours: number;
+  /** Pre-filled from the timetable; not counted until confirmed. */
+  scheduledHours: number;
+  pendingLessonCount: number;
   adminHours: number;
+  adminSessions: TaxLiteAdminSession[];
   totalHours: number;
   estimateCents: number;
   centsPerHour: number;
+  /** Lessons confirmed as taught from home. */
   lessonCount: number;
+};
+
+export type TaxLitePendingLesson = {
+  lessonId: string;
+  date: string;
+  startsAt: string;
+  studentFirstName: string;
+  minutes: number;
+};
+
+export type TaxLitePendingWeek = {
+  weekStart: string;
+  lessons: TaxLitePendingLesson[];
 };
 
 export type TaxLitePack = {
@@ -73,6 +100,8 @@ export type TaxLitePack = {
   homeStudio: TaxLiteHomeStudioHours;
   kmEntries: TaxLiteKmEntry[];
   kmTotal: number;
+  /** Km counted for the estimate (capped at 5,000 business km). */
+  kmCounted: number;
   kmEstimateCents: number;
 };
 
@@ -86,11 +115,9 @@ function isStripeMethod(method: PaymentMethod): boolean {
   return STRIPE_METHODS.includes(method);
 }
 
-/** AU-ish mock fee when webhook fields are missing — always labelled derived. */
-export function deriveStripeFeeCents(method: PaymentMethod, grossCents: number): number {
-  if (method === "stripe_card") return Math.round(grossCents * 0.017) + 30;
-  if (method === "stripe_becs" || method === "stripe_payto") return Math.round(grossCents * 0.01) + 30;
-  return 0;
+/** GST included in a GST-inclusive amount (1/11). */
+export function gstIncludedCents(inclusiveCents: number): number {
+  return Math.round(inclusiveCents / 11);
 }
 
 function feeForPayment(payment: Payment): {
@@ -110,8 +137,8 @@ function feeForPayment(payment: Payment): {
       typeof payment.netPayoutCents === "number" ? payment.netPayoutCents : gross - fee;
     return { grossCents: gross, feeCents: fee, netCents: net, feeSource: "stored" };
   }
-  const fee = deriveStripeFeeCents(payment.method, gross);
-  return { grossCents: gross, feeCents: fee, netCents: gross - fee, feeSource: "derived" };
+  // Stripe has not reported a fee yet: never model one from a rate card (T-06).
+  return { grossCents: gross, feeCents: 0, netCents: gross, feeSource: "missing" };
 }
 
 function openDraftForFamily(familyId: string, invoices: Invoice[]): Invoice | undefined {
@@ -125,14 +152,13 @@ function reimbursementLine(input: {
   studentId?: string;
 }): InvoiceLine {
   return {
-    description: input.description.includes("reimbursement")
-      ? input.description
-      : `${input.description} (reimbursement)`,
+    description: input.description,
     qty: 1,
     unitCents: input.amountCents,
     lineTotalCents: input.amountCents,
     taxCents: 0,
-    taxCode: input.includesGst ? "taxable" : "gst_free",
+    // GST on an on-charge follows the studio's registration, not whether the purchase had GST (T-09).
+    taxCode: studio.gstRegistered ? "taxable" : "gst_free",
     lineKind: "reimbursement",
     ...(input.studentId ? { studentId: input.studentId } : {}),
   };
@@ -243,53 +269,150 @@ export async function getTaxLiteStripeSummary(
     netCents: grossTuitionCents - merchantFeesCents,
     paymentCount: rows.length,
     storedFeeCount: rows.filter((row) => row.feeSource === "stored").length,
-    derivedFeeCount: rows.filter((row) => row.feeSource === "derived").length,
+    missingFeeCount: rows.filter((row) => row.feeSource === "missing").length,
+    feeGstCents: gstIncludedCents(merchantFeesCents),
+    gstRegistered: Boolean(studio.gstRegistered),
     rows,
   });
 }
 
-function sumTeachingMinutes(start: string, end: string): { minutes: number; lessonCount: number } {
-  let minutes = 0;
-  let lessonCount = 0;
+type ScheduledLesson = TaxLitePendingLesson;
+
+/** Scheduled (not cancelled) lessons in range: the pre-fill for confirmation, never counted on their own. */
+function scheduledLessons(start: string, end: string): ScheduledLesson[] {
+  const out: ScheduledLesson[] = [];
   for (const date of eachDateInclusive(start, end)) {
     const day = listDayLessonsSync(date);
     for (const lesson of day.lessons) {
       if (lesson.status === "cancelled_by_studio" || lesson.status === "cancelled_late") continue;
-      minutes += lesson.lessonType.durationMin;
-      lessonCount += 1;
+      out.push({
+        lessonId: lesson.id,
+        date,
+        startsAt: lesson.startsAt,
+        studentFirstName: lesson.student.firstName,
+        minutes: lesson.lessonType.durationMin,
+      });
     }
   }
-  return { minutes, lessonCount };
+  return out;
 }
+
+function teachRange(fy: TaxLiteFyKey) {
+  const bounds = taxLiteFyBounds(fy);
+  // Never count future lessons: they have not been taught yet.
+  const teachEnd = bounds.end > PROTOTYPE_TODAY ? PROTOTYPE_TODAY : bounds.end;
+  return { bounds, teachEnd };
+}
+
+const hoursOf = (minutes: number) => Math.round((minutes / 60) * 100) / 100;
 
 export async function getTaxLiteHomeStudioHours(
   fy: TaxLiteFyKey = "ytd",
 ): Promise<TaxLiteHomeStudioHours> {
-  const bounds = taxLiteFyBounds(fy);
-  // Cap future FY end at prototype today so we don't invent unscheduled future lessons.
-  const teachEnd = bounds.end > PROTOTYPE_TODAY ? PROTOTYPE_TODAY : bounds.end;
-  const { minutes, lessonCount } = sumTeachingMinutes(bounds.start, teachEnd);
-  const teachingHours = Math.round((minutes / 60) * 100) / 100;
-  const adminHours = taxLiteAdminHoursByFy[bounds.fyLabel] ?? 0;
+  const { bounds, teachEnd } = teachRange(fy);
+  const scheduled = scheduledLessons(bounds.start, teachEnd);
+  let confirmedMinutes = 0;
+  let lessonCount = 0;
+  let pendingLessonCount = 0;
+  for (const lesson of scheduled) {
+    const confirmation = taxLiteLessonConfirmations[lesson.lessonId];
+    if (!confirmation) {
+      pendingLessonCount += 1;
+      continue;
+    }
+    if (confirmation.fromHome) {
+      confirmedMinutes += confirmation.minutes;
+      lessonCount += 1;
+    }
+  }
+  const adminSessions = taxLiteAdminSessions
+    .filter((session) => inRange(session.date, bounds.start, bounds.end))
+    .sort((a, b) => b.date.localeCompare(a.date));
+  const adminHours = Math.round(adminSessions.reduce((sum, row) => sum + row.hours, 0) * 100) / 100;
+  const teachingHours = hoursOf(confirmedMinutes);
   const totalHours = Math.round((teachingHours + adminHours) * 100) / 100;
-  const estimateCents = Math.round(totalHours * TAX_LITE_WFH_CENTS_PER_HOUR);
   return respond({
     bounds,
     teachingHours,
+    scheduledHours: hoursOf(scheduled.reduce((sum, lesson) => sum + lesson.minutes, 0)),
+    pendingLessonCount,
     adminHours,
+    adminSessions,
     totalHours,
-    estimateCents,
+    estimateCents: Math.round(totalHours * TAX_LITE_WFH_CENTS_PER_HOUR),
     centsPerHour: TAX_LITE_WFH_CENTS_PER_HOUR,
     lessonCount,
   });
 }
 
-export async function setTaxLiteAdminHours(hours: number, fyLabel?: string): Promise<number> {
-  if (!Number.isFinite(hours) || hours < 0) throw new Error("Enter zero or more admin hours");
-  const label = fyLabel ?? australianFyLabel(australianFyStartYear());
-  const rounded = Math.round(hours * 100) / 100;
-  taxLiteAdminHoursByFy[label] = rounded;
-  return respond(rounded);
+/** Weeks with lessons still to confirm, most recent first (T-05). */
+export async function listTaxLitePendingWeeks(
+  fy: TaxLiteFyKey = "ytd",
+  limit = 4,
+): Promise<TaxLitePendingWeek[]> {
+  const { bounds, teachEnd } = teachRange(fy);
+  const byWeek = new Map<string, TaxLitePendingLesson[]>();
+  for (const lesson of scheduledLessons(bounds.start, teachEnd)) {
+    if (taxLiteLessonConfirmations[lesson.lessonId]) continue;
+    const week = weekMonday(lesson.date);
+    byWeek.set(week, [...(byWeek.get(week) ?? []), lesson]);
+  }
+  return respond(
+    [...byWeek.entries()]
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .slice(0, limit)
+      .map(([weekStart, lessons]) => ({ weekStart, lessons })),
+  );
+}
+
+/**
+ * Teacher confirms which scheduled lessons were actually taught from home (T-05).
+ * Lessons in `taughtFromHome` count; lessons in `notFromHome` are recorded and never counted.
+ */
+export async function confirmTaxLiteLessons(input: {
+  taughtFromHome: string[];
+  notFromHome?: string[];
+}): Promise<number> {
+  const all = scheduledLessons("2000-01-01", PROTOTYPE_TODAY);
+  const byId = new Map(all.map((lesson) => [lesson.lessonId, lesson]));
+  const confirmedAt = new Date().toISOString();
+  let count = 0;
+  for (const [ids, fromHome] of [
+    [input.taughtFromHome, true],
+    [input.notFromHome ?? [], false],
+  ] as const) {
+    for (const id of ids) {
+      const lesson = byId.get(id);
+      if (!lesson) throw new Error("Only lessons already taught can be confirmed");
+      taxLiteLessonConfirmations[id] = { date: lesson.date, minutes: lesson.minutes, fromHome, confirmedAt };
+      count += 1;
+    }
+  }
+  return respond(count);
+}
+
+/** Log an admin session worked from home, as it happens (T-05). */
+export async function addTaxLiteAdminSession(input: {
+  date: string;
+  hours: number;
+  note: string;
+}): Promise<TaxLiteAdminSession> {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date)) throw new Error("Enter a valid date");
+  if (input.date > PROTOTYPE_TODAY) throw new Error("Log admin time after you have done it");
+  if (!Number.isFinite(input.hours) || input.hours <= 0 || input.hours > 24) {
+    throw new Error("Enter the hours you worked, up to 24");
+  }
+  const note = input.note.trim();
+  if (!note) throw new Error("Say what the admin time was for");
+  const session: TaxLiteAdminSession = {
+    id: `tax-admin-${crypto.randomUUID()}`,
+    date: input.date,
+    hours: Math.round(input.hours * 100) / 100,
+    note,
+    createdAt: new Date().toISOString(),
+  };
+  taxLiteAdminSessions.unshift(session);
+  return respond(session);
 }
 
 export async function listTaxLiteKmEntries(fy: TaxLiteFyKey = "ytd"): Promise<TaxLiteKmEntry[]> {
@@ -339,7 +462,8 @@ export async function getTaxLitePack(fy: TaxLiteFyKey = "ytd"): Promise<TaxLiteP
     homeStudio,
     kmEntries,
     kmTotal: Math.round(kmTotal * 10) / 10,
-    kmEstimateCents: Math.round(kmTotal * TAX_LITE_CENTS_PER_KM),
+    kmCounted: Math.round(Math.min(kmTotal, CENTS_PER_KM_CAP_KM) * 10) / 10,
+    kmEstimateCents: Math.round(Math.min(kmTotal, CENTS_PER_KM_CAP_KM) * TAX_LITE_CENTS_PER_KM),
   });
 }
 
@@ -365,6 +489,10 @@ export function taxLiteEofyCsv(pack: TaxLitePack): { filename: string; csv: stri
   const label = pack.bounds.fyLabel;
   const lines: string[] = [
     ["section", "field", "value", "notes"].map(csvEscape).join(","),
+    ["summary", "disclaimer", "", TAX_DISCLAIMER].map(csvEscape).join(","),
+    ["summary", "reviewed_by_user", "yes", "Figures reviewed before export. Keystone does not decide what is deductible."]
+      .map(csvEscape)
+      .join(","),
     ["summary", "financial_year", label, `Australia/Sydney · ${pack.bounds.start}–${pack.bounds.end}`]
       .map(csvEscape)
       .join(","),
@@ -378,39 +506,45 @@ export function taxLiteEofyCsv(pack: TaxLitePack): { filename: string; csv: stri
       "stripe",
       "merchant_fees_cents",
       pack.stripe.merchantFeesCents,
-      `${pack.stripe.storedFeeCount} stored · ${pack.stripe.derivedFeeCount} derived estimates`,
+      pack.stripe.missingFeeCount > 0
+        ? `Actual fees reported by Stripe · ${pack.stripe.missingFeeCount} payment(s) with no fee reported yet`
+        : "Actual fees reported by Stripe",
     ]
       .map(csvEscape)
       .join(","),
     ["stripe", "net_cents", pack.stripe.netCents, ""].map(csvEscape).join(","),
-    ["expenses", "total_cents", pack.expenseTotalCents, "Tax Lite log (not a full ledger)"]
+    ...(pack.stripe.gstRegistered
+      ? [["stripe", "fee_gst_cents", pack.stripe.feeGstCents, "GST included in Stripe fees (possible GST credit)"].map(csvEscape).join(",")]
+      : []),
+    ["expenses", "total_cents", pack.expenseTotalCents, "Costs you logged (not a full ledger). On-charged costs are also income on the family invoice."]
       .map(csvEscape)
       .join(","),
     [
       "home_studio",
       "teaching_hours",
       pack.homeStudio.teachingHours,
-      `${pack.homeStudio.lessonCount} scheduled/taught lessons`,
+      `${pack.homeStudio.lessonCount} lessons you confirmed were taught from home`,
     ]
       .map(csvEscape)
       .join(","),
-    ["home_studio", "admin_hours", pack.homeStudio.adminHours, "Manual admin claim"].map(csvEscape).join(","),
+    ["home_studio", "admin_hours", pack.homeStudio.adminHours, `${pack.homeStudio.adminSessions.length} admin sessions logged`].map(csvEscape).join(","),
+    ["home_studio", "unconfirmed_lessons", pack.homeStudio.pendingLessonCount, "Scheduled but not confirmed; not counted"].map(csvEscape).join(","),
     [
       "home_studio",
       "total_hours",
       pack.homeStudio.totalHours,
-      `ATO Fixed Rate ${pack.homeStudio.centsPerHour}c/hr`,
+      `Fixed rate method ${pack.homeStudio.centsPerHour}c/hr (actual hours recorded)`,
     ]
       .map(csvEscape)
       .join(","),
     ["home_studio", "estimate_cents", pack.homeStudio.estimateCents, ""].map(csvEscape).join(","),
-    ["vehicle", "kilometres", pack.kmTotal, `${TAX_LITE_CENTS_PER_KM}c/km estimate`].map(csvEscape).join(","),
-    ["vehicle", "estimate_cents", pack.kmEstimateCents, "Optional light log"].map(csvEscape).join(","),
+    ["vehicle", "kilometres", pack.kmTotal, `${TAX_LITE_CENTS_PER_KM}c/km, up to ${CENTS_PER_KM_CAP_KM} km; sole traders only`].map(csvEscape).join(","),
+    ["vehicle", "estimate_cents", pack.kmEstimateCents, "Optional light log; companies cannot use cents per km"].map(csvEscape).join(","),
   ];
 
   lines.push(["", "", "", ""].join(","));
   lines.push(
-    ["expense_id", "date", "vendor", "category", "amount_cents", "includes_gst", "pass_through_student", "invoice_id"]
+    ["expense_id", "date", "vendor", "category", "amount_cents", "includes_gst", "on_charged_to_student", "invoice_id"]
       .map(csvEscape)
       .join(","),
   );
@@ -454,7 +588,7 @@ export function taxLiteEofyCsv(pack: TaxLitePack): { filename: string; csv: stri
   }
 
   return {
-    filename: `keystone-tax-lite-${label}-${pack.bounds.key}.csv`,
+    filename: `keystone-eofy-summary-${label}-${pack.bounds.key}.csv`,
     csv: `${lines.join("\n")}\n`,
   };
 }

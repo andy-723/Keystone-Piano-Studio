@@ -16,5 +16,5 @@ export function marketingSnapshotCsv(period: SnapshotPeriod) {
 
 export function marketingTaxCsv() {
   const { tax } = marketingFinance;
-  return `Illustrative only - not for tax lodgement,Amount AUD\r\nGross tuition,${(tax.grossCents / 100).toFixed(2)}\r\nMerchant fees,${(tax.stripeFeesCents / 100).toFixed(2)}\r\nTeaching and admin hours,${tax.hours}\r\nHome-office estimate at 70 cents per hour,${(homeOfficeEstimateCents(tax.hours, tax.rateCents) / 100).toFixed(2)}\r\nPass-through reimbursement (not tuition),${(tax.bookCents / 100).toFixed(2)}\r\n`;
+  return `Illustrative only - not for tax lodgement,Amount AUD\r\nGross tuition,${(tax.grossCents / 100).toFixed(2)}\r\nStripe fees (as reported),${(tax.stripeFeesCents / 100).toFixed(2)}\r\nConfirmed teaching and admin hours,${tax.hours}\r\nHome-office estimate at 70 cents per hour,${(homeOfficeEstimateCents(tax.hours, tax.rateCents) / 100).toFixed(2)}\r\nBook on-charged to family (income; cost recorded as expense),${(tax.bookCents / 100).toFixed(2)}\r\n`;
 }

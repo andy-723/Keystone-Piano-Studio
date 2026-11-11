@@ -42,11 +42,11 @@ Keystone Music HQ ("Keystone") is software that helps music studios schedule les
 
 ## Not financial, tax or legal advice
 
-Studio Snapshot, Tax Lite and other money tools summarise records you keep in Keystone. They are not financial, tax, accounting or legal advice, do not lodge anything with the ATO, and do not replace a registered tax agent or accountant. Check your own circumstances, including GST registration, with a qualified adviser.
+Studio Snapshot, Tax Lite and other money tools summarise records you keep in Keystone. They are not financial, tax, accounting or legal advice, do not lodge anything with the ATO, and do not replace a registered tax agent or accountant. Keystone is not a registered tax or BAS agent and does not decide what is deductible. Figures are estimates based on your data. Check your own circumstances, including GST registration, with a qualified adviser.
 
 ## Prices
 
-Prices are in Australian dollars, per studio, per month. Base is A$29 a month for up to 30 students and Pro is A$49 a month with no student limit. GST is added where it applies. Prices may change; the price that applies to your studio is the one in your studio agreement.
+Prices are in Australian dollars, per studio, per month. Base is A$29 a month for up to 30 students and Pro is A$49 a month with no student limit. Keystone is not registered for GST, so no GST is charged. Prices may change; the price that applies to your studio is the one in your studio agreement.
 
 ## Links to other websites
 
