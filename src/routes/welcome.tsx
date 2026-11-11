@@ -1,22 +1,23 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import hero from "@/assets/welcome-hero.jpg";
-import { DeviceShowcase } from "@/components/DeviceShowcase";
+import { FinanceShowcase, marketingFinanceQuery } from "@/components/FinanceShowcase";
 import { MarketingMotion } from "@/components/MarketingMotion";
 import teachingMoment from "@/assets/keystone-teaching-moment.jpg";
 import logo from "@/assets/keystone-logo.jpg";
-import { ArrowRight, Check, Lock, MapPin, MailOpen, FileSignature, BookOpen, MessageCircle, Newspaper, Flag, Receipt, UserPlus } from "lucide-react";
+import { ArrowRight, Lock, MapPin, MailOpen, FileSignature, BookOpen, Receipt, Clock, Wallet, Car, ArrowDownToLine } from "lucide-react";
 
 const SIGN_IN = "https://keystonemusichq.com/login";
 const ENQUIRE = "mailto:support@keystonemusichq.com?subject=Request%20a%20studio";
 
 export const Route = createFileRoute("/welcome")({
+  loader: ({ context }) => context.queryClient.ensureQueryData(marketingFinanceQuery),
   head: () => ({
     meta: [
-      { title: "Keystone Music HQ — The calm operating system for music studios" },
-      { name: "description", content: "Designed for simplicity, built for scalability. Lessons, family chat, studio news, invoices and agreements in one Sydney-hosted workspace for Australian music studios." },
-      { property: "og:title", content: "Keystone Music HQ — The calm operating system for music studios" },
-      { property: "og:description", content: "Run lessons, enrolments, chat, invoices and agreements in one calm Australian-hosted workspace." },
+      { title: "Keystone Music HQ — Studio Snapshot & Tax Lite" },
+      { name: "description", content: "Studio Snapshot for your teaching week. Tax Lite for EOFY. Explore the calm finance and operations workspace for independent Australian music studios." },
+      { property: "og:title", content: "Keystone Music HQ — Studio Snapshot & Tax Lite" },
+      { property: "og:description", content: "Unpaid, unenrolled, not practising — one calm studio view. Discover Studio Snapshot and planned Tax Lite tools." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -35,91 +36,82 @@ function Eyebrow({ children }: { children: string }) {
 }
 
 function PrimaryCta({ className = "" }: { className?: string }) {
-  return (
-    <a href={ENQUIRE} className={`group inline-flex min-h-14 items-center gap-2 rounded-full bg-mk-bronze px-7 text-lg font-semibold text-mk-paper transition hover:bg-mk-ink ${className}`}>
-      Request a studio <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" aria-hidden />
-    </a>
-  );
+  return <Button asChild size="lg" className={`group bg-mk-bronze text-mk-paper shadow-none hover:bg-mk-ink ${className}`}><a href={ENQUIRE}>Request a studio <ArrowRight aria-hidden className="transition-transform group-hover:translate-x-1" /></a></Button>;
 }
 
-const studioPoints = [
-  ["A digital day book", "A clean, simple view focused on lessons. See your day book or your week, and mark attendance, add notes to student files, and manage courses, exams and templates with simple clicks."],
-  ["Chat, all in one place", "Families and teachers interact through built-in chat — every message on one platform. Upload videos of a student's performance or an area needing help, or send a quick note about upcoming payments."],
-  ["News and notices, organised", "Send notices and news feeds to the right groups — school-holiday closures, recitals, away schedules and more. Organise students into the categories that matter, from Grade 1 to Grade 6, and control how important newsletters reach families."],
-  ["No student forgotten", "Visibility into every student's performance, with a built-in red flag for students who need assistance — so teachers can follow through."],
-  ["No more invoice nightmares", "Prepare invoices for each family, get reminded each term and trigger the next reminder. Better yet, plug in Stripe and Xero for simple payments and bookkeeping."],
-  ["Invite-only enrolment", "Send a branded invite; families complete a guided form. No stray sign-ups on your roll."],
-  ["Agreements that stick", "Studio agreement and app terms accepted at enrolment with a typed name and guardian rules for minors."],
+const taxFeatures = [
+  { Icon: Receipt, title: "Books and exam fees, passed on properly", body: "Log an AMEB book or exam fee, then pass it to the student’s next invoice as a reimbursement — not fake tuition profit." },
+  { Icon: Wallet, title: "Gross tuition. Stripe fees. No guesswork.", body: "See what families paid and what processing cost, year to date and across the Australian financial year: 1 July to 30 June." },
+  { Icon: Clock, title: "Home-studio hours, in one place", body: "Teaching and admin hours from the calendar, with an illustrative 70¢/hr home-office estimate. Check the applicable ATO rate and eligibility." },
+  { Icon: Car, title: "Mobile teaching, minus the paperwork", body: "An optional kilometre log and cents-per-kilometre estimate. Simple travel records, not a full logbook product." },
+  { Icon: ArrowDownToLine, title: "One EOFY pack, ready to review", body: "Export gross tuition, fees, expenses and home-office hours as CSV for your tax agent or cash-basis myTax preparation." },
 ];
-const featureIcons = [BookOpen, MessageCircle, Newspaper, Flag, Receipt, UserPlus, FileSignature];
 
 function Welcome() {
   return (
     <MarketingMotion><div className="min-h-screen bg-mk-cream font-mk-sans text-mk-ink antialiased">
       {/* Hero */}
-      <section className="relative isolate flex min-h-[92svh] flex-col overflow-hidden bg-mk-ink text-mk-paper">
+      <section className="relative isolate flex min-h-[min(760px,88svh)] flex-col overflow-hidden bg-mk-ink text-mk-paper">
         <img src={hero} alt="Grand piano on an Art Deco stage under a gold sunburst" width={1600} height={1008} className="mk-stage-image absolute inset-0 -z-10 h-full w-full object-cover" />
         <div className="absolute inset-0 -z-10 bg-gradient-to-r from-mk-ink/90 via-mk-ink/60 to-mk-ink/10" aria-hidden />
         <header className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-5 py-5 md:px-10">
-          <a href="#top" className="rounded-2xl bg-mk-paper px-3 py-1.5"><img src={logo} alt="Keystone Music HQ" className="h-11 w-auto" /></a>
+          <Link to="/welcome" className="shrink-0 rounded-lg bg-mk-paper px-3 py-1.5"><img src={logo} alt="Keystone Music HQ" className="h-10 w-auto max-w-[120px] sm:max-w-[180px]" /></Link>
           <nav className="flex items-center gap-2">
             <Button asChild variant="ghost" className="px-2 text-mk-paper hover:bg-mk-paper/10 hover:text-mk-paper"><Link to="/pricing">Pricing</Link></Button>
             <a href="#enrolment" className="hidden min-h-12 items-center px-4 text-base text-mk-paper/85 hover:text-mk-paper md:inline-flex">How it works</a>
             <a href="#trust" className="hidden min-h-12 items-center px-4 text-base text-mk-paper/85 hover:text-mk-paper md:inline-flex">Trust</a>
-            <a href={SIGN_IN} className="inline-flex min-h-12 items-center rounded-full border border-mk-paper/40 px-5 text-base backdrop-blur-md hover:bg-mk-paper/10">Sign in</a>
+            <Button asChild variant="ghost" className="border border-mk-paper/40 px-3 text-mk-paper hover:bg-mk-paper/10 hover:text-mk-paper"><a href={SIGN_IN}>Sign in</a></Button>
           </nav>
         </header>
-        <div id="top" className="mx-auto flex w-full max-w-7xl flex-1 items-center px-5 pb-20 md:px-10">
-          <div className="mk-hero-copy max-w-2xl">
-            <p className="text-base font-medium uppercase tracking-[0.22em] text-mk-gold">Keystone Music HQ</p>
-            <h1 className={`${serif} mt-5 text-5xl font-semibold leading-[1.08] md:text-7xl`}>
-              Your studio, <em className="font-normal italic">in tune.</em>
+        <div id="top" className="mx-auto flex w-full max-w-7xl flex-1 items-center px-5 pb-12 pt-6 md:px-10">
+          <div className="mk-hero-copy max-w-3xl">
+            <p className="font-mk-serif text-3xl font-semibold text-mk-paper">Keystone Music HQ</p>
+            <h1 className={`${serif} mt-5 text-4xl font-semibold leading-[1.12] md:text-6xl`}>
+              See the studio week — <em className="font-normal italic">money, roll and practice.</em>
             </h1>
             <p className="mt-6 max-w-xl text-xl leading-relaxed text-mk-paper/85">
-              Designed for simplicity, built for scalability — one studio, 40+ students. Lessons, chat, news, invoices and agreements in one calm, Australian-hosted workspace.
+              Snapshot for the teaching week. Tax Lite for EOFY. Not another spreadsheet or a second ledger.
             </p>
             <div className="mt-10 flex flex-wrap items-center gap-4">
-              <PrimaryCta className="bg-mk-paper !text-mk-ink hover:!bg-mk-cream" />
-              <a href={SIGN_IN} className="inline-flex min-h-14 items-center px-3 text-lg underline decoration-mk-gold underline-offset-8 hover:decoration-2">Sign in</a>
+              <PrimaryCta className="bg-mk-paper text-mk-ink hover:bg-mk-cream" />
+              <Button asChild variant="ghost" size="lg" className="text-mk-paper underline decoration-mk-gold underline-offset-8 hover:bg-mk-paper/10 hover:text-mk-paper"><a href={SIGN_IN}>Sign in</a></Button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Who it's for */}
-      <section className="mx-auto max-w-7xl px-5 py-24 md:px-10">
-        <Eyebrow>Who it's for</Eyebrow>
-        <h2 className={`${serif} mt-4 max-w-3xl text-4xl font-semibold leading-tight md:text-5xl`}>Built for the teacher. Clear for the family.</h2>
-        <figure data-reveal className="mk-teaching-photo relative mt-10 overflow-hidden rounded-lg">
-          <img src={teachingMoment} alt="A piano teacher guiding a student through sheet music, with a tablet beside the piano" loading="lazy" width={1536} height={1024} className="h-full w-full object-cover" />
-          <figcaption className="absolute bottom-0 left-0 right-0 bg-mk-ink/85 px-6 py-4 text-lg text-mk-paper md:px-8">More time for the moments that matter.</figcaption>
-        </figure>
-        <div className="mt-12 grid gap-px overflow-hidden rounded-3xl border border-mk-gold/50 bg-mk-gold/50 md:grid-cols-2">
-          {[
-            ["Studio owners & teachers", "Run your studio without spreadsheets and scattered message threads. Everything you need before and after a lesson, on any device.", ["Day book and week view", "Student records, courses and red flags", "Term invoices with Stripe and Xero"]],
-            ["Families & guardians", "Enrol from a studio invite, one question at a time. Know exactly what you agreed to, and stay connected to your teacher.", ["Guided enrolment form", "Studio news and recital notices", "Chat and video sharing"]],
-          ].map(([title, body, items]) => (
-            <article key={title as string} className="bg-mk-paper p-8 md:p-12">
-              <h3 className={`${serif} text-3xl font-semibold`}>{title as string}</h3>
-              <p className="mt-4 text-lg leading-relaxed text-mk-ink/75">{body as string}</p>
-              <ul className="mt-6 space-y-3">
-                {(items as string[]).map((i) => (
-                  <li key={i} className="flex items-center gap-3 text-lg"><Check className="h-5 w-5 shrink-0 text-mk-bronze" aria-hidden />{i}</li>
-                ))}
-              </ul>
-            </article>
-          ))}
+      <main>
+      <section aria-labelledby="snapshot-title" className="bg-mk-paper">
+        <div className="mx-auto max-w-7xl px-5 py-12 md:px-10 md:py-16">
+          <Eyebrow>Studio Snapshot</Eyebrow>
+          <div className="mt-4 grid gap-4 lg:grid-cols-[1.2fr_1fr] lg:gap-12">
+            <h2 id="snapshot-title" className="font-mk-serif text-3xl font-semibold leading-tight md:text-4xl">Unpaid, unenrolled, not practising.<br /><em className="font-normal">One calm screen.</em></h2>
+            <p className="text-lg leading-relaxed text-mk-ink/75">What came in. Who needs a follow-up. How the teaching week went. A studio snapshot, not another spreadsheet — designed for solo owners, with room to grow.</p>
+          </div>
+          <FinanceShowcase mode="snapshot" />
+          <p className="mt-5 text-base text-mk-ink/70">Lists when you need detail. CSV when you need your own notes. Studio-wide finances for owners and admins; teachers keep their own caseload.</p>
         </div>
+      </section>
+
+      <section aria-labelledby="tax-title" className="mx-auto max-w-7xl px-5 py-12 md:px-10 md:py-16">
+        <Eyebrow>Tax Lite · planned</Eyebrow>
+        <h2 id="tax-title" className="mt-4 max-w-3xl font-mk-serif text-3xl font-semibold leading-tight md:text-4xl">EOFY without rebuilding<br />the year in a spreadsheet.</h2>
+        <p className="mt-4 max-w-3xl text-lg leading-relaxed text-mk-ink/75">Studio-specific numbers before you ever open Xero. For solo teachers preparing cash-basis myTax records: gross tuition, merchant fees and home-studio hours, together.</p>
+        <div className="mt-6 grid min-w-0 gap-8 xl:grid-cols-2 xl:gap-12">
+          <FinanceShowcase mode="tax" />
+          <dl className="divide-y divide-mk-gold/50">{taxFeatures.map(({ Icon, title, body }) => <div key={title} className="grid grid-cols-[2rem_1fr] gap-x-4 py-5"><Icon aria-hidden className="mt-1 size-6 text-mk-bronze" /><dt className="font-mk-serif text-2xl font-semibold">{title}</dt><dd className="col-start-2 mt-2 text-lg leading-relaxed text-mk-ink/75">{body}</dd></div>)}</dl>
+        </div>
+        <p className="mt-7 max-w-4xl border-t border-mk-gold/50 pt-5 text-base text-mk-ink/70">Tax Lite is record preparation, not a general ledger or tax lodgement. Rent, utilities and bank feeds stay in Xero when you grow; Keystone doesn’t replace your accountant. Estimates are illustrative, not ATO advice.</p>
       </section>
 
       {/* How enrolment works */}
       <section id="enrolment" className="bg-mk-paper">
-        <div className="mx-auto max-w-7xl px-5 py-24 md:px-10">
+        <div className="mx-auto max-w-7xl px-5 py-12 md:px-10 md:py-16">
           <Eyebrow>How enrolment works</Eyebrow>
           <h2 className={`${serif} mt-4 max-w-3xl text-4xl font-semibold leading-tight md:text-5xl`}>From invite to first lesson in three steps.</h2>
           <ol className="mt-14 grid gap-10 md:grid-cols-3 md:gap-0">
             {[
-              ["Invite", "Your studio emails a branded invite to the family — no public sign-up wall."],
+              ["Invite", "Your studio sends a branded invite — no public sign-up wall."],
               ["Enrol", "A guided form, one question at a time. Terms accepted properly, with a typed name."],
               ["Teach", "The student appears on your roll with chat, practice and invoicing ready."],
             ].map(([t, b], i) => (
@@ -133,49 +125,22 @@ function Welcome() {
         </div>
       </section>
 
-      {/* A look inside */}
-      <section className="bg-mk-cream">
-        <div className="mx-auto max-w-7xl px-5 py-24 md:px-10">
-          <Eyebrow>A look inside</Eyebrow>
-          <div className="mt-4 flex flex-wrap items-end justify-between gap-6">
-            <h2 className={`${serif} max-w-2xl text-4xl font-semibold leading-tight md:text-5xl`}>See the studio your families will see.</h2>
-            <p className="max-w-md text-lg leading-relaxed text-mk-ink/75">Built for every teacher, not just the tech-savvy. Switch between laptop and iPad, then tap around — big, clear buttons on any screen.</p>
-          </div>
-          <DeviceShowcase />
+      <section className="mx-auto max-w-7xl px-5 py-12 md:px-10 md:py-16">
+        <div className="grid items-center gap-10 lg:grid-cols-2">
+          <div><Eyebrow>Pro · room to grow</Eyebrow><h2 className="mt-4 font-mk-serif text-3xl font-semibold leading-tight md:text-4xl">Know prepaid fees vs lessons you’ve actually delivered.</h2><p className="mt-5 text-lg leading-relaxed text-mk-ink/75">For growing and multi-teacher studios: a planned CFO view of margin after teacher splits, prepaid tuition, churn and make-up radar, Xero queues and contractor payouts.</p><p className="mt-4 text-lg text-mk-ink/75">Approaching the $75,000 GST turnover threshold? Explore a calm path to Xero-ready Pro. Your registration obligations are separate from your plan.</p><Button asChild variant="ghost" className="mt-5 text-mk-bronze hover:bg-mk-paper"><Link to="/pricing">Compare Base and Pro <ArrowRight aria-hidden /></Link></Button></div>
+          <figure data-reveal className="overflow-hidden rounded-lg"><img src={teachingMoment} alt="A piano teacher and student working through music with a tablet beside the piano" loading="lazy" width={1536} height={1024} className="aspect-[4/3] w-full object-cover" /><figcaption className="mt-3 text-base text-mk-ink/70">Less time piecing together numbers. More time teaching.</figcaption></figure>
         </div>
       </section>
-
-      {/* What studios get */}
-      <section className="mx-auto max-w-7xl px-5 py-24 md:px-10">
-        <div className="grid gap-14 lg:grid-cols-[1fr_1.6fr]">
-          <div className="lg:sticky lg:top-10 lg:self-start">
-            <Eyebrow>What studios get</Eyebrow>
-            <h2 className={`${serif} mt-4 text-4xl font-semibold leading-tight md:text-5xl`}>Everything a real teaching week needs.</h2>
-            <p className="mt-5 text-lg leading-relaxed text-mk-ink/75">A calm interface for the minutes before and after lessons — and a mobile-friendly studio for teachers on the move.</p>
-          </div>
-          <dl className="divide-y divide-mk-gold/50 border-y border-mk-gold/50">
-            {studioPoints.map(([t, b], i) => {
-              const Icon = featureIcons[i] ?? BookOpen;
-              return (
-              <div key={t} className="grid gap-2 py-7 sm:grid-cols-[3rem_1fr_1.4fr] sm:gap-6">
-                <span className="mk-feature-icon flex size-12 items-center justify-center rounded-lg border border-mk-gold/50 bg-mk-paper text-mk-bronze"><Icon className="size-6" aria-hidden /></span>
-                <dt className={`${serif} text-2xl font-semibold`}>{t}</dt>
-                <dd className="text-lg leading-relaxed text-mk-ink/75">{b}</dd>
-              </div>
-            ); })}
-          </dl>
-        </div>
-      </section>
-
+      <section className="border-t border-mk-gold/50 bg-mk-paper"><div className="mx-auto grid max-w-7xl gap-6 px-5 py-12 md:grid-cols-2 md:px-10"><h2 className="font-mk-serif text-3xl font-semibold">The music stays at the centre.</h2><p className="text-lg leading-relaxed text-mk-ink/75">Lessons, practice and chat beside the student. Native invoices and guided enrolment. For families: a clear invite, one-question enrolment, agreements they understand and a direct connection to their teacher.</p></div></section>
       {/* Trust */}
       <section id="trust" className="bg-mk-ink text-mk-paper">
-        <div className="mx-auto max-w-7xl px-5 py-24 md:px-10">
+        <div className="mx-auto max-w-7xl px-5 py-12 md:px-10 md:py-16">
           <p className="flex items-center gap-3 text-base font-medium uppercase tracking-[0.18em] text-mk-gold"><span className="h-px w-10 bg-mk-gold" aria-hidden />Trust, quietly built in</p>
           <h2 className={`${serif} mt-4 max-w-3xl text-4xl font-semibold leading-tight md:text-5xl`}>Student records deserve care.</h2>
-          <div className="mt-14 grid gap-px overflow-hidden rounded-3xl bg-mk-gold/30 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-14 grid gap-px overflow-hidden rounded-lg bg-mk-gold/30 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              [MapPin, "Australian made, hosted in Sydney", "Secure Sydney hosting, compliant with the Australian Privacy Act — cybersecurity by design."],
-              [Lock, "Staff two-step sign-in", "An authenticator is required for studio staff."],
+              [MapPin, "Australian made, hosted in Sydney", "Designed for a Sydney-hosted workspace, with student privacy at its heart."],
+              [Lock, "Staff two-step sign-in", "Planned passwordless sign-in with Google, Microsoft or email link, plus staff MFA."],
               [MailOpen, "Invite-only", "Accounts start from a teacher or Keystone — never an open sign-up."],
               [FileSignature, "Agreements on record", "Clear terms, guardian rules for minors and receipts of acceptance."],
             ].map(([Icon, t, b]) => {
@@ -199,18 +164,18 @@ function Welcome() {
         <p className="mx-auto mt-5 max-w-xl text-xl leading-relaxed text-mk-ink/75">Keystone is invite-only. Tell us about your studio and we'll set you up personally.</p>
         <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
           <PrimaryCta />
-          <a href={SIGN_IN} className="inline-flex min-h-14 items-center rounded-full border border-mk-ink/25 px-7 text-lg hover:bg-mk-paper">Sign in</a>
+          <Button asChild variant="ghost" size="lg" className="border border-mk-ink/25 text-mk-ink hover:bg-mk-paper"><a href={SIGN_IN}>Sign in</a></Button>
         </div>
       </section>
 
+      </main>
       <footer className="border-t border-mk-gold/50 bg-mk-paper">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-5 py-8 text-base text-mk-ink/70 md:px-10">
           <p>© 2026 Synoratech Pty Ltd · Keystone Music HQ</p>
           <nav className="flex flex-wrap gap-6">
             <Link to="/pricing" className="hover:text-mk-ink">Pricing</Link>
             <a href="mailto:support@keystonemusichq.com" className="hover:text-mk-ink">Help</a>
-            <a href="#trust" className="hover:text-mk-ink">Privacy</a>
-            <a href="#trust" className="hover:text-mk-ink">Terms</a>
+            <span>Marketing preview · no live payments or tax filing</span>
             <span>Data hosted in Sydney, Australia</span>
           </nav>
         </div>
