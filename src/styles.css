@@ -515,7 +515,9 @@
 .mk-zoom-shade { opacity: calc(1 - var(--zoom-p) * 0.9); }
 .mk-zoom-copy { transform: scale(calc(1 + var(--zoom-p) * 0.9)); opacity: calc(1 - var(--zoom-p) * 2.2); filter: blur(calc(var(--zoom-p) * 14px)); transform-origin: 30% 50%; will-change: transform, opacity; }
 .mk-zoom-nav { opacity: calc(1 - var(--zoom-p) * 3); }
-.mk-zoom-fade { opacity: clamp(0, calc((var(--zoom-p) - 0.75) * 4), 1); }
+.mk-zoom-fade { opacity: clamp(0, calc((var(--zoom-p) - 0.6) * 1.75), 0.7); }
+.mk-founder-overlap { position: relative; z-index: 10; margin-top: -60svh; padding-top: 30svh; background: linear-gradient(to bottom, transparent 0, color-mix(in oklab, var(--color-mk-ink) 55%, transparent) 35svh, var(--color-mk-ink) 75svh); }
+.mk-zoom-track[data-static="true"] + * .mk-founder-overlap, .mk-zoom-track[data-static="true"] ~ * .mk-founder-overlap { margin-top: 0; padding-top: 0; }
 .mk-zoom-track[data-static="true"] { height: auto; }
 .mk-zoom-track[data-static="true"] .mk-zoom-stage { position: relative; min-height: min(760px, 88svh); height: auto; }
 @media (prefers-reduced-motion: reduce) {
