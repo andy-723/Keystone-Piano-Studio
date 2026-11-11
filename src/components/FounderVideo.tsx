@@ -22,16 +22,16 @@ export function FounderVideo() {
   const media = embedUrl(FOUNDER_VIDEO_URL);
 
   return (
-    <section aria-labelledby="founder-video-title" className="bg-mk-cream">
-      <div className="mx-auto max-w-6xl px-5 py-12 md:px-10 md:py-20">
-        <p className="flex items-center gap-3 text-base font-medium uppercase tracking-[0.18em] text-mk-bronze">
+    <section aria-labelledby="founder-video-title" className="bg-mk-ink">
+      <div className="mx-auto max-w-6xl px-5 pb-16 pt-6 md:px-10 md:pb-24 md:pt-8">
+        <p className="flex items-center gap-3 text-base font-medium uppercase tracking-[0.18em] text-mk-gold">
           <span className="h-px w-10 bg-mk-gold" aria-hidden />
           Meet Keystone
         </p>
-        <h2 id="founder-video-title" className="mt-4 font-mk-serif text-3xl font-semibold leading-tight text-mk-ink md:text-4xl">
+        <h2 id="founder-video-title" className="mt-4 font-mk-serif text-3xl font-semibold leading-tight text-mk-paper md:text-4xl">
           A walk through the studio, from the founder
         </h2>
-        <p className="mt-3 max-w-2xl text-lg text-mk-ink/75">
+        <p className="mt-3 max-w-2xl text-lg text-mk-paper/75">
           Hear why we built Keystone and see a real studio account in a few minutes. Press play, or keep scrolling.
         </p>
 
