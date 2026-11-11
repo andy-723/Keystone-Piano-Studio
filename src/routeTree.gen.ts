@@ -17,6 +17,7 @@ import { Route as InvoicesRouteImport } from './routes/invoices'
 import { Route as LibraryRouteImport } from './routes/library'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as NewsRouteImport } from './routes/news'
+import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SnapshotRouteImport } from './routes/snapshot'
@@ -24,6 +25,7 @@ import { Route as StudentsRouteImport } from './routes/students'
 import { Route as StudioEnquiryRouteImport } from './routes/studio-enquiry'
 import { Route as SupportRouteImport } from './routes/support'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AuthMfaRouteImport } from './routes/auth.mfa'
@@ -95,6 +97,11 @@ const NewsRoute = NewsRouteImport.update({
   path: '/news',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
@@ -128,6 +135,11 @@ const SupportRoute = SupportRouteImport.update({
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WelcomeRoute = WelcomeRouteImport.update({
+  id: '/welcome',
+  path: '/welcome',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiHealthRoute = ApiHealthRouteImport.update({
@@ -291,6 +303,7 @@ export interface FileRoutesByFullPath {
   '/library': typeof LibraryRoute
   '/login': typeof LoginRoute
   '/news': typeof NewsRoute
+  '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRouteWithChildren
   '/snapshot': typeof SnapshotRoute
@@ -298,6 +311,7 @@ export interface FileRoutesByFullPath {
   '/studio-enquiry': typeof StudioEnquiryRoute
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
+  '/welcome': typeof WelcomeRoute
   '/api/health': typeof ApiHealthRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/mfa': typeof AuthMfaRoute
@@ -336,11 +350,13 @@ export interface FileRoutesByTo {
   '/library': typeof LibraryRoute
   '/login': typeof LoginRoute
   '/news': typeof NewsRoute
+  '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/snapshot': typeof SnapshotRoute
   '/studio-enquiry': typeof StudioEnquiryRoute
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
+  '/welcome': typeof WelcomeRoute
   '/api/health': typeof ApiHealthRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/mfa': typeof AuthMfaRoute
@@ -382,6 +398,7 @@ export interface FileRoutesById {
   '/library': typeof LibraryRoute
   '/login': typeof LoginRoute
   '/news': typeof NewsRoute
+  '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRouteWithChildren
   '/snapshot': typeof SnapshotRoute
@@ -389,6 +406,7 @@ export interface FileRoutesById {
   '/studio-enquiry': typeof StudioEnquiryRoute
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
+  '/welcome': typeof WelcomeRoute
   '/api/health': typeof ApiHealthRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/mfa': typeof AuthMfaRoute
@@ -431,6 +449,7 @@ export interface FileRouteTypes {
     | '/library'
     | '/login'
     | '/news'
+    | '/pricing'
     | '/privacy'
     | '/settings'
     | '/snapshot'
@@ -438,6 +457,7 @@ export interface FileRouteTypes {
     | '/studio-enquiry'
     | '/support'
     | '/terms'
+    | '/welcome'
     | '/api/health'
     | '/auth/callback'
     | '/auth/mfa'
@@ -476,11 +496,13 @@ export interface FileRouteTypes {
     | '/library'
     | '/login'
     | '/news'
+    | '/pricing'
     | '/privacy'
     | '/snapshot'
     | '/studio-enquiry'
     | '/support'
     | '/terms'
+    | '/welcome'
     | '/api/health'
     | '/auth/callback'
     | '/auth/mfa'
@@ -521,6 +543,7 @@ export interface FileRouteTypes {
     | '/library'
     | '/login'
     | '/news'
+    | '/pricing'
     | '/privacy'
     | '/settings'
     | '/snapshot'
@@ -528,6 +551,7 @@ export interface FileRouteTypes {
     | '/studio-enquiry'
     | '/support'
     | '/terms'
+    | '/welcome'
     | '/api/health'
     | '/auth/callback'
     | '/auth/mfa'
@@ -569,6 +593,7 @@ export interface RootRouteChildren {
   LibraryRoute: typeof LibraryRoute
   LoginRoute: typeof LoginRoute
   NewsRoute: typeof NewsRoute
+  PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
   SettingsRoute: typeof SettingsRouteWithChildren
   SnapshotRoute: typeof SnapshotRoute
@@ -576,6 +601,7 @@ export interface RootRouteChildren {
   StudioEnquiryRoute: typeof StudioEnquiryRoute
   SupportRoute: typeof SupportRoute
   TermsRoute: typeof TermsRoute
+  WelcomeRoute: typeof WelcomeRoute
   ApiHealthRoute: typeof ApiHealthRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   AuthMfaRoute: typeof AuthMfaRoute
@@ -651,6 +677,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NewsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/privacy': {
       id: '/privacy'
       path: '/privacy'
@@ -698,6 +731,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/welcome': {
+      id: '/welcome'
+      path: '/welcome'
+      fullPath: '/welcome'
+      preLoaderRoute: typeof WelcomeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/health': {
@@ -990,6 +1030,7 @@ const rootRouteChildren: RootRouteChildren = {
   LibraryRoute: LibraryRoute,
   LoginRoute: LoginRoute,
   NewsRoute: NewsRoute,
+  PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
   SettingsRoute: SettingsRouteWithChildren,
   SnapshotRoute: SnapshotRoute,
@@ -997,6 +1038,7 @@ const rootRouteChildren: RootRouteChildren = {
   StudioEnquiryRoute: StudioEnquiryRoute,
   SupportRoute: SupportRoute,
   TermsRoute: TermsRoute,
+  WelcomeRoute: WelcomeRoute,
   ApiHealthRoute: ApiHealthRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   AuthMfaRoute: AuthMfaRoute,

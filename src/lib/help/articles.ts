@@ -468,7 +468,7 @@ Your studio terms are your agreement with each family. Keystone provides a templ
     topic: "subscription",
     title: { en: "Base and Pro plans" },
     body: {
-      en: `Base is A$29 a month and includes up to 35 active students. Pro is A$49 a month with no limit on active students, and adds billing automation, Xero sync, video lessons and the review queue, Red Risk alerts and exam board rules. GST is added only while Keystone is registered for GST.
+      en: `Base is A$29 a month and includes up to 30 active students. Pro is A$49 a month with no limit on active students, and adds billing automation, Xero sync, video lessons and the review queue, Red Risk alerts and exam board rules. GST is added only while Keystone is registered for GST.
 
 One subscription covers your whole studio, including all your teachers. You can see and change your plan under Settings, Plan and billing. Moving from Pro to Base never deletes anything: Pro features switch off and your data stays.`,
     },

@@ -298,7 +298,7 @@ function StudioAccessForm({
           onChange={(e) => setPlan(e.target.value as "base" | "pro")}
           className="mt-1 min-h-11 w-full rounded-[10px] border border-[#CDBF9F] bg-white px-3"
         >
-          <option value="base">Base (up to 35 students)</option>
+          <option value="base">Base (up to 30 students)</option>
           <option value="pro">Pro (unlimited students)</option>
         </select>
       </label>
@@ -476,7 +476,7 @@ function NewStudioTab({ token, onError }: { token: string; onError: (m: string |
             className="mt-1 min-h-11 w-full rounded-[10px] border border-[#CDBF9F] bg-white px-3"
           >
             <option value="pro">Pro (unlimited students)</option>
-            <option value="base">Base (up to 35 students)</option>
+            <option value="base">Base (up to 30 students)</option>
           </select>
         </label>
         {accessStatus !== "none" && (

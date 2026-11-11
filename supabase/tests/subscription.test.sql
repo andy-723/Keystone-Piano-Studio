@@ -181,28 +181,28 @@ select test_as(current_setting('test.owner')::uuid);
 select is((select count(*)::int from public.family), 0, 'canceled 31 days ago: owner has no access');
 select test_reset_role();
 
--- Base plan: 35 students, the 36th is refused; Pro has no cap
+-- Base plan: 30 students (0017), the 31st is refused; Pro has no cap
 select test_set_status('active');
 insert into public.student (family_id, studio_id, first_name, last_name, birth_year)
 select current_setting('test.family')::uuid, current_setting('test.studio')::uuid, 'S', n::text, 2015
-from generate_series(1, 35) n;
+from generate_series(1, 30) n;
 select throws_ok(
   format('insert into public.student (family_id, studio_id, first_name, last_name, birth_year) values (%L::uuid, %L::uuid, %L, %L, 2015)',
-    current_setting('test.family'), current_setting('test.studio'), 'S', '36'),
+    current_setting('test.family'), current_setting('test.studio'), 'S', '31'),
   'P0001',
   null,
-  'Base: the 36th student is refused'
+  'Base: the 31st student is refused'
 );
 update public.studio_subscription set plan = 'pro' where studio_id = current_setting('test.studio')::uuid;
 select lives_ok(
   format('insert into public.student (family_id, studio_id, first_name, last_name, birth_year) values (%L::uuid, %L::uuid, %L, %L, 2015)',
-    current_setting('test.family'), current_setting('test.studio'), 'S', '36'),
-  'Pro: the 36th student is allowed'
+    current_setting('test.family'), current_setting('test.studio'), 'S', '31'),
+  'Pro: the 31st student is allowed'
 );
 update public.studio_subscription set plan = 'base' where studio_id = current_setting('test.studio')::uuid;
 select is(
   (select count(*)::int from public.student where studio_id = current_setting('test.studio')::uuid),
-  36,
+  31,
   'downgrading to Base keeps every student'
 );
 

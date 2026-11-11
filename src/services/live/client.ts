@@ -26,7 +26,7 @@ export function friendly(
 ): Error {
   const message = error?.message ?? "";
   if (message.includes("base_plan_student_limit"))
-    return new Error("The Base plan allows up to 35 students. Upgrade to Pro to add more.");
+    return new Error("The Base plan allows up to 30 students. Upgrade to Pro to add more.");
   if (error?.code === "42501" || /row-level security/i.test(message))
     return new Error("You don't have permission to change this, or your studio is read-only.");
   return new Error(fallback);
