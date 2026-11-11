@@ -62,6 +62,27 @@ export function PublicPage({
 }
 
 /** Minimal renderer for the legal markdown we ship (#, ##, ###, paragraphs, "- " lists). */
+/** Renders **bold** spans inside a line of legal text. */
+function inline(text: string): ReactNode {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) =>
+    part.startsWith("**") && part.endsWith("**") && part.length > 4 ? (
+      <strong key={i}>{part.slice(2, -2)}</strong>
+    ) : (
+      part
+    ),
+  );
+}
+
+function cells(row: string): string[] {
+  return row
+    .trim()
+    .replace(/^\|/, "")
+    .replace(/\|$/, "")
+    .split("|")
+    .map((cell) => cell.trim());
+}
+
 export function LegalMarkdown({ markdown }: { markdown: string }) {
   const blocks = markdown.trim().split(/\n{2,}/);
   const lang = useSiteLang();
@@ -75,19 +96,60 @@ export function LegalMarkdown({ markdown }: { markdown: string }) {
     <div data-no-translate className="contents">
       {blocks.map((block, index) => {
         const lines = block.split("\n");
+        if (lines.length >= 2 && lines.every((line) => line.trim().startsWith("|"))) {
+          const [head = "", , ...body] = lines;
+          return (
+            <div key={index} className="overflow-x-auto">
+              <table className="w-full border-collapse text-left text-base">
+                <thead>
+                  <tr>
+                    {cells(head).map((cell, i) => (
+                      <th
+                        key={i}
+                        className="border-b border-mk-gold/40 py-2 pr-4 font-semibold text-mk-ink"
+                      >
+                        {inline(cell)}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {body.map((row, r) => (
+                    <tr key={r}>
+                      {cells(row).map((cell, i) => (
+                        <td key={i} className="border-b border-mk-gold/20 py-2 pr-4 align-top">
+                          {inline(cell)}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          );
+        }
         const out: ReactNode[] = [];
         let para: string[] = [];
         let list: string[] = [];
         const flush = () => {
           if (para.length) {
-            out.push(<p key={`p${out.length}`}>{para.join(" ")}</p>);
+            const text = para.join(" ");
+            out.push(
+              text.startsWith("> ") ? (
+                <p key={`p${out.length}`} className="border-l-2 border-mk-gold pl-4">
+                  {inline(text.slice(2))}
+                </p>
+              ) : (
+                <p key={`p${out.length}`}>{inline(text)}</p>
+              ),
+            );
             para = [];
           }
           if (list.length) {
             out.push(
               <ul key={`u${out.length}`} className="list-disc space-y-1 pl-6 marker:text-mk-gold">
                 {list.map((item, i) => (
-                  <li key={i}>{item}</li>
+                  <li key={i}>{inline(item)}</li>
                 ))}
               </ul>,
             );
@@ -103,7 +165,10 @@ export function LegalMarkdown({ markdown }: { markdown: string }) {
             if (level === 1) continue; // page title is rendered by PublicPage
             out.push(
               level === 2 ? (
-                <h2 key={`h${out.length}`} className="mt-6 border-t border-mk-gold/40 pt-6 font-mk-serif text-2xl font-semibold text-mk-ink first:mt-0 first:border-0 first:pt-0">
+                <h2
+                  key={`h${out.length}`}
+                  className="mt-6 border-t border-mk-gold/40 pt-6 font-mk-serif text-2xl font-semibold text-mk-ink first:mt-0 first:border-0 first:pt-0"
+                >
                   {text}
                 </h2>
               ) : (

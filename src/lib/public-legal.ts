@@ -17,11 +17,8 @@ function fill(markdown: string): string {
 /** Same Keystone app terms families accept in the app, for the public /terms page. */
 export const PUBLIC_TERMS_MARKDOWN = fill(FAMILY_APP_TERMS_MARKDOWN);
 
-/** Keystone privacy notice (Part C of the app terms), for the public /privacy page. */
-export const PUBLIC_PRIVACY_MARKDOWN = fill(PRIVACY_NOTICE_MARKDOWN).replace(
-  "## Part C — Privacy notice",
-  "",
-);
+/** Keystone privacy notice summary and full policy (Parts B and C of the app terms), for the public /privacy page. */
+export const PUBLIC_PRIVACY_MARKDOWN = fill(PRIVACY_NOTICE_MARKDOWN);
 
 /**
  * Website terms and disclaimer for the public marketing pages (/welcome, /pricing, /help).
