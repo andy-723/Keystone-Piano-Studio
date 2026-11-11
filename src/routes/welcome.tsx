@@ -6,6 +6,7 @@ import { StudioShowcase } from "@/components/StudioShowcase";
 import { MarketingMotion } from "@/components/MarketingMotion";
 import teachingMoment from "@/assets/keystone-teaching-moment.jpg";
 import { MarketingNavbar } from "@/components/MarketingNavbar";
+import { ZoomHero } from "@/components/ZoomHero";
 import { ArrowRight, Lock, MapPin, MailOpen, FileSignature, BookOpen, Receipt, Clock, Wallet, Car, ArrowDownToLine } from "lucide-react";
 
 const SIGN_IN = "https://keystonemusichq.com/login";
@@ -52,10 +53,12 @@ function Welcome() {
   return (
     <MarketingMotion><div className="min-h-screen bg-mk-cream font-mk-sans text-mk-ink antialiased">
       {/* Hero */}
-      <section className="relative isolate flex min-h-[min(760px,88svh)] flex-col overflow-hidden bg-mk-ink text-mk-paper">
-        <img src={hero} alt="Grand piano on an Art Deco stage under a gold sunburst" width={1600} height={1008} className="mk-stage-image absolute inset-0 -z-10 h-full w-full object-cover" />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-mk-ink/95 via-mk-ink/80 to-mk-ink/30" aria-hidden />
-        <MarketingNavbar />
+      <ZoomHero
+        image={hero}
+        alt="Grand piano on an Art Deco stage under a gold sunburst"
+        overlay={<div className="h-full w-full bg-gradient-to-r from-mk-ink/95 via-mk-ink/80 to-mk-ink/30" />}
+        nav={<MarketingNavbar />}
+      >
         <div id="top" className="mx-auto flex w-full max-w-7xl flex-1 items-center px-5 pb-12 pt-6 md:px-10">
           <div className="mk-hero-copy max-w-3xl">
             <p className="font-mk-serif text-3xl font-semibold text-mk-paper">Keystone Music HQ</p>
@@ -71,7 +74,7 @@ function Welcome() {
             </div>
           </div>
         </div>
-      </section>
+      </ZoomHero>
 
       <main>
       <section aria-labelledby="snapshot-title" className="bg-mk-paper">
