@@ -23,28 +23,28 @@ function download(csv: string, name: string) {
   link.href = url; link.download = name; link.click(); URL.revokeObjectURL(url);
 }
 
-export function FinanceShowcase({ mode }: { mode: "snapshot" | "tax" }) {
+export function FinanceShowcase({ mode, embedded = false }: { mode: "snapshot" | "tax"; embedded?: boolean }) {
   const { data } = useSuspenseQuery(marketingFinanceQuery);
   const [device, setDevice] = useState<"laptop" | "ipad">("laptop");
   const [period, setPeriod] = useState<SnapshotPeriod>("week");
   const [signal, setSignal] = useState<SnapshotSignal>("overdue");
   const [taxView, setTaxView] = useState("summary");
   const [passed, setPassed] = useState(false);
-  const Frame = device === "laptop" ? LaptopFrame : TabletFrame;
-  return <div className="mt-7 min-w-0">
-    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+  const Frame = embedded ? PlainFrame : device === "laptop" ? LaptopFrame : TabletFrame;
+  return <div className={embedded ? "min-w-0" : "mt-7 min-w-0"}>
+    {!embedded && <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
       <div role="group" aria-label={`${mode} device`} className="flex gap-1">
         {(["laptop", "ipad"] as const).map(d => <Button key={d} type="button" variant="ghost" aria-pressed={device === d} onClick={() => setDevice(d)} className={device === d ? "bg-mk-ink text-mk-paper hover:bg-mk-bronze hover:text-mk-paper" : "text-mk-bronze hover:bg-mk-cream"}>{d === "laptop" ? <Laptop aria-hidden /> : <Tablet aria-hidden />}{d === "laptop" ? "Laptop" : "iPad"}</Button>)}
       </div>
       <p className="text-base text-mk-ink/70">Planned tools · illustrative preview</p>
-    </div>
+    </div>}
     <Frame>
-    <div className="max-h-[620px] overflow-y-auto bg-mk-paper">
+    <div className={embedded ? "bg-mk-paper" : "max-h-[620px] overflow-y-auto bg-mk-paper"}>
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-mk-gold/50 px-4 py-3 sm:px-6"><span className="font-mk-serif text-xl font-semibold">Keystone <span className="text-mk-bronze">/ {mode === "snapshot" ? "Snapshot" : "Tax Lite"}</span></span><span className="text-base text-mk-ink/70">Owner view</span></div>
       <div className="p-4 sm:p-6">
         {mode === "snapshot" ? <>
           <div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="font-mk-serif text-2xl font-semibold">Your studio pulse</h3><p className="text-base text-mk-ink/70">{data[period].label} · Sydney</p></div><div role="group" aria-label="Snapshot period" className="flex gap-1">{(["week", "month"] as const).map(p => <Button key={p} variant="ghost" aria-pressed={period === p} onClick={() => setPeriod(p)} className={period === p ? "bg-mk-bronze text-mk-paper hover:bg-mk-ink hover:text-mk-paper" : "text-mk-bronze hover:bg-mk-cream"}>{p === "week" ? "Week" : "Month"}</Button>)}</div></div>
-          <div className="mt-5 grid grid-cols-2 gap-px border-y border-mk-gold/50 bg-mk-gold/30 lg:grid-cols-3">{signals.map(({ id, label, Icon }) => <Button key={id} variant="ghost" aria-pressed={signal === id} onClick={() => setSignal(id)} className={`h-auto min-h-28 flex-col items-start justify-start rounded-none p-3 text-left sm:p-5 ${signal === id ? "bg-mk-cream text-mk-bronze hover:bg-mk-cream" : "bg-mk-paper text-mk-ink hover:bg-mk-cream"}`}><span className="flex items-center gap-2 text-base"><Icon className="size-5 shrink-0" aria-hidden />{label}</span><span className="font-mk-serif text-3xl tabular-nums">{data[period][id]}</span></Button>)}</div>
+          <div className="mt-5 grid grid-cols-2 gap-px border-y border-mk-gold/50 bg-mk-gold/30">{signals.map(({ id, label, Icon }) => <Button key={id} variant="ghost" aria-pressed={signal === id} onClick={() => setSignal(id)} className={`h-auto min-h-28 whitespace-normal flex-col items-start justify-start rounded-none p-3 text-left ${signal === id ? "bg-mk-cream text-mk-bronze hover:bg-mk-cream" : "bg-mk-paper text-mk-ink hover:bg-mk-cream"}`}><span className="flex items-center gap-2 text-base"><Icon className="size-5 shrink-0" aria-hidden />{label}</span><span className="font-mk-serif text-3xl tabular-nums">{data[period][id]}</span></Button>)}</div>
           <div key={`${period}-${signal}`} className="mk-screen mt-5 min-h-[220px]" aria-live="polite"><h4 className="text-lg font-semibold">{signals.find(s => s.id === signal)?.label}</h4><ul className="mt-2 divide-y divide-mk-gold/30">{data.lists[signal].map(([name, detail], i) => <li key={name} className="flex flex-wrap justify-between gap-x-3 gap-y-1 py-3 text-base"><span>{name}</span><span className="text-mk-ink/70">{signal === "collected" && i === 2 ? `${data[period].collected} total` : signal === "overdue" && period === "month" && i === 1 ? "$420 · 3 days overdue" : signal === "lessons" && period === "month" ? ["72 lessons", "9 lessons", "3 lessons"][i] : detail}</span></li>)}</ul></div>
           <Button variant="ghost" className="mt-2 text-mk-bronze hover:bg-mk-cream" onClick={() => download(marketingSnapshotCsv(period), `keystone-example-${period}.csv`)}><ArrowDownToLine aria-hidden />Export example CSV</Button>
         </> : <>
@@ -63,4 +63,8 @@ export function FinanceShowcase({ mode }: { mode: "snapshot" | "tax" }) {
 
 function TabletFrame({ children }: { children: React.ReactNode }) {
   return <div className="mk-device mx-auto max-w-2xl overflow-hidden rounded-[24px] border-[8px] border-mk-ink bg-mk-paper">{children}</div>;
+}
+
+function PlainFrame({ children }: { children: React.ReactNode }) {
+  return <>{children}</>;
 }
