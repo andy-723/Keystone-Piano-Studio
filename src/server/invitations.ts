@@ -25,9 +25,9 @@ export async function createInvitationPrivileged(input: {
   actorUserId: string;
   familyId: string;
   studentIds: string[];
-  enrolmentDraftIds?: string[];
+  enrolmentDraftIds?: string[] | undefined;
   /** Forged client studio — ignored unless it mismatches the derived studio (then refused). */
-  studioId?: string;
+  studioId?: string | undefined;
 }) {
   const derivedStudioId = DEMO_STUDIO_ID;
   if (input.studioId && input.studioId !== derivedStudioId) {

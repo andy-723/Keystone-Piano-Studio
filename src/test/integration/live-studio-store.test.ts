@@ -23,13 +23,13 @@ import { copyTemplate } from "@/services/library";
 import { libraryState } from "@/mocks/library";
 import { createInvoice, getInvoices, issueCreditNote, recordPayment, sendInvoice } from "@/services/billing";
 
-const enabled = process.env.SUPABASE_LOCAL === "1";
+const enabled = process.env["SUPABASE_LOCAL"] === "1";
 
 describe.skipIf(!enabled)("live studio store (local Supabase)", () => {
   it("loads, saves and deletes only the signed-in owner's studio rows", async () => {
-    const url = process.env.SUPABASE_URL ?? "http://127.0.0.1:54321";
-    const anon = process.env.SUPABASE_ANON_KEY!;
-    const admin = createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+    const url = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:54321";
+    const anon = process.env["SUPABASE_ANON_KEY"]!;
+    const admin = createClient(url, process.env["SUPABASE_SERVICE_ROLE_KEY"]!, {
       auth: { persistSession: false },
     });
 

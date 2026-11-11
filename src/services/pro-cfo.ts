@@ -103,7 +103,7 @@ export type ProCfoXeroQueueRow = {
   familyName: string;
   totalCents: number;
   status: ProCfoXeroQueueStatus;
-  lastError?: string;
+  lastError?: string | undefined;
   attemptedAt?: string;
 };
 

@@ -53,7 +53,7 @@ export interface Studio {
   abn?: string;
   gstRegistered: boolean;
   timezone: "Australia/Melbourne";
-  plan?: StudioPlan;
+  plan?: StudioPlan | undefined;
   asyncLessonPolicy?: "makeup_credit" | "counts_as_lesson";
   legalName?: string;
   address?: string;
@@ -267,7 +267,7 @@ export interface StudioBillingProfile {
   nextInvoiceNumber: number;
   creditNotePrefix: string;
   nextCreditNoteNumber: number;
-  numberingLockedAt?: string;
+  numberingLockedAt?: string | undefined;
   payTo: StudioPayTo;
   attachPdf: boolean;
   /** Days before due for pre-due reminder; null = off. */

@@ -5,12 +5,12 @@
 import { describe, expect, it } from "vitest";
 import { createClient } from "@supabase/supabase-js";
 
-const enabled = process.env.SUPABASE_LOCAL === "1";
+const enabled = process.env["SUPABASE_LOCAL"] === "1";
 
 describe.skipIf(!enabled)("last-owner concurrency (local Supabase)", () => {
   it("exactly one of two concurrent last-owner removals succeeds", async () => {
-    const url = process.env.SUPABASE_URL ?? "http://127.0.0.1:54321";
-    const service = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const url = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:54321";
+    const service = process.env["SUPABASE_SERVICE_ROLE_KEY"];
     if (!service) throw new Error("SUPABASE_SERVICE_ROLE_KEY required for SUPABASE_LOCAL=1");
 
     const admin = createClient(url, service, {
@@ -37,7 +37,7 @@ describe.skipIf(!enabled)("last-owner concurrency (local Supabase)", () => {
       return;
     }
 
-    const anon = process.env.SUPABASE_ANON_KEY ?? "";
+    const anon = process.env["SUPABASE_ANON_KEY"] ?? "";
     const clientA = createClient(url, anon, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
