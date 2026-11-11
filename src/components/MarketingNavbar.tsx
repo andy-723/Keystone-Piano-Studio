@@ -91,6 +91,9 @@ export function MarketingNavbar() {
                     Student privacy & care
                   </Link>
                 </MenuLink>
+                <MenuLink>
+                  <Link to="/about">About us</Link>
+                </MenuLink>
               </div>
             </MenuItem>
             <MenuItem item="Pricing">
