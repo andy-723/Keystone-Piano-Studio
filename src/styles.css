@@ -316,6 +316,13 @@
   opacity: 0.22;
   pointer-events: none;
 }
+.mk-pricing-hero { min-height: 440px; }
+.mk-pricing-pro::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--color-mk-gold); }
+.mk-compare-row { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 20px; }
+@media (max-width: 639px) {
+  .mk-pricing-hero { min-height: 0; }
+  .mk-compare-row { grid-template-columns: minmax(0, 1.5fr) minmax(0, .65fr) minmax(0, .65fr); gap: 10px; }
+}
 @keyframes mk-enter { from { opacity: 0.3; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes mk-screen-in { from { opacity: 0.5; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes mk-stage-settle { from { transform: scale(1.04); } to { transform: scale(1); } }
