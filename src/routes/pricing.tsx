@@ -29,9 +29,10 @@ const comparison = [
   { label: "Student attention flags & board rules", base: "Not included", pro: "Included" },
 ];
 const financialRoadmap = [
+  { title: "Studio Snapshot", base: "A planned week/month pulse: collected revenue, overdue balances, roll, incomplete invites, practice and delivered lessons.", pro: "Owner/admin studio totals with teachers scoped to their caseload; unlimited roll." },
   { title: "Student costs, without the double entry", base: "Billable books and exam fees on family invoices; a lightweight expense log.", pro: "Everything in Base, plus receipt forwarding and billable costs synced to Xero." },
   { title: "Know what you actually collected", base: "Annual gross tuition and Stripe fee summary, with an EOFY export.", pro: "Gross-to-net reconciliation, earned versus collected revenue, prepaid tuition and studio margin." },
-  { title: "A clearer view of tax time", base: "Rolling turnover alerts, teaching-hours records and a travel log.", pro: "Quarterly GST estimates, teacher payout reporting and contractor review indicators." },
+  { title: "Home studio and travel", base: "Teaching and admin hours, an illustrative 70¢/hr home-office estimate, optional kilometre log and EOFY CSV.", pro: "Everything in Base, plus GST radar, teacher splits and contractor payout reporting." },
 ];
 
 function Pricing() {
@@ -84,7 +85,7 @@ function Pricing() {
       <section className="mx-auto max-w-7xl px-5 py-16 md:px-10">
         <p className="text-base font-semibold text-mk-bronze">FINANCIAL ROADMAP · PLANNED, NOT AVAILABLE YET</p>
         <h2 className="mt-4 max-w-3xl font-mk-serif text-3xl font-semibold md:text-4xl">Better studio finances.<br />Not another accounting ledger.</h2>
-        <p className="mt-5 max-w-3xl text-lg text-mk-ink/75">We’re working towards the blueprint’s Tax Lite tools for Base and financial dashboard for Pro. These are future additions, not features you can use today.</p>
+        <p className="mt-5 max-w-3xl text-lg text-mk-ink/75">Snapshot and Tax Lite for solo owners in Base; a deeper CFO view for growing studios in Pro. These are planned additions, not features you can use today. Base remains the plan name — no separate Starter subscription.</p>
         <div className="mt-10 divide-y divide-mk-gold/50 border-y border-mk-gold/50">{financialRoadmap.map(item => <div key={item.title} className="grid gap-5 py-8 md:grid-cols-3 md:gap-8"><h3 className="font-mk-serif text-2xl font-semibold">{item.title}</h3><div><p className="text-base font-semibold text-mk-bronze">Base · planned</p><p className="mt-2 text-lg text-mk-ink/75">{item.base}</p></div><div><p className="text-base font-semibold text-mk-bronze">Pro · planned</p><p className="mt-2 text-lg text-mk-ink/75">{item.pro}</p></div></div>)}</div>
         <p className="mt-6 max-w-3xl text-base text-mk-ink/70">Tax tools will support record-keeping, not lodge returns or replace professional advice. Eligibility, rates and reporting obligations must be checked against current ATO guidance. Your studio’s GST obligations do not depend on which Keystone plan you choose.</p>
       </section>
