@@ -16,6 +16,7 @@ export function createResendEmailProvider(): EmailProvider {
         text: input.text,
         ...(input.replyTo ? { replyTo: input.replyTo } : {}),
         ...(input.tags ? { tags: input.tags } : {}),
+        ...(input.headers ? { headers: input.headers } : {}),
         ...(input.attachments?.length
           ? {
               attachments: input.attachments.map((attachment) => ({

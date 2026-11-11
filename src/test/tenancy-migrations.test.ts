@@ -14,6 +14,8 @@ const STUDIO_ID_ALLOWLIST: Record<string, string> = {
   studio: "studio itself",
   platform_staff: "Keystone platform operators — no studio tenancy (ADR-019 out of scope)",
   platform_audit: "platform-wide append-only audit — studio id optional on some events",
+  notification_preference:
+    "a person's own email switches (0018), across all their studios; RLS is user_id = auth.uid()",
 };
 
 function sqlFiles() {
