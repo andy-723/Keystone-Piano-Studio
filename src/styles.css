@@ -218,6 +218,39 @@
   .mk-laptop-trackpad { height: 22px; margin-top: 6px; }
 }
 .mk-screen { animation: mk-screen-in 300ms ease-out both; }
+.mk-showcase-stage { position: relative; isolation: isolate; display: grid; grid-template-columns: 1.35fr 1fr; align-items: center; gap: 2%; padding: 20px 0 70px; }
+.mk-showcase-preview { position: relative; min-width: 0; transition: transform 500ms ease, opacity 500ms ease; }
+.mk-showcase-preview-ipad { margin-left: -12%; transform: rotate(3deg); z-index: 2; }
+.mk-showcase-stage[data-active=laptop] .mk-showcase-preview-ipad,
+.mk-showcase-stage[data-active=ipad] .mk-showcase-preview-laptop { transform: translateY(30px) scale(.88); opacity: .45; }
+.mk-showcase-thumbnail { height: 390px; }
+.mk-showcase-thumbnail > div:last-child { overflow: hidden; }
+.mk-showcase-open { position: absolute; inset: 0; padding: 0; display: flex; align-items: end; justify-content: center; cursor: zoom-in; }
+.mk-showcase-label { position: absolute; bottom: -60px; display: flex; gap: 10px; align-items: center; min-height: 48px; color: var(--color-mk-bronze); font-size: 18px; }
+.mk-showcase-overlay { backdrop-filter: blur(5px); }
+.mk-showcase-popout { position: fixed; z-index: 51; top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(1100px, calc(100% - 32px)); max-height: calc(100dvh - 24px); outline: none; }
+.mk-showcase-popout[data-device=ipad] { width: min(740px, calc(100% - 32px)); }
+.mk-showcase-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 3% 12px; padding: 4px 8px; border-radius: 8px; background: var(--color-mk-paper); }
+.mk-showcase-live { height: min(580px, calc(100dvh - 300px)); min-height: 220px; }
+.mk-showcase-popout[data-device=ipad] .mk-showcase-live { height: min(760px, calc(100dvh - 160px)); }
+.mk-showcase-front { animation: mk-device-forward 500ms cubic-bezier(.16, 1, .3, 1) both; transform-origin: 30% 70%; }
+.mk-showcase-popout[data-device=ipad] .mk-showcase-front { transform-origin: 80% 70%; }
+@keyframes mk-device-forward { from { opacity: .4; transform: translateY(55px) scale(.72); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@media (max-width: 639px) {
+  .mk-showcase-stage { grid-template-columns: 1fr; gap: 90px; padding-bottom: 70px; }
+  .mk-showcase-preview-ipad { width: 86%; margin-inline: auto; transform: rotate(2deg); }
+  .mk-showcase-thumbnail { height: 300px; }
+  .mk-showcase-popout, .mk-showcase-popout[data-device=ipad] { width: calc(100% - 8px); }
+  .mk-showcase-toolbar { margin-inline: 4px; }
+  .mk-showcase-popout .mk-laptop-deck { height: 62px; }
+  .mk-showcase-popout .mk-laptop-keyboard { display: none; }
+  .mk-showcase-popout .mk-laptop-trackpad { height: 34px; }
+  .mk-showcase-live { height: calc(100dvh - 225px); }
+  .mk-showcase-popout[data-device=ipad] .mk-showcase-live { height: calc(100dvh - 160px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mk-showcase-front, .mk-showcase-overlay, .mk-showcase-preview, .mk-showcase-popout * { animation: none !important; transition: none !important; }
+}
 .mk-hero-copy { animation: mk-enter 850ms ease-out both; }
 .mk-stage-image { animation: mk-stage-settle 1800ms ease-out both; }
 .mk-revealed { animation: mk-enter 650ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
