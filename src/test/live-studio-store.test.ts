@@ -198,7 +198,7 @@ function fakeSupabase(tables: Tables, options: { failOn?: string } = {}) {
     return builder;
   };
   const rpcCalls: Array<[string, Record<string, unknown>]> = [];
-  const rpc = async (name: string, args: Record<string, unknown>) => {
+  const rpc = async (name: string, args: Row) => {
     rpcCalls.push([name, args]);
     if (options.failOn === `rpc.${name}`)
       return { data: null, error: { message: "not allowed", code: "42501" } };
