@@ -26,7 +26,7 @@ function HelpPage() {
   const email = publicSupportEmail();
 
   return (
-    <PublicPage title={audience === "family" && lang === "zh-CN" ? "帮助中心" : "Help centre"}>
+    <PublicPage eyebrow="SUPPORT" title={audience === "family" && lang === "zh-CN" ? "帮助中心" : "Help centre"}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div role="group" aria-label="Who is this help for?" className="flex flex-wrap gap-2">
           <Button
@@ -72,9 +72,9 @@ function HelpPage() {
         mode="public"
         supportEmail={email}
       />
-      <p className="text-sm text-[#6B6052]">
+      <p className="text-base text-mk-ink/70">
         {audience === "family" && lang === "zh-CN" ? "也可以发邮件至 " : "You can also email "}
-        <a className="text-[#604A19] underline" href={`mailto:${email}`}>
+        <a className="text-mk-bronze underline" href={`mailto:${email}`}>
           {email}
         </a>
         {audience === "family" && lang === "zh-CN"

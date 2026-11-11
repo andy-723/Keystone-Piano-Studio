@@ -12,14 +12,6 @@ export function publicSupportEmail(): string {
   return value || "support@keystonemusichq.com";
 }
 
-const SECTION_LABELS: Record<string, string> = {
-  "/help": "SUPPORT",
-  "/contact": "GET IN TOUCH",
-  "/privacy": "LEGAL",
-  "/terms": "LEGAL",
-  "/disclaimer": "LEGAL",
-};
-
 /**
  * Standalone public web page (Help, Contact, Privacy, Terms, Disclaimer) in the marketing
  * theme: shared navbar, ink hero band, paper content card and marketing footer.
@@ -28,14 +20,14 @@ const SECTION_LABELS: Record<string, string> = {
 export function PublicPage({
   title,
   intro,
+  eyebrow = "LEGAL",
   children,
 }: {
   title: string;
   intro?: string;
+  eyebrow?: string;
   children: ReactNode;
 }) {
-  const path = typeof window !== "undefined" ? window.location.pathname : "";
-  const label = SECTION_LABELS[path] ?? "KEYSTONE MUSIC HQ";
   return (
     <div className="min-h-[100dvh] bg-mk-cream font-mk-sans text-mk-ink antialiased">
       <MarketingNavbar />
@@ -46,9 +38,9 @@ export function PublicPage({
           style={{ background: "var(--mk-essentials-pattern)" }}
         />
         <div className="mx-auto max-w-4xl px-5 py-12 md:px-10 md:py-16">
-          <p className="flex items-center gap-3 text-base font-medium text-mk-gold" suppressHydrationWarning>
+          <p className="flex items-center gap-3 text-base font-medium text-mk-gold">
             <span className="h-px w-8 bg-mk-gold" aria-hidden />
-            {label}
+            {eyebrow}
           </p>
           <h1 className="mt-4 font-mk-serif text-4xl font-semibold leading-tight md:text-5xl">
             {title}

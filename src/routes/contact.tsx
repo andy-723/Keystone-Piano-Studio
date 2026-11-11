@@ -30,7 +30,7 @@ function ContactPage() {
   const support = publicSupportEmail();
 
   return (
-    <PublicPage
+    <PublicPage eyebrow="GET IN TOUCH"
       title={studio ? "Request a studio" : "Contact us"}
       intro="Studio accounts are set up by the Keystone team. Tell us a little about your studio and we'll reply by email, usually within one business day."
     >
