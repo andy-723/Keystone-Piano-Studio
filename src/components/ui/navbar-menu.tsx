@@ -5,10 +5,9 @@ import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function Menu({ children, onSelect }: { children: ReactNode; onSelect: () => void }) {
-  const reduced = useReducedMotion();
   return <Navigation.Root aria-label="Main navigation" className="mk-navbar-menu" delayDuration={100} onClick={event => { if ((event.target as HTMLElement).closest("a")) onSelect(); }}>
     <Navigation.List className="mk-navbar-list">{children}</Navigation.List>
-    <div className="mk-navbar-viewport-position"><Navigation.Viewport asChild><motion.div layout={!reduced} transition={{ type: "spring", mass: .5, damping: 18, stiffness: 140 }} className="mk-navbar-viewport" /></Navigation.Viewport></div>
+    <div className="mk-navbar-viewport-position"><Navigation.Viewport className="mk-navbar-viewport" /></div>
   </Navigation.Root>;
 }
 
