@@ -6,6 +6,7 @@ import { StudioShowcase } from "@/components/StudioShowcase";
 import { MarketingMotion } from "@/components/MarketingMotion";
 import teachingMoment from "@/assets/keystone-teaching-moment.jpg";
 import { MarketingNavbar } from "@/components/MarketingNavbar";
+import { CinematicFooter } from "@/components/ui/motion-footer";
 import { ArrowRight, Lock, MapPin, MailOpen, FileSignature, BookOpen, Receipt, Clock, Wallet, Car, ArrowDownToLine } from "lucide-react";
 
 const SIGN_IN = "https://keystonemusichq.com/login";
@@ -161,29 +162,8 @@ function Welcome() {
         </div>
       </section>
 
-      {/* Closing CTA */}
-      <section className="mx-auto max-w-4xl px-5 py-28 text-center">
-        <div className="mx-auto mb-8 h-px w-24 bg-mk-gold" aria-hidden />
-        <h2 className={`${serif} text-4xl font-semibold leading-tight md:text-6xl`}>Bring your studio to Keystone.</h2>
-        <p className="mx-auto mt-5 max-w-xl text-xl leading-relaxed text-mk-ink/75">Keystone is invite-only. Tell us about your studio and we'll set you up personally.</p>
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-          <PrimaryCta />
-          <Button asChild variant="ghost" size="lg" className="border border-mk-ink/25 text-mk-ink hover:bg-mk-paper"><a href={SIGN_IN}>Sign in</a></Button>
-        </div>
-      </section>
-
       </main>
-      <footer className="border-t border-mk-gold/50 bg-mk-paper">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-5 py-8 text-base text-mk-ink/70 md:px-10">
-          <p>© 2026 Synoratech Pty Ltd · Keystone Music HQ</p>
-          <nav className="flex flex-wrap gap-6">
-            <Link to="/pricing" className="hover:text-mk-ink">Pricing</Link>
-            <a href="mailto:support@keystonemusichq.com" className="hover:text-mk-ink">Help</a>
-            <span>Marketing preview · no live payments or tax filing</span>
-            <span>Data hosted in Sydney, Australia</span>
-          </nav>
-        </div>
-      </footer>
+      <CinematicFooter />
     </div></MarketingMotion>
   );
 }
