@@ -6,10 +6,11 @@
 /** Keystone's own GST status (its operating ABN is not registered for GST as of 11 Nov 2026). */
 export const KEYSTONE_GST_REGISTERED = false;
 
-/** Shown beside Keystone's own prices. Prices are always the total price; never "+ GST" (ACCC price display). */
-export const KEYSTONE_PRICE_GST_LINE = KEYSTONE_GST_REGISTERED
-  ? "Price includes GST."
-  : "Keystone is not registered for GST, so no GST is charged.";
+/**
+ * Shown beside Keystone's own prices once Keystone registers for GST. Prices are always the total
+ * price; never "+ GST" (ACCC price display). While not registered, say nothing about GST (Andrew, 11 Nov 2026).
+ */
+export const KEYSTONE_PRICE_GST_LINE = KEYSTONE_GST_REGISTERED ? "Price includes GST." : "";
 
 /** Every tax screen and every export (T-04). */
 export const TAX_DISCLAIMER =

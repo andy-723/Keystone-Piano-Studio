@@ -33,7 +33,7 @@ export function PlanBilling({ scope = "demo" }: { scope?: IntegrationScope }) {
     <h2 className="text-2xl font-semibold" data-tour="settings-plan">Plan and billing</h2>
     <div className="mt-5 rounded-md border border-border bg-card p-5 md:p-7">
       <p className="text-2xl font-semibold">You're on the {label} plan</p>
-      {data.plan !== "academy" && <p className="mt-3 text-lg">A${base ? "29" : "49"} a month. {KEYSTONE_PRICE_GST_LINE}</p>}
+      {data.plan !== "academy" && <p className="mt-3 text-lg">A${base ? "29" : "49"} a month.{KEYSTONE_PRICE_GST_LINE && ` ${KEYSTONE_PRICE_GST_LINE}`}</p>}
       {data.renewal && <p className="mt-3">Renews {data.renewal}</p>}
       {data.card && <p className="mt-3 flex items-center gap-3"><CreditCard aria-hidden className="size-6 text-muted-foreground" />{data.card}</p>}
       {!live && <Button className="mt-5" onClick={() => { change.reset(); setConfirm(true); }}>{base ? "Upgrade to Pro" : "Switch to Base"}<ArrowRight aria-hidden /></Button>}
