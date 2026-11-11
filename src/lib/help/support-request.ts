@@ -37,39 +37,39 @@ export const STUDIO_CATEGORIES: SupportCategory[] = [
 export const FAMILY_CATEGORIES: SupportCategory[] = [
   {
     id: "lessons",
-    label: { en: "Lesson times, cancellations or make-ups", "zh-CN": "上课时间、取消或补课" },
+    label: { en: "Lesson times, cancellations or make-ups", "zh-CN": "上课时间、取消或补课", vi: "Giờ học, hủy buổi hoặc học bù" },
     answeredBy: "studio",
   },
   {
     id: "fees",
-    label: { en: "Fees, invoices or refunds", "zh-CN": "学费、账单或退款" },
+    label: { en: "Fees, invoices or refunds", "zh-CN": "学费、账单或退款", vi: "Học phí, hóa đơn hoặc hoàn tiền" },
     answeredBy: "studio",
   },
   {
     id: "progress",
-    label: { en: "My child's progress or exams", "zh-CN": "孩子的进度或考试" },
+    label: { en: "My child's progress or exams", "zh-CN": "孩子的进度或考试", vi: "Tiến độ hoặc kỳ thi của con" },
     answeredBy: "studio",
   },
-  { id: "sign_in", label: { en: "I can't sign in", "zh-CN": "无法登录" }, answeredBy: "keystone" },
+  { id: "sign_in", label: { en: "I can't sign in", "zh-CN": "无法登录", vi: "Tôi không đăng nhập được" }, answeredBy: "keystone" },
   {
     id: "bug",
-    label: { en: "The app isn't working", "zh-CN": "应用无法正常使用" },
+    label: { en: "The app isn't working", "zh-CN": "应用无法正常使用", vi: "Ứng dụng không hoạt động" },
     answeredBy: "keystone",
   },
   {
     id: "privacy",
-    label: { en: "My information or privacy", "zh-CN": "我的信息或隐私" },
+    label: { en: "My information or privacy", "zh-CN": "我的信息或隐私", vi: "Thông tin của tôi hoặc quyền riêng tư" },
     answeredBy: "keystone",
   },
   {
     id: "security",
-    label: { en: "Someone may have got into my account", "zh-CN": "我的账户可能被盗用" },
+    label: { en: "Someone may have got into my account", "zh-CN": "我的账户可能被盗用", vi: "Có thể ai đó đã vào tài khoản của tôi" },
     answeredBy: "keystone",
     urgent: true,
   },
   {
     id: "other",
-    label: { en: "Something else about the app", "zh-CN": "关于应用的其他问题" },
+    label: { en: "Something else about the app", "zh-CN": "关于应用的其他问题", vi: "Vấn đề khác về ứng dụng" },
     answeredBy: "keystone",
   },
 ];
