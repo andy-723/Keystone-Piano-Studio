@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import hero from "@/assets/welcome-hero.jpg";
-import { FinanceShowcase, marketingFinanceQuery } from "@/components/FinanceShowcase";
+import { marketingFinanceQuery } from "@/components/FinanceShowcase";
+import { StudioShowcase } from "@/components/StudioShowcase";
 import { MarketingMotion } from "@/components/MarketingMotion";
 import teachingMoment from "@/assets/keystone-teaching-moment.jpg";
 import logo from "@/assets/keystone-logo.jpg";
@@ -83,25 +84,35 @@ function Welcome() {
       <main>
       <section aria-labelledby="snapshot-title" className="bg-mk-paper">
         <div className="mx-auto max-w-7xl px-5 py-12 md:px-10 md:py-16">
-          <Eyebrow>Studio Snapshot</Eyebrow>
+          <Eyebrow>A look inside Keystone</Eyebrow>
           <div className="mt-4 grid gap-4 lg:grid-cols-[1.2fr_1fr] lg:gap-12">
-            <h2 id="snapshot-title" className="font-mk-serif text-3xl font-semibold leading-tight md:text-4xl">Unpaid, unenrolled, not practising.<br /><em className="font-normal">One calm screen.</em></h2>
-            <p className="text-lg leading-relaxed text-mk-ink/75">What came in. Who needs a follow-up. How the teaching week went. A studio snapshot, not another spreadsheet — designed for solo owners, with room to grow.</p>
+            <h2 id="snapshot-title" className="font-mk-serif text-3xl font-semibold leading-tight md:text-4xl">One studio.<br /><em className="font-normal">At your desk or by the piano.</em></h2>
+            <p className="text-lg leading-relaxed text-mk-ink/75">A clear view of your teaching day, family conversations and studio finances. Designed for every teacher, including those who prefer music to technology.</p>
           </div>
           <div className="mt-5 border-y border-mk-gold/50 py-4"><p className="text-lg text-mk-ink"><strong className="text-mk-bronze">Tax Lite for EOFY.</strong> Gross tuition, Stripe fees and home-studio hours — ready to review for myTax.</p><p className="mt-1 text-base text-mk-ink/70">Planned finance tools. Explore the examples below.</p></div>
-          <FinanceShowcase mode="snapshot" />
-          <p className="mt-5 text-base text-mk-ink/70">Lists when you need detail. CSV when you need your own notes. Studio-wide finances for owners and admins; teachers keep their own caseload.</p>
+          <StudioShowcase />
+          <p className="mt-5 text-base text-mk-ink/70">Example studio only · no messages or invoices are sent.</p>
         </div>
+      </section>
+
+      <section aria-labelledby="features-title" className="mx-auto max-w-7xl px-5 py-12 md:px-10 md:py-16">
+        <Eyebrow>The everyday essentials</Eyebrow>
+        <h2 id="features-title" className="mt-4 font-mk-serif text-3xl font-semibold md:text-4xl">Less admin. More attention to each student.</h2>
+        <dl className="mt-8 grid gap-x-12 md:grid-cols-2">
+          {[
+            ["Studio Snapshot · planned", "Unpaid, unenrolled, not practising — one calm view of the week. Lists for the detail, CSV for your own notes. Studio-wide finances for owners and admins; teachers keep their own caseload."],
+            ["A digital day book", "Your teaching week in one place, with one-tap attendance and a clear roll. Keep lessons organised at your desk or beside the piano."],
+            ["Family chat, together", "Conversations stay beside the student, with practice updates and lesson feedback in one place instead of scattered messages."],
+            ["Clear term invoices", "See who has paid and who needs a follow-up. Prepare family invoices without piecing together another spreadsheet."],
+          ].map(([title, body]) => <div key={title} className="border-t border-mk-gold/50 py-6"><dt className="font-mk-serif text-2xl font-semibold">{title}</dt><dd className="mt-3 text-lg leading-relaxed text-mk-ink/75">{body}</dd></div>)}
+        </dl>
       </section>
 
       <section aria-labelledby="tax-title" className="mx-auto max-w-7xl px-5 py-12 md:px-10 md:py-16">
         <Eyebrow>Tax Lite · planned</Eyebrow>
         <h2 id="tax-title" className="mt-4 max-w-3xl font-mk-serif text-3xl font-semibold leading-tight md:text-4xl">EOFY without rebuilding<br />the year in a spreadsheet.</h2>
         <p className="mt-4 max-w-3xl text-lg leading-relaxed text-mk-ink/75">Studio-specific numbers before you ever open Xero. For solo teachers preparing cash-basis myTax records: gross tuition, merchant fees and home-studio hours, together.</p>
-        <div className="mt-6 grid min-w-0 gap-8 xl:grid-cols-2 xl:gap-12">
-          <FinanceShowcase mode="tax" />
-          <dl className="divide-y divide-mk-gold/50">{taxFeatures.map(({ Icon, title, body }) => <div key={title} className="grid grid-cols-[2rem_1fr] gap-x-4 py-5"><Icon aria-hidden className="mt-1 size-6 text-mk-bronze" /><dt className="font-mk-serif text-2xl font-semibold">{title}</dt><dd className="col-start-2 mt-2 text-lg leading-relaxed text-mk-ink/75">{body}</dd></div>)}</dl>
-        </div>
+        <dl className="mt-6 grid gap-x-12 md:grid-cols-2">{taxFeatures.map(({ Icon, title, body }) => <div key={title} className="grid grid-cols-[2rem_1fr] gap-x-4 border-t border-mk-gold/50 py-5"><Icon aria-hidden className="mt-1 size-6 text-mk-bronze" /><dt className="font-mk-serif text-2xl font-semibold">{title}</dt><dd className="col-start-2 mt-2 text-lg leading-relaxed text-mk-ink/75">{body}</dd></div>)}</dl>
         <p className="mt-7 max-w-4xl border-t border-mk-gold/50 pt-5 text-base text-mk-ink/70">Tax Lite is record preparation, not a general ledger or tax lodgement. Rent, utilities and bank feeds stay in Xero when you grow; Keystone doesn’t replace your accountant. Estimates are illustrative, not ATO advice.</p>
       </section>
 

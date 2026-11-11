@@ -1,4 +1,5 @@
 # Teacher day-book
+- [x] Combine welcome previews into one interactive laptop and one iPad, followed by feature breakdowns; verify device controls and narrow layouts.
 - [x] Make interactive laptop previews recognisable with a screen bezel, camera, hinge, keyboard and trackpad; verify phone and laptop interactions.
 - [x] Refocus the welcome page on Snapshot and Tax Lite with interactive laptop/iPad previews; keep finance tools labelled as planned and verify phone/tablet/laptop layouts.
 - [x] Add marketing photography, restrained scroll reveals and device transitions; verify welcome/pricing interactions and phone/tablet layouts with reduced motion.

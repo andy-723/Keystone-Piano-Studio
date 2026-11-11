@@ -39,10 +39,10 @@ function DayBook() {
               <Button variant="ghost"
                 type="button"
                 onClick={() => setDone((d) => ({ ...d, [l.name]: !d[l.name] }))}
-                className={`flex min-h-14 w-full items-center gap-3 rounded-2xl border px-4 text-left text-base transition ${on ? "border-mk-bronze/50 bg-mk-cream" : "border-mk-gold/40 bg-mk-paper hover:border-mk-bronze"}`}
+                className={`flex h-auto min-h-14 w-full flex-wrap items-center gap-2 whitespace-normal rounded-lg border px-3 py-3 text-left text-base transition ${on ? "border-mk-bronze/50 bg-mk-cream" : "border-mk-gold/40 bg-mk-paper hover:border-mk-bronze"}`}
               >
                 <span className="w-20 shrink-0 font-semibold tabular-nums">{l.time}</span>
-                <span className="min-w-0 flex-1 truncate">{l.name} <span className="text-mk-ink/60">· {l.len}</span></span>
+                <span className="min-w-0 flex-1 basis-32">{l.name} <span className="text-mk-ink/60">· {l.len}</span></span>
                 <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 font-medium ${on ? "bg-mk-bronze text-mk-paper" : "border border-mk-ink/20 text-mk-ink/70"}`}>
                   {on ? <><Check className="h-4 w-4" aria-hidden /> Attended</> : "Mark"}
                 </span>
@@ -137,12 +137,12 @@ function Invoices() {
   );
 }
 
-function AppScreen({ screen, device, onNav }: { screen: Screen; device: Device; onNav: (s: Screen) => void }) {
+export function AppScreen({ screen, device, onNav, embedded = false }: { screen: Screen; device: Device; onNav: (s: Screen) => void; embedded?: boolean }) {
   const nav: [Screen, string, typeof BookOpen][] = [["day", "Today", BookOpen], ["week", "Week", CalendarDays], ["chat", "Chat", MessageCircle], ["invoices", "Invoices", FileText]];
   const body = screen === "day" ? <DayBook /> : screen === "week" ? <Week /> : screen === "chat" ? <Chat /> : <Invoices />;
   return (
     <div className={`flex h-full bg-mk-paper text-mk-ink ${device === "ipad" ? "flex-col-reverse" : ""}`}>
-      <nav className={device === "laptop" ? "hidden w-44 shrink-0 flex-col gap-1 border-r border-mk-gold/40 p-3 sm:flex" : "grid grid-cols-4 border-t border-mk-gold/40"}>
+      {!embedded && <nav className={device === "laptop" ? "hidden w-44 shrink-0 flex-col gap-1 border-r border-mk-gold/40 p-3 sm:flex" : "grid grid-cols-4 border-t border-mk-gold/40"}>
         {device === "laptop" && <p className="mb-3 px-2 font-mk-serif text-lg font-semibold tracking-wide">KEYSTONE</p>}
         {nav.map(([id, label, I]) => (
           <Button variant="ghost" key={id} type="button" onClick={() => onNav(id)}
@@ -150,7 +150,7 @@ function AppScreen({ screen, device, onNav }: { screen: Screen; device: Device; 
             <I className="h-5 w-5" aria-hidden />{label}
           </Button>
         ))}
-      </nav>
+      </nav>}
       <div key={screen} className="mk-screen min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">{body}</div>
     </div>
   );
