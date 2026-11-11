@@ -10,17 +10,7 @@ export function LaptopFrame({ children }: { children: ReactNode }) {
         <div className="mk-laptop-chin" aria-hidden="true" />
       </div>
       <div className="mk-laptop-hinge" aria-hidden="true" />
-      <div className="mk-laptop-deck" aria-hidden="true">
-        <div className="mk-laptop-keyboard">
-          {Array.from({ length: 3 }, (_, row) => (
-            <div key={row} className="mk-laptop-key-row">
-              {Array.from({ length: 14 }, (_, key) => <span key={key} />)}
-            </div>
-          ))}
-          <div className="mk-laptop-key-row mk-laptop-space-row"><span /><span /><span /><span /><span /></div>
-        </div>
-        <div className="mk-laptop-trackpad" />
-      </div>
+      <div className="mk-laptop-deck" aria-hidden="true"><span /></div>
       <div className="mk-laptop-edge" aria-hidden="true"><span /></div>
     </div>
   );

@@ -20,7 +20,7 @@ const features = [
 function DeviceContent({ device, initial, preview = false }: { device: "laptop" | "ipad"; initial: Feature; preview?: boolean }) {
   const [feature, setFeature] = useState<Feature>(initial);
   return <div className={`@container flex min-w-0 flex-col overflow-hidden bg-mk-paper text-mk-ink ${preview ? "mk-showcase-thumbnail" : "mk-showcase-live"}`}>
-    <div className="border-b border-mk-gold/40 px-3 py-3">
+    <div className="mk-showcase-screen-header border-b border-mk-gold/40 px-3 py-3">
       <p className="mb-3 font-mk-serif text-xl font-semibold">Keystone Music HQ</p>
       {!preview && <div role="tablist" aria-label={`${device === "laptop" ? "Laptop" : "iPad"} features`} className="grid grid-cols-2 gap-1 @min-[360px]:grid-cols-3">
         {features.map(({ id, label, Icon }) => <Button key={id} id={`${device}-${id}`} role="tab" aria-selected={feature === id} aria-controls={`${device}-panel`} variant="ghost" type="button" onClick={() => setFeature(id)} className={`h-auto min-h-14 flex-col gap-1 whitespace-normal rounded-md px-1 py-2 text-base ${feature === id ? "bg-mk-bronze text-mk-paper hover:bg-mk-ink hover:text-mk-paper" : "text-mk-ink hover:bg-mk-cream"}`}><Icon className="size-5 shrink-0" aria-hidden />{label}</Button>)}
@@ -46,16 +46,14 @@ export function StudioShowcase() {
       </div>)}
     </div>
     <DialogPortal>
-      <DialogOverlay className="mk-showcase-overlay bg-mk-ink/45" />
+      <DialogOverlay className="mk-showcase-overlay bg-mk-paper/65" />
       <DialogPrimitive.Content aria-describedby={undefined} className="mk-showcase-popout font-mk-sans text-mk-ink" data-device={active ?? "laptop"}>
-        <div className="mk-showcase-toolbar">
-          <DialogTitle className="sr-only">Keystone {active === "ipad" ? "iPad" : "laptop"} preview</DialogTitle>
-          <div role="group" aria-label="Preview device" className="flex gap-1">
-            {(["laptop", "ipad"] as const).map(device => <Button key={device} type="button" variant="ghost" aria-pressed={active === device} onClick={() => setActive(device)} className={`min-h-12 text-base ${active === device ? "bg-mk-bronze text-mk-paper hover:bg-mk-ink hover:text-mk-paper" : "text-mk-ink hover:bg-mk-cream"}`}>{device === "laptop" ? <Laptop aria-hidden /> : <Tablet aria-hidden />}{device === "laptop" ? "Laptop" : "iPad"}</Button>)}
-          </div>
-          <DialogClose asChild><Button variant="ghost" type="button" aria-label="Close preview" title="Close preview" className="size-12 shrink-0 text-mk-ink hover:bg-mk-cream"><X aria-hidden /></Button></DialogClose>
-        </div>
+        <DialogTitle className="sr-only">Keystone {active === "ipad" ? "iPad" : "laptop"} preview</DialogTitle>
+        <DialogClose asChild><Button variant="ghost" type="button" aria-label="Close preview" title="Close preview" className="mk-showcase-close size-12 shrink-0 rounded-full text-mk-ink hover:bg-mk-paper"><X aria-hidden /></Button></DialogClose>
         {active && <div key={active} className="mk-showcase-front"><Hardware device={active}><DeviceContent device={active} initial={active === "laptop" ? "snapshot" : "day"} /></Hardware></div>}
+        <div role="group" aria-label="Preview device" className="mk-showcase-controls">
+          {(["laptop", "ipad"] as const).map(device => <Button key={device} type="button" variant="ghost" aria-pressed={active === device} onClick={() => setActive(device)} className="mk-showcase-switch min-h-12 rounded-none px-4 text-base text-mk-ink hover:bg-transparent hover:text-mk-bronze">{device === "laptop" ? <Laptop aria-hidden /> : <Tablet aria-hidden />}{device === "laptop" ? "Laptop" : "iPad"}</Button>)}
+        </div>
       </DialogPrimitive.Content>
     </DialogPortal>
   </Dialog>;
@@ -63,8 +61,9 @@ export function StudioShowcase() {
 
 function Hardware({ device, children }: { device: "laptop" | "ipad"; children: React.ReactNode }) {
   if (device === "laptop") return <LaptopFrame>{children}</LaptopFrame>;
-  return <div className="mk-showcase-tablet mk-device overflow-hidden rounded-[28px] border-[10px] border-mk-ink bg-mk-ink p-1">
-    <div className="flex h-4 items-center justify-center" aria-hidden><span className="size-1 rounded-full bg-device-lens" /></div>
-    <div className="overflow-hidden rounded-[14px]">{children}</div><div className="h-3" aria-hidden />
+  return <div className="mk-showcase-tablet mk-device">
+    <div className="mk-tablet-camera" aria-hidden><span /></div>
+    <div className="mk-tablet-display">{children}</div>
+    <div className="mk-tablet-home" aria-hidden><span /></div>
   </div>;
 }

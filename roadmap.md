@@ -1,4 +1,5 @@
 # Teacher day-book
+- [ ] Refresh laptop/iPad hardware with crisp dark-metal frames and unframed popout controls; verify feature actions and phone/tablet layouts.
 - [x] Separate everyday essentials and planned Tax Lite with gloss feature cards, contrasting backgrounds and phone/tablet checks.
 - [x] Adapt the supplied animated navigation to welcome/pricing with working Keystone links and mobile/touch controls; verify navigation and reduced motion.
 - [x] Simplify device previews and bring the selected laptop or iPad forward into a large interactive view; verify phone sizing, dismissal and screen actions.
