@@ -6,7 +6,8 @@ export function isAuMobile(value: string): boolean {
   return false;
 }
 
-export function formatAuMobileHint(lang: "en" | "zh-CN") {
+export function formatAuMobileHint(lang: "en" | "zh-CN" | "vi") {
+  if (lang === "vi") return "Số di động Úc, ví dụ 04xx xxx xxx";
   return lang === "zh-CN"
     ? "澳大利亚手机号，例如 04xx xxx xxx"
     : "Australian mobile, e.g. 04xx xxx xxx";

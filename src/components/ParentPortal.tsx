@@ -76,6 +76,7 @@ function ParentViews() {
             >
               <Button variant={lang === "en" ? "secondary" : "ghost"} aria-pressed={lang === "en"} onClick={() => setLang("en")}>EN</Button>
               <Button variant={lang === "zh-CN" ? "secondary" : "ghost"} aria-pressed={lang === "zh-CN"} onClick={() => setLang("zh-CN")}>中文</Button>
+              <Button variant={lang === "vi" ? "secondary" : "ghost"} aria-pressed={lang === "vi"} onClick={() => setLang("vi")} lang="vi" aria-label="Tiếng Việt">VI</Button>
             </div>
           </div>
         </div>

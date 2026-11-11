@@ -44,6 +44,16 @@ export function FocusLayout({
           >
             中文
           </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={lang === "vi" ? "default" : "outline"}
+            aria-pressed={lang === "vi"}
+            aria-label="Tiếng Việt"
+            onClick={() => onLangChange("vi")}
+          >
+            VI
+          </Button>
         </div>
       </header>
       <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 pb-8 pt-4 sm:px-6">

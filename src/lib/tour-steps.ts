@@ -265,7 +265,7 @@ export const FAMILY_TOUR: TourStep[] = [
   {
     id: "language",
     target: "family-language",
-    title: { en: "English, 中文 or Tiếng Việt", "zh-CN": "English 或 中文", vi: "English, 中文 hoặc Tiếng Việt" },
+    title: { en: "English, 中文 or Tiếng Việt", "zh-CN": "English、中文 或 Tiếng Việt", vi: "English, 中文 hoặc Tiếng Việt" },
     body: {
       en: "Switch language any time. The whole portal follows your choice.",
       "zh-CN": "随时切换语言，整个门户都会使用您选择的语言。", vi: "Đổi ngôn ngữ bất cứ lúc nào; toàn bộ cổng sẽ dùng ngôn ngữ bạn chọn.",
