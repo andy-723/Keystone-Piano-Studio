@@ -462,11 +462,11 @@ export const listPlatformAuditFn = createServerFn({ method: "POST" })
   .validator(
     (data: {
       accessToken: string;
-      event?: string;
-      from?: string;
-      to?: string;
-      page?: number;
-      ip?: string;
+      event?: string | undefined;
+      from?: string | undefined;
+      to?: string | undefined;
+      page?: number | undefined;
+      ip?: string | undefined;
     }) => data,
   )
   .handler(async ({ data }) => {

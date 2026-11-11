@@ -9,7 +9,7 @@ import { resolveAccountFn } from "@/server/account";
 
 export const Route = createFileRoute("/auth/mfa")({
   validateSearch: (search: Record<string, unknown>) => ({
-    next: typeof search.next === "string" ? search.next : undefined,
+    next: typeof search["next"] === "string" ? search["next"] : undefined,
   }),
   component: MfaChallengePage,
   head: () => ({ meta: [{ title: "Two-step sign-in — Keystone Music HQ" }] }),

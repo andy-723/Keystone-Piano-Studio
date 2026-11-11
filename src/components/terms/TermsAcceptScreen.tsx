@@ -40,10 +40,10 @@ export function TermsAcceptScreen({
   moneyRules: { billingCycle: string; lateFee: string; cancelNotice: string; makeUps: string; stopNotice: string };
   agreementMarkdown: string;
   /** Full Keystone family app terms (Parts A–D). Shown in the scrolling Keystone panel. */
-  appTermsMarkdown?: string;
+  appTermsMarkdown?: string | undefined;
   /** Part C privacy notice (merged). Used for the Part C link / PDF when provided. */
-  privacyNoticeMarkdown?: string;
-  appVersionNo?: number;
+  privacyNoticeMarkdown?: string | undefined;
+  appVersionNo?: number | undefined;
   requiresGuardian: boolean;
   onOpenAppTerms?: () => void;
   onOpenPrivacyNotice?: () => void;
