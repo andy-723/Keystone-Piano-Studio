@@ -58,7 +58,7 @@ export function StreetScene() {
           aria-pressed={music.wanted}
           aria-label={music.wanted ? "Mute Für Elise" : "Play Für Elise"}
           title={music.wanted ? "Mute music" : "Play music"}
-          className="music-toggle absolute bottom-6 left-6 z-3 flex min-h-11 items-center gap-2 rounded-full border border-[rgba(251,247,238,0.6)] bg-[rgba(21,16,13,0.55)] px-4 text-sm font-medium text-[#FBF7EE] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FBF7EE] max-[860px]:bottom-auto max-[860px]:left-auto max-[860px]:right-4 max-[860px]:top-7 max-[860px]:px-3"
+          className="music-toggle absolute bottom-6 left-6 z-3 flex min-h-11 items-center gap-2 rounded-full border border-[rgba(251,247,238,0.6)] bg-[rgba(21,16,13,0.55)] px-4 text-sm font-medium text-[#FBF7EE] transition-[background-color,border-color,transform] duration-150 fine-hover:hover:border-[rgba(251,247,238,0.9)] fine-hover:hover:bg-[rgba(21,16,13,0.75)] fine-hover:active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FBF7EE] max-[860px]:bottom-auto max-[860px]:left-auto max-[860px]:right-4 max-[860px]:top-7 max-[860px]:px-3"
         >
           <SpeakerIcon on={music.wanted} />
           {/* Icon only on narrow phones so the label never runs into the logo. */}

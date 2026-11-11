@@ -374,7 +374,7 @@ export function ProCfoPanel() {
             </Button>
             <Button
               type="button"
-              className="bg-[#604A19] text-[#FBF7EE] hover:bg-[#604A19]/90"
+              className="bg-bronze text-[#FBF7EE] hover:bg-bronze-hover"
               disabled={!pack.proEnabled || remittancePush.isPending}
               onClick={() => remittancePush.mutate()}
             >

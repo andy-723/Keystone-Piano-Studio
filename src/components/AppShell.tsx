@@ -77,8 +77,8 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
             key={to}
             to={to}
             activeOptions={{ exact: to === "/" }}
-            className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-lg px-2 text-base font-semibold text-sidebar-foreground hover:bg-sidebar-accent"
-            activeProps={{ className: "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary" }}
+            className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-lg px-2 text-base font-semibold text-sidebar-foreground transition-[background-color,color,transform] duration-150 fine-hover:hover:bg-sidebar-accent fine-hover:hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
+            activeProps={{ className: "bg-sidebar-primary text-sidebar-primary-foreground fine-hover:hover:bg-sidebar-primary fine-hover:hover:text-sidebar-primary-foreground" }}
           >
             <span className="relative flex size-6 items-center justify-center"><Icon className="size-6" aria-hidden />{to === "/chat" && chatNotification}</span>
             {label}
@@ -177,7 +177,7 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
             key={to}
             to={to}
             activeOptions={{ exact: to === "/" }}
-            className="min-readable flex min-h-16 min-w-0 flex-col items-center justify-center gap-0.5 font-semibold text-sidebar-foreground"
+            className="min-readable flex min-h-16 min-w-0 flex-col items-center justify-center gap-0.5 font-semibold text-sidebar-foreground transition-[background-color,color] duration-150 fine-hover:hover:bg-sidebar-accent/80 fine-hover:hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sidebar-ring"
             activeProps={{ className: "text-sidebar-primary underline underline-offset-4" }}
           >
             <span className="relative flex size-6 items-center justify-center"><Icon className="size-6" aria-hidden />{to === "/chat" && chatNotification}</span>

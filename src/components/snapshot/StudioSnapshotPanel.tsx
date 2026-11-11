@@ -187,8 +187,8 @@ export function StudioSnapshotPanel({
             variant={range === "week" ? "default" : "outline"}
             className={
               range === "week"
-                ? "bg-[#604A19] text-[#FBF7EE] hover:bg-[#604A19]/90"
-                : "border-[#CDBF9F] bg-[#F5EBD6] text-[#15100D]"
+                ? "bg-bronze text-[#FBF7EE] hover:bg-bronze-hover"
+                : "border-[#CDBF9F] bg-paper text-[#15100D] hover:bg-paper-hover"
             }
             aria-pressed={range === "week"}
             onClick={() => onRangeChange("week")}
@@ -200,8 +200,8 @@ export function StudioSnapshotPanel({
             variant={range === "month" ? "default" : "outline"}
             className={
               range === "month"
-                ? "bg-[#604A19] text-[#FBF7EE] hover:bg-[#604A19]/90"
-                : "border-[#CDBF9F] bg-[#F5EBD6] text-[#15100D]"
+                ? "bg-bronze text-[#FBF7EE] hover:bg-bronze-hover"
+                : "border-[#CDBF9F] bg-paper text-[#15100D] hover:bg-paper-hover"
             }
             aria-pressed={range === "month"}
             onClick={() => onRangeChange("month")}
@@ -221,10 +221,10 @@ export function StudioSnapshotPanel({
                   type="button"
                   aria-pressed={selected}
                   onClick={() => setDrill(id)}
-                  className={`flex min-h-28 w-full flex-col items-start gap-1 rounded-[2px] border px-4 py-4 text-left transition-colors ${
+                  className={`interactive-tile flex min-h-28 w-full flex-col items-start gap-1 rounded-[2px] border px-4 py-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                     selected
                       ? "border-[#C2A259] bg-[#FBF7EE] shadow-[inset_0_0_0_1px_#C2A259]"
-                      : "border-[#D9C79E] bg-[#F5EBD6] hover:bg-[#FBF7EE]"
+                      : "border-[#D9C79E] bg-paper"
                   }`}
                 >
                   <span className="flex items-center gap-2 text-base font-semibold text-[#604A19]">
@@ -399,7 +399,7 @@ export function StudioSnapshotPanel({
         </Button>
         <Button
           type="button"
-          className="bg-[#604A19] text-[#FBF7EE] hover:bg-[#604A19]/90"
+          className="bg-bronze text-[#FBF7EE] hover:bg-bronze-hover"
           disabled={count === 0}
           onClick={() => {
             const file = snapshotDrillCsv(drill, data);
