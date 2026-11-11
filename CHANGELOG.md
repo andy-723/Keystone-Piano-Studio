@@ -6,6 +6,10 @@ GitHub Release with the same text. See `docs/release-process.md`.
 
 ## Unreleased
 
+- The calendar now works on the demo studio (Clarke Piano Studio), including for platform staff:
+  it shows the demo timetable, and lessons you add, move or cancel there stay in that browser tab
+  and reset on reload. Google Calendar is not offered on the demo. Demo data now shows a
+  "Demo studio" label next to the studio name.
 - The Keystone logo on public pages (sign-in, help, terms, privacy, disclaimer, contact, welcome,
   pricing) now goes to the welcome page, or to your studio if you're already signed in. It never
   opens the demo app.

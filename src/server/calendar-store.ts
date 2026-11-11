@@ -2,7 +2,13 @@ import { createServiceSupabase } from "./supabase";
 import { isMockOnboarding } from "./env";
 import { ProblemError } from "./problem";
 import type { LessonException, LessonSeries } from "@/lib/lesson-calendar";
-import { students as demoStudents, families as demoFamilies } from "@/mocks/data";
+import {
+  students as demoStudents,
+  families as demoFamilies,
+  lessonTypes as demoLessonTypes,
+  weeklySlots as demoWeeklySlots,
+} from "@/mocks/data";
+import { addDays, fromMinutes, mondayOf, todayIn, toMinutes } from "@/lib/lesson-calendar";
 
 /** Studio id the calendar uses in the local demo (no Supabase). */
 export const DEMO_CALENDAR_STUDIO = "demo";
@@ -609,19 +615,68 @@ export function setCalendarStoreForTests(store: CalendarStore | null) {
   override = store;
 }
 
+/** The demo teacher every demo lesson belongs to (no auth.users row; demo only). */
+export const DEMO_CALENDAR_TEACHER = "demo-teacher";
+const DEMO_TIMEZONE = "Australia/Melbourne";
+
+/**
+ * Memory store for the demo studio (Clarke Piano Studio fixtures): the demo students plus their
+ * weekly lesson times from the demo timetable, starting four weeks before today so the current
+ * week is full. Used by local mock mode on the server and by the demo studio in the browser.
+ */
+export function createDemoCalendarStore(today = todayIn(DEMO_TIMEZONE)) {
+  const store = createMemoryCalendarStore({
+    timezone: DEMO_TIMEZONE,
+    students: {
+      [DEMO_CALENDAR_STUDIO]: demoStudents.map((s) => ({
+        id: s.id,
+        firstName: s.firstName,
+        lastName: s.lastName,
+        familyName: demoFamilies.find((f) => f.id === s.familyId)?.displayName ?? null,
+      })),
+    },
+  });
+  const start = addDays(mondayOf(today), -28);
+  // The fixture timetable has some longer lessons running into the next slot; start each lesson
+  // when the one before it ends so the demo week has no double-booking.
+  const dayEnds = new Map<number, number>();
+  demoWeeklySlots.forEach((slot, index) => {
+    const durationMin = demoLessonTypes.find((t) => t.id === slot.lessonTypeId)?.durationMin ?? 30;
+    const startMin = Math.max(toMinutes(slot.time), dayEnds.get(slot.weekday) ?? 0);
+    dayEnds.set(slot.weekday, startMin + durationMin);
+    const id = `00000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`;
+    store.state.series.set(id, {
+      id,
+      studioId: DEMO_CALENDAR_STUDIO,
+      studentId: slot.studentId,
+      teacherUserId: DEMO_CALENDAR_TEACHER,
+      repeat: "weekly",
+      firstDate: addDays(start, slot.weekday - 1),
+      untilDate: null,
+      startTime: fromMinutes(startMin),
+      durationMin,
+      location: null,
+      note: null,
+      googleSyncStatus: "off",
+      googleSyncError: null,
+    });
+  });
+  return store;
+}
+
+/**
+ * The demo studio's calendar runs in the browser tab (see src/lib/calendar-api.ts): changes stay
+ * in that tab and reset on reload, and nothing about the demo is stored on the server.
+ */
+export function browserDemoCalendarStore(): CalendarStore {
+  override ??= createDemoCalendarStore();
+  return override;
+}
+
 export function getCalendarStore(): CalendarStore {
   if (override) return override;
   if (isMockOnboarding()) {
-    mockStore ??= createMemoryCalendarStore({
-      students: {
-        [DEMO_CALENDAR_STUDIO]: demoStudents.map((s) => ({
-          id: s.id,
-          firstName: s.firstName,
-          lastName: s.lastName,
-          familyName: demoFamilies.find((f) => f.id === s.familyId)?.displayName ?? null,
-        })),
-      },
-    });
+    mockStore ??= createDemoCalendarStore();
     return mockStore;
   }
   return createSupabaseCalendarStore();

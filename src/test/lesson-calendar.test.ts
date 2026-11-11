@@ -11,7 +11,13 @@ import {
 } from "@/lib/lesson-calendar";
 import { resetMockMemberships } from "@/server/authz";
 import { resetMockSubscriptions } from "@/server/subscription-store";
-import { createMemoryCalendarStore, setCalendarStoreForTests } from "@/server/calendar-store";
+import {
+  createDemoCalendarStore,
+  createMemoryCalendarStore,
+  DEMO_CALENDAR_STUDIO,
+  setCalendarStoreForTests,
+} from "@/server/calendar-store";
+import { weeklySlots } from "@/mocks/data";
 import {
   addLesson,
   cancelOneLesson,
@@ -24,6 +30,7 @@ import {
   moveOneLesson,
   restoreOneLesson,
   startGoogleConnect,
+  DEMO_CALENDAR_ACTOR,
   type CalendarActor,
 } from "@/server/calendar";
 import { createOAuthState, readOAuthState, setGoogleFetchForTests } from "@/server/google-calendar";
@@ -396,5 +403,53 @@ describe("calendar server (memory store)", () => {
     expect(week.lessons).toHaveLength(1);
     expect(week.lessons[0]?.googleSyncStatus).toBe("error");
     expect(week.google.needsReconnect).toBe(true);
+  });
+});
+
+describe("demo studio calendar", () => {
+  afterEach(() => setCalendarStoreForTests(null));
+
+  it("fills the demo week from the demo timetable and lets the demo teacher add lessons", async () => {
+    const store = createDemoCalendarStore("2026-11-11");
+    setCalendarStoreForTests(store);
+    const week = await getCalendarWeek(DEMO_CALENDAR_ACTOR, DEMO_CALENDAR_STUDIO, "2026-11-11");
+    expect(week.weekStart).toBe("2026-11-09");
+    expect(week.lessons.length).toBe(weeklySlots.length);
+    expect(week.students.length).toBeGreaterThan(0);
+    expect(week.google).toMatchObject({ demo: true, configured: false });
+    const byStart = [...week.lessons].sort((a, b) =>
+      `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`),
+    );
+    byStart.forEach((lesson, i) => {
+      const next = byStart[i + 1];
+      if (!next || next.date !== lesson.date) return;
+      const [h, m] = lesson.startTime.split(":").map(Number);
+      const end = (h ?? 0) * 60 + (m ?? 0) + lesson.durationMin;
+      const [nh, nm] = next.startTime.split(":").map(Number);
+      expect((nh ?? 0) * 60 + (nm ?? 0)).toBeGreaterThanOrEqual(end);
+    });
+    const first = week.lessons.find((l) => l.date === "2026-11-09");
+    expect(first?.startTime).toBe("15:30");
+
+    const student = week.students[0]!;
+    await addLesson(DEMO_CALENDAR_ACTOR, DEMO_CALENDAR_STUDIO, {
+      studentId: student.id,
+      date: "2026-11-11",
+      startTime: "07:00",
+      durationMin: 30,
+      repeat: "once",
+    });
+    const after = await getCalendarWeek(DEMO_CALENDAR_ACTOR, DEMO_CALENDAR_STUDIO, "2026-11-11");
+    expect(after.lessons.length).toBe(weeklySlots.length + 1);
+  });
+
+  it("never lets the demo actor touch a real studio", async () => {
+    setCalendarStoreForTests(createDemoCalendarStore("2026-11-11"));
+    await expect(getCalendarWeek(DEMO_CALENDAR_ACTOR, STUDIO_A, "2026-11-11")).rejects.toThrow(
+      /permission/,
+    );
+    await expect(startGoogleConnect(DEMO_CALENDAR_ACTOR, DEMO_CALENDAR_STUDIO)).rejects.toThrow(
+      /signed-in studio/,
+    );
   });
 });
