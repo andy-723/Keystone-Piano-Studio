@@ -58,7 +58,7 @@ function Reveal({ delay = 0.1, className, children }: { delay?: number; classNam
 export function MarketingFooter() {
   return (
     <div className="bg-mk-cream pt-12">
-      <footer className="relative mx-auto w-full max-w-6xl rounded-t-[2.5rem] border-t border-mk-gold/60 bg-mk-ink px-6 py-12 text-mk-cream md:rounded-t-[3.5rem] md:px-10 lg:py-16">
+      <footer className="relative mx-auto w-full max-w-6xl rounded-t-[2.5rem] border-t border-mk-gold/60 bg-mk-paper px-6 py-12 text-mk-ink shadow-mk-lift md:rounded-t-[3.5rem] md:px-10 lg:py-16">
         <div
           aria-hidden
           className="absolute left-1/2 top-0 h-px w-1/3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-mk-gold blur-sm"
@@ -68,17 +68,17 @@ export function MarketingFooter() {
             <img
               src={keystoneLogo}
               alt="Keystone Music HQ — Studio OS & LMS management platform"
-              className="h-14 w-auto rounded-md bg-mk-cream p-2"
+              className="h-14 w-auto w-auto"
             />
-            <p className="text-base text-mk-cream/70">
+            <p className="text-base text-mk-ink/70">
               © {new Date().getFullYear()} Keystone Music HQ. All rights reserved.
             </p>
-            <p className="text-base text-mk-cream/70">Data hosted in Sydney, Australia.</p>
+            <p className="text-base text-mk-ink/70">Data hosted in Sydney, Australia.</p>
           </Reveal>
           <div className="grid grid-cols-2 gap-8 md:grid-cols-4 xl:col-span-2">
             {SECTIONS.map((section, i) => (
               <Reveal key={section.label} delay={0.1 + i * 0.1}>
-                <h3 className="font-mk-sans text-base font-semibold uppercase tracking-[0.14em] text-mk-gold">
+                <h3 className="font-mk-sans text-base font-semibold uppercase tracking-[0.14em] text-mk-bronze">
                   {section.label}
                 </h3>
                 <ul className="mt-4 space-y-1">
@@ -86,7 +86,7 @@ export function MarketingFooter() {
                     <li key={link.label}>
                       <Link
                         to={link.to}
-                        className="inline-flex min-h-12 items-center text-base text-mk-cream/75 transition-colors duration-300 hover:text-mk-gold"
+                        className="inline-flex min-h-12 items-center text-base text-mk-ink/75 transition-colors duration-300 hover:text-mk-bronze"
                       >
                         {link.label}
                       </Link>
