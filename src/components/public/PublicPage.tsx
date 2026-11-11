@@ -1,3 +1,4 @@
+import { useSiteLang } from "@/i18n/marketing/site-lang";
 import type { ReactNode } from "react";
 import { MarketingNavbar } from "@/components/MarketingNavbar";
 import { MarketingFooter } from "@/components/MarketingFooter";
@@ -63,8 +64,15 @@ export function PublicPage({
 /** Minimal renderer for the legal markdown we ship (#, ##, ###, paragraphs, "- " lists). */
 export function LegalMarkdown({ markdown }: { markdown: string }) {
   const blocks = markdown.trim().split(/\n{2,}/);
+  const lang = useSiteLang();
   return (
     <>
+    {lang !== "en" && (
+      <p role="note" className="rounded-xl border border-mk-gold/60 bg-mk-cream px-4 py-3 text-base font-medium text-mk-ink">
+        This document is available in English only. The English version applies.
+      </p>
+    )}
+    <div data-no-translate className="contents">
       {blocks.map((block, index) => {
         const lines = block.split("\n");
         const out: ReactNode[] = [];
@@ -115,6 +123,7 @@ export function LegalMarkdown({ markdown }: { markdown: string }) {
         flush();
         return <div key={index}>{out}</div>;
       })}
+    </div>
     </>
   );
 }

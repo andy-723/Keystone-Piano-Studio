@@ -99,9 +99,9 @@ export function searchArticles(
   const limit = options.limit ?? 5;
   const matches: HelpMatch[] = [];
   for (const article of articlesFor(audience)) {
-    const title = normaliseQuery(`${article.title.en} ${article.title["zh-CN"] ?? ""}`);
+    const title = normaliseQuery(`${article.title.en} ${article.title["zh-CN"] ?? ""} ${article.title.vi ?? ""}`);
     const keywords = article.keywords.map(normaliseQuery).join(" | ");
-    const body = normaliseQuery(`${article.body.en} ${article.body["zh-CN"] ?? ""}`);
+    const body = normaliseQuery(`${article.body.en} ${article.body["zh-CN"] ?? ""} ${article.body.vi ?? ""}`);
     let score = 0;
     let hits = 0;
     for (const term of terms) {

@@ -282,7 +282,7 @@ function ActiveFlow({
     );
   }
 
-  const names = session.students.map((s) => s.firstName).join(lang === "zh-CN" ? "、" : " & ");
+  const names = session.students.map((s) => s.firstName).join(lang === "zh-CN" ? "、" : lang === "vi" ? " và " : " & ");
   const patchFamily = (patch: Record<string, unknown>) =>
     setAnswers((current) => ({ ...current, ...patch }));
   const patchChild = (studentId: string, patch: Record<string, unknown>) =>

@@ -3,14 +3,14 @@
  * Keystone legal drafts (MSA v3.2, family app terms v3). Do not describe a feature here
  * until it is live in the app.
  *
- * Studio articles are English only. Family articles carry English and Simplified Chinese,
+ * Studio articles are English only. Family articles carry English, Simplified Chinese and Vietnamese,
  * matching the family portal.
  *
  * Body format: paragraphs separated by a blank line; lines starting with "- " are bullets.
  */
 
 export type HelpAudience = "studio" | "family";
-export type HelpLang = "en" | "zh-CN";
+export type HelpLang = "en" | "zh-CN" | "vi";
 
 export type HelpTopic =
   | "getting-started"
@@ -23,7 +23,7 @@ export type HelpTopic =
   | "using-the-app"
   | "lessons-fees";
 
-export type LocalisedText = { en: string; "zh-CN"?: string };
+export type LocalisedText = { en: string; "zh-CN"?: string; vi?: string };
 
 export type HelpArticle = {
   id: string;
@@ -41,15 +41,15 @@ export type HelpArticle = {
 };
 
 export const HELP_TOPICS: Record<HelpTopic, LocalisedText> = {
-  "getting-started": { en: "Getting started", "zh-CN": "入门" },
+  "getting-started": { en: "Getting started", "zh-CN": "入门", vi: "Bắt đầu" },
   "students-families": { en: "Students and families" },
   "lessons-teaching": { en: "Lessons and teaching" },
-  "messages-news": { en: "Chat and news", "zh-CN": "聊天和新闻" },
+  "messages-news": { en: "Chat and news", "zh-CN": "聊天和新闻", vi: "Trò chuyện và tin tức" },
   "family-billing": { en: "Invoicing families" },
   subscription: { en: "Your Keystone plan" },
-  "privacy-security": { en: "Privacy and security", "zh-CN": "隐私和安全" },
-  "using-the-app": { en: "Using the app", "zh-CN": "使用应用" },
-  "lessons-fees": { en: "Lessons, fees and progress", "zh-CN": "课程、费用和进度" },
+  "privacy-security": { en: "Privacy and security", "zh-CN": "隐私和安全", vi: "Quyền riêng tư và bảo mật" },
+  "using-the-app": { en: "Using the app", "zh-CN": "使用应用", vi: "Sử dụng ứng dụng" },
+  "lessons-fees": { en: "Lessons, fees and progress", "zh-CN": "课程、费用和进度", vi: "Bài học, học phí và tiến độ" },
 };
 
 export const HELP_ARTICLES: HelpArticle[] = [
@@ -577,7 +577,7 @@ While you wait, sign out on any shared devices.`,
     id: "family-join",
     audience: "family",
     topic: "using-the-app",
-    title: { en: "Joining from your invite email", "zh-CN": "通过邀请邮件加入" },
+    title: { en: "Joining from your invite email", "zh-CN": "通过邀请邮件加入" , vi: "Tham gia từ email mời" },
     body: {
       en: `Your studio sends you an invite email from Keystone Music HQ. Open the link, confirm your child's details, answer the studio's questions (about 5 minutes) and accept the terms. Then sign in with the same email address.
 
@@ -585,6 +585,9 @@ If the link says it has expired, ask your teacher to send a new one.`,
       "zh-CN": `您的音乐工作室会通过 Keystone Music HQ 给您发送邀请邮件。打开链接，确认孩子的资料，回答工作室的问题（约 5 分钟），并接受条款。然后用同一个邮箱地址登录。
 
 如果链接显示已过期，请让老师重新发送。`,
+      vi: `Studio sẽ gửi cho bạn email mời từ Keystone Music HQ. Mở liên kết, xác nhận thông tin của con, trả lời các câu hỏi của studio (khoảng 5 phút) và chấp nhận điều khoản. Sau đó đăng nhập bằng cùng địa chỉ email.
+
+Nếu liên kết báo đã hết hạn, hãy nhờ giáo viên gửi lại liên kết mới.`,
     },
     keywords: [
       "invite",
@@ -604,7 +607,7 @@ If the link says it has expired, ask your teacher to send a new one.`,
     id: "family-sign-in",
     audience: "family",
     topic: "using-the-app",
-    title: { en: "Signing in", "zh-CN": "登录" },
+    title: { en: "Signing in", "zh-CN": "登录" , vi: "Đăng nhập" },
     body: {
       en: `Use Continue with Google, Continue with Microsoft, or enter your email address to get a one-time sign-in link. Always use the email address your studio's invite was sent to. Open the link on the same device.
 
@@ -616,6 +619,11 @@ If the link says it has expired, ask your teacher to send a new one.`,
 - 没收到邮件？请查看垃圾邮件文件夹。
 - 提示「找不到账户」？您可能使用了与邀请邮件不同的邮箱地址。
 - 想更安全？可以用身份验证器应用开启两步登录。家庭用户可自愿选择。`,
+      vi: `Chọn Tiếp tục với Google, Tiếp tục với Microsoft, hoặc nhập địa chỉ email để nhận liên kết đăng nhập một lần. Luôn dùng địa chỉ email mà studio đã gửi lời mời. Mở liên kết trên cùng một thiết bị.
+
+- Không nhận được gì? Hãy kiểm tra thư mục thư rác.
+- Báo "Không tìm thấy tài khoản"? Có thể bạn đang dùng email khác với email nhận lời mời.
+- Muốn bảo mật hơn? Bạn có thể bật đăng nhập hai bước bằng ứng dụng xác thực. Không bắt buộc với gia đình.`,
     },
     keywords: [
       "login",
@@ -637,10 +645,11 @@ If the link says it has expired, ask your teacher to send a new one.`,
     id: "family-language",
     audience: "family",
     topic: "using-the-app",
-    title: { en: "Changing the language", "zh-CN": "切换语言" },
+    title: { en: "Changing the language", "zh-CN": "切换语言" , vi: "Đổi ngôn ngữ" },
     body: {
       en: `Tap EN or 中文 at the top of the family portal to switch between English and Chinese.`,
       "zh-CN": `在家庭页面顶部点击 EN 或「中文」，即可在英文和中文之间切换。`,
+      vi: `Chạm EN, 中文 hoặc VI ở đầu cổng gia đình để chuyển giữa tiếng Anh, tiếng Trung và tiếng Việt.`,
     },
     keywords: ["language", "chinese", "english", "translate", "语言", "中文", "英文", "翻译"],
   },
@@ -648,10 +657,11 @@ If the link says it has expired, ask your teacher to send a new one.`,
     id: "family-chat",
     audience: "family",
     topic: "using-the-app",
-    title: { en: "Messaging your teacher", "zh-CN": "给老师发消息" },
+    title: { en: "Messaging your teacher", "zh-CN": "给老师发消息" , vi: "Nhắn tin cho giáo viên" },
     body: {
       en: `Open the Chat tab to message your teacher. You can send text, a photo or video, or a voice note. Keystone doesn't send SMS, so check the app for replies.`,
       "zh-CN": `打开「聊天」标签即可给老师发消息。可以发送文字、照片、视频或语音留言。Keystone 不发送短信，请在应用中查看老师的回复。`,
+      vi: `Mở thẻ Trò chuyện để nhắn tin cho giáo viên. Bạn có thể gửi chữ, ảnh hoặc video, hoặc tin nhắn thoại. Keystone không gửi SMS, nên hãy xem phản hồi trong ứng dụng.`,
     },
     keywords: [
       "chat",
@@ -674,10 +684,11 @@ If the link says it has expired, ask your teacher to send a new one.`,
     id: "family-news",
     audience: "family",
     topic: "using-the-app",
-    title: { en: "Studio news", "zh-CN": "工作室新闻" },
+    title: { en: "Studio news", "zh-CN": "工作室新闻" , vi: "Tin tức studio" },
     body: {
       en: `The News tab shows announcements from your studio, such as concerts, holidays and exam dates. To ask about a post, use the message button on the post. It opens a private chat with your teacher.`,
       "zh-CN": `「新闻」标签显示工作室的公告，例如音乐会、假期和考试日期。如对某条公告有疑问，请点击公告上的消息按钮，与老师私下聊天。`,
+      vi: `Thẻ Tin tức hiển thị thông báo từ studio, như buổi hòa nhạc, ngày nghỉ và lịch thi. Để hỏi về một bài đăng, dùng nút nhắn tin trên bài. Nút này mở cuộc trò chuyện riêng với giáo viên.`,
     },
     keywords: ["news", "announcement", "concert", "holiday", "新闻", "公告", "音乐会", "假期"],
   },
@@ -686,7 +697,7 @@ If the link says it has expired, ask your teacher to send a new one.`,
     audience: "family",
     topic: "lessons-fees",
     studioAnswers: true,
-    title: { en: "Lesson times, cancellations and make-ups", "zh-CN": "上课时间、取消和补课" },
+    title: { en: "Lesson times, cancellations and make-ups", "zh-CN": "上课时间、取消和补课" , vi: "Giờ học, hủy buổi và học bù" },
     body: {
       en: `Your next lesson is on the Home tab. Lesson times, cancellations and make-up lessons are set by your studio under its own terms, so please ask your teacher in Chat.
 
@@ -694,6 +705,9 @@ If your teacher offers make-ups, you'll see how many make-up lessons you're owed
       "zh-CN": `「首页」标签显示下一节课。上课时间、取消和补课由工作室按其条款决定，请在「聊天」中询问老师。
 
 如果老师提供补课，您会看到欠补的课时数量和「申请补课」按钮。`,
+      vi: `Buổi học tiếp theo hiển thị ở thẻ Trang chủ. Giờ học, việc hủy buổi và học bù do studio quy định theo điều khoản riêng, vì vậy hãy hỏi giáo viên trong Trò chuyện.
+
+Nếu giáo viên có học bù, bạn sẽ thấy số buổi học bù còn lại và nút Yêu cầu học bù.`,
     },
     keywords: [
       "lesson",
@@ -719,7 +733,7 @@ If your teacher offers make-ups, you'll see how many make-up lessons you're owed
     audience: "family",
     topic: "lessons-fees",
     studioAnswers: true,
-    title: { en: "Invoices and paying your studio", "zh-CN": "账单和付款" },
+    title: { en: "Invoices and paying your studio", "zh-CN": "账单和付款" , vi: "Hóa đơn và thanh toán cho studio" },
     body: {
       en: `You pay your studio, not Keystone. Keystone never receives or holds your payments and never sees full card numbers.
 
@@ -731,6 +745,11 @@ To ask about an invoice, tap Question this invoice. Your question goes to your t
 打开「账单」标签查看每张账单。如果通过银行转账付款，请点击「查看付款信息」获取账户和付款备注。款项到账后，老师会将账单标记为已付。
 
 如对账单有疑问，请点击「对此账单提问」，问题会发送给老师。`,
+      vi: `Bạn trả tiền cho studio, không phải cho Keystone. Keystone không bao giờ nhận hay giữ tiền của bạn và không bao giờ thấy đầy đủ số thẻ.
+
+Mở thẻ Hóa đơn để xem từng hóa đơn. Nếu bạn chuyển khoản, chạm Xem thông tin thanh toán để lấy số tài khoản và nội dung chuyển khoản. Giáo viên sẽ đánh dấu đã trả khi nhận được tiền.
+
+Để hỏi về một hóa đơn, chạm Hỏi về hóa đơn này. Câu hỏi sẽ được gửi tới giáo viên.`,
     },
     keywords: [
       "invoice",
@@ -754,7 +773,7 @@ To ask about an invoice, tap Question this invoice. Your question goes to your t
     audience: "family",
     topic: "lessons-fees",
     studioAnswers: true,
-    title: { en: "Fees, refunds and late fees", "zh-CN": "学费、退款和滞纳金" },
+    title: { en: "Fees, refunds and late fees", "zh-CN": "学费、退款和滞纳金" , vi: "Học phí, hoàn tiền và phí trễ hạn" },
     body: {
       en: `Fees, refunds, discounts and late fees are decided by your studio under the studio terms you accepted when you enrolled. Please ask your teacher.
 
@@ -762,6 +781,9 @@ If you think the app made a technical mistake, such as a wrong invoice amount, t
       "zh-CN": `学费、退款、折扣和滞纳金由工作室根据您报名时接受的工作室条款决定。请询问老师。
 
 如果您认为是应用出现了技术错误（例如账单金额不对），请告诉老师，或向 Keystone 提交支持请求，我们会调查应用方面的原因。`,
+      vi: `Học phí, hoàn tiền, giảm giá và phí trễ hạn do studio quyết định theo điều khoản studio mà bạn đã chấp nhận khi ghi danh. Vui lòng hỏi giáo viên.
+
+Nếu bạn nghĩ ứng dụng bị lỗi kỹ thuật, chẳng hạn số tiền hóa đơn sai, hãy báo giáo viên hoặc gửi yêu cầu hỗ trợ cho Keystone để chúng tôi kiểm tra phần liên quan đến ứng dụng.`,
     },
     keywords: [
       "fee",
@@ -784,10 +806,11 @@ If you think the app made a technical mistake, such as a wrong invoice amount, t
     audience: "family",
     topic: "lessons-fees",
     studioAnswers: true,
-    title: { en: "Answering a term renewal", "zh-CN": "回复下学期续课" },
+    title: { en: "Answering a term renewal", "zh-CN": "回复下学期续课" , vi: "Trả lời gia hạn học kỳ" },
     body: {
       en: `Before each term your studio may ask whether you'd like to continue. Answer on the Home tab: keep your current lesson times, ask to discuss a change, or let your teacher know you won't continue. You can add a note for your teacher.`,
       "zh-CN": `每学期开始前，工作室可能会询问您是否继续上课。请在「首页」回复：保留现有上课时间、希望讨论调整，或告知老师下学期不再继续。您也可以给老师留言。`,
+      vi: `Trước mỗi học kỳ, studio có thể hỏi gia đình có muốn tiếp tục không. Hãy trả lời ở thẻ Trang chủ: giữ giờ học hiện tại, xin trao đổi về thay đổi, hoặc báo giáo viên rằng gia đình sẽ không tiếp tục. Bạn có thể thêm lời nhắn cho giáo viên.`,
     },
     keywords: [
       "renewal",
@@ -807,7 +830,7 @@ If you think the app made a technical mistake, such as a wrong invoice amount, t
     audience: "family",
     topic: "lessons-fees",
     studioAnswers: true,
-    title: { en: "Progress and logging practice", "zh-CN": "学习进度和练琴记录" },
+    title: { en: "Progress and logging practice", "zh-CN": "学习进度和练琴记录" , vi: "Tiến độ và ghi luyện tập" },
     body: {
       en: `The Progress tab shows your child's grade requirements, what's been passed and their grade readiness. Tap Log practice to record practice minutes. Minutes your teacher adds are shown separately.
 
@@ -815,6 +838,9 @@ Questions about your child's progress or exams are best asked in Chat with your 
       "zh-CN": `「进度」标签显示孩子的考级要求、已通过的项目和考级准备程度。点击「记录练琴」可以登记练琴分钟数。老师添加的分钟数会单独显示。
 
 关于孩子学习进度或考试的问题，请在「聊天」中询问老师。`,
+      vi: `Thẻ Tiến độ hiển thị yêu cầu của cấp độ, những phần con đã đạt và mức sẵn sàng thi. Chạm Ghi luyện tập để ghi số phút luyện tập. Số phút giáo viên thêm được hiển thị riêng.
+
+Câu hỏi về tiến độ hoặc kỳ thi của con nên hỏi giáo viên trong Trò chuyện.`,
     },
     keywords: [
       "progress",
@@ -836,7 +862,7 @@ Questions about your child's progress or exams are best asked in Chat with your 
     id: "family-agreements",
     audience: "family",
     topic: "privacy-security",
-    title: { en: "Your two agreements", "zh-CN": "您的两份协议" },
+    title: { en: "Your two agreements", "zh-CN": "您的两份协议" , vi: "Hai thỏa thuận của gia đình" },
     body: {
       en: `Your family has two agreements. One is with your studio, for lessons, fees and cancellations. The other is with Keystone, for using the app and how Keystone handles your information.
 
@@ -844,6 +870,9 @@ Keystone looks after the app: sign-in problems, technical errors and suspected a
       "zh-CN": `您的家庭有两份协议。一份与工作室签订，涉及课程、学费和取消政策。另一份与 Keystone 签订，涉及应用的使用以及 Keystone 如何处理您的信息。
 
 Keystone 负责应用本身：登录问题、技术错误和疑似账户被盗用。工作室负责课程、学费、退款以及孩子学习记录的相关决定。`,
+      vi: `Gia đình bạn có hai thỏa thuận. Một với studio, về bài học, học phí và hủy buổi. Một với Keystone, về việc sử dụng ứng dụng và cách Keystone xử lý thông tin của bạn.
+
+Keystone lo phần ứng dụng: sự cố đăng nhập, lỗi kỹ thuật và nghi ngờ tài khoản bị lạm dụng. Studio lo bài học, học phí, hoàn tiền và các quyết định về hồ sơ học tập của con.`,
     },
     keywords: [
       "terms",
@@ -861,7 +890,7 @@ Keystone 负责应用本身：登录问题、技术错误和疑似账户被盗�
     id: "family-privacy",
     audience: "family",
     topic: "privacy-security",
-    title: { en: "Your family's information", "zh-CN": "您家庭的信息" },
+    title: { en: "Your family's information", "zh-CN": "您家庭的信息" , vi: "Thông tin của gia đình" },
     body: {
       en: `Keystone stores information in Australia (Sydney), with a nightly encrypted backup in Melbourne. We don't sell personal information, show advertising, or use children's information for advertising or profiling.
 
@@ -869,6 +898,9 @@ Your child's lesson records belong to your studio. To get a copy of the informat
       "zh-CN": `Keystone 将信息存储在澳大利亚（悉尼），并每晚在墨尔本进行加密备份。我们不出售个人信息，不展示广告，也不会将儿童信息用于广告或用户画像。
 
 孩子的学习记录属于工作室。如需获取 Keystone 持有的您的信息副本、更正信息或注销登录，请向 Keystone 提交支持请求，并选择「我的信息或隐私」。注销登录不会终止您与工作室的协议。`,
+      vi: `Keystone lưu thông tin tại Úc (Sydney), với bản sao lưu mã hóa hằng đêm ở Melbourne. Chúng tôi không bán thông tin cá nhân, không hiển thị quảng cáo và không dùng thông tin của trẻ em cho quảng cáo hay lập hồ sơ.
+
+Hồ sơ học tập của con thuộc về studio. Để nhận bản sao thông tin Keystone lưu về bạn, sửa thông tin hoặc đóng tài khoản đăng nhập, hãy gửi yêu cầu hỗ trợ cho Keystone và chọn "Thông tin của tôi hoặc quyền riêng tư". Đóng tài khoản không chấm dứt thỏa thuận của bạn với studio.`,
     },
     keywords: [
       "privacy",
@@ -889,7 +921,7 @@ Your child's lesson records belong to your studio. To get a copy of the informat
 ];
 
 export function articleText(text: LocalisedText, lang: HelpLang): string {
-  return (lang === "zh-CN" ? text["zh-CN"] : undefined) ?? text.en;
+  return (lang === "en" ? undefined : text[lang]) ?? text.en;
 }
 
 export function articlesFor(audience: HelpAudience): HelpArticle[] {

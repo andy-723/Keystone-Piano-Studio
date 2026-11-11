@@ -98,13 +98,13 @@ export async function queryParentInvoice(id: string, messageBody: string) {
   await markInvoiceQueried(id);
   return getParentInvoice(id);
 }
-export async function requestParentMakeUp(studentId: string, lang: "en" | "zh-CN") {
+export async function requestParentMakeUp(studentId: string, lang: "en" | "zh-CN" | "vi") {
   const { children } = await getParentSession(); const child = children.find((entry) => entry.id === studentId);
   if (!child) throw new Error("Child not in this family");
   const credits = await getCredits(studentId); if (credits.balance < 1) throw new Error("No make-up credit available");
   if (parentMakeUpRequests.has(studentId)) return respond({ requested: true });
   parentMakeUpRequests.add(studentId);
-  try { await sendParentMessage({ kind: "text", body: lang === "zh-CN" ? `请为${child.firstName}安排一节补课。请老师告知可用时间，谢谢。` : `Could you please book a make-up lesson for ${child.firstName}? Please let us know a suitable free time. Thank you.` }); }
+  try { await sendParentMessage({ kind: "text", body: lang === "zh-CN" ? `请为${child.firstName}安排一节补课。请老师告知可用时间，谢谢。` : lang === "vi" ? `Thầy/cô vui lòng sắp xếp một buổi học bù cho ${child.firstName}. Xin cho gia đình biết thời gian trống phù hợp. Cảm ơn thầy/cô.` : `Could you please book a make-up lesson for ${child.firstName}? Please let us know a suitable free time. Thank you.` }); }
   catch (error) { parentMakeUpRequests.delete(studentId); throw error; }
   return respond({ requested: true });
 }
