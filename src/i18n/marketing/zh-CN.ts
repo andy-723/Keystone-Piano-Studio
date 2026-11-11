@@ -325,8 +325,6 @@ export const zhSite: Record<string, string> = {
   "$210 · 7 days overdue": "$210 · 逾期 7 天",
   "Security or privacy concern": "安全或隐私问题",
   "9–15 November 2026": "2026 年 11 月 9–15 日",
-  "Keystone is not registered for GST, so no GST is charged.": "Keystone 未注册 GST，因此不收取 GST。",
-  "Total price · no GST charged": "总价 · 不收取 GST",
   "Billed monthly": "按月计费",
   "Books & exam fees passed on to families": "教材和考试费转收家庭",
   "Books and exam fees recorded once, then added to family invoices. The charge is recorded as income and your cost as an expense, so they offset.": "教材和考试费只需记录一次，再加入家庭账单。向家庭收取的费用记为收入，您的成本记为支出，两者相互抵消。",

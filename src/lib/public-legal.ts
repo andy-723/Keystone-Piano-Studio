@@ -46,7 +46,7 @@ Studio Snapshot, Tax Lite and other money tools summarise records you keep in Ke
 
 ## Prices
 
-Prices are in Australian dollars, per studio, per month. Base is A$29 a month for up to 30 students and Pro is A$49 a month with no student limit. Keystone is not registered for GST, so no GST is charged. Prices may change; the price that applies to your studio is the one in your studio agreement.
+Prices are in Australian dollars, per studio, per month. Base is A$29 a month for up to 30 students and Pro is A$49 a month with no student limit. Prices may change; the price that applies to your studio is the one in your studio agreement.
 
 ## Links to other websites
 

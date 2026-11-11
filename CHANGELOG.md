@@ -6,7 +6,8 @@ GitHub Release with the same text. See `docs/release-process.md`.
 
 ## Unreleased
 
-- Tax and GST wording fixed after the tax review. Prices now show the total (Keystone is not registered for GST, so no GST is charged). Tax Lite counts only home hours you confirm plus admin time you log, uses the actual fees Stripe reports, records on-charged costs as income, uses 91c/km up to 5,000 km, and asks you to review figures before exporting an EOFY summary. Pro CFO has a GST threshold monitor with a next-12-months estimate, shows estimated net GST (not BAS), and adds super and card-surcharge notes.
+- Pricing no longer mentions GST while Keystone is not registered for GST. Base stays A$29 and Pro A$49 a month; the GST toggle stays removed.
+- Tax and GST wording fixed after the tax review. Prices now show the total. Tax Lite counts only home hours you confirm plus admin time you log, uses the actual fees Stripe reports, records on-charged costs as income, uses 91c/km up to 5,000 km, and asks you to review figures before exporting an EOFY summary. Pro CFO has a GST threshold monitor with a next-12-months estimate, shows estimated net GST (not BAS), and adds super and card-surcharge notes.
 - Email notifications, in the same branded look as the sign-in emails. Families get an email when
   a teacher's chat message has been unread for 15 minutes, straight away for news posts marked
   important, and a 7am daily update for other news and teacher feedback shared with them. Studio

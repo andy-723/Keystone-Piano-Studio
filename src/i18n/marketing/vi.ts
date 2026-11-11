@@ -325,8 +325,6 @@ export const viSite: Record<string, string> = {
   "$210 · 7 days overdue": "$210 · quá hạn 7 ngày",
   "Security or privacy concern": "Lo ngại về bảo mật hoặc quyền riêng tư",
   "9–15 November 2026": "9–15 tháng 11 năm 2026",
-  "Keystone is not registered for GST, so no GST is charged.": "Keystone chưa đăng ký GST, vì vậy không tính GST.",
-  "Total price · no GST charged": "Tổng giá · không tính GST",
   "Billed monthly": "Thanh toán hằng tháng",
   "Books & exam fees passed on to families": "Phí sách & thi chuyển cho gia đình",
   "Books and exam fees recorded once, then added to family invoices. The charge is recorded as income and your cost as an expense, so they offset.": "Phí sách và phí thi chỉ cần ghi một lần, rồi thêm vào hóa đơn của gia đình. Khoản thu được ghi là thu nhập và chi phí của bạn ghi là chi phí, nên hai khoản bù trừ nhau.",

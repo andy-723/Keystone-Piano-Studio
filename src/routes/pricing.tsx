@@ -40,7 +40,7 @@ export const Route = createFileRoute("/pricing")({
       {
         name: "description",
         content:
-          "Keystone Music HQ Base: A$29 a month for up to 30 students. Pro: A$49 a month for unlimited students, video review and Xero. Keystone is not registered for GST, so no GST is charged.",
+          "Keystone Music HQ Base: A$29 a month for up to 30 students. Pro: A$49 a month for unlimited students, video review and Xero.",
       },
       { property: "og:title", content: "Base & Pro pricing — Keystone Music HQ" },
       {
@@ -250,7 +250,9 @@ function Pricing() {
             <div className="mx-auto max-w-7xl">
               <div className="mb-8 flex flex-wrap items-center justify-between gap-5">
                 <p className="text-lg font-medium text-mk-bronze">Two plans. Billed monthly.</p>
-                <p className="text-base text-mk-ink/75">{KEYSTONE_PRICE_GST_LINE}</p>
+                {KEYSTONE_PRICE_GST_LINE && (
+                  <p className="text-base text-mk-ink/75">{KEYSTONE_PRICE_GST_LINE}</p>
+                )}
               </div>
               <div className="grid gap-6 md:grid-cols-2">
                 {PUBLIC_PLANS.map((plan) => (
@@ -305,11 +307,6 @@ function Pricing() {
                         <span aria-hidden className="text-lg">
                           / month
                         </span>
-                      </p>
-                      <p
-                        className={`mt-2 text-base ${plan.id === "pro" ? "text-mk-paper/75" : "text-mk-ink/70"}`}
-                      >
-                        Total price · no GST charged
                       </p>
                     </div>
                     <Button
@@ -404,9 +401,9 @@ function Pricing() {
                 ))}
               </div>
               <p className="mt-7 max-w-4xl text-base leading-relaxed text-mk-paper/75">
-                Tax Lite prepares records for you to review; it does not lodge returns, prepare BAS or
-                replace professional advice. {TAX_DISCLAIMER} Your GST obligations depend on your GST
-                turnover, not your Keystone plan.
+                Tax Lite prepares records for you to review; it does not lodge returns, prepare BAS
+                or replace professional advice. {TAX_DISCLAIMER} Your GST obligations depend on your
+                GST turnover, not your Keystone plan.
               </p>
             </div>
           </section>
