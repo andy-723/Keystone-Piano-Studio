@@ -28,6 +28,7 @@ export const PUBLIC_PAGE_PATHS = [
   "/contact",
   "/welcome",
   "/pricing",
+  "/about",
 ] as const;
 
 export function isPublicPagePath(pathname: string): boolean {
