@@ -12,7 +12,7 @@ export function ZoomHero({ image, alt, overlay, nav, children }: { image: string
     const track = trackRef.current;
     if (!track) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      track.dataset.static = "true";
+      track.dataset["static"] = "true";
       return;
     }
     let raf = 0;
