@@ -39,10 +39,10 @@ function DayBook() {
               <Button variant="ghost"
                 type="button"
                 onClick={() => setDone((d) => ({ ...d, [l.name]: !d[l.name] }))}
-                className={`flex min-h-14 w-full items-center gap-3 rounded-2xl border px-4 text-left text-base transition ${on ? "border-mk-bronze/50 bg-mk-cream" : "border-mk-gold/40 bg-mk-paper hover:border-mk-bronze"}`}
+                className={`flex h-auto min-h-14 w-full flex-wrap items-center gap-2 whitespace-normal rounded-lg border px-3 py-3 text-left text-base transition ${on ? "border-mk-bronze/50 bg-mk-cream" : "border-mk-gold/40 bg-mk-paper hover:border-mk-bronze"}`}
               >
                 <span className="w-20 shrink-0 font-semibold tabular-nums">{l.time}</span>
-                <span className="min-w-0 flex-1 truncate">{l.name} <span className="text-mk-ink/60">· {l.len}</span></span>
+                <span className="min-w-0 flex-1 basis-32">{l.name} <span className="text-mk-ink/60">· {l.len}</span></span>
                 <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 font-medium ${on ? "bg-mk-bronze text-mk-paper" : "border border-mk-ink/20 text-mk-ink/70"}`}>
                   {on ? <><Check className="h-4 w-4" aria-hidden /> Attended</> : "Mark"}
                 </span>
