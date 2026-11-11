@@ -31,6 +31,11 @@
   --font-mk-sans: "Instrument Sans", system-ui, sans-serif;
   --shadow-mk-device: 0 30px 80px -30px oklch(0.22 0.012 70 / 45%);
   --shadow-mk-lift: 0 18px 40px -24px oklch(0.3 0.035 80 / 35%);
+  --color-device-metal: oklch(0.78 0.008 85);
+  --color-device-highlight: oklch(0.91 0.006 85);
+  --color-device-edge: oklch(0.55 0.008 85);
+  --color-device-key: oklch(0.28 0.008 85);
+  --color-device-lens: oklch(0.44 0.025 230);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -189,6 +194,29 @@
   transition: transform 250ms ease, box-shadow 250ms ease;
 }
 .mk-device { box-shadow: var(--shadow-mk-device); }
+.mk-laptop { margin-inline: auto; padding-inline: 3%; }
+.mk-laptop-lid { overflow: hidden; border: 2px solid var(--color-device-edge); border-radius: 20px 20px 6px 6px; background: var(--color-mk-ink); padding-inline: 9px; }
+.mk-laptop-camera { height: 22px; display: grid; place-items: center; }
+.mk-laptop-camera span { width: 5px; height: 5px; border-radius: 50%; background: var(--color-device-lens); }
+.mk-laptop-display { overflow: hidden; border-radius: 4px; background: var(--color-mk-paper); }
+.mk-laptop-chin { height: 16px; }
+.mk-laptop-hinge { height: 7px; margin-inline: 8%; background: linear-gradient(var(--color-device-edge), var(--color-mk-ink)); border-radius: 0 0 4px 4px; }
+.mk-laptop-deck { position: relative; width: 106%; margin-left: -3%; height: 118px; padding: 9px 12% 6px; background: linear-gradient(var(--color-device-metal), var(--color-device-highlight)); clip-path: polygon(3% 0, 97% 0, 100% 100%, 0 100%); }
+.mk-laptop-keyboard { display: grid; gap: 3px; padding: 4px; border-radius: 4px; background: var(--color-device-edge); }
+.mk-laptop-key-row { display: grid; grid-template-columns: repeat(14, 1fr); gap: 3px; }
+.mk-laptop-key-row span { height: 9px; background: var(--color-device-key); border-radius: 2px; }
+.mk-laptop-space-row { grid-template-columns: 1fr 1fr 6fr 1fr 1fr; }
+.mk-laptop-trackpad { width: 27%; height: 34px; margin: 8px auto 0; border: 1px solid var(--color-device-edge); border-radius: 4px; background: var(--color-device-metal); }
+.mk-laptop-edge { position: relative; width: 106%; height: 10px; margin-left: -3%; border-radius: 0 0 40% 40%; background: linear-gradient(var(--color-device-metal), var(--color-device-edge)); box-shadow: var(--shadow-mk-device); }
+.mk-laptop-edge span { display: block; width: 16%; height: 4px; margin-inline: auto; border-radius: 0 0 8px 8px; background: var(--color-device-edge); }
+@media (max-width: 639px) {
+  .mk-laptop-lid { padding-inline: 5px; border-radius: 12px 12px 4px 4px; }
+  .mk-laptop-camera { height: 16px; }
+  .mk-laptop-chin { height: 10px; }
+  .mk-laptop-deck { height: 86px; padding-inline: 10%; }
+  .mk-laptop-key-row span { height: 6px; }
+  .mk-laptop-trackpad { height: 22px; margin-top: 6px; }
+}
 .mk-screen { animation: mk-screen-in 300ms ease-out both; }
 .mk-hero-copy { animation: mk-enter 850ms ease-out both; }
 .mk-stage-image { animation: mk-stage-settle 1800ms ease-out both; }

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { LaptopFrame } from "@/components/LaptopFrame";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { getMarketingFinance, homeOfficeEstimateCents, marketingSnapshotCsv, marketingTaxCsv } from "@/services/marketing-finance";
@@ -29,6 +30,7 @@ export function FinanceShowcase({ mode }: { mode: "snapshot" | "tax" }) {
   const [signal, setSignal] = useState<SnapshotSignal>("overdue");
   const [taxView, setTaxView] = useState("summary");
   const [passed, setPassed] = useState(false);
+  const Frame = device === "laptop" ? LaptopFrame : TabletFrame;
   return <div className="mt-7 min-w-0">
     <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
       <div role="group" aria-label={`${mode} device`} className="flex gap-1">
@@ -36,7 +38,8 @@ export function FinanceShowcase({ mode }: { mode: "snapshot" | "tax" }) {
       </div>
       <p className="text-base text-mk-ink/70">Planned tools · illustrative preview</p>
     </div>
-    <div className={`mk-device mx-auto overflow-hidden border-[8px] border-mk-ink bg-mk-paper ${device === "ipad" ? "max-w-2xl rounded-[24px]" : "w-full rounded-lg"}`}>
+    <Frame>
+    <div className="max-h-[620px] overflow-y-auto bg-mk-paper">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-mk-gold/50 px-4 py-3 sm:px-6"><span className="font-mk-serif text-xl font-semibold">Keystone <span className="text-mk-bronze">/ {mode === "snapshot" ? "Snapshot" : "Tax Lite"}</span></span><span className="text-base text-mk-ink/70">Owner view</span></div>
       <div className="p-4 sm:p-6">
         {mode === "snapshot" ? <>
@@ -54,5 +57,10 @@ export function FinanceShowcase({ mode }: { mode: "snapshot" | "tax" }) {
         </>}
       </div>
     </div>
+    </Frame>
   </div>;
+}
+
+function TabletFrame({ children }: { children: React.ReactNode }) {
+  return <div className="mk-device mx-auto max-w-2xl overflow-hidden rounded-[24px] border-[8px] border-mk-ink bg-mk-paper">{children}</div>;
 }

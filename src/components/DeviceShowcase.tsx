@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { LaptopFrame } from "@/components/LaptopFrame";
 import { Button } from "@/components/ui/button";
 import { BookOpen, CalendarDays, Check, CheckCircle2, FileText, Laptop, MessageCircle, Send, Tablet } from "lucide-react";
 
@@ -175,12 +176,9 @@ export function DeviceShowcase() {
 
       <div className="mt-8 flex justify-center">
         {device === "laptop" ? (
-          <div className="w-full max-w-5xl">
-            <div className="mk-device rounded-t-[1.75rem] border-[10px] border-mk-ink bg-mk-ink">
-              <div className="h-[460px] overflow-hidden rounded-xl sm:h-[520px]"><AppScreen screen={screen} device="laptop" onNav={setScreen} /></div>
-            </div>
-            <div className="mx-auto h-4 w-[106%] -translate-x-[3%] rounded-b-2xl bg-mk-ink/85" aria-hidden />
-          </div>
+          <LaptopFrame>
+            <div className="h-[460px] overflow-hidden sm:h-[520px]"><AppScreen screen={screen} device="laptop" onNav={setScreen} /></div>
+          </LaptopFrame>
         ) : (
           <div className="mk-device w-full max-w-2xl rounded-[2.5rem] border-[14px] border-mk-ink bg-mk-ink">
             <div className="h-[560px] overflow-hidden rounded-[1.5rem] sm:h-[640px]"><AppScreen screen={screen} device="ipad" onNav={setScreen} /></div>
