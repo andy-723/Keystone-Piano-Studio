@@ -57,8 +57,16 @@ jobs:
 
       # Starts a throwaway local Supabase, applies every migration from an empty database,
       # then loads seed.sql. A migration that can't apply cleanly fails here, not in production.
+      # Clear any leftover containers/ports first — a prior partial start can leave :54322 bound
+      # and fail with "address already in use" even though this job changed no SQL.
       - name: Start local Supabase and apply migrations
-        run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,mailpit,inbucket
+        run: |
+          supabase stop --no-backup || true
+          docker ps -aq --filter "name=supabase" | xargs -r docker rm -f || true
+          for port in 54320 54321 54322 54323 54324 54327 54329; do
+            fuser -k "${port}/tcp" 2>/dev/null || true
+          done
+          supabase start -x studio,imgproxy,edge-runtime,logflare,vector,mailpit,inbucket
 
       - name: Tenancy and subscription tests (pgTAP)
         run: supabase test db

@@ -6,6 +6,8 @@ GitHub Release with the same text. See `docs/release-process.md`.
 
 ## Unreleased
 
+- CI Database checks clear leftover Supabase containers/ports before `supabase start`, so a
+  stuck `:54322` bind does not fail the job.
 - Clearer button hover and keyboard focus across the app (shared Button tokens, nav, login CTAs,
   Snapshot tiles and Tax Lite / Pro CFO actions) — bronze darkens, paper lightens; touch stays clean.
 - Family invoices, payments, credit notes and billing settings are now saved per studio. Invoice
