@@ -17,7 +17,7 @@ export function CinematicFooter() {
   return (
     <div ref={wrapper} className="mk-cinematic-curtain">
       <footer className="mk-cinematic-footer" aria-labelledby="keystone-footer-title">
-        <motion.div aria-hidden className="mk-footer-wordmark" style={reducedMotion ? undefined : { y }}>KEYSTONE</motion.div>
+        <motion.div aria-hidden className="mk-footer-wordmark" style={reducedMotion ? {} : { y }}>KEYSTONE</motion.div>
         <div className="mk-footer-marquee-band">
           <div className="mk-footer-marquee-window" aria-hidden>
             <div className="mk-footer-marquee" data-paused={paused || Boolean(reducedMotion)}>
