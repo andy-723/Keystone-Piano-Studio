@@ -94,6 +94,50 @@ const zh: typeof en = {
   back: "返回",
 };
 
+const vi: typeof en = {
+  helpCentre: "Trung tâm trợ giúp",
+  searchLabel: "Tìm trợ giúp",
+  searchPlaceholder: "Nhập câu hỏi, ví dụ: làm sao để thanh toán",
+  noResults: "Không có bài viết phù hợp. Hãy thử từ khác, hoặc gửi yêu cầu cho chúng tôi bên dưới.",
+  resultsFor: "Bài viết có thể giúp bạn",
+  browse: "Duyệt theo chủ đề",
+  askStudioTitle: "Câu này studio của bạn sẽ trả lời",
+  askStudioBody: "Bài học, học phí, hoàn tiền và tiến độ do studio quyết định, nên hỏi giáo viên là cách nhanh nhất.",
+  messageTeacher: "Nhắn tin cho giáo viên",
+  askStudioSignedOut: "Đăng nhập và mở Trò chuyện để nhắn giáo viên, hoặc liên hệ trực tiếp với studio.",
+  stillNeedHelp: "Vẫn cần trợ giúp?",
+  stillNeedHelpBody: "Gửi yêu cầu cho đội ngũ Keystone. Chúng tôi cố gắng trả lời trong một ngày làm việc.",
+  category: "Về vấn đề gì?",
+  categoryPlaceholder: "Chọn chủ đề",
+  subject: "Chủ đề",
+  message: "Mô tả vấn đề",
+  messageHint: "Bạn đang định làm gì, và điều gì đã xảy ra?",
+  privacyNote: "Vui lòng không ghi tên, ngày sinh hay thông tin cá nhân khác của học sinh, cũng như mật khẩu hay mã. Chúng tôi sẽ hỏi nếu cần thêm.",
+  suggestionsTitle: "Trước khi gửi, có thể những bài này sẽ giúp bạn:",
+  name: "Tên của bạn (không bắt buộc)",
+  email: "Địa chỉ email của bạn",
+  emailHint: "Chúng tôi sẽ trả lời về địa chỉ này.",
+  send: "Gửi yêu cầu",
+  sending: "Đang gửi…",
+  sentTitle: "Đã gửi yêu cầu",
+  sentBody: "Mã tham chiếu của bạn là {reference}. Chúng tôi đã gửi bản sao qua email và cố gắng trả lời trong một ngày làm việc.",
+  sentUrgent: "Các vấn đề bảo mật được xem trước.",
+  another: "Gửi yêu cầu khác",
+  readMore: "Đọc",
+  urgentNote: "Đã đánh dấu khẩn. Chúng tôi xem các vấn đề bảo mật trước.",
+  errors_required: "Vui lòng điền mục này.",
+  errors_too_long: "Nội dung quá dài. Vui lòng rút ngắn.",
+  errors_too_short: "Vui lòng thêm chi tiết.",
+  errors_invalid: "Vui lòng kiểm tra lại.",
+  errors_captcha: "Vui lòng hoàn tất kiểm tra bảo mật.",
+  errors_rate_limited: "Bạn đã gửi nhiều yêu cầu trong thời gian ngắn. Vui lòng đợi 15 phút rồi thử lại.",
+  errors_unauthorized: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại và gửi lại.",
+  errors_failed: "Không gửi được yêu cầu. Vui lòng thử lại, hoặc email cho chúng tôi tại {email}.",
+  errors_ask_studio: "Vui lòng hỏi studio về vấn đề này.",
+  help: "Trợ giúp",
+  back: "Quay lại",
+};
+
 export type HelpUiKey = keyof typeof en;
 
 export function helpText(
@@ -101,7 +145,7 @@ export function helpText(
   key: HelpUiKey,
   values: Record<string, string> = {},
 ): string {
-  let text = (lang === "zh-CN" ? zh : en)[key];
+  let text = (lang === "zh-CN" ? zh : lang === "vi" ? vi : en)[key];
   for (const [name, value] of Object.entries(values)) text = text.replaceAll(`{${name}}`, value);
   return text;
 }
