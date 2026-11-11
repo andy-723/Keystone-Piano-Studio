@@ -1,5 +1,5 @@
 # Teacher day-book
-- [ ] Refresh pricing with distinctive tiers, integrated finance features, grouped comparison and polished FAQs; remove demo copy and verify phone/tablet/desktop.
+- [x] Refresh pricing with distinctive tiers, integrated finance features, grouped comparison and polished FAQs; remove demo copy and verify phone/tablet/desktop.
 - [x] Refresh laptop/iPad hardware with crisp dark-metal frames and unframed popout controls; verify feature actions and phone/tablet layouts.
 - [x] Separate everyday essentials and planned Tax Lite with gloss feature cards, contrasting backgrounds and phone/tablet checks.
 - [x] Adapt the supplied animated navigation to welcome/pricing with working Keystone links and mobile/touch controls; verify navigation and reduced motion.
