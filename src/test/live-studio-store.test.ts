@@ -53,8 +53,54 @@ import {
   sendMessage,
 } from "@/services/chat";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Row = Record<string, any>;
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// Declared props keep dot access legal under noPropertyAccessFromIndexSignature;
+// the index signature covers every other column the mocks touch.
+type Row = Record<string, any> & {
+  [K in
+    | "id"
+    | "status"
+    | "number"
+    | "name"
+    | "email"
+    | "kind"
+    | "profile"
+    | "is_demo"
+    | "display_name"
+    | "first_name"
+    | "family_id"
+    | "studio_id"
+    | "sent_at"
+    | "read_at"
+    | "metadata"
+    | "snapshot"
+    | "data"
+    | "invoice_prefix"
+    | "next_invoice_number"
+    | "credit_note_prefix"
+    | "next_credit_note_number"
+    | "p_invoice_id"]?: any;
+};
+type Tables = Record<string, Row[]> & {
+  [K in
+    | "studio"
+    | "invoice"
+    | "invoice_line"
+    | "invoice_event"
+    | "credit_note"
+    | "payment"
+    | "family"
+    | "guardian"
+    | "student"
+    | "student_course"
+    | "student_group"
+    | "library_item"
+    | "news_post"
+    | "conversation"
+    | "message"
+    | "snapshot"
+    | "studio_billing_profile"]?: Row[];
+};
 type Call = {
   table: string;
   op: string;
