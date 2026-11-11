@@ -1,6 +1,6 @@
 import type { Lang } from '@/mocks/types';
 const words = {
- news:['News','动态'],event:['Event','活动'],concert:['Concert','音乐会'],exam:['Exam','考试'],holiday:['Holiday','假日'],reminder:['Reminder','提醒'],
- pinned:['Pinned','置顶'],new:['New','新动态'],readMore:['Read more','阅读更多'],less:['Show less','收起'],gotIt:['Got it','知道了'],acknowledged:['Acknowledged','已确认'],message:['Message the teacher','给老师发消息'],calendar:['Add to calendar','添加到日历'],translate:['Translate — Coming soon','翻译 — 即将推出'],edited:['Edited','已编辑'],empty:['No studio updates yet.','暂无工作室动态。'],ago:['days ago','天前'],today:['Today','今天'],all:['All families','所有家庭'],attachments:['Attachments','附件'],close:['Close','关闭'],preview:['Family preview','家庭预览'],
+ news:['News','动态','Tin tức'],event:['Event','活动','Sự kiện'],concert:['Concert','音乐会','Hòa nhạc'],exam:['Exam','考试','Kỳ thi'],holiday:['Holiday','假日','Ngày nghỉ'],reminder:['Reminder','提醒','Nhắc nhở'],
+ pinned:['Pinned','置顶','Đã ghim'],new:['New','新动态','Mới'],readMore:['Read more','阅读更多','Đọc thêm'],less:['Show less','收起','Thu gọn'],gotIt:['Got it','知道了','Đã hiểu'],acknowledged:['Acknowledged','已确认','Đã xác nhận'],message:['Message the teacher','给老师发消息','Nhắn tin cho giáo viên'],calendar:['Add to calendar','添加到日历','Thêm vào lịch'],translate:['Translate — Coming soon','翻译 — 即将推出','Dịch — Sắp ra mắt'],edited:['Edited','已编辑','Đã sửa'],empty:['No studio updates yet.','暂无工作室动态。','Chưa có tin từ studio.'],ago:['days ago','天前','ngày trước'],today:['Today','今天','Hôm nay'],all:['All families','所有家庭','Tất cả gia đình'],attachments:['Attachments','附件','Tệp đính kèm'],close:['Close','关闭','Đóng'],preview:['Family preview','家庭预览','Xem trước cho gia đình'],
 } as const;
-export function newsText(lang: Lang, key: keyof typeof words) { return words[key][lang === 'zh-CN' ? 1 : 0]; }
+export function newsText(lang: Lang, key: keyof typeof words) { return words[key][lang === 'zh-CN' ? 1 : lang === 'vi' ? 2 : 0]; }
