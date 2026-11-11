@@ -6,6 +6,7 @@ import { StudioShowcase } from "@/components/StudioShowcase";
 import { MarketingMotion } from "@/components/MarketingMotion";
 import teachingMoment from "@/assets/keystone-teaching-moment.jpg";
 import { MarketingNavbar } from "@/components/MarketingNavbar";
+import { MarketingFooter } from "@/components/MarketingFooter";
 import { ZoomHero } from "@/components/ZoomHero";
 import {
   ArrowRight,
@@ -440,21 +441,7 @@ function Welcome() {
             </div>
           </section>
         </main>
-        <footer className="border-t border-mk-gold/50 bg-mk-paper">
-          <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-5 py-8 text-base text-mk-ink/70 md:px-10">
-            <p>© 2026 Synoratech Pty Ltd · Keystone Music HQ</p>
-            <nav className="flex flex-wrap gap-6">
-              <Link to="/pricing" className="hover:text-mk-ink">
-                Pricing
-              </Link>
-              <a href="mailto:support@keystonemusichq.com" className="hover:text-mk-ink">
-                Help
-              </a>
-              <span>Marketing preview · no live payments or tax filing</span>
-              <span>Data hosted in Sydney, Australia</span>
-            </nav>
-          </div>
-        </footer>
+        <MarketingFooter />
       </div>
     </MarketingMotion>
   );

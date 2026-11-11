@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as ChatRouteImport } from './routes/chat'
+import { Route as DisclaimerRouteImport } from './routes/disclaimer'
 import { Route as HelpRouteImport } from './routes/help'
 import { Route as InvoicesRouteImport } from './routes/invoices'
 import { Route as LibraryRouteImport } from './routes/library'
@@ -70,6 +71,11 @@ const AdminRoute = AdminRouteImport.update({
 const ChatRoute = ChatRouteImport.update({
   id: '/chat',
   path: '/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DisclaimerRoute = DisclaimerRouteImport.update({
+  id: '/disclaimer',
+  path: '/disclaimer',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HelpRoute = HelpRouteImport.update({
@@ -298,6 +304,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/chat': typeof ChatRouteWithChildren
+  '/disclaimer': typeof DisclaimerRoute
   '/help': typeof HelpRoute
   '/invoices': typeof InvoicesRouteWithChildren
   '/library': typeof LibraryRoute
@@ -346,6 +353,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/disclaimer': typeof DisclaimerRoute
   '/help': typeof HelpRoute
   '/library': typeof LibraryRoute
   '/login': typeof LoginRoute
@@ -393,6 +401,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/chat': typeof ChatRouteWithChildren
+  '/disclaimer': typeof DisclaimerRoute
   '/help': typeof HelpRoute
   '/invoices': typeof InvoicesRouteWithChildren
   '/library': typeof LibraryRoute
@@ -444,6 +453,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/chat'
+    | '/disclaimer'
     | '/help'
     | '/invoices'
     | '/library'
@@ -492,6 +502,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
+    | '/disclaimer'
     | '/help'
     | '/library'
     | '/login'
@@ -538,6 +549,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/chat'
+    | '/disclaimer'
     | '/help'
     | '/invoices'
     | '/library'
@@ -588,6 +600,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   ChatRoute: typeof ChatRouteWithChildren
+  DisclaimerRoute: typeof DisclaimerRoute
   HelpRoute: typeof HelpRoute
   InvoicesRoute: typeof InvoicesRouteWithChildren
   LibraryRoute: typeof LibraryRoute
@@ -640,6 +653,13 @@ declare module '@tanstack/react-router' {
       path: '/chat'
       fullPath: '/chat'
       preLoaderRoute: typeof ChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/disclaimer': {
+      id: '/disclaimer'
+      path: '/disclaimer'
+      fullPath: '/disclaimer'
+      preLoaderRoute: typeof DisclaimerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/help': {
@@ -1025,6 +1045,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   ChatRoute: ChatRouteWithChildren,
+  DisclaimerRoute: DisclaimerRoute,
   HelpRoute: HelpRoute,
   InvoicesRoute: InvoicesRouteWithChildren,
   LibraryRoute: LibraryRoute,

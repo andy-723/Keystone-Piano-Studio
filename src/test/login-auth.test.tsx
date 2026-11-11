@@ -126,6 +126,7 @@ describe("route guard helpers", () => {
     expect(isAuthExemptPath("/help")).toBe(true);
     expect(isAuthExemptPath("/welcome")).toBe(true);
     expect(isAuthExemptPath("/pricing")).toBe(true);
+    expect(isAuthExemptPath("/disclaimer")).toBe(true);
     expect(isAuthExemptPath("/privacy")).toBe(true);
     expect(isAuthExemptPath("/terms")).toBe(true);
     expect(isAuthExemptPath("/settings/terms")).toBe(false);

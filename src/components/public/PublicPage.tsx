@@ -23,10 +23,7 @@ export function PublicPage({ title, children }: { title: string; children: React
           <a href="/login" aria-label="Keystone Music HQ sign in">
             <BrandLogo variant="horizontal" alt="Keystone Music HQ" />
           </a>
-          <a
-            href="/login"
-            className="ks-btn ks-btn-secondary"
-          >
+          <a href="/login" className="ks-btn ks-btn-secondary">
             Sign in
           </a>
         </div>
@@ -44,6 +41,9 @@ export function PublicPage({ title, children }: { title: string; children: React
         </a>
         <a href="/terms" className="text-[#604A19] hover:text-[#15100D]">
           Terms
+        </a>
+        <a href="/disclaimer" className="text-[#604A19] hover:text-[#15100D]">
+          Disclaimer
         </a>
         <span>Data hosted in Sydney, Australia</span>
       </footer>
