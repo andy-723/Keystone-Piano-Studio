@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useSiteLang } from "@/i18n/marketing/site-lang";
 import { PublicPage, publicSupportEmail } from "@/components/public/PublicPage";
 import { HelpCentre } from "@/components/help/HelpCentre";
 import { Button } from "@/components/ui/button";
@@ -22,11 +22,12 @@ function HelpPage() {
   const search = Route.useSearch();
   const navigate = useNavigate({ from: "/help" });
   const audience = search.for ?? "studio";
-  const [lang, setLang] = useState<HelpLang>("en");
+  const siteLang = useSiteLang();
+  const lang: HelpLang = siteLang === "zh-CN" ? "zh-CN" : "en";
   const email = publicSupportEmail();
 
   return (
-    <PublicPage eyebrow="SUPPORT" title={audience === "family" && lang === "zh-CN" ? "帮助中心" : "Help centre"}>
+    <PublicPage eyebrow="SUPPORT" title="Help centre">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div role="group" aria-label="Who is this help for?" className="flex flex-wrap gap-2">
           <Button
@@ -43,28 +44,11 @@ function HelpPage() {
             className="min-h-11"
             onClick={() => void navigate({ search: { for: "family" } })}
           >
-            Families 家庭
+            Families
           </Button>
         </div>
-        {audience === "family" && (
-          <div role="group" aria-label="Language" className="flex gap-1">
-            <Button
-              variant={lang === "en" ? "secondary" : "ghost"}
-              aria-pressed={lang === "en"}
-              onClick={() => setLang("en")}
-            >
-              EN
-            </Button>
-            <Button
-              variant={lang === "zh-CN" ? "secondary" : "ghost"}
-              aria-pressed={lang === "zh-CN"}
-              onClick={() => setLang("zh-CN")}
-            >
-              中文
-            </Button>
-          </div>
-        )}
       </div>
+      <div data-no-translate={audience === "family" ? "" : undefined}>
       <HelpCentre
         key={audience}
         audience={audience}
@@ -72,14 +56,13 @@ function HelpPage() {
         mode="public"
         supportEmail={email}
       />
+      </div>
       <p className="text-base text-mk-ink/70">
-        {audience === "family" && lang === "zh-CN" ? "也可以发邮件至 " : "You can also email "}
+        {"You can also email "}
         <a className="text-mk-bronze underline" href={`mailto:${email}`}>
           {email}
         </a>
-        {audience === "family" && lang === "zh-CN"
-          ? "。我们绝不会索要您的密码或验证码。"
-          : ". We never ask for your password or authenticator codes."}
+        {". We never ask for your password or authenticator codes."}
       </p>
     </PublicPage>
   );
