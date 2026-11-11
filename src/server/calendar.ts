@@ -5,6 +5,7 @@ import { verifyAccessToken } from "./session";
 import { forbidden, ProblemError } from "./problem";
 import {
   DEMO_CALENDAR_STUDIO,
+  DEMO_CALENDAR_TEACHER,
   getCalendarStore,
   type CalendarConnection,
   type CalendarStudent,
@@ -59,6 +60,13 @@ export type CalendarActor = {
   demo?: boolean;
 };
 
+/** The demo studio's teacher. Only ever paired with the demo studio id (see authorize). */
+export const DEMO_CALENDAR_ACTOR: CalendarActor = {
+  userId: DEMO_CALENDAR_TEACHER,
+  aal: "aal2",
+  demo: true,
+};
+
 const STAFF: StudioRole[] = ["owner", "admin", "teacher"];
 
 async function authorize(actor: CalendarActor, studioId: string, access: "read" | "write") {
@@ -83,6 +91,8 @@ export type CalendarLesson = LessonOccurrence & {
 };
 
 export type GoogleStatus = {
+  /** Demo studio: Google sync is never offered. */
+  demo?: boolean;
   configured: boolean;
   connected: boolean;
   needsReconnect: boolean;
@@ -153,7 +163,9 @@ export async function getCalendarWeek(
     timeZone,
     lessons,
     students,
-    google: googleStatus(connection),
+    google: actor.demo
+      ? { ...googleStatus(null), configured: false, demo: true }
+      : googleStatus(connection),
   };
 }
 
@@ -682,8 +694,7 @@ export async function disconnectGoogle(actor: CalendarActor, studioId: string) {
 // Server functions (browser entry points)
 // ---------------------------------------------------------------------------
 async function actorFrom(accessToken: string): Promise<CalendarActor> {
-  if (isMockOnboarding() && !accessToken)
-    return { userId: "demo-teacher", aal: "aal2", demo: true };
+  if (isMockOnboarding() && !accessToken) return DEMO_CALENDAR_ACTOR;
   const session = await verifyAccessToken(accessToken);
   return { userId: session.userId, aal: session.aal, email: session.email };
 }

@@ -37,6 +37,14 @@ hour.
 OAuth state is HMAC-signed with the client secret, expires after 10 minutes and carries the
 Keystone user id; `/calendar/google` only finishes the link when the signed-in user matches.
 
+## Demo studio
+
+The demo studio (`studio.is_demo`), platform staff and local mock mode use the demo calendar:
+`src/lib/calendar-api.ts` runs the same calendar code in the browser tab on a memory store seeded
+from the demo timetable (`createDemoCalendarStore`). Nothing about the demo is sent to or stored on
+the server, demo changes reset on reload, and Google Calendar is not offered. The demo actor is
+only ever allowed on the `demo` studio id (`authorize`).
+
 ## Set up (dashboard steps)
 
 1. Google Cloud console, same project as the Google sign-in client: APIs & Services > Library >

@@ -14,6 +14,7 @@ import { useState, type ReactNode } from "react";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { chatThreadsQuery } from "@/lib/chat-queries";
 import { Button } from "@/components/ui/button";
+import { getStudioWorkspace } from "@/lib/studio-workspace";
 import { StudioNews } from "./StudioNews";
 import { TeacherProfileSettings } from "./TeacherProfileSettings";
 import { ProfilePicture } from "./ProfilePicture";
@@ -52,6 +53,9 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
   const { data: profile } = useSuspenseQuery(teacherProfileQuery(role === "new-teacher" ? "new-studio" : "demo"));
   const [newNewsOpen, setNewNewsOpen] = useState(false);
   const [newPlanOpen, setNewPlanOpen] = useState(false);
+  // Sample data (the demo studio, platform staff, local mock mode) is labelled so it is never
+  // mistaken for a real studio, e.g. in screen recordings.
+  const showDemoLabel = (role === "teacher" || role === "parent") && getStudioWorkspace().mode === "mock";
   const planLabel = subscription.plan === "base" ? "Base plan" : subscription.plan === "academy" ? "Academy plan" : "Pro plan";
   const planBadge = <Button asChild={role === "teacher"} variant={subscription.plan === "base" ? "outline" : "default"} className="min-h-12 h-auto rounded-full px-3 text-base" onClick={() => role === "new-teacher" && setNewPlanOpen(true)}>{role === "teacher" ? <Link to="/settings" hash="plan-and-billing">{planLabel}</Link> : planLabel}</Button>;
   const isTeacher = role === "teacher";
@@ -92,7 +96,7 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
             <span className={isTeacher ? "md:hidden" : undefined}>
               <BrandLogo variant="horizontal" alt="Keystone Music HQ" />
             </span>
-            <div className="min-w-0 break-words font-display text-xl font-semibold sm:flex-1">{profile.studioName || studio.name}</div>
+            <div className="min-w-0 break-words font-display text-xl font-semibold sm:flex-1">{profile.studioName || studio.name}{showDemoLabel && <span className="ml-3 inline-block rounded-full border border-amber-700/40 bg-amber-100 px-3 py-0.5 align-middle font-sans text-sm font-semibold text-amber-900" data-testid="demo-studio-label">Demo studio</span>}</div>
             {role !== "parent" && <ProfilePicture id="teacher" name={profile.name || "Teacher"} scope={role === "new-teacher" ? "new-studio" : "demo"} />}
             {role !== "parent" && <div className={isTeacher ? "md:hidden" : ""}>{planBadge}</div>}
           </div>

@@ -20,24 +20,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getCalendarAuth } from "@/lib/calendar-studio";
+import { calendarApi } from "@/lib/calendar-api";
 import { addDays, formatClock, fromMinutes, mondayOf, toMinutes } from "@/lib/lesson-calendar";
 import { formatLongDate, formatShortDate } from "@/lib/format";
-import {
-  addLessonFn,
-  cancelLessonFn,
-  changeFromWeekFn,
-  deleteLessonsFn,
-  disconnectGoogleFn,
-  endWeeklyLessonsFn,
-  getCalendarWeekFn,
-  moveLessonFn,
-  restoreLessonFn,
-  startGoogleConnectFn,
-  syncGoogleNowFn,
-  type CalendarLesson,
-  type CalendarWeek,
-} from "@/server/calendar";
+import type { CalendarLesson, CalendarWeek } from "@/server/calendar";
 
 const SLOT_MIN = 30;
 const ROW_PX = 48;
@@ -48,10 +34,7 @@ export const calendarWeekKey = (date: string) => ["lesson-calendar", date] as co
 export function calendarWeekQuery(date: string) {
   return {
     queryKey: calendarWeekKey(date),
-    queryFn: async (): Promise<CalendarWeek> => {
-      const auth = await getCalendarAuth();
-      return getCalendarWeekFn({ data: { ...auth, date } });
-    },
+    queryFn: (): Promise<CalendarWeek> => calendarApi.week(date),
   };
 }
 
@@ -317,21 +300,28 @@ function GoogleBar({ week }: { week: CalendarWeek }) {
   const failed = week.lessons.filter((l) => l.googleSyncStatus === "error").length;
   const connect = useMutation({
     mutationFn: async () => {
-      const auth = await getCalendarAuth();
-      const { url } = await startGoogleConnectFn({ data: auth });
+      const { url } = await calendarApi.startGoogle();
       window.location.assign(url);
     },
   });
   const sync = useMutation({
-    mutationFn: async () => syncGoogleNowFn({ data: await getCalendarAuth() }),
+    mutationFn: () => calendarApi.syncGoogle(),
     onSuccess: () => client.invalidateQueries({ queryKey: ["lesson-calendar"] }),
   });
   const disconnect = useMutation({
-    mutationFn: async () => disconnectGoogleFn({ data: await getCalendarAuth() }),
+    mutationFn: () => calendarApi.disconnectGoogle(),
     onSuccess: () => client.invalidateQueries({ queryKey: ["lesson-calendar"] }),
   });
   const error = connect.error ?? sync.error ?? disconnect.error;
 
+  if (google.demo) {
+    return (
+      <p className="mt-4 text-base text-muted-foreground">
+        Demo studio: changes here are just for trying the calendar and reset when you reload. Google
+        Calendar sync works in your own studio.
+      </p>
+    );
+  }
   if (!google.configured) {
     return (
       <p className="mt-4 text-base text-muted-foreground">
@@ -526,20 +516,15 @@ function AddLessonForm({
   const [location, setLocation] = useState("");
   const mutation = useMutation({
     mutationFn: async (allowClash: boolean) =>
-      addLessonFn({
-        data: {
-          ...(await getCalendarAuth()),
-          lesson: {
-            studentId,
-            date,
-            startTime: time,
-            durationMin: length,
-            repeat: weekly ? "weekly" : "once",
-            untilDate: weekly && until ? until : null,
-            location,
-            allowClash,
-          },
-        },
+      calendarApi.addLesson({
+        studentId,
+        date,
+        startTime: time,
+        durationMin: length,
+        repeat: weekly ? "weekly" : "once",
+        untilDate: weekly && until ? until : null,
+        location,
+        allowClash,
       }),
     onSuccess: async () => {
       await refresh();
@@ -656,18 +641,16 @@ function LessonActions({
     await refresh();
     onDone();
   };
-  const auth = getCalendarAuth;
-
   const cancel = useMutation({
     mutationFn: async () =>
-      cancelLessonFn({
-        data: { ...(await auth()), seriesId: lesson.seriesId, originalDate: lesson.originalDate },
+      calendarApi.cancelLesson({
+        seriesId: lesson.seriesId,
+        originalDate: lesson.originalDate,
       }),
     onSuccess: done,
   });
   const restore = useMutation({
-    mutationFn: async () =>
-      restoreLessonFn({ data: { ...(await auth()), exceptionId: lesson.exceptionId ?? "" } }),
+    mutationFn: async () => calendarApi.restoreLesson(lesson.exceptionId ?? ""),
     onSuccess: done,
   });
   const weekly = lesson.repeat === "weekly";
@@ -755,15 +738,12 @@ function MoveForm({ lesson, onDone }: { lesson: CalendarLesson; onDone: () => Pr
   const [time, setTime] = useState(lesson.startTime);
   const mutation = useMutation({
     mutationFn: async (allowClash: boolean) =>
-      moveLessonFn({
-        data: {
-          ...(await getCalendarAuth()),
-          seriesId: lesson.seriesId,
-          originalDate: lesson.originalDate,
-          newDate: date,
-          newStartTime: time,
-          allowClash,
-        },
+      calendarApi.moveLesson({
+        seriesId: lesson.seriesId,
+        originalDate: lesson.originalDate,
+        newDate: date,
+        newStartTime: time,
+        allowClash,
       }),
     onSuccess: onDone,
   });
@@ -792,16 +772,13 @@ function ChangeForm({ lesson, onDone }: { lesson: CalendarLesson; onDone: () => 
   const [length, setLength] = useState(lesson.durationMin);
   const mutation = useMutation({
     mutationFn: async (allowClash: boolean) =>
-      changeFromWeekFn({
-        data: {
-          ...(await getCalendarAuth()),
-          seriesId: lesson.seriesId,
-          fromDate: lesson.originalDate,
-          newDate: date,
-          startTime: time,
-          durationMin: length,
-          allowClash,
-        },
+      calendarApi.changeFromWeek({
+        seriesId: lesson.seriesId,
+        fromDate: lesson.originalDate,
+        newDate: date,
+        startTime: time,
+        durationMin: length,
+        allowClash,
       }),
     onSuccess: onDone,
   });
@@ -848,10 +825,7 @@ function EndForm({
 }) {
   const [last, setLast] = useState(lesson.originalDate);
   const mutation = useMutation({
-    mutationFn: async () =>
-      endWeeklyLessonsFn({
-        data: { ...(await getCalendarAuth()), seriesId: lesson.seriesId, lastDate: last },
-      }),
+    mutationFn: async () => calendarApi.endWeekly({ seriesId: lesson.seriesId, lastDate: last }),
     onSuccess: onDone,
   });
   return (
@@ -891,8 +865,7 @@ function EndForm({
 
 function DeleteForm({ lesson, onDone }: { lesson: CalendarLesson; onDone: () => Promise<void> }) {
   const mutation = useMutation({
-    mutationFn: async () =>
-      deleteLessonsFn({ data: { ...(await getCalendarAuth()), seriesId: lesson.seriesId } }),
+    mutationFn: async () => calendarApi.deleteLessons(lesson.seriesId),
     onSuccess: onDone,
   });
   return (

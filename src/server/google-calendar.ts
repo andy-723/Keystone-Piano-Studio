@@ -18,8 +18,10 @@ const STATE_TTL_MS = 10 * 60 * 1000;
 
 export function googleConfig() {
   const env = getServerEnv();
-  const clientId = process.env["GOOGLE_CALENDAR_CLIENT_ID"]?.trim() ?? "";
-  const clientSecret = process.env["GOOGLE_CALENDAR_CLIENT_SECRET"]?.trim() ?? "";
+  // The demo calendar runs this code in the browser, where there is no process.env.
+  const vars = typeof process !== "undefined" && process.env ? process.env : {};
+  const clientId = vars["GOOGLE_CALENDAR_CLIENT_ID"]?.trim() ?? "";
+  const clientSecret = vars["GOOGLE_CALENDAR_CLIENT_SECRET"]?.trim() ?? "";
   return {
     clientId,
     clientSecret,
