@@ -322,3 +322,18 @@
 @media (prefers-reduced-motion: reduce) {
   .marketing-site *, .marketing-site *::before, .marketing-site *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* Scroll zoom hero */
+.mk-zoom-track { --zoom-p: 0; height: 230svh; }
+.mk-zoom-image { transform: scale(calc(1 + var(--zoom-p) * 1.5)); transform-origin: 55% 62%; will-change: transform; }
+.mk-zoom-shade { opacity: calc(1 - var(--zoom-p) * 0.9); }
+.mk-zoom-copy { transform: scale(calc(1 + var(--zoom-p) * 0.9)); opacity: calc(1 - var(--zoom-p) * 2.2); filter: blur(calc(var(--zoom-p) * 14px)); transform-origin: 30% 50%; will-change: transform, opacity; }
+.mk-zoom-nav { opacity: calc(1 - var(--zoom-p) * 3); }
+.mk-zoom-fade { opacity: clamp(0, calc((var(--zoom-p) - 0.8) * 5), 1); }
+.mk-zoom-track[data-static="true"] { height: auto; }
+.mk-zoom-track[data-static="true"] .mk-zoom-stage { position: relative; min-height: min(760px, 88svh); height: auto; }
+@media (prefers-reduced-motion: reduce) {
+  .mk-zoom-track { height: auto; }
+  .mk-zoom-image, .mk-zoom-copy, .mk-zoom-shade, .mk-zoom-nav, .mk-zoom-fade { transform: none; opacity: 1; filter: none; }
+  .mk-zoom-fade { opacity: 0; }
+}
