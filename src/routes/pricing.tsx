@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/accordion";
 import { PUBLIC_PLANS } from "@/lib/plans";
 import { MarketingNavbar } from "@/components/MarketingNavbar";
+import { MarketingFooter } from "@/components/MarketingFooter";
 import { MarketingMotion } from "@/components/MarketingMotion";
 import teachingMoment from "@/assets/keystone-teaching-moment.jpg";
 import { useState } from "react";
@@ -53,8 +54,7 @@ export const Route = createFileRoute("/pricing")({
   component: Pricing,
 });
 
-const enquire = (plan: string) =>
-  `mailto:support@keystonemusichq.com?subject=${encodeURIComponent(`Request a studio — ${plan}`)}`;
+const enquire = (plan: string) => `/contact?topic=studio&plan=${encodeURIComponent(plan)}`;
 const shared = [
   {
     Icon: CalendarDays,
@@ -580,17 +580,7 @@ function Pricing() {
             </div>
           </section>
         </main>
-        <footer className="border-t border-mk-gold/50 bg-mk-paper px-5 py-8 text-base text-mk-ink/70">
-          <div className="mx-auto flex max-w-7xl flex-wrap justify-between gap-4 md:px-5">
-            <p>© 2026 Synoratech Pty Ltd · Keystone Music HQ</p>
-            <a
-              className="inline-flex min-h-12 items-center text-mk-bronze underline underline-offset-4"
-              href="mailto:support@keystonemusichq.com"
-            >
-              Contact Keystone
-            </a>
-          </div>
-        </footer>
+        <MarketingFooter />
       </div>
     </MarketingMotion>
   );

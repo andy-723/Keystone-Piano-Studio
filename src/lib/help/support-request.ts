@@ -14,6 +14,11 @@ export type SupportCategory = {
 };
 
 export const STUDIO_CATEGORIES: SupportCategory[] = [
+  {
+    id: "new_studio",
+    label: { en: "Set up a new studio or ask about plans" },
+    answeredBy: "keystone",
+  },
   { id: "sign_in", label: { en: "Sign-in or two-step sign-in" }, answeredBy: "keystone" },
   { id: "families", label: { en: "Enrolling or inviting families" }, answeredBy: "keystone" },
   { id: "family_billing", label: { en: "Family invoices and payments" }, answeredBy: "keystone" },

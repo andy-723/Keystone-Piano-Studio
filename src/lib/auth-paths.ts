@@ -19,8 +19,16 @@ export function maskEmail(email: string): string {
   return `${visible}***@${domain}`;
 }
 
-/** Public web pages (Help, Privacy, Terms, Welcome, Pricing): no session and no app shell. */
-export const PUBLIC_PAGE_PATHS = ["/help", "/privacy", "/terms", "/welcome", "/pricing"] as const;
+/** Public web pages (Help, Privacy, Terms, Disclaimer, Contact, Welcome, Pricing): no session and no app shell. */
+export const PUBLIC_PAGE_PATHS = [
+  "/help",
+  "/privacy",
+  "/terms",
+  "/disclaimer",
+  "/contact",
+  "/welcome",
+  "/pricing",
+] as const;
 
 export function isPublicPagePath(pathname: string): boolean {
   const path = pathname.replace(/\/+$/, "") || "/";

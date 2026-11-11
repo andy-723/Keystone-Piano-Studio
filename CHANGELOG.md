@@ -6,6 +6,12 @@ GitHub Release with the same text. See `docs/release-process.md`.
 
 ## Unreleased
 
+- New public Contact us page (`/contact`). "Request a studio" on the welcome and pricing pages now
+  opens it with "Set up a new studio" and the plan preselected; messages go through the same
+  support request path as the help centre. Keystone's privacy contact is now
+  privacy@keystonemusichq.com.
+- Welcome and pricing pages share one footer: "© 2026 Keystone Music HQ" with links to Pricing,
+  Help, Terms of use, Privacy and a new public Website terms and disclaimer page (`/disclaimer`).
 - Visitors who aren't signed in and open keystonemusichq.com now land on the welcome page
   (`/welcome`); signed-in people still go straight to their studio, and other app links still go
   to sign-in first.
