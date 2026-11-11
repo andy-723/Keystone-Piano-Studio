@@ -1,5 +1,4 @@
 # Teacher day-book
-- [x] Place the supplied cinematic closing animation after the student-records care section with Keystone links; verify desktop, phone and reduced motion.
 - [x] Adapt the supplied animated navigation to welcome/pricing with working Keystone links and mobile/touch controls; verify navigation and reduced motion.
 - [x] Simplify device previews and bring the selected laptop or iPad forward into a large interactive view; verify phone sizing, dismissal and screen actions.
 - [x] Combine welcome previews into one interactive laptop and one iPad, followed by feature breakdowns; verify device controls and narrow layouts.
