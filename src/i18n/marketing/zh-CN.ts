@@ -233,7 +233,7 @@ export const zhSite: Record<string, string> = {
   "Simple record preparation for Australian studio owners.": "为澳大利亚工作室主准备的简单记录。",
   "Smith family": "Smith 一家",
   "Snapshot": "概览",
-  "“Less Paperwork, More Passion – Your Studio, Unified”": "“少些文书，多些热爱 – 您的工作室，一站整合”",
+  "Snapshot for the teaching week. Tax Lite for EOFY. Base brings your solo studio records together; Pro adds the bigger financial picture and Xero sync.": "教学周看概览，年终看 Tax Lite。Base 把您的个人工作室记录整合在一起；Pro 增加更完整的财务全景和 Xero 同步。",
   "“Less Paperwork, More Passion – Your Studio, Unified”": "“少些文书，多些热爱 – 您的工作室，一站整合”",
   "Snapshot period": "概览周期",
   "Someone may have got into my account": "可能有人进入了我的账户",

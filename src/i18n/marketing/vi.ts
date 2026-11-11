@@ -233,7 +233,7 @@ export const viSite: Record<string, string> = {
   "Simple record preparation for Australian studio owners.": "Chuẩn bị hồ sơ đơn giản cho chủ studio tại Úc.",
   "Smith family": "Gia đình Smith",
   "Snapshot": "Tổng quan",
-  "“Less Paperwork, More Passion – Your Studio, Unified”": "“Bớt giấy tờ, thêm đam mê – Studio của bạn, hợp nhất”",
+  "Snapshot for the teaching week. Tax Lite for EOFY. Base brings your solo studio records together; Pro adds the bigger financial picture and Xero sync.": "Tổng quan cho tuần dạy. Tax Lite cho cuối năm tài chính. Base gom hồ sơ studio cá nhân của bạn về một nơi; Pro bổ sung bức tranh tài chính toàn diện hơn và đồng bộ Xero.",
   "“Less Paperwork, More Passion – Your Studio, Unified”": "“Bớt giấy tờ, thêm đam mê – Studio của bạn, hợp nhất”",
   "Snapshot period": "Kỳ tổng quan",
   "Someone may have got into my account": "Có thể ai đó đã vào tài khoản của tôi",
