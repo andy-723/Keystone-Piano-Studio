@@ -242,6 +242,8 @@
   .mk-showcase-thumbnail { height: 300px; }
   .mk-showcase-popout, .mk-showcase-popout[data-device=ipad] { width: calc(100% - 8px); }
   .mk-showcase-toolbar { margin-inline: 4px; }
+  .mk-showcase-toolbar [role=group] { min-width: 0; flex: 1; }
+  .mk-showcase-toolbar [role=group] button { min-width: 0; flex: 1; padding-inline: 6px; gap: 6px; }
   .mk-showcase-popout .mk-laptop-deck { height: 62px; }
   .mk-showcase-popout .mk-laptop-keyboard { display: none; }
   .mk-showcase-popout .mk-laptop-trackpad { height: 34px; }
