@@ -64,7 +64,7 @@ export function ZoomHero({
         <div className="mk-zoom-nav relative z-20">{nav}</div>
         <div className="mk-zoom-copy flex flex-1">{children}</div>
         <div
-          className="mk-zoom-fade pointer-events-none absolute inset-0 z-30 bg-mk-paper"
+          className="mk-zoom-fade pointer-events-none absolute inset-0 z-30 bg-mk-ink"
           aria-hidden
         />
       </section>
