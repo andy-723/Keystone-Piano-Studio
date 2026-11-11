@@ -2,14 +2,14 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Menu, MenuItem, MenuLink } from "@/components/ui/navbar-menu";
-import logo from "@/assets/keystone-logo.jpg";
+import logo from "@/assets/keystone-lockup-tagline.png.asset.json";
 import { ArrowUpRight, BookOpen, LayoutDashboard, Receipt, Menu as MenuIcon, X } from "lucide-react";
 
 export function MarketingNavbar() {
   const [expanded, setExpanded] = useState(false);
   return <header className="mk-navbar-header font-mk-sans text-mk-ink">
     <div className="mk-navbar-bar">
-      <Link to="/welcome" aria-label="Keystone Music HQ home" onClick={() => setExpanded(false)} className="shrink-0"><img src={logo} alt="Keystone Music HQ" className="h-10 w-auto max-w-[150px]" /></Link>
+      <Link to="/welcome" aria-label="Keystone Music HQ home" onClick={() => setExpanded(false)} className="min-w-0 shrink"><img src={logo.url} alt="Keystone Music HQ — Studio OS & LMS management platform" width={1988} height={565} className="h-auto w-[250px] max-w-full sm:w-[280px]" /></Link>
       <Button type="button" variant="ghost" aria-label={expanded ? "Close navigation" : "Open navigation"} aria-expanded={expanded} aria-controls="marketing-navigation" onClick={() => setExpanded(value => !value)} className="size-12 text-mk-ink hover:bg-mk-cream lg:hidden">{expanded ? <X aria-hidden /> : <MenuIcon aria-hidden />}</Button>
       <div id="marketing-navigation" className={`mk-navbar-links ${expanded ? "mk-navbar-expanded" : ""}`}>
         <Menu onSelect={() => setExpanded(false)}>
