@@ -30,7 +30,7 @@ function PayButton({ studioId, label }: { studioId: string; label: string }) {
           setBusy(true);
           void openBilling(studioId, setError).finally(() => setBusy(false));
         }}
-        className="min-h-11 rounded-[10px] bg-[#604A19] px-4 text-sm font-semibold text-[#FBF7EE] disabled:opacity-60"
+        className="ks-btn ks-btn-primary"
       >
         {label}
       </button>
@@ -78,11 +78,7 @@ export function StudioPausedScreen({
         </div>
       )}
       {supportEmail && <p className="mt-6 text-sm text-[#5A4F43]">Questions? {supportEmail}</p>}
-      <button
-        type="button"
-        onClick={() => void signOut()}
-        className="mt-6 text-[#604A19] underline"
-      >
+      <button type="button" onClick={() => void signOut()} className="ks-btn ks-btn-link mt-6">
         Sign out
       </button>
     </main>
