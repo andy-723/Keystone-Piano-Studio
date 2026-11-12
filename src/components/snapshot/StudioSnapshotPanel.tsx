@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   Download,
   Mail,
+  Send,
   Receipt,
   Users,
   AlertTriangle,
@@ -22,6 +23,8 @@ import {
   type SnapshotTileId,
   type StudioSnapshot,
 } from "@/services/snapshot";
+import { sendOverdueChase } from "@/services/pro-cfo";
+import { AT_RISK_NOTE, NO_SURCHARGE_NOTE } from "@/lib/tax-copy";
 import { ProCfoPanel } from "@/components/snapshot/ProCfoPanel";
 import { TaxLitePanel } from "@/components/snapshot/TaxLitePanel";
 import type { TaxLiteFyKey } from "@/lib/tax-lite-fy";
@@ -161,6 +164,19 @@ export function StudioSnapshotPanel({
     },
     onError: (error: Error) => toast.error(error.message || "Could not resend invitation."),
   });
+  // Overdue reminders are on every plan, so the reminder button lives here, not in Pro CFO.
+  const chase = useMutation({
+    mutationFn: (invoiceId: string) => sendOverdueChase(invoiceId),
+    onSuccess: async () => {
+      await Promise.all([
+        client.invalidateQueries({ queryKey: ["studio-snapshot"] }),
+        client.invalidateQueries({ queryKey: ["chat-threads"] }),
+        client.invalidateQueries({ queryKey: ["messages"] }),
+      ]);
+      toast.success("Overdue reminder sent in family chat");
+    },
+    onError: (error: Error) => toast.error(error.message || "Could not send reminder."),
+  });
 
   const empty = TILES.find((tile) => tile.id === drill)!;
   const count = drillCount(data, drill);
@@ -279,6 +295,14 @@ export function StudioSnapshotPanel({
             </Link>
           </p>
         ) : (
+          <>
+          {drill === "overdue" && (
+            <p className="mt-3 text-base text-[#5A4F43]">
+              Reminders go to the family chat with a payment link. They do not email or charge cards.{" "}
+              {NO_SURCHARGE_NOTE}
+            </p>
+          )}
+          {drill === "practice" && <p className="mt-3 text-base text-[#5A4F43]">{AT_RISK_NOTE}</p>}
           <ul className="mt-5 divide-y divide-[#E6D7B8]">
             {drill === "revenue" &&
               data.paidInvoices.map((row) => (
@@ -309,11 +333,23 @@ export function StudioSnapshotPanel({
                       {formatAUD(row.balanceCents)} · {row.daysOverdue} day{row.daysOverdue === 1 ? "" : "s"} overdue
                     </p>
                   </div>
-                  <Button asChild variant="ghost" className="text-[#604A19]">
-                    <Link to="/invoices/$invoiceId" params={{ invoiceId: row.invoiceId }}>
-                      Open invoice
-                    </Link>
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button asChild variant="ghost" className="text-[#604A19]">
+                      <Link to="/invoices/$invoiceId" params={{ invoiceId: row.invoiceId }}>
+                        Open invoice
+                      </Link>
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="border-[#CDBF9F]"
+                      disabled={chase.isPending}
+                      onClick={() => chase.mutate(row.invoiceId)}
+                    >
+                      <Send aria-hidden />
+                      Send reminder in chat
+                    </Button>
+                  </div>
                 </li>
               ))}
             {drill === "students" &&
@@ -387,6 +423,7 @@ export function StudioSnapshotPanel({
                 </li>
               ))}
           </ul>
+          </>
         )}
       </section>
 
@@ -412,9 +449,9 @@ export function StudioSnapshotPanel({
         </Button>
       </footer>
 
-      <ProCfoPanel />
-
       <TaxLitePanel fy={taxFy} onFyChange={onTaxFyChange} />
+
+      <ProCfoPanel />
     </div>
   );
 }

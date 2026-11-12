@@ -3,12 +3,11 @@ import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-q
 import {
   Download,
   RefreshCw,
-  Send,
   Landmark,
   Wallet,
-  AlertTriangle,
   Scale,
   BadgeCheck,
+  Lock,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -16,18 +15,15 @@ import { Button } from "@/components/ui/button";
 import { formatAUD, formatNumericDate } from "@/lib/format";
 import { proCfoPackQuery } from "@/lib/pro-cfo-queries";
 import {
-  AT_RISK_NOTE,
   GST_ALERT,
   GST_REGISTRATION_RULE,
   NET_GST_NOTE,
-  NO_SURCHARGE_NOTE,
   SUPER_NOTE,
   TAX_DISCLAIMER,
 } from "@/lib/tax-copy";
 import {
   pushTeacherBillsToXero,
   retryXeroQueueItem,
-  sendOverdueChase,
   setProCfoProjectedTurnover,
   teacherRemittanceCsv,
   type ProCfoPack,
@@ -102,7 +98,6 @@ function GstBar({ pack }: { pack: ProCfoPack }) {
         </div>
         <p className={muted}>
           {gstRadar.percentOfThreshold}% of $75,000
-          {gstRadar.softPreview ? " · Pro preview" : ""}
         </p>
       </div>
       <div
@@ -155,7 +150,59 @@ function GstBar({ pack }: { pack: ProCfoPack }) {
   );
 }
 
+/** What Pro CFO adds, shown to Base studios instead of any figures. */
+export const PRO_CFO_TEASER_ITEMS = [
+  "Net cash after Stripe fees and studio margin",
+  "Unearned tuition and make-up credit liability",
+  "GST threshold monitor with a next-12-months estimate",
+  "Xero sync queue with retry",
+  "Teacher payouts, remittance export and Xero bills",
+] as const;
+
+/**
+ * Pro CFO is Pro only. Base studios get a locked card that lists what Pro adds,
+ * with no figures. Day-to-day items (collected cash, overdue reminders,
+ * practice at risk, lessons delivered) live in the Studio Snapshot on all plans.
+ */
 export function ProCfoPanel() {
+  const { data: pack } = useSuspenseQuery(proCfoPackQuery());
+  return pack.proEnabled ? <ProCfoDetail /> : <ProCfoTeaser />;
+}
+
+function ProCfoTeaser() {
+  return (
+    <section className="mt-10" data-tour="pro-cfo" aria-label="Pro CFO">
+      <div className={panel}>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="flex items-center gap-2 text-base font-semibold uppercase tracking-[0.14em] text-[#604A19]">
+              <Lock className="size-4" aria-hidden />
+              Pro CFO
+            </p>
+            <h2 className={`mt-2 ${title}`}>Cash, margin and Xero ops</h2>
+            <p className={`mt-2 max-w-2xl ${muted}`}>
+              Pro CFO is part of the Pro plan. Your Studio Snapshot and Tax Lite above stay on every plan.
+            </p>
+          </div>
+          <Button asChild className="bg-bronze text-[#FBF7EE] hover:bg-bronze-hover">
+            <Link to="/settings" hash="plan-and-billing">
+              Upgrade to Pro
+            </Link>
+          </Button>
+        </div>
+        <ul className="mt-5 grid gap-2 sm:grid-cols-2" aria-label="What Pro CFO adds">
+          {PRO_CFO_TEASER_ITEMS.map((item) => (
+            <li key={item} className={`${card} text-base text-[#15100D]`}>
+              {item}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  );
+}
+
+function ProCfoDetail() {
   const { data: pack } = useSuspenseQuery(proCfoPackQuery());
   const client = useQueryClient();
 
@@ -182,18 +229,6 @@ export function ProCfoPanel() {
     onError: (error: Error) => toast.error(error.message || "Could not push bills."),
   });
 
-  const chase = useMutation({
-    mutationFn: (invoiceId: string) => sendOverdueChase(invoiceId),
-    onSuccess: async () => {
-      await Promise.all([
-        invalidate(),
-        client.invalidateQueries({ queryKey: ["chat-threads"] }),
-        client.invalidateQueries({ queryKey: ["messages"] }),
-      ]);
-      toast.success("Overdue reminder sent in family chat");
-    },
-    onError: (error: Error) => toast.error(error.message || "Could not send reminder."),
-  });
 
   const failedOrPending = pack.xeroQueue.filter((row) => row.status !== "synced");
 
@@ -208,10 +243,8 @@ export function ProCfoPanel() {
             <h2 className={`mt-2 ${title}`}>Cash, margin and Xero ops</h2>
             <p className={`mt-2 max-w-2xl ${muted}`}>
               Rolling {formatNumericDate(pack.windowStart)}–{formatNumericDate(pack.windowEnd)}{" "}
-              pulse for owners — not a second ledger. {TAX_DISCLAIMER}{" "}
-              {pack.proEnabled
-                ? "Pro tools are unlocked on this studio."
-                : "Soft Pro preview — upgrade unlocks Xero retry and remittance push."}
+              pulse for owners — not a second ledger. Collected cash, overdue reminders and
+              practice check-ins are in the Studio Snapshot above. {TAX_DISCLAIMER}
             </p>
           </div>
           <span
@@ -255,56 +288,23 @@ export function ProCfoPanel() {
       </ul>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        <section className={panel} aria-label="Revenue and churn">
+        <section className={panel} aria-label="Earned revenue and make-up credits">
           <div className="flex items-center gap-2 text-[#604A19]">
             <Scale className="size-5" aria-hidden />
-            <h3 className={title}>Revenue and churn</h3>
+            <h3 className={title}>Earned revenue and make-up credits</h3>
           </div>
-          <dl className="mt-4 grid gap-3 sm:grid-cols-2">
+          <dl className="mt-4 grid gap-3">
             <div className={card}>
               <dt className="font-semibold text-[#604A19]">Earned</dt>
               <dd className="mt-1 font-display text-xl font-semibold text-[#15100D]">
                 {formatAUD(pack.revenueChurn.earnedCents)}
               </dd>
               <dd className={muted}>
-                {pack.revenueChurn.earnedLessonCount} lessons delivered
+                Value of lessons delivered in this window
               </dd>
-            </div>
-            <div className={card}>
-              <dt className="font-semibold text-[#604A19]">Collected</dt>
-              <dd className="mt-1 font-display text-xl font-semibold text-[#15100D]">
-                {formatAUD(pack.revenueChurn.collectedCents)}
-              </dd>
-              <dd className={muted}>Cash taken in window</dd>
             </div>
           </dl>
 
-          <h4 className="mt-6 text-lg font-semibold text-[#15100D]">
-            Students who may need a check-in
-            <span className={`ml-2 font-normal ${muted}`}>
-              ({pack.revenueChurn.atRisk.length})
-            </span>
-          </h4>
-          <p className={`mt-1 ${muted}`}>{AT_RISK_NOTE}</p>
-          {pack.revenueChurn.atRisk.length === 0 ? (
-            <p className={`mt-3 ${muted}`}>No one with missed lessons and quiet practice right now.</p>
-          ) : (
-            <ul className="mt-3 divide-y divide-[#E6D7B8]">
-              {pack.revenueChurn.atRisk.map((row) => (
-                <li key={row.studentId} className="flex flex-wrap items-center justify-between gap-2 py-3">
-                  <div>
-                    <p className="font-semibold text-[#15100D]">{row.name}</p>
-                    <p className={muted}>{row.reason}</p>
-                  </div>
-                  <Button asChild variant="ghost" className="text-[#604A19]">
-                    <Link to="/students/$studentId" params={{ studentId: row.studentId }}>
-                      Open student
-                    </Link>
-                  </Button>
-                </li>
-              ))}
-            </ul>
-          )}
 
           <h4 className="mt-6 text-lg font-semibold text-[#15100D]">
             Make-up credit liability
@@ -384,7 +384,7 @@ export function ProCfoPanel() {
         </div>
       </div>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+      <div className="mt-4">
         <section className={panel} aria-label="Teacher payouts">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2 text-[#604A19]">
@@ -442,52 +442,6 @@ export function ProCfoPanel() {
           </div>
         </section>
 
-        <section className={panel} aria-label="Overdue chaser">
-          <div className="flex items-center gap-2 text-[#604A19]">
-            <AlertTriangle className="size-5" aria-hidden />
-            <h3 className={title}>Overdue chaser</h3>
-          </div>
-          <p className={`mt-2 ${muted}`}>
-            Sends a family chat reminder with a mock payment link. Does not email or charge cards.
-          </p>
-          <p className={`mt-1 ${muted}`}>{NO_SURCHARGE_NOTE}</p>
-          {pack.overdue.length === 0 ? (
-            <p className={`mt-4 ${muted}`}>Nothing overdue to chase.</p>
-          ) : (
-            <ul className="mt-4 divide-y divide-[#E6D7B8]">
-              {pack.overdue.map((row) => (
-                <li key={row.invoiceId} className="flex flex-wrap items-center justify-between gap-2 py-3">
-                  <div>
-                    <p className="font-semibold text-[#15100D]">
-                      {row.number} · {row.familyName}
-                    </p>
-                    <p className={muted}>
-                      {formatAUD(row.balanceCents)} · {row.daysOverdue} day
-                      {row.daysOverdue === 1 ? "" : "s"} overdue
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Button asChild variant="ghost" className="text-[#604A19]">
-                      <Link to="/invoices/$invoiceId" params={{ invoiceId: row.invoiceId }}>
-                        Open
-                      </Link>
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="border-[#CDBF9F]"
-                      disabled={chase.isPending}
-                      onClick={() => chase.mutate(row.invoiceId)}
-                    >
-                      <Send aria-hidden />
-                      Chase in chat
-                    </Button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
       </div>
     </section>
   );
