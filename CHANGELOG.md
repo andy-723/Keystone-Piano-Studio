@@ -6,6 +6,7 @@ GitHub Release with the same text. See `docs/release-process.md`.
 
 ## Unreleased
 
+- Studio snapshot page tidied so nothing shows twice. Pro CFO is now Pro only: Base studios see a locked card listing what Pro adds, with an upgrade link. Collected cash, overdue invoices, practice at risk and lessons delivered stay in the Studio Snapshot for every plan, and the "Send reminder in chat" button for overdue invoices is now in the Snapshot's overdue list. Tax Lite (every plan) now sits straight under the Snapshot.
 - Slimmer top bar on the public pages: a one-row bar with the smaller logo, and the language switch and Sign in in their own pill at the top right (inside the menu on phones).
 
 - Pricing no longer mentions GST while Keystone is not registered for GST. Base stays A$29 and Pro A$49 a month; the GST toggle stays removed.
