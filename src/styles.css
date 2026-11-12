@@ -344,8 +344,10 @@
 }
 
 /* Marketing motion is scoped away from the studio workspace. */
-.mk-navbar-header { position: relative; z-index: 30; width: calc(100% - 40px); max-width: 1240px; margin: 20px auto; }
-.mk-navbar-bar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 10px 20px; border: 1px solid var(--color-mk-gold); border-radius: 40px; background: var(--color-mk-paper); box-shadow: var(--shadow-mk-lift); }
+.mk-navbar-header { position: relative; z-index: 30; display: flex; align-items: center; justify-content: space-between; gap: 16px; width: calc(100% - 40px); max-width: 1240px; margin: 16px auto; }
+.mk-navbar-utilities { align-items: center; gap: 8px; flex-shrink: 0; }
+.mk-navbar-header > .mk-navbar-utilities { padding: 4px; border: 1px solid var(--color-mk-gold); border-radius: 40px; background: var(--color-mk-paper); box-shadow: var(--shadow-mk-lift); }
+.mk-navbar-bar { display: flex; flex: 0 1 auto; min-width: 0; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px 24px; padding: 6px 10px 6px 20px; border: 1px solid var(--color-mk-gold); border-radius: 40px; background: var(--color-mk-paper); box-shadow: var(--shadow-mk-lift); }
 .mk-navbar-links { display: flex; align-items: center; gap: 8px; }
 .mk-navbar-menu { position: relative; }
 .mk-navbar-list { display: flex; align-items: center; gap: 4px; list-style: none; margin: 0; padding: 0; }
@@ -363,9 +365,14 @@
 .mk-navbar-product:hover, .mk-navbar-simple a:hover { background: var(--color-mk-cream); }
 .mk-navbar-simple { display: grid; gap: 4px; min-width: 260px; }
 .mk-navbar-simple a { display: block; padding: 16px; min-height: 48px; border-radius: 6px; font-size: 18px; }
+.mk-navbar-bar .mk-navbar-trigger { min-height: 40px; border-radius: 9999px; padding-inline: 14px; }
+@media (min-width: 1024px) { .mk-navbar-bar { flex-wrap: nowrap; gap: 16px; } .mk-navbar-list { gap: 0; } }
+@media (min-width: 1024px) and (max-width: 1179px) { .mk-navbar-header { gap: 10px; } .mk-navbar-bar { gap: 8px; padding-left: 14px; } .mk-navbar-bar .mk-navbar-trigger { padding-inline: 10px; } }
 @media (max-width: 1023px) {
   .mk-navbar-header { width: calc(100% - 24px); margin-block: 12px; }
+  .mk-navbar-header { display: block; }
   .mk-navbar-bar { border-radius: 24px; padding: 8px 14px; }
+  .mk-navbar-links .mk-navbar-utilities { display: flex; justify-content: space-between; flex-wrap: wrap; padding-top: 8px; border-top: 1px solid var(--color-mk-gold); }
   .mk-navbar-links { display: none; width: 100%; align-items: stretch; }
   .mk-navbar-expanded { display: flex; flex-direction: column; }
   .mk-navbar-list { justify-content: space-between; flex-wrap: wrap; }

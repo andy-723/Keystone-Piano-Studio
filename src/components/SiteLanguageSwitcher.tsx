@@ -1,7 +1,14 @@
 import { Globe } from "lucide-react";
 import { SITE_LANGS, setSiteLang, useSiteLang } from "@/i18n/marketing/site-lang";
 
-export function SiteLanguageSwitcher({ className = "" }: { className?: string }) {
+export function SiteLanguageSwitcher({
+  className = "",
+  compact = false,
+}: {
+  className?: string;
+  /** Smaller buttons for the slim marketing navbar. */
+  compact?: boolean;
+}) {
   const lang = useSiteLang();
   return (
     <div
@@ -10,7 +17,10 @@ export function SiteLanguageSwitcher({ className = "" }: { className?: string })
       data-no-translate
       className={`flex items-center gap-1 rounded-full border border-mk-gold/60 bg-mk-paper p-1 ${className}`}
     >
-      <Globe aria-hidden className="mx-1 size-5 shrink-0 text-mk-bronze" />
+      <Globe
+        aria-hidden
+        className={`mx-1 shrink-0 text-mk-bronze ${compact ? "size-4" : "size-5"}`}
+      />
       {SITE_LANGS.map((option) => (
         <button
           key={option.value}
@@ -19,9 +29,9 @@ export function SiteLanguageSwitcher({ className = "" }: { className?: string })
           aria-pressed={lang === option.value}
           aria-label={option.label}
           onClick={() => setSiteLang(option.value)}
-          className={`min-h-12 min-w-12 rounded-full px-3 text-base font-medium transition-colors ${
-            lang === option.value ? "bg-mk-ink text-mk-paper" : "text-mk-ink hover:bg-mk-cream"
-          }`}
+          className={`rounded-full font-medium transition-colors ${
+            compact ? "min-h-9 min-w-9 px-2 text-sm" : "min-h-12 min-w-12 px-3 text-base"
+          } ${lang === option.value ? "bg-mk-ink text-mk-paper" : "text-mk-ink hover:bg-mk-cream"}`}
         >
           {option.short}
         </button>

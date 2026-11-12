@@ -5,7 +5,7 @@ import { HomeLogoLink } from "@/components/HomeLogoLink";
 import { SiteLanguageSwitcher } from "@/components/SiteLanguageSwitcher";
 import { useSiteTranslation } from "@/i18n/marketing/site-lang";
 import { Menu, MenuItem, MenuLink } from "@/components/ui/navbar-menu";
-import logo from "@/assets/brand/keystone-lockup-tagline-360@3x.png";
+import logo from "@/assets/brand/keystone-lockup-horizontal-40@3x.png";
 import {
   ArrowUpRight,
   BookOpen,
@@ -15,19 +15,37 @@ import {
   X,
 } from "lucide-react";
 
+/** Language and sign-in: top-right corner on wide screens, inside the open menu on phones. */
+function NavUtilities({ className }: { className: string }) {
+  return (
+    <div className={`mk-navbar-utilities ${className}`}>
+      <SiteLanguageSwitcher compact />
+      <Button
+        asChild
+        variant="ghost"
+        className="min-h-10 rounded-full px-4 text-base text-mk-ink hover:bg-mk-cream"
+      >
+        <a href="/login">
+          Sign in <ArrowUpRight aria-hidden className="size-4" />
+        </a>
+      </Button>
+    </div>
+  );
+}
+
 export function MarketingNavbar() {
   const [expanded, setExpanded] = useState(false);
   useSiteTranslation();
   return (
     <header className="mk-navbar-header font-mk-sans text-mk-ink">
       <div className="mk-navbar-bar">
-        <HomeLogoLink onClick={() => setExpanded(false)} className="min-w-0 shrink">
+        <HomeLogoLink onClick={() => setExpanded(false)} className="min-w-0 shrink lg:shrink-0">
           <img
             src={logo}
-            alt="Keystone Music HQ — Studio OS & LMS management platform"
-            width={1080}
-            height={307}
-            className="h-auto w-[250px] max-w-full sm:w-[280px]"
+            alt="Keystone Music HQ"
+            width={475}
+            height={120}
+            className="h-9 w-auto max-w-full"
           />
         </HomeLogoLink>
         <Button
@@ -114,18 +132,10 @@ export function MarketingNavbar() {
               </div>
             </MenuItem>
           </Menu>
-          <SiteLanguageSwitcher />
-          <Button
-            asChild
-            variant="ghost"
-            className="min-h-12 text-base text-mk-ink hover:bg-mk-cream"
-          >
-            <a href="/login">
-              Sign in <ArrowUpRight aria-hidden className="size-4" />
-            </a>
-          </Button>
+          <NavUtilities className="lg:hidden" />
         </div>
       </div>
+      <NavUtilities className="hidden lg:flex" />
     </header>
   );
 }
