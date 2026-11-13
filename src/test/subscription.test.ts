@@ -14,10 +14,15 @@ import { ProblemError, requireStudioRole, resetMockMemberships } from "@/server/
 import { clearEmailOutbox, getEmailOutbox } from "@/server/email";
 import { signStripePayload, verifyStripeEvent, type StripeEvent } from "@/server/stripe";
 import {
+  isStripeBillingConfigured,
+  isStripeBillingWebhookConfigured,
+} from "@/server/env";
+import {
   applyStudioAccessUpdate,
   endOfDaySydney,
   handleStripeEvent,
   runSubscriptionEnforcement,
+  stripeBillingStatus,
 } from "@/server/subscription";
 import {
   getStudioAccess,
@@ -168,6 +173,32 @@ describe("Stripe webhook signature", () => {
     expect(() => verifyStripeEvent(payload, header, "whsec_other", now)).toThrow(ProblemError);
     expect(() => verifyStripeEvent(payload, header, secret, now + 301)).toThrow(ProblemError);
     expect(() => verifyStripeEvent(payload, null, secret, now)).toThrow(ProblemError);
+  });
+});
+
+describe("stripe billing env gating", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("stays off when secrets are absent", () => {
+    vi.stubEnv("STRIPE_SECRET_KEY", "");
+    vi.stubEnv("STRIPE_PRICE_BASE", "");
+    vi.stubEnv("STRIPE_PRICE_PRO", "");
+    vi.stubEnv("STRIPE_BILLING_WEBHOOK_SECRET", "");
+    expect(isStripeBillingConfigured()).toBe(false);
+    expect(isStripeBillingWebhookConfigured()).toBe(false);
+    expect(stripeBillingStatus()).toEqual({ checkoutReady: false, webhookReady: false });
+  });
+
+  it("is ready for Checkout when secret key and both prices are set", () => {
+    vi.stubEnv("STRIPE_SECRET_KEY", "sk_test_x");
+    vi.stubEnv("STRIPE_PRICE_BASE", "price_base");
+    vi.stubEnv("STRIPE_PRICE_PRO", "price_pro");
+    vi.stubEnv("STRIPE_BILLING_WEBHOOK_SECRET", "whsec_x");
+    expect(isStripeBillingConfigured()).toBe(true);
+    expect(isStripeBillingWebhookConfigured()).toBe(true);
+    expect(stripeBillingStatus()).toEqual({ checkoutReady: true, webhookReady: true });
   });
 });
 

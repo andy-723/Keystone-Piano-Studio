@@ -1,23 +1,7 @@
 import { useState } from "react";
 import { getAuthClient } from "@/lib/auth-client";
+import { openStripeBillingSession } from "@/lib/open-stripe-billing";
 import { signOutLocal } from "@/lib/sign-out";
-import { createBillingSessionFn } from "@/server/subscription";
-
-async function openBilling(studioId: string, setError: (m: string | null) => void) {
-  try {
-    const client = getAuthClient();
-    const { data } = (await client?.auth.getSession()) ?? { data: { session: null } };
-    const token = data.session?.access_token;
-    if (!token) {
-      window.location.replace("/login");
-      return;
-    }
-    const result = await createBillingSessionFn({ data: { accessToken: token, studioId } });
-    window.location.assign(result.url);
-  } catch (error) {
-    setError(error instanceof Error ? error.message : "Could not open billing.");
-  }
-}
 
 function PayButton({ studioId, label }: { studioId: string; label: string }) {
   const [busy, setBusy] = useState(false);
@@ -29,7 +13,11 @@ function PayButton({ studioId, label }: { studioId: string; label: string }) {
         disabled={busy}
         onClick={() => {
           setBusy(true);
-          void openBilling(studioId, setError).finally(() => setBusy(false));
+          void openStripeBillingSession(studioId)
+            .catch((err) =>
+              setError(err instanceof Error ? err.message : "Could not open billing."),
+            )
+            .finally(() => setBusy(false));
         }}
         className="ks-btn ks-btn-primary"
       >
