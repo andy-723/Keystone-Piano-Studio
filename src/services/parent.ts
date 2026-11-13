@@ -1,7 +1,7 @@
 import { families, students, weeklySlots } from "@/mocks/data";
 import { parentGuardianId, parentPayments } from "@/mocks/parent";
 import type { Message, PracticeLog, Guardian } from "@/mocks/types";
-import { PROTOTYPE_TODAY, addDays } from "@/lib/calendar";
+import { addDays } from "@/lib/calendar";
 import { respond } from "./_delay";
 import { getCredits, getDayLessons } from "./schedule";
 import { getInvoices, recordInvoicePayment } from "./billing";
@@ -10,6 +10,7 @@ import { getChatThread, getOrCreateFamilyConversation, sendMessage, markThreadRe
 import { parentMakeUpRequests } from "@/mocks/scheduling";
 import { getNotes } from "./notes";
 import { getStripeStatus } from "./integrations";
+import { studioToday } from "@/lib/studio-clock";
 
 function parentGuardian(guardian: Guardian) { return { id: guardian.id, name: guardian.name, email: guardian.email, preferredLanguage: guardian.preferredLanguage }; }
 
@@ -45,7 +46,7 @@ export async function getParentHome() {
   const [session, invoices, thread] = await Promise.all([getParentSession(), getParentInvoices(), getParentChat()]);
   let nextLesson: Awaited<ReturnType<typeof getDayLessons>>["lessons"][number] | undefined;
   for (let offset = 0; offset < 365 && !nextLesson; offset++) {
-    const day = await getDayLessons(addDays(PROTOTYPE_TODAY, offset));
+    const day = await getDayLessons(addDays(studioToday(), offset));
     nextLesson = day.lessons.find((lesson) => lesson.student.familyId === session.family.id && lesson.status === "scheduled");
   }
   const latestTeacher = thread?.messages.filter((message) => message.authorRole === "teacher").at(-1);
@@ -72,7 +73,7 @@ export async function logParentPractice(input: Pick<PracticeLog, "studentId" | "
   const session = await getParentSession();
   if (!session.children.some((child) => child.id === input.studentId)) throw new Error("Child not in this family");
   if (!Number.isInteger(input.minutes) || input.minutes <= 0) throw new Error("Enter positive whole minutes");
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date) || Number.isNaN(Date.parse(input.date)) || input.date > PROTOTYPE_TODAY) throw new Error("Choose a valid practice date");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date) || Number.isNaN(Date.parse(input.date)) || input.date > studioToday()) throw new Error("Choose a valid practice date");
   return addPractice({ ...input, loggedBy: "student" });
 }
 export async function payParentInvoice(id: string, method: "payto" | "becs" | "card" | "stripe_payto" | "stripe_becs" | "stripe_card") {

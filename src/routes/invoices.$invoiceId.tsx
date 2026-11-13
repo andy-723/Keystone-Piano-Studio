@@ -1,6 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { studioToday } from "@/lib/studio-clock";
 import {
   ArrowLeft,
   Ban,
@@ -32,7 +33,6 @@ import { stripeStatusQuery } from "@/lib/integration-queries";
 import { queryOptions } from "@tanstack/react-query";
 import { formatAUD, formatNumericDate } from "@/lib/format";
 import type { PaymentMethod } from "@/mocks/types";
-import { PROTOTYPE_TODAY } from "@/lib/calendar";
 
 const billingProfileQuery = queryOptions({
   queryKey: ["billing-profile", "demo"],
@@ -88,7 +88,7 @@ function InvoiceDetail() {
   const client = useQueryClient();
   const [amountDollars, setAmountDollars] = useState("");
   const [method, setMethod] = useState<PaymentMethod>("bank_transfer");
-  const [dueDate, setDueDate] = useState(data?.invoice.dueDate ?? PROTOTYPE_TODAY);
+  const [dueDate, setDueDate] = useState(data?.invoice.dueDate ?? studioToday());
   const [voidReason, setVoidReason] = useState("");
   const [creditReason, setCreditReason] = useState("");
   const [creditDollars, setCreditDollars] = useState("");

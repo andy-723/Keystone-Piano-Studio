@@ -1,7 +1,8 @@
-import { addDays, PROTOTYPE_TODAY } from "@/lib/calendar";
+import { addDays } from "@/lib/calendar";
 import { bytesToHex, randomTokenBytes, sha256Hex } from "@/lib/onboarding/crypto";
 import { allStudentsAdult, buildSteps, goalLabel } from "@/lib/onboarding/steps";
 import { families, students, studio, teacher } from "@/mocks/data";
+import { studioToday } from "@/lib/studio-clock";
 import {
   invitationState,
   type AuthAuditEvent,
@@ -31,7 +32,7 @@ function nowIso() {
       ? invitationState.clockNow
       : `${invitationState.clockNow}T09:00:00+11:00`;
   }
-  return `${PROTOTYPE_TODAY}T12:00:00+11:00`;
+  return `${studioToday()}T12:00:00+11:00`;
 }
 
 function nowDate() {
@@ -399,7 +400,7 @@ export function ensureDemoIncompleteInvites() {
       familyId: "fam-12",
       studentIds: students.filter((student) => student.familyId === "fam-12").map((student) => student.id),
       status: "opened",
-      openedAt: `${PROTOTYPE_TODAY}T09:30:00+11:00`,
+      openedAt: `${studioToday()}T09:30:00+11:00`,
     },
   ];
   for (const sample of samples) {
@@ -414,8 +415,8 @@ export function ensureDemoIncompleteInvites() {
       language: family.guardians[0]?.preferredLanguage ?? "en",
       tokenHash: `demo-hash-${sample.id}`,
       status: sample.status,
-      expiresAt: `${addDays(PROTOTYPE_TODAY, 14)}T23:59:59+11:00`,
-      sentAt: `${addDays(PROTOTYPE_TODAY, -3)}T10:00:00+11:00`,
+      expiresAt: `${addDays(studioToday(), 14)}T23:59:59+11:00`,
+      sentAt: `${addDays(studioToday(), -3)}T10:00:00+11:00`,
       openedAt: sample.openedAt,
       completedAt: null,
       reminderCount: 0,
@@ -423,7 +424,7 @@ export function ensureDemoIncompleteInvites() {
       createdBy: teacher.id,
       studentIds: sample.studentIds,
       enrolmentDraftIds: [],
-      createdAt: `${addDays(PROTOTYPE_TODAY, -3)}T10:00:00+11:00`,
+      createdAt: `${addDays(studioToday(), -3)}T10:00:00+11:00`,
     });
   }
 }

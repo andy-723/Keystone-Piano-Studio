@@ -1,4 +1,5 @@
-import { addDays, PROTOTYPE_TODAY, weekday } from "@/lib/calendar";
+import { addDays, weekday } from "@/lib/calendar";
+import { studioToday } from "@/lib/studio-clock";
 
 /** Snapshot reporting timezone (civil dates; matches AU studio clocks). */
 export const SNAPSHOT_TIMEZONE = "Australia/Sydney" as const;
@@ -29,7 +30,7 @@ function lastDayOfMonth(date: string): string {
 /** This week (Mon–Sun) or this calendar month containing `today`, labeled Australia/Sydney. */
 export function snapshotBounds(
   key: SnapshotRangeKey,
-  today: string = PROTOTYPE_TODAY,
+  today: string = studioToday(),
 ): SnapshotBounds {
   if (key === "week") {
     const start = weekStartMonday(today);

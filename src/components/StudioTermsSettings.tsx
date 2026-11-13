@@ -9,6 +9,7 @@ import { StudioTermsOnboarding } from "@/components/StudioTermsOnboarding";
 import { downloadDocumentPdf } from "@/lib/download-terms-pdf";
 import { STUDIO_STATES } from "@/mocks/setup";
 import type { TermsScope } from "@/mocks/terms";
+import { studioToday } from "@/lib/studio-clock";
 import {
   downloadAcceptanceRecords,
   getAcceptanceTracker,
@@ -21,7 +22,7 @@ import {
   remindFamilyTerms,
   saveStudioTermsDraft,
 } from "@/services/terms";
-import { addDays, PROTOTYPE_TODAY } from "@/lib/calendar";
+import { addDays } from "@/lib/calendar";
 import { toast } from "sonner";
 
 export function StudioTermsSettings({ scope = "demo" }: { scope?: TermsScope }) {
@@ -32,7 +33,7 @@ export function StudioTermsSettings({ scope = "demo" }: { scope?: TermsScope }) 
   const [editingClause, setEditingClause] = useState<string | null>(null);
   const [clauseText, setClauseText] = useState("");
   const [summary, setSummary] = useState("");
-  const [effectiveAt, setEffectiveAt] = useState(addDays(PROTOTYPE_TODAY, 30));
+  const [effectiveAt, setEffectiveAt] = useState(addDays(studioToday(), 30));
   const [forceMaterial, setForceMaterial] = useState(false);
   const [paperFamilyId, setPaperFamilyId] = useState("");
   const [paperFile, setPaperFile] = useState("");

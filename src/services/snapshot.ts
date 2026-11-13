@@ -1,4 +1,5 @@
-import { PROTOTYPE_TODAY, addDays } from "@/lib/calendar";
+import { addDays } from "@/lib/calendar";
+import { studioToday } from "@/lib/studio-clock";
 import {
   eachDateInclusive,
   inRange,
@@ -268,7 +269,7 @@ function buildLessons(start: string, end: string, today: string) {
 
 export async function getStudioSnapshot(
   range: SnapshotRangeKey = "week",
-  today: string = PROTOTYPE_TODAY,
+  today: string = studioToday(),
 ): Promise<StudioSnapshot> {
   ensureDemoIncompleteInvites();
   const bounds = snapshotBounds(range, today);

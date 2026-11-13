@@ -92,7 +92,7 @@ export async function startEnrolment(input: { firstName: string; lastName: strin
     const contactName = selfContact ? `${input.firstName.trim()} ${input.lastName.trim()}` : input.guardianName.trim();
     const email = (selfContact ? input.studentEmail ?? '' : input.guardianEmail).trim().toLowerCase();
     const mobile = selfContact ? input.studentMobile ?? '' : input.guardianMobile;
-    if (!input.firstName.trim() || !input.lastName.trim() || !Number.isInteger(input.birthYear) || input.birthYear < 1900 || input.birthYear > enrolmentYear) throw new Error("Enter the student’s name and a valid birth year.");
+    if (!input.firstName.trim() || !input.lastName.trim() || !Number.isInteger(input.birthYear) || input.birthYear < 1900 || input.birthYear > enrolmentYear()) throw new Error("Enter the student’s name and a valid birth year.");
     if (!contactName || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error(selfContact ? "Enter a valid student email." : "Enter a guardian name and valid email.");
     let family = data.families.find((entry) => entry.guardians.some((guardian) => guardian.email.toLowerCase() === email));
     // Live studio: save to Supabase first, so the roster only shows what was really saved.

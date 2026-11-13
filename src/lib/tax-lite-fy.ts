@@ -1,5 +1,5 @@
-import { PROTOTYPE_TODAY } from "@/lib/calendar";
 import { SNAPSHOT_TIMEZONE } from "@/lib/snapshot-range";
+import { studioToday } from "@/lib/studio-clock";
 
 /** Australian financial year bounds (1 July – 30 June), civil dates. */
 export type TaxLiteFyKey = "ytd" | "fy";
@@ -14,7 +14,7 @@ export type TaxLiteFyBounds = {
 };
 
 /** FY containing `today`: if month ≥ July, start this year; else previous year. */
-export function australianFyStartYear(today: string = PROTOTYPE_TODAY): number {
+export function australianFyStartYear(today: string = studioToday()): number {
   const year = Number(today.slice(0, 4));
   const month = Number(today.slice(5, 7));
   return month >= 7 ? year : year - 1;
@@ -31,7 +31,7 @@ export function australianFyLabel(startYear: number): string {
  */
 export function taxLiteFyBounds(
   key: TaxLiteFyKey,
-  today: string = PROTOTYPE_TODAY,
+  today: string = studioToday(),
 ): TaxLiteFyBounds {
   const startYear = australianFyStartYear(today);
   const start = `${startYear}-07-01`;

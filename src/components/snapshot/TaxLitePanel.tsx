@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import { studioToday } from "@/lib/studio-clock";
 import {
   Download,
   Home,
@@ -14,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatAUD, formatNumericDate } from "@/lib/format";
-import { PROTOTYPE_TODAY } from "@/lib/calendar";
+
 import type { TaxLiteFyKey } from "@/lib/tax-lite-fy";
 import {
   taxLiteCategoriesQuery,
@@ -71,12 +72,12 @@ export function TaxLitePanel({
   const { data: categories } = useSuspenseQuery(taxLiteCategoriesQuery());
   const { data: pendingWeeks } = useSuspenseQuery(taxLitePendingWeeksQuery(fy));
   const [notFromHome, setNotFromHome] = useState<Set<string>>(new Set());
-  const [adminDate, setAdminDate] = useState(PROTOTYPE_TODAY);
+  const [adminDate, setAdminDate] = useState(studioToday());
   const [adminNote, setAdminNote] = useState("");
   const [reviewed, setReviewed] = useState(false);
   const client = useQueryClient();
 
-  const [date, setDate] = useState(PROTOTYPE_TODAY);
+  const [date, setDate] = useState(studioToday());
   const [vendor, setVendor] = useState("");
   const [category, setCategory] = useState<TaxLiteCategory>(categories[0]!);
   const [amount, setAmount] = useState("");
@@ -88,7 +89,7 @@ export function TaxLitePanel({
   useEffect(() => {
     setReviewed(false);
   }, [pack]);
-  const [kmDate, setKmDate] = useState(PROTOTYPE_TODAY);
+  const [kmDate, setKmDate] = useState(studioToday());
   const [km, setKm] = useState("");
   const [kmPurpose, setKmPurpose] = useState("");
 
@@ -504,7 +505,7 @@ export function TaxLitePanel({
                   id="tax-admin-date"
                   type="date"
                   value={adminDate}
-                  max={PROTOTYPE_TODAY}
+                  max={studioToday()}
                   onChange={(event) => setAdminDate(event.target.value)}
                   className="mt-1 border-[#CDBF9F] bg-[#FBF7EE]"
                   required
