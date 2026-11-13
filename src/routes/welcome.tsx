@@ -43,7 +43,7 @@ export const Route = createFileRoute("/welcome")({
       {
         property: "og:description",
         content:
-          "Unpaid, unenrolled, not practising — one calm studio view. Discover Studio Snapshot and planned Tax Lite tools.",
+          "Unpaid, unenrolled, not practising — one calm studio view. Discover Studio Snapshot, Tax Lite and Pro CFO tools for Australian music studios.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -174,7 +174,7 @@ function Welcome() {
                   Stripe fees and home-studio hours — ready to review for myTax.
                 </p>
                 <p className="mt-1 text-base text-mk-ink/70">
-                  Planned finance tools. Explore the examples below.
+                  Live in the studio today. Explore the examples below.
                 </p>
               </div>
               <StudioShowcase />
@@ -197,7 +197,7 @@ function Welcome() {
                 {[
                   {
                     Icon: LayoutDashboard,
-                    title: "Studio Snapshot · planned",
+                    title: "Studio Snapshot",
                     body: "Unpaid, unenrolled, not practising — one calm view of the week. Lists for the detail, CSV for your own notes. Studio-wide finances for owners and admins; teachers keep their own caseload.",
                   },
                   {
@@ -241,7 +241,7 @@ function Welcome() {
               <p className="flex flex-wrap items-center gap-3 text-base font-medium uppercase text-mk-gold">
                 <span className="h-px w-10 bg-mk-gold" aria-hidden />
                 Tax Lite{" "}
-                <span className="border-l border-mk-gold/50 pl-3 text-mk-paper/75">Planned</span>
+                <span className="border-l border-mk-gold/50 pl-3 text-mk-paper/75">Included</span>
               </p>
               <h2
                 id="tax-title"
@@ -332,7 +332,7 @@ function Welcome() {
                   Know prepaid fees vs lessons you’ve actually delivered.
                 </h2>
                 <p className="mt-5 text-lg leading-relaxed text-mk-ink/75">
-                  For growing and multi-teacher studios: a planned CFO view of margin after teacher
+                  For growing and multi-teacher studios: Pro CFO shows margin after teacher
                   splits, prepaid tuition, churn and make-up radar, Xero queues and contractor
                   payouts.
                 </p>
@@ -396,7 +396,7 @@ function Welcome() {
                   [
                     Lock,
                     "Staff two-step sign-in",
-                    "Planned passwordless sign-in with Google, Microsoft or email link, plus staff MFA.",
+                    "Sign in with Google, Microsoft or an email link, plus authenticator-app MFA for studio staff.",
                   ],
                   [
                     MailOpen,

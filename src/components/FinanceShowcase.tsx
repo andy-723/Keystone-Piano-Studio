@@ -89,7 +89,7 @@ export function FinanceShowcase({
               </Button>
             ))}
           </div>
-          <p className="text-base text-mk-ink/70">Planned tools · illustrative preview</p>
+          <p className="text-base text-mk-ink/70">Example studio · illustrative preview</p>
         </div>
       )}
       <Frame>

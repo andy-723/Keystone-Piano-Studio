@@ -84,7 +84,7 @@ function DeviceContent({
         {feature === "snapshot" || feature === "tax" ? (
           <>
             <p className="border-b border-mk-gold/30 px-4 py-2 text-base text-mk-ink/70">
-              Planned tool · illustrative preview
+              Example studio · illustrative preview
             </p>
             <FinanceShowcase mode={feature} embedded />
           </>

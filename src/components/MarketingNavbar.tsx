@@ -71,7 +71,7 @@ export function MarketingNavbar() {
                     [
                       "snapshot-title",
                       "Studio Snapshot",
-                      "A planned pulse of money, roll and practice.",
+                      "A calm pulse of money, roll and practice.",
                       LayoutDashboard,
                     ],
                     [
@@ -82,7 +82,7 @@ export function MarketingNavbar() {
                     ],
                     [
                       "tax-title",
-                      "Tax Lite · planned",
+                      "Tax Lite",
                       "Studio records for your EOFY review.",
                       Receipt,
                     ],
