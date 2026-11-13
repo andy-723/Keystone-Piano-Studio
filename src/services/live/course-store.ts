@@ -25,6 +25,7 @@ import type {
   TermMilestone,
 } from "@/mocks/types";
 import { liveStudioId, type StudioWorkspace } from "@/lib/studio-workspace";
+import { courseReadiness, lastSignOff, sectionProgress, weekStart } from "@/lib/course-progress";
 import { client, friendly, type Client } from "./client";
 
 export type CourseDocument = {
@@ -150,6 +151,33 @@ export async function saveLiveCourses(courseIds: string[]) {
     const { error } = await c.from("student_course").upsert(batch, { onConflict: "id" });
     if (error) throw friendly(error, "Couldn't save this course. Please try again.");
   }
+  await saveProgressSnapshots(studioId, docs.filter((doc) => doc.course.status === "active"), c);
+}
+
+/** This week's progress row per student (0019). Best effort: a failure never blocks the course save. */
+export function progressSnapshotRow(studioId: string, doc: CourseDocument, now = new Date()) {
+  const progress = sectionProgress(doc.sections, doc.items);
+  return {
+    studio_id: studioId,
+    student_id: doc.course.studentId,
+    week_start: weekStart(now),
+    course_id: doc.course.id,
+    level: doc.course.grade.slice(0, 80) || null,
+    target_term: /^\d{4}-T[1-4]$/.test(doc.course.targetTerm) ? doc.course.targetTerm : null,
+    readiness_pct: courseReadiness(doc.sections, doc.items),
+    sections: doc.sections.map((section) => {
+      const row = progress.find((entry) => entry.sectionId === section.id);
+      return { name: section.name, pct: row?.pct ?? 0, done: row?.done ?? 0, total: row?.total ?? 0 };
+    }),
+    last_signoff_at: lastSignOff(doc.feedback) ?? null,
+  };
+}
+async function saveProgressSnapshots(studioId: string, docs: CourseDocument[], c: Client) {
+  if (!docs.length) return;
+  const { error } = await c
+    .from("student_progress_snapshot")
+    .upsert(docs.map((doc) => progressSnapshotRow(studioId, doc)), { onConflict: "student_id,week_start" });
+  if (error) console.warn("[course-store] progress snapshot not saved", error.message);
 }
 
 const COURSE_LISTS = [

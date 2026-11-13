@@ -82,3 +82,30 @@ describe("Keystone grade benchmark", () => {
     expect(lucy?.course.sections.find((section) => section.name === "Technical work")).toMatchObject({ done: 1, total: 4 });
   });
 });
+
+describe("Weekly progress snapshots (0019)", () => {
+  it("keys rows by the Monday of the local week", async () => {
+    const { weekStart } = await import("@/lib/course-progress");
+    expect(weekStart(new Date(2026, 10, 13))).toBe("2026-11-09"); // Friday
+    expect(weekStart(new Date(2026, 10, 9))).toBe("2026-11-09"); // Monday
+    expect(weekStart(new Date(2026, 10, 15))).toBe("2026-11-09"); // Sunday
+  });
+
+  it("builds a staff-only row with readiness and per-section counts", async () => {
+    const { progressSnapshotRow, courseDocument } = await import("@/services/live/course-store");
+    const data = await startBenchmarkCourse("stu-1", { levelId: "grade-1", pathway: "recreational", targetTerm: "2027-T3" });
+    const scale = data.items.find((item) => item.kind === "technical")!;
+    await scoreCourseItem({ studentId: "stu-1", courseItemId: scale.id, score: 50 });
+    const row = progressSnapshotRow("studio-1", courseDocument(data.course.id)!, new Date(2026, 10, 13));
+    expect(row).toMatchObject({ studio_id: "studio-1", student_id: "stu-1", week_start: "2026-11-09", level: "Grade 1", target_term: "2027-T3", readiness_pct: 3 });
+    expect(row.sections.find((section) => section.name === "Technical work")).toEqual({ name: "Technical work", pct: 13, done: 0, total: 4 });
+    expect(row.last_signoff_at).toBeTruthy();
+  });
+
+  it("gives the roster each student's level, readiness and goal", async () => {
+    const { getRosterProgress } = await import("@/services/curriculum");
+    await startBenchmarkCourse("stu-1", { levelId: "grade-2", pathway: "AMEB", targetTerm: "2027-T4" });
+    const rows = await getRosterProgress();
+    expect(rows.find((row) => row.studentId === "stu-1")).toMatchObject({ level: "Grade 2", benchmarkLevel: "grade-2", readiness: 0, targetTerm: "2027-T4" });
+  });
+});

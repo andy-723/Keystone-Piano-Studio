@@ -142,6 +142,15 @@ export async function startBenchmarkCourse(studentId: string, input: { levelId: 
   return getStudentCourse(studentId);
 }
 
+export type RosterProgress = { studentId: string; level: string; benchmarkLevel?: string; readiness: number; targetTerm: string; lastSignOffAt?: string };
+/** Each student's current level, readiness, goal term and last sign-off, for the roster. */
+export async function getRosterProgress(): Promise<RosterProgress[]> {
+  return respond(students.map((student) => {
+    const state = courseState(student.id);
+    return { studentId: student.id, level: state.course.grade, ...(state.benchmark ? { benchmarkLevel: state.benchmark.id } : {}), readiness: state.readiness, targetTerm: state.course.targetTerm, ...(state.lastSignOffAt ? { lastSignOffAt: state.lastSignOffAt } : {}) };
+  }));
+}
+
 export async function getCourseReminders(studentId: string, beforeDate: string) {
   const state = courseState(studentId);
   const { getDayLessons } = await import("./schedule");

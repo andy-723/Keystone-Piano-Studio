@@ -27,6 +27,12 @@ export function sectionProgress(sections: FrameworkSection[], items: CourseItem[
   });
 }
 
+/** Monday of the week `date` falls in, as YYYY-MM-DD in local time (progress snapshot key). */
+export function weekStart(date: Date): string {
+  const monday = new Date(date.getFullYear(), date.getMonth(), date.getDate() - ((date.getDay() + 6) % 7));
+  return `${monday.getFullYear()}-${String(monday.getMonth() + 1).padStart(2, "0")}-${String(monday.getDate()).padStart(2, "0")}`;
+}
+
 /** The newest checkpoint or score the teacher recorded on the course, if any. */
 export function lastSignOff(feedback: Pick<Feedback, "createdAt" | "outcome">[]): string | undefined {
   return feedback.filter((entry) => entry.outcome !== "carry_over").map((entry) => entry.createdAt).sort().at(-1);
