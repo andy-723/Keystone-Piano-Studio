@@ -32,7 +32,8 @@ import {
 import type { Studio } from "@/mocks/types";
 import { translate } from "@/i18n/parent";
 import { BrandLogo } from "@/components/BrandLogo";
-import { getAuthClient, isLiveAuthConfigured } from "@/lib/auth-client";
+import { isLiveAuthConfigured } from "@/lib/auth-client";
+import { signOutLocal } from "@/lib/sign-out";
 import { TourHelpButton } from "@/components/tour/Tour";
 
 const NAV = [
@@ -159,11 +160,7 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
                 variant="outline"
                 className="min-h-12"
                 onClick={() => {
-                  void getAuthClient()
-                    ?.auth.signOut({ scope: "local" })
-                    .then(() => {
-                      window.location.href = "/login";
-                    });
+                  void signOutLocal({ redirectTo: "/login" });
                 }}
               >
                 Sign out

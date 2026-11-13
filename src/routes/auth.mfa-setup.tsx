@@ -6,6 +6,7 @@ import { safeNextPath } from "@/lib/auth-paths";
 import { rememberVerifiedAccess } from "@/lib/live-auth-cache";
 import { decideStudioAccessGate,
   shellRoleForAccount, destinationForAccount } from "@/lib/post-login";
+import { markSessionStarted } from "@/lib/session-timeout";
 import { recordMfaEnrolledFn, resolveAccountFn } from "@/server/account";
 
 export const Route = createFileRoute("/auth/mfa-setup")({
@@ -83,6 +84,7 @@ function MfaSetupPage() {
     await recordMfaEnrolledFn({ data: { accessToken: token, userAgent: navigator.userAgent } });
     const account = await resolveAccountFn({ data: { accessToken: token } });
     rememberVerifiedAccess(token, decideStudioAccessGate(account), shellRoleForAccount(account));
+    markSessionStarted();
     window.location.replace(destinationForAccount(account, safeNextPath(next)));
   }
 

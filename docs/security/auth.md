@@ -48,6 +48,22 @@ A platform admin can reset another user’s TOTP from `/admin` → Team (type th
 
 Follow Supabase defaults for access / refresh tokens. **Recommended inactivity timeout for Andrew to set in the dashboard:** 7–14 days refresh token reuse / inactivity (studio staff leave devices signed in between lessons; shorter than consumer apps is fine). Leave the actual dashboard toggle to Andrew — document the choice here when set.
 
+### App-level session timeout (all accounts)
+
+The browser also enforces shorter lifetimes so a restored Supabase session (or the
+demo/prototype path) cannot stay signed in indefinitely. Applies equally to real
+accounts and the demo account — no keep-alive exception.
+
+| Timer | Default | Behaviour |
+| --- | --- | --- |
+| Idle | **30 minutes** without clicks, keypresses or navigation | Signs out |
+| Absolute | **8 hours** from sign-in | Signs out even if the person stays active |
+
+Implementation: `src/lib/session-timeout.ts`, watched by `SessionTimeout` inside
+`LiveAuthGuard`. On timeout the app calls `signOut({ scope: "local" })`, clears the
+verified-access cache and session markers, and redirects to `/login` or `/welcome`
+with `?reason=session_timeout` (no silent re-auth from leftover storage).
+
 Sign-out (live mode) uses `signOut({ scope: "local" })` and returns to `/login`.
 
 ## No-account behaviour

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { getAuthClient } from "@/lib/auth-client";
+import { signOutLocal } from "@/lib/sign-out";
 import { createBillingSessionFn } from "@/server/subscription";
 
 async function openBilling(studioId: string, setError: (m: string | null) => void) {
@@ -54,8 +55,7 @@ export function StudioPausedScreen({
   supportEmail?: string;
 }) {
   async function signOut() {
-    await getAuthClient()?.auth.signOut({ scope: "local" });
-    window.location.href = "/login";
+    await signOutLocal({ redirectTo: "/login" });
   }
   return (
     <main className="flex min-h-[100dvh] flex-col items-center justify-center bg-[#F5EBD6] px-4 text-center text-[#15100D]">

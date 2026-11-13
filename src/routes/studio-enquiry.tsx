@@ -37,7 +37,7 @@ function StudioEnquiryPage() {
           </a>
         </p>
         <p className="mt-8">
-          <Link to="/login" search={{ next: undefined }} className="text-[#604A19] underline-offset-2 hover:underline">
+          <Link to="/login" search={{ next: undefined, reason: undefined }} className="text-[#604A19] underline-offset-2 hover:underline">
             Back to sign in
           </Link>
         </p>

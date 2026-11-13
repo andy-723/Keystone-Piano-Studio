@@ -6,6 +6,7 @@ GitHub Release with the same text. See `docs/release-process.md`.
 
 ## Unreleased
 
+- Session timeout for security: Keystone Music HQ signs everyone out after 30 minutes of inactivity, or after 8 hours from sign-in even if they stay active. Applies to all accounts including the demo account. No migration.
 - Sign-in page: a clear "Demo account? Sign in with a password" button under the email form opens the demo sign-in page (/demo). Everyone else still signs in with an email link, Google or Microsoft.
 - Guardian-only sign-ins open the family portal (not the teacher screens). Studio members and platform staff still get the studio. No migration.
 - Invoice, renewals, Tax Lite, Pro CFO, parent practice and related studio dates now use the real studio day in live studios (demo still uses the fixture date). No migration.

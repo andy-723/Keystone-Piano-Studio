@@ -15,7 +15,15 @@ import {
   shellRoleForAccount,
   type StudioAccessGate,
 } from "@/lib/post-login";
+import {
+  ensureSessionMarkers,
+  isSessionLoginRequired,
+  isSessionTimedOut,
+  resetSessionTimeoutForTests,
+} from "@/lib/session-timeout";
+import { signOutForSessionTimeout, signOutLocal } from "@/lib/sign-out";
 import { useOptionalAppSettings } from "@/lib/app-settings";
+import { SessionTimeout } from "@/components/SessionTimeout";
 import { StudioPausedScreen, StudioReadOnlyBanner } from "@/components/StudioAccessNotice";
 import { resolveAccountFn } from "@/server/account";
 import { QueryClientContext } from "@tanstack/react-query";
@@ -29,6 +37,7 @@ type GuardState = "checking" | "ok" | "unavailable" | "studio_error";
 
 export function resetLiveAuthGuardForTests() {
   resetLiveAuthCacheForTests();
+  resetSessionTimeoutForTests();
   workspaceReady = false;
   resetStudioWorkspaceForTests();
 }
@@ -63,7 +72,10 @@ export function LiveAuthGuard({ children }: { children: ReactNode }) {
   const [state, setState] = useState<GuardState>(() => {
     if (exempt) return "ok";
     if (isLiveAuthConfigured()) return "checking";
-    return isDemoModeAllowed() ? "ok" : "unavailable";
+    if (!isDemoModeAllowed()) return "unavailable";
+    // Avoid flashing the app before the timeout / re-login redirect runs.
+    if (isSessionLoginRequired() || isSessionTimedOut()) return "checking";
+    return "ok";
   });
 
   useEffect(() => {
@@ -72,7 +84,17 @@ export function LiveAuthGuard({ children }: { children: ReactNode }) {
       return;
     }
     if (!isLiveAuthConfigured()) {
-      setState(isDemoModeAllowed() ? "ok" : "unavailable");
+      if (!isDemoModeAllowed()) {
+        setState("unavailable");
+        return;
+      }
+      // After a timeout or sign-out, mock/prototype mode must not silently reopen the app.
+      if (isSessionLoginRequired() || isSessionTimedOut()) {
+        void signOutForSessionTimeout(pathname, search || "");
+        return;
+      }
+      ensureSessionMarkers();
+      setState("ok");
       return;
     }
     let cancelled = false;
@@ -91,9 +113,15 @@ export function LiveAuthGuard({ children }: { children: ReactNode }) {
         window.location.replace(signedOutRedirect(pathname, search || ""));
         return;
       }
+      // Idle / absolute lifetime applies to every account, including the demo account.
+      if (isSessionTimedOut()) {
+        await signOutForSessionTimeout(pathname, search || "");
+        return;
+      }
       const known = getVerifiedAccess(session.access_token);
       // A full reload empties the in-memory store, so the studio's data must load again.
       if (known && workspaceReady) {
+        ensureSessionMarkers();
         setRole(known.shellRole);
         setAccessGate(known.access);
         setState("ok");
@@ -112,16 +140,12 @@ export function LiveAuthGuard({ children }: { children: ReactNode }) {
           account.memberships.length > 0 ||
           account.guardianFamilyIds.length > 0;
         if (!hasAccount) {
-          clearVerifiedAccess();
-          await client.auth.signOut({ scope: "local" });
-          window.location.replace("/login");
+          await signOutLocal({ redirectTo: "/login" });
           return;
         }
         // Password sign-in is for the demo account only (ADR-062).
         if (passwordSessionRefused(account)) {
-          clearVerifiedAccess();
-          await client.auth.signOut({ scope: "local" });
-          window.location.replace("/login");
+          await signOutLocal({ redirectTo: "/login" });
           return;
         }
         const hasVerifiedTotp = (factors.data?.totp ?? []).some((f) => f.status === "verified");
@@ -160,6 +184,7 @@ export function LiveAuthGuard({ children }: { children: ReactNode }) {
         // Guardians get the family portal (and its tour); the studio screens never render for them.
         const shellRole = shellRoleForAccount(account);
         rememberVerifiedAccess(session.access_token, access, shellRole);
+        ensureSessionMarkers();
         setRole(shellRole);
         setAccessGate(access);
         setState("ok");
@@ -208,15 +233,26 @@ export function LiveAuthGuard({ children }: { children: ReactNode }) {
     return <p className="p-6 text-[#5A4F43]">Checking sign-in…</p>;
   }
   if (accessGate.kind === "paused") {
-    return <StudioPausedScreen ownerStudioId={accessGate.ownerStudioId} ended={accessGate.ended} />;
+    return (
+      <>
+        <SessionTimeout />
+        <StudioPausedScreen ownerStudioId={accessGate.ownerStudioId} ended={accessGate.ended} />
+      </>
+    );
   }
   if (accessGate.kind === "read_only") {
     return (
       <>
+        <SessionTimeout />
         <StudioReadOnlyBanner studioId={accessGate.studioId} />
         {children}
       </>
     );
   }
-  return children;
+  return (
+    <>
+      <SessionTimeout />
+      {children}
+    </>
+  );
 }

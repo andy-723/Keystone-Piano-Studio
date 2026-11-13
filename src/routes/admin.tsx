@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Fragment, useEffect, useState } from "react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { getAuthClient, isLiveAuthConfigured } from "@/lib/auth-client";
-import { clearVerifiedAccess } from "@/lib/live-auth-cache";
+import { signOutLocal } from "@/lib/sign-out";
 import {
   AU_TIMEZONES,
   addPlatformStaffFn,
@@ -47,10 +47,7 @@ function AdminPage() {
   }, [live]);
 
   async function signOut() {
-    clearVerifiedAccess();
-    const client = getAuthClient();
-    await client?.auth.signOut({ scope: "local" });
-    window.location.href = "/login";
+    await signOutLocal({ redirectTo: "/login" });
   }
 
   if (!live) {
@@ -114,7 +111,7 @@ function AdminPage() {
         {token && tab === "team" && <TeamTab token={token} onError={setError} />}
         {token && tab === "audit" && <AuditTab token={token} onError={setError} />}
         <p className="mt-8 text-sm text-[#5A4F43]">
-          <Link to="/login" search={{ next: undefined }} className="text-[#604A19] hover:underline">
+          <Link to="/login" search={{ next: undefined, reason: undefined }} className="text-[#604A19] hover:underline">
             Sign-in page
           </Link>
         </p>

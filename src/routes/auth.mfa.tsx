@@ -6,6 +6,7 @@ import { safeNextPath } from "@/lib/auth-paths";
 import { rememberVerifiedAccess } from "@/lib/live-auth-cache";
 import { decideStudioAccessGate,
   shellRoleForAccount, destinationForAccount } from "@/lib/post-login";
+import { markSessionStarted } from "@/lib/session-timeout";
 import { resolveAccountFn } from "@/server/account";
 
 export const Route = createFileRoute("/auth/mfa")({
@@ -65,6 +66,7 @@ function MfaChallengePage() {
     const account = await resolveAccountFn({ data: { accessToken: token } });
     // aal2 session is verified — seed the guard cache so /admin (or studio) skips a second round-trip.
     rememberVerifiedAccess(token, decideStudioAccessGate(account), shellRoleForAccount(account));
+    markSessionStarted();
     window.location.replace(destinationForAccount(account, safeNextPath(next)));
   }
 

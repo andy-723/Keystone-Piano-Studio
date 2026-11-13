@@ -6,6 +6,7 @@ import { safeNextPath } from "@/lib/auth-paths";
 export const Route = createFileRoute("/login")({
   validateSearch: (search: Record<string, unknown>) => ({
     next: typeof search["next"] === "string" ? search["next"] : undefined,
+    reason: typeof search["reason"] === "string" ? search["reason"] : undefined,
   }),
   component: LoginPage,
   head: () => ({
@@ -20,7 +21,7 @@ export const Route = createFileRoute("/login")({
 });
 
 function LoginPage() {
-  const { next } = Route.useSearch();
+  const { next, reason } = Route.useSearch();
   const nextPath = safeNextPath(next);
   const siteKey =
     (typeof import.meta !== "undefined" &&
@@ -29,7 +30,11 @@ function LoginPage() {
 
   return (
     <LoginLayout>
-      <LoginCard nextPath={nextPath} siteKey={siteKey} />
+      <LoginCard
+        nextPath={nextPath}
+        siteKey={siteKey}
+        sessionTimedOut={reason === "session_timeout"}
+      />
     </LoginLayout>
   );
 }
