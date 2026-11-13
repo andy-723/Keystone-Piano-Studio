@@ -31,7 +31,7 @@ export function IntakeTermsFlow({
   onComplete: () => void;
 }) {
   const hasHealthNotes = Boolean(healthNotes?.trim());
-  const age = enrolmentYear - birthYear;
+  const age = enrolmentYear() - birthYear;
   const requiresGuardian = !isAdultStudent(birthYear);
   const steps: Step[] = ["collection", "emergency", ...(hasHealthNotes ? (["health"] as Step[]) : []), "media", "terms"];
   const [index, setIndex] = useState(0);

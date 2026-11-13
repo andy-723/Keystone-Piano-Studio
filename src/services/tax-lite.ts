@@ -4,8 +4,8 @@
  * Keystone is not a registered tax or BAS agent: figures are estimates from the studio's own data.
  */
 
-import { PROTOTYPE_TODAY } from "@/lib/calendar";
 import { eachDateInclusive, inRange } from "@/lib/snapshot-range";
+import { studioToday } from "@/lib/studio-clock";
 import {
   australianFyLabel,
   australianFyStartYear,
@@ -217,7 +217,7 @@ export async function logTaxLiteExpense(input: {
       const created = await createInvoice({
         familyId: student.familyId,
         lines: [line],
-        issueDate: PROTOTYPE_TODAY,
+        issueDate: studioToday(),
       });
       attachedInvoiceId = created.id;
     }
@@ -300,7 +300,7 @@ function scheduledLessons(start: string, end: string): ScheduledLesson[] {
 function teachRange(fy: TaxLiteFyKey) {
   const bounds = taxLiteFyBounds(fy);
   // Never count future lessons: they have not been taught yet.
-  const teachEnd = bounds.end > PROTOTYPE_TODAY ? PROTOTYPE_TODAY : bounds.end;
+  const teachEnd = bounds.end > studioToday() ? studioToday() : bounds.end;
   return { bounds, teachEnd };
 }
 
@@ -373,7 +373,7 @@ export async function confirmTaxLiteLessons(input: {
   taughtFromHome: string[];
   notFromHome?: string[];
 }): Promise<number> {
-  const all = scheduledLessons("2000-01-01", PROTOTYPE_TODAY);
+  const all = scheduledLessons("2000-01-01", studioToday());
   const byId = new Map(all.map((lesson) => [lesson.lessonId, lesson]));
   const confirmedAt = new Date().toISOString();
   let count = 0;
@@ -398,7 +398,7 @@ export async function addTaxLiteAdminSession(input: {
   note: string;
 }): Promise<TaxLiteAdminSession> {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date)) throw new Error("Enter a valid date");
-  if (input.date > PROTOTYPE_TODAY) throw new Error("Log admin time after you have done it");
+  if (input.date > studioToday()) throw new Error("Log admin time after you have done it");
   if (!Number.isFinite(input.hours) || input.hours <= 0 || input.hours > 24) {
     throw new Error("Enter the hours you worked, up to 24");
   }

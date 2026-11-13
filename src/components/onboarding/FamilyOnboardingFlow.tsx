@@ -31,7 +31,7 @@ function childOf(
   answers: FamilyAnswers & { children?: Record<string, ChildAnswers> },
   id: string,
 ): ChildAnswers {
-  return answers.children?.[id] ?? { firstName: "", lastName: "", birthYear: enrolmentYear - 8 };
+  return answers.children?.[id] ?? { firstName: "", lastName: "", birthYear: enrolmentYear() - 8 };
 }
 
 export function FamilyOnboardingFlow({
@@ -688,7 +688,7 @@ function ActiveFlow({
           <PublicMediaConsentScreen
             lang={lang}
             studentName={student.firstName}
-            studentAge={enrolmentYear - student.birthYear}
+            studentAge={enrolmentYear() - student.birthYear}
             value={{ granted: child.mediaPublic ?? null }}
             onChange={(value) => patchChild(student.id, { mediaPublic: value.granted })}
             onBack={() => go(-1)}
@@ -698,7 +698,7 @@ function ActiveFlow({
       );
     }
   } else if (step.id === "terms" && termsMeta) {
-    const requiresGuardian = session.students.some((s) => enrolmentYear - s.birthYear < 18);
+    const requiresGuardian = session.students.some((s) => enrolmentYear() - s.birthYear < 18);
     body = (
       <TermsAcceptScreen
         lang={lang}

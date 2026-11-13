@@ -3,8 +3,9 @@
  * Composes billing / schedule / Tax Lite / integrations mocks. Not a ledger or live Xero API.
  */
 
-import { PROTOTYPE_TODAY, addDays, melbourneIso } from "@/lib/calendar";
+import { addDays, melbourneIso } from "@/lib/calendar";
 import { eachDateInclusive, inRange } from "@/lib/snapshot-range";
+import { studioToday } from "@/lib/studio-clock";
 import {
   families,
   invoices,
@@ -182,7 +183,7 @@ function creditBalance(studentId: string): number {
     .reduce((sum, entry) => sum + entry.amount, 0);
 }
 
-function rollingWindow(today = PROTOTYPE_TODAY) {
+function rollingWindow(today = studioToday()) {
   return { start: addDays(today, -(ROLLING_DAYS - 1)), end: today };
 }
 
@@ -483,7 +484,7 @@ export async function setProCfoProjectedTurnover(cents: number | null): Promise<
   return respond(proCfoGstProjection.next12mCents);
 }
 
-export async function getProCfoPack(today = PROTOTYPE_TODAY): Promise<ProCfoPack> {
+export async function getProCfoPack(today = studioToday()): Promise<ProCfoPack> {
   const { start, end } = rollingWindow(today);
   const proEnabled = proFeaturesEnabled();
   const stripe = await getTaxLiteStripeSummary("ytd");
@@ -542,7 +543,7 @@ export async function retryXeroQueueItem(invoiceId: string) {
   if (xero.status !== "connected") await connectXero();
 
   const existing = proCfoXeroQueue.find((item) => item.invoiceId === invoiceId);
-  const attemptedAt = melbourneIso(PROTOTYPE_TODAY, "11:05");
+  const attemptedAt = melbourneIso(studioToday(), "11:05");
 
   if (proCfoXeroStickyFails.has(invoiceId)) {
     proCfoXeroStickyFails.delete(invoiceId);
@@ -614,7 +615,7 @@ export function teacherRemittanceCsv(pack: ProCfoPack): { filename: string; csv:
 export async function pushTeacherBillsToXero() {
   if (!proFeaturesEnabled()) throw new Error("Teacher bill push is available on Pro.");
   if (integrationState.demo.xero.status !== "connected") await connectXero();
-  integrationState.demo.xero.lastSyncedAt = melbourneIso(PROTOTYPE_TODAY, "11:20");
+  integrationState.demo.xero.lastSyncedAt = melbourneIso(studioToday(), "11:20");
   return respond({
     pushed: proCfoTeachers.filter((teacher) => teacher.kind === "contractor").length,
     syncedAt: integrationState.demo.xero.lastSyncedAt,

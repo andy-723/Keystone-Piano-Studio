@@ -11,8 +11,9 @@ import { createInvoice, sendInvoice, gstFromInclusive } from "@/services/billing
 import { getBillingProfile } from "@/services/billing-profile";
 import { stripeStatusQuery } from "@/lib/integration-queries";
 import { queryOptions } from "@tanstack/react-query";
-import { addDays, PROTOTYPE_TODAY } from "@/lib/calendar";
+import { addDays } from "@/lib/calendar";
 import type { Invoice, InvoiceLine } from "@/mocks/types";
+import { studioToday } from "@/lib/studio-clock";
 
 const billingProfileQuery = queryOptions({
   queryKey: ["billing-profile", "demo"],
@@ -49,7 +50,7 @@ function NewInvoice() {
   const navigate = useNavigate();
   const client = useQueryClient();
   const [familyId, setFamilyId] = useState(data.families[0]?.id ?? "");
-  const [dueDate, setDueDate] = useState(addDays(PROTOTYPE_TODAY, 14));
+  const [dueDate, setDueDate] = useState(addDays(studioToday(), 14));
   const [lines, setLines] = useState<DraftLine[]>([
     { description: "Piano lessons", qty: "1", unitDollars: "49" },
   ]);
@@ -83,7 +84,7 @@ function NewInvoice() {
       number: null,
       familyId,
       status: "draft",
-      issueDate: PROTOTYPE_TODAY,
+      issueDate: studioToday(),
       dueDate,
       lines: builtLines,
       totalCents,

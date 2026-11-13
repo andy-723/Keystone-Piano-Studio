@@ -1,10 +1,11 @@
 import { families, students, weeklySlots, teacher } from "@/mocks/data";
 import { parentGuardianId } from "@/mocks/parent";
 import { getRenewalState, type RenewalTerm, type FamilyRenewal } from "@/mocks/renewals";
-import { addDays, melbourneIso, PROTOTYPE_TODAY, TERMS_2027 } from "@/lib/calendar";
+import { addDays, melbourneIso, TERMS_2027 } from "@/lib/calendar";
 import { formatShortDate, formatTime } from "@/lib/format";
 import { getOrCreateFamilyConversation, sendMessage } from "./chat";
 import { respond } from "./_delay";
+import { studioToday } from "@/lib/studio-clock";
 
 function row(familyId: string, term: RenewalTerm = 2): FamilyRenewal { return getRenewalState(term).families.get(familyId) ?? { familyId, status: "not_invited" }; }
 function termDates(term: RenewalTerm) { return term === 2 ? TERMS_2027[1] : term === 3 ? TERMS_2027[2] : TERMS_2027[3]; }
@@ -20,7 +21,7 @@ export async function getRenewals(term: RenewalTerm = 2) {
 }
 export async function setRenewalSettings(input: { deadline: string; remindersEnabled: boolean }, term: RenewalTerm = 2) {
   const renewalState = getRenewalState(term);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.deadline) || !Number.isFinite(Date.parse(input.deadline)) || new Date(`${input.deadline}T12:00:00Z`).toISOString().slice(0,10) !== input.deadline || input.deadline < PROTOTYPE_TODAY || input.deadline >= (TERMS_2027[term - 1]?.start ?? "")) throw new Error("Choose a deadline before the selected term starts");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.deadline) || !Number.isFinite(Date.parse(input.deadline)) || new Date(`${input.deadline}T12:00:00Z`).toISOString().slice(0,10) !== input.deadline || input.deadline < studioToday() || input.deadline >= (TERMS_2027[term - 1]?.start ?? "")) throw new Error("Choose a deadline before the selected term starts");
   if (renewalState.active && input.deadline !== renewalState.deadline) throw new Error("The deadline cannot change after invitations are sent");
   renewalState.deadline = input.deadline; renewalState.remindersEnabled = input.remindersEnabled;
   return getRenewals(term);
@@ -45,7 +46,7 @@ export function sendRenewalInvitations(term: RenewalTerm = 2): Promise<number> {
     for (const family of families) {
       if (row(family.id, term).status !== "not_invited") continue;
       await sendRenewalMessage(family.id, false, term);
-      renewalState.families.set(family.id, { familyId: family.id, status: "awaiting", invitedDate: PROTOTYPE_TODAY }); count++;
+      renewalState.families.set(family.id, { familyId: family.id, status: "awaiting", invitedDate: studioToday() }); count++;
     }
     return count;
   })().finally(() => { invitations.delete(term); });
@@ -63,7 +64,7 @@ async function sendReminders(term: RenewalTerm, simulate: boolean): Promise<numb
     let count = 0;
     for (const entry of state.families.values()) {
       if (entry.status !== "awaiting" || entry.reminderDate || !entry.invitedDate) continue;
-      const date = simulate ? addDays(entry.invitedDate, state.reminderDays) : PROTOTYPE_TODAY;
+      const date = simulate ? addDays(entry.invitedDate, state.reminderDays) : studioToday();
       if (date > state.deadline) continue;
       await sendRenewalMessage(entry.familyId, true, term);
       entry.reminderDate = date; count++;
@@ -97,7 +98,7 @@ export async function respondToParentRenewal(status: "confirmed" | "change_reque
   const guardian = family.guardians.find((entry) => entry.id === parentGuardianId);
   const conversation = await getOrCreateFamilyConversation(family.id);
   // Reserve the response before the asynchronous message send to prevent double taps.
-  entry.status = status; entry.responseDate = PROTOTYPE_TODAY; entry.responseNote = note.trim();
+  entry.status = status; entry.responseDate = studioToday(); entry.responseNote = note.trim();
   try {
     await sendMessage({ conversationId: conversation.id, authorName: guardian?.name ?? "Parent", authorRole: "guardian", kind: "text", body: `${guardian?.preferredLanguage === "zh-CN" ? status === "confirmed" ? `确认第 ${term} 学期继续课程，保留现有时间。` : status === "declined" ? `第 ${term} 学期暂不继续课程。` : `希望调整第 ${term} 学期的课程安排。` : status === "confirmed" ? `We confirm continuing in Term ${term} at our current lesson times.` : status === "declined" ? `We won't continue lessons in Term ${term}. Thank you.` : `We would like to discuss a change for Term ${term}.`}${note.trim() ? `\n\n${note.trim()}` : ""}` });
   } catch (error) { entry.status = "awaiting"; delete entry.responseDate; delete entry.responseNote; throw error; }

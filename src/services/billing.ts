@@ -2,7 +2,7 @@ import { invoices, studio, students, families, weeklySlots, lessonTypes, payment
 import { termInvoiceDrafts } from "@/mocks/billing";
 import { creditNotes, invoiceEvents } from "@/mocks/billing-profile";
 import { renewalState } from "@/mocks/renewals";
-import { addDays, dayKind, TERMS_2027, weekday, PUBLIC_HOLIDAYS_2027, PROTOTYPE_TODAY, melbourneIso } from "@/lib/calendar";
+import { addDays, dayKind, TERMS_2027, weekday, PUBLIC_HOLIDAYS_2027, melbourneIso } from "@/lib/calendar";
 import type {
   Invoice,
   InvoiceLine,
