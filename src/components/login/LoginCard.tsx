@@ -243,6 +243,11 @@ export function LoginCard({ nextPath, siteKey = "" }: Props) {
         </button>
       </form>
 
+      {/* The demo account is the only one with a password (ADR-062); everyone else gets a link. */}
+      <a href="/demo" className={btnSecondary} data-testid="login-demo-link">
+        Demo account? Sign in with a password
+      </a>
+
       {error && (
         <p className="m-0 text-sm text-[#8B1E1E]" role="status" aria-live="polite">
           {error}
@@ -279,9 +284,6 @@ export function LoginCard({ nextPath, siteKey = "" }: Props) {
         </a>
         <a href="/terms" className="text-[#604A19] hover:text-[#15100D]">
           Terms
-        </a>
-        <a href="/demo" className="text-[#604A19] hover:text-[#15100D]">
-          Demo studio
         </a>
         <span>Data hosted in Sydney, Australia</span>
       </div>

@@ -1,4 +1,12 @@
-import { describe, expect, it } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it } from "vitest";
+import {
+  createMemoryHistory,
+  createRootRoute,
+  createRouter,
+  RouterProvider,
+} from "@tanstack/react-router";
+import { LoginCard } from "@/components/login/LoginCard";
 import { isDemoOnlyAccount, type ResolvedAccount } from "@/server/account";
 import {
   decideMfaGate,
@@ -111,5 +119,21 @@ describe("/demo route", () => {
   it("is public and renders without the studio shell", () => {
     expect(isAuthExemptPath("/demo")).toBe(true);
     expect(isFocusFlowPath("/demo")).toBe(true);
+  });
+});
+
+describe("sign-in page demo button", () => {
+  afterEach(() => cleanup());
+
+  it("sends people with the demo account to the password page", async () => {
+    const root = createRootRoute({ component: () => <LoginCard /> });
+    const router = createRouter({
+      routeTree: root,
+      history: createMemoryHistory({ initialEntries: ["/login"] }),
+    });
+    render(<RouterProvider router={router} />);
+    const link = await screen.findByTestId("login-demo-link");
+    expect(link.getAttribute("href")).toBe("/demo");
+    expect(link.textContent).toContain("Sign in with a password");
   });
 });
