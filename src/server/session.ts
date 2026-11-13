@@ -6,6 +6,8 @@ export type VerifiedSession = {
   userId: string;
   email: string | null;
   aal: string | null;
+  /** How this session was signed in (JWT amr), e.g. ["password"], ["otp"], ["oauth", "totp"]. */
+  signInMethods: string[];
   accessToken: string;
 };
 
@@ -33,19 +35,25 @@ export async function verifyAccessToken(accessToken: string): Promise<VerifiedSe
   }
 
   let aal: string | null = null;
+  let signInMethods: string[] = [];
   try {
     const payload = JSON.parse(
       Buffer.from(accessToken.split(".")[1] ?? "", "base64url").toString("utf8"),
     ) as { aal?: string; amr?: Array<{ method?: string }> };
     aal = payload.aal ?? null;
+    signInMethods = (payload.amr ?? [])
+      .map((entry) => entry?.method)
+      .filter((method): method is string => typeof method === "string");
   } catch {
     aal = null;
+    signInMethods = [];
   }
 
   return {
     userId: data.user.id,
     email: data.user.email ?? null,
     aal,
+    signInMethods,
     accessToken,
   };
 }
