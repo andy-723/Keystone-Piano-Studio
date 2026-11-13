@@ -18,9 +18,12 @@ at **`/demo`** with an email and password (a "Demo studio" link sits in the sign
   `LiveAuthGuard`, using the JWT `amr` claim). Real people keep signing in with an email link,
   Google or Microsoft.
 - The demo account skips the app's two-step gate, so its session stays at `aal1`. Every staff
-  server route still demands `aal2` (`requireStudioRole`), so the demo account can't invite
-  people, send emails, sync calendars or change anything on the server. It only sees the demo
-  fixtures, which live in the browser and reset on reload.
+server route still demands `aal2` (`requireStudioRole`), so the demo account can't invite
+people, send emails, sync calendars or change anything on the server. It only sees the demo
+fixtures, which live in the browser and reset on reload.
+
+The same app-level session timeout as every other account applies (30 minutes idle, 8 hours
+absolute — see `docs/security/auth.md`). There is no keep-alive exception for the demo.
 - RLS is unchanged: it can read only its own (demo) studio's rows.
 - Turnstile (CAPTCHA) protects the `/demo` form as it does `/login`.
 

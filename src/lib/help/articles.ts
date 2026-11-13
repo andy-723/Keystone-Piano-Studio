@@ -68,7 +68,9 @@ Studio owners, admins and teachers must use two-step sign-in. The first time you
 
 - Lost your phone? Use one of your recovery codes on the code screen.
 - No recovery codes either? Send us a support request. We check it's really you, then reset two-step sign-in so you can set it up again.
-- We never ask for your authenticator codes or recovery codes.`,
+- We never ask for your authenticator codes or recovery codes.
+
+For security, Keystone Music HQ signs you out after 30 minutes without activity, or after 8 hours from sign-in even if you stay active. Sign in again to continue.`,
     },
     keywords: [
       "login",
@@ -82,6 +84,9 @@ Studio owners, admins and teachers must use two-step sign-in. The first time you
       "recovery",
       "locked out",
       "magic link",
+      "timeout",
+      "session",
+      "signed out",
       "google",
       "microsoft",
     ],
@@ -615,17 +620,23 @@ Nếu liên kết báo đã hết hạn, hãy nhờ giáo viên gửi lại liê
 
 - Nothing arrived? Check your spam or junk folder.
 - "We couldn't find an account"? You're probably using a different email address from the one the invite went to.
-- Want extra security? You can turn on two-step sign-in with an authenticator app. It's optional for families.`,
+- Want extra security? You can turn on two-step sign-in with an authenticator app. It's optional for families.
+
+For security, Keystone Music HQ signs you out after 30 minutes without activity, or after 8 hours from sign-in even if you stay active.`,
       "zh-CN": `可以选择「使用 Google 继续」、「使用 Microsoft 继续」，或输入邮箱地址获取一次性登录链接。请始终使用工作室邀请邮件所发送到的邮箱地址，并在同一台设备上打开链接。
 
 - 没收到邮件？请查看垃圾邮件文件夹。
 - 提示「找不到账户」？您可能使用了与邀请邮件不同的邮箱地址。
-- 想更安全？可以用身份验证器应用开启两步登录。家庭用户可自愿选择。`,
+- 想更安全？可以用身份验证器应用开启两步登录。家庭用户可自愿选择。
+
+为安全起见，若 30 分钟无操作，或自登录起已满 8 小时，Keystone Music HQ 会退出登录。`,
       vi: `Chọn Tiếp tục với Google, Tiếp tục với Microsoft, hoặc nhập địa chỉ email để nhận liên kết đăng nhập một lần. Luôn dùng địa chỉ email mà studio đã gửi lời mời. Mở liên kết trên cùng một thiết bị.
 
 - Không nhận được gì? Hãy kiểm tra thư mục thư rác.
 - Báo "Không tìm thấy tài khoản"? Có thể bạn đang dùng email khác với email nhận lời mời.
-- Muốn bảo mật hơn? Bạn có thể bật đăng nhập hai bước bằng ứng dụng xác thực. Không bắt buộc với gia đình.`,
+- Muốn bảo mật hơn? Bạn có thể bật đăng nhập hai bước bằng ứng dụng xác thực. Không bắt buộc với gia đình.
+
+Vì lý do bảo mật, Keystone Music HQ sẽ đăng xuất bạn sau 30 phút không hoạt động, hoặc sau 8 giờ kể từ lúc đăng nhập dù bạn vẫn đang dùng.`,
     },
     keywords: [
       "login",

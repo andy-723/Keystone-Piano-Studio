@@ -18,7 +18,7 @@ function MfaRecoveryPage() {
         <p className="mt-6">
           <Link
             to="/login"
-            search={{ next: undefined }}
+            search={{ next: undefined, reason: undefined }}
             className="font-medium text-[#604A19] underline-offset-2 hover:underline"
           >
             Back to sign in

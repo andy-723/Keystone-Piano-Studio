@@ -10,6 +10,7 @@ import {
   destinationForAccount,
   NO_ACCOUNT_MESSAGE,
 } from "@/lib/post-login";
+import { markSessionStarted } from "@/lib/session-timeout";
 import { resolveAccountFn, recordNoAccountFn } from "@/server/account";
 import { Button } from "@/components/ui/button";
 
@@ -158,6 +159,7 @@ function AuthCallbackPage() {
         return;
       }
       rememberVerifiedAccess(session.access_token, decideStudioAccessGate(account), shellRoleForAccount(account));
+      markSessionStarted();
       window.location.replace(destinationForAccount(account, nextSafe));
     }
     void run();
@@ -193,7 +195,7 @@ function AuthCallbackPage() {
       )}
       {failed && (
         <Button className="mt-6" asChild>
-          <Link to="/login" search={{ next: undefined }}>Back to sign in</Link>
+          <Link to="/login" search={{ next: undefined, reason: undefined }}>Back to sign in</Link>
         </Button>
       )}
     </div>

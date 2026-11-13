@@ -5,6 +5,7 @@ import { btnPrimary, Sunburst } from "./LoginCard";
 import { getAuthClient, isDemoModeAllowed, isLiveAuthConfigured } from "@/lib/auth-client";
 import { clearVerifiedAccess } from "@/lib/live-auth-cache";
 import { DEMO_LOGIN_REFUSED_MESSAGE } from "@/lib/post-login";
+import { markSessionStarted } from "@/lib/session-timeout";
 import { resolveAccountFn } from "@/server/account";
 
 const inputClass =
@@ -38,6 +39,7 @@ export function DemoLoginCard({ siteKey = "" }: { siteKey?: string }) {
     setError(null);
     if (!live) {
       if (isDemoModeAllowed()) {
+        markSessionStarted();
         window.location.href = "/";
       } else {
         setError("Sign-in is unavailable right now. Please try again shortly.");
@@ -81,6 +83,7 @@ export function DemoLoginCard({ siteKey = "" }: { siteKey?: string }) {
       refuse("The demo couldn't open right now. Please try again shortly.");
       return;
     }
+    markSessionStarted();
     window.location.replace("/");
   }
 
@@ -157,7 +160,7 @@ export function DemoLoginCard({ siteKey = "" }: { siteKey?: string }) {
         Studio owners and families{" "}
         <Link
           to="/login"
-          search={{ next: undefined }}
+          search={{ next: undefined, reason: undefined }}
           className="font-medium text-[#604A19] underline-offset-2 hover:text-[#15100D] hover:underline"
         >
           sign in here

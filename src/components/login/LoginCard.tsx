@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { TurnstileField } from "./TurnstileField";
 import { maskEmail } from "@/lib/auth-paths";
 import { getAuthClient, isDemoModeAllowed, isLiveAuthConfigured } from "@/lib/auth-client";
+import { markSessionStarted } from "@/lib/session-timeout";
 
 const GoogleMark = () => (
   <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true">
@@ -73,9 +74,11 @@ export const btnPrimary =
 type Props = {
   nextPath?: string | null;
   siteKey?: string;
+  /** Set when the idle or absolute session timer signed the person out. */
+  sessionTimedOut?: boolean;
 };
 
-export function LoginCard({ nextPath, siteKey = "" }: Props) {
+export function LoginCard({ nextPath, siteKey = "", sessionTimedOut = false }: Props) {
   const live = isLiveAuthConfigured();
   const [email, setEmail] = useState("");
   const [captcha, setCaptcha] = useState<string | null>(null);
@@ -93,6 +96,7 @@ export function LoginCard({ nextPath, siteKey = "" }: Props) {
     if (!live) {
       // Never "sign in" without a real provider round trip. Local demo only.
       if (isDemoModeAllowed()) {
+        markSessionStarted();
         window.location.href = nextPath || "/";
       } else {
         setError("Sign-in is unavailable right now. Please try again shortly.");
@@ -183,6 +187,16 @@ export function LoginCard({ nextPath, siteKey = "" }: Props) {
           Sign in to keep the music going.
         </p>
       </div>
+
+      {sessionTimedOut && (
+        <p
+          className="m-0 rounded-[10px] bg-[#F5EBD6] px-3 py-2 text-sm text-[#5A4F43]"
+          role="status"
+          data-testid="session-timeout-notice"
+        >
+          Your Keystone Music HQ session ended for security. Please sign in again.
+        </p>
+      )}
 
       {!live && isDemoModeAllowed() && (
         <p
