@@ -6,6 +6,7 @@ GitHub Release with the same text. See `docs/release-process.md`.
 
 ## Unreleased
 
+- Guardian-only sign-ins open the family portal (not the teacher screens). Studio members and platform staff still get the studio. No migration.
 - Today page for real studios now shows the real date and the lessons from your calendar, including cancelled and moved ones, with a link to the calendar for changes. Attendance buttons, lesson notes, make-up credits and practice history are hidden for real studios until they are saved properly (they stay in the demo studio). No migration.
 - Students page shows each student's level, readiness, goal term and last sign-off, and can be filtered by benchmark level. Keystone now keeps a weekly record of each student's progress for staff (never shown to families), ready for Pro stagnation alerts. Needs migration 0019.
 - Demo studio sign-in: the Clarke Piano Studio demo can be opened at /demo with a demo email and password (link in the sign-in page footer). The demo account belongs only to the demo studio, sees sample data only, and can't change anything on the server. Keystone admin has an "Open demo studio" button. Setup steps in docs/security/demo-account.md.

@@ -47,6 +47,16 @@ export function passwordSessionRefused(account: ResolvedAccount): boolean {
 export const DEMO_LOGIN_REFUSED_MESSAGE =
   "That email and password didn't open the demo. Studio owners and families sign in on the main sign-in page.";
 
+/**
+ * Which app a signed-in person lands in. Only someone who is a guardian and nothing else gets
+ * the family portal; studio members and platform staff keep the studio screens, even if they
+ * are also a guardian at a studio.
+ */
+export function shellRoleForAccount(account: ResolvedAccount): "teacher" | "parent" {
+  if (account.platformStaff || account.memberships.length > 0) return "teacher";
+  return account.guardianFamilyIds.length > 0 ? "parent" : "teacher";
+}
+
 export const NO_ACCOUNT_MESSAGE =
   "We couldn't find a Keystone Music HQ account for this sign-in. If your teacher invited you, use the same email address the invite was sent to.";
 

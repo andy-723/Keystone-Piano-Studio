@@ -61,3 +61,8 @@ export function useAppSettings() {
   if (!v) throw new Error("useAppSettings must be used inside AppSettingsProvider");
   return v;
 }
+
+/** Settings when inside the provider, otherwise null (for guards that also render standalone). */
+export function useOptionalAppSettings() {
+  return useContext(Ctx);
+}
