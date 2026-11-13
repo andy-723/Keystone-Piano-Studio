@@ -45,7 +45,7 @@ const ShieldIcon = () => (
   </svg>
 );
 
-function Sunburst() {
+export function Sunburst() {
   return (
     <svg className="orn mb-1.5 block" width="72" height="36" viewBox="0 0 72 36" aria-hidden="true">
       <line x1="36" y1="34" x2="66.9" y2="25.7" stroke="#C2A259" strokeWidth="1.4" />
@@ -65,9 +65,9 @@ function Sunburst() {
   );
 }
 
-const btnSecondary =
+export const btnSecondary =
   "flex w-full min-h-12 items-center justify-center gap-3 rounded-[10px] border border-[#CDBF9F] bg-white text-[15px] font-medium text-[#15100D] transition-[background-color,border-color,transform] duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#604A19] fine-hover:hover:border-[#604A19] fine-hover:hover:bg-[#F5EBD6] fine-hover:active:scale-[0.98] disabled:opacity-60";
-const btnPrimary =
+export const btnPrimary =
   "min-h-[50px] w-full rounded-[10px] border-0 bg-[#604A19] text-[15px] font-semibold text-[#FBF7EE] transition-[background-color,transform] duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#604A19] fine-hover:hover:bg-[#4E3C14] fine-hover:active:scale-[0.98] disabled:opacity-60";
 
 type Props = {
@@ -279,6 +279,9 @@ export function LoginCard({ nextPath, siteKey = "" }: Props) {
         </a>
         <a href="/terms" className="text-[#604A19] hover:text-[#15100D]">
           Terms
+        </a>
+        <a href="/demo" className="text-[#604A19] hover:text-[#15100D]">
+          Demo studio
         </a>
         <span>Data hosted in Sydney, Australia</span>
       </div>

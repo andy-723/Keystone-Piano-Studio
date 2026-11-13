@@ -48,7 +48,7 @@ export function signedOutRedirect(pathname: string, search = ""): string {
 
 /** Public routes that do not require a live session. */
 export function isAuthExemptPath(pathname: string): boolean {
-  if (pathname === "/login" || pathname === "/studio-enquiry") return true;
+  if (pathname === "/login" || pathname === "/demo" || pathname === "/studio-enquiry") return true;
   if (isPublicPagePath(pathname)) return true;
   if (pathname.startsWith("/auth/")) return true;
   if (pathname.startsWith("/join/")) return true;
@@ -62,7 +62,14 @@ export function isAuthExemptPath(pathname: string): boolean {
  * Includes platform admin (`/admin`) so staff land without waiting on mock studio/parent loaders.
  */
 export function isFocusFlowPath(pathname: string): boolean {
-  if (pathname === "/login" || pathname === "/studio-enquiry" || pathname === "/admin") return true;
+  if (
+    pathname === "/login" ||
+    pathname === "/demo" ||
+    pathname === "/studio-enquiry" ||
+    pathname === "/admin"
+  ) {
+    return true;
+  }
   if (
     pathname.startsWith("/join/") ||
     pathname.startsWith("/intake/") ||

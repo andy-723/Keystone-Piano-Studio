@@ -8,7 +8,12 @@ import {
   rememberVerifiedAccess,
   resetLiveAuthCacheForTests,
 } from "@/lib/live-auth-cache";
-import { decideMfaGate, decideStudioAccessGate, type StudioAccessGate } from "@/lib/post-login";
+import {
+  decideMfaGate,
+  decideStudioAccessGate,
+  passwordSessionRefused,
+  type StudioAccessGate,
+} from "@/lib/post-login";
 import { StudioPausedScreen, StudioReadOnlyBanner } from "@/components/StudioAccessNotice";
 import { resolveAccountFn } from "@/server/account";
 import { QueryClientContext } from "@tanstack/react-query";
@@ -98,6 +103,13 @@ export function LiveAuthGuard({ children }: { children: ReactNode }) {
           account.memberships.length > 0 ||
           account.guardianFamilyIds.length > 0;
         if (!hasAccount) {
+          clearVerifiedAccess();
+          await client.auth.signOut({ scope: "local" });
+          window.location.replace("/login");
+          return;
+        }
+        // Password sign-in is for the demo account only (ADR-062).
+        if (passwordSessionRefused(account)) {
           clearVerifiedAccess();
           await client.auth.signOut({ scope: "local" });
           window.location.replace("/login");
