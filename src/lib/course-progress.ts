@@ -1,14 +1,35 @@
 import type { CourseItem, CourseStage, Feedback, FrameworkSection } from "@/mocks/types";
 
+/** Percent credit for one item: pieces 20% a stage; technical 0/50/100; checklists 0/100. */
+export function itemPercent(item: Pick<CourseItem, "kind" | "stage" | "score">): number {
+  if (item.kind === "technical") return item.score ?? 0;
+  if (item.kind === "checklist") return item.score === 100 ? 100 : 0;
+  return item.stage * 20;
+}
+
 /** Empty sections contribute zero until the teacher adds work; section weights are normalised. */
 export function courseReadiness(sections: FrameworkSection[], items: CourseItem[]): number {
   const totalWeight = sections.reduce((sum, section) => sum + section.weightPct, 0);
   if (totalWeight <= 0) return 0;
   return Math.round(sections.reduce((sum, section) => {
     const group = items.filter((item) => item.sectionId === section.id);
-    const average = group.length ? group.reduce((value, item) => value + item.stage * 20, 0) / group.length : 0;
+    const average = group.length ? group.reduce((value, item) => value + itemPercent(item), 0) / group.length : 0;
     return sum + average * section.weightPct;
   }, 0) / totalWeight);
+}
+
+/** Per-section summary for families: items finished (100%) out of total, and the section's percent. */
+export function sectionProgress(sections: FrameworkSection[], items: CourseItem[]) {
+  return sections.map((section) => {
+    const group = items.filter((item) => item.sectionId === section.id);
+    const pct = group.length ? Math.round(group.reduce((value, item) => value + itemPercent(item), 0) / group.length) : 0;
+    return { sectionId: section.id, done: group.filter((item) => itemPercent(item) === 100).length, total: group.length, pct };
+  });
+}
+
+/** The newest checkpoint or score the teacher recorded on the course, if any. */
+export function lastSignOff(feedback: Pick<Feedback, "createdAt" | "outcome">[]): string | undefined {
+  return feedback.filter((entry) => entry.outcome !== "carry_over").map((entry) => entry.createdAt).sort().at(-1);
 }
 
 export function stageAfterFeedback(stage: CourseStage, outcome: Feedback["outcome"], newStage?: CourseStage): CourseStage {

@@ -2,7 +2,7 @@ import { students, weeklySlots } from "./data";
 import { addDays, melbourneIso, PROTOTYPE_TODAY, weekday } from "@/lib/calendar";
 import type { CourseItem, CourseStage, Feedback, FrameworkSection, FrameworkSlot, Student, StudentCourse, TermMilestone } from "./types";
 
-export const stageNames: Record<CourseStage, string> = { 1: "Notes learned", 2: "Hands together slowly", 3: "Up to speed", 4: "Polished", 5: "Exam ready" };
+export const stageNames: Record<CourseStage, string> = { 1: "Notes and fingering learned", 2: "Hands together, accurate rhythm", 3: "Up to tempo, no stops", 4: "Dynamics, articulation and pedal", 5: "Performance ready" };
 export const studentCourses: StudentCourse[] = [];
 export const frameworkSections: FrameworkSection[] = [];
 export const frameworkSlots: FrameworkSlot[] = [];
