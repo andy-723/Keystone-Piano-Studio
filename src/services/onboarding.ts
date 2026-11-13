@@ -5,7 +5,7 @@ import { newStudioRoster, type ImportScope } from "@/mocks/roster-import";
 import { enrolmentDrafts, type EnrolmentDraft } from "@/mocks/onboarding";
 import { libraryState } from "@/mocks/library";
 import { studentCourses, frameworkSections, courseItems, termMilestones } from "@/mocks/curriculum";
-import type { CourseStage, Intake, Message } from "@/mocks/types";
+import type { CourseStage, Intake, Message, Lang } from "@/mocks/types";
 import { getOrCreateFamilyConversation, sendMessage } from "./chat";
 import { getParentSession, sendParentMessage } from "./parent";
 import { respond } from "./_delay";
@@ -19,6 +19,52 @@ import { buildCourseSnapshot } from "@/lib/course-snapshot";
 import { insertLiveFamily, insertLiveStudents } from "./live/studio-store";
 import { withLiveCourseSave } from "./live/course-store";
 const store = (scope: ImportScope) => scope === "demo" ? { families, students } : newStudioRoster;
+
+/** After a live enrol+invite server call, seed the teacher UI mock store so step 1 continues. */
+export async function seedLocalEnrolmentFromLiveInvite(input: {
+  draft: EnrolmentDraft;
+  familyId: string;
+  studentId: string;
+  firstName: string;
+  lastName: string;
+  birthYear: number;
+  guardianName: string;
+  guardianEmail: string;
+  guardianMobile?: string;
+  language: Lang;
+}) {
+  const data = store("demo");
+  let family = data.families.find((entry) => entry.id === input.familyId);
+  if (!family) {
+    family = {
+      id: input.familyId,
+      displayName: `${input.lastName.trim()} family`,
+      guardians: [
+        {
+          id: crypto.randomUUID(),
+          name: input.guardianName,
+          email: input.guardianEmail.toLowerCase(),
+          mobile: input.guardianMobile ?? "",
+          preferredLanguage: input.language,
+        },
+      ],
+    };
+    data.families.push(family);
+  }
+  if (!data.students.some((entry) => entry.id === input.studentId)) {
+    data.students.push({
+      id: input.studentId,
+      familyId: input.familyId,
+      firstName: input.firstName.trim(),
+      lastName: input.lastName.trim(),
+      birthYear: input.birthYear,
+    });
+  }
+  if (!enrolmentDrafts.some((entry) => entry.id === input.draft.id)) {
+    enrolmentDrafts.push(structuredClone(input.draft));
+  }
+  return respond(structuredClone(input.draft));
+}
 
 async function requireTermsAcceptance(studentId: string, scope: TermsScope) {
   const state = await ensureTermsState();
