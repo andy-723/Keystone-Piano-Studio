@@ -6,8 +6,9 @@ import { libraryState } from "@/mocks/library";
 import { buildCourseSnapshot } from "@/lib/course-snapshot";
 import { getOrCreateFamilyConversation, sendMessage } from "./chat";
 import { courseFeedback, courseItems, frameworkSections, frameworkSlots, seedStudentCourse, stageNames, studentCourses, termMilestones } from "@/mocks/curriculum";
-import { courseReadiness, hasNoFeedbackInThreeLessons, stageAfterFeedback } from "@/lib/course-progress";
-import type { CourseItem, Feedback, FrameworkSection, Student, StudentCourse } from "@/mocks/types";
+import { courseReadiness, hasNoFeedbackInThreeLessons, lastSignOff, sectionProgress, stageAfterFeedback } from "@/lib/course-progress";
+import { BENCHMARK_VERSION, PATHWAYS, PILLARS, benchmarkLevel, benchmarkLevelForGrade, repertoireSlotLabels, type BenchmarkPathway } from "@/lib/benchmarks";
+import type { CourseItem, Feedback, FrameworkSection, FrameworkSlot, Student, StudentCourse } from "@/mocks/types";
 import { isLiveStudio } from "@/lib/studio-workspace";
 import { currentTermKey, termAfterKey } from "@/lib/course-progress";
 import { withLiveCourseSave } from "./live/course-store";
@@ -17,7 +18,8 @@ import { withLiveCourseSave } from "./live/course-store";
  * demo's made-up pieces. Kept per student so ids stay the same between reads.
  */
 const starterCourses = new Map<string, { course: StudentCourse; sections: FrameworkSection[] }>();
-const STARTER_SECTIONS: [string, number][] = [["Repertoire", 50], ["Technical work", 15], ["Musicianship", 15], ["Theory", 20]];
+/** Keystone default weights 40/20/20/20 (benchmark pillars); studios can change them per course. */
+const STARTER_SECTIONS: [string, number][] = PILLARS.map((pillar) => [pillar.name, pillar.weightPct]);
 function starterCourse(student: Student) {
   const saved = starterCourses.get(student.id);
   if (saved) return saved;
@@ -50,13 +52,14 @@ function courseState(studentId: string) {
   const items = courseItems.filter((entry) => entry.studentCourseId === course.id);
   const slots = frameworkSlots.filter((entry) => sections.some((section) => section.id === entry.sectionId));
   const feedback = courseFeedback.filter((entry) => items.some((item) => item.id === entry.courseItemId));
-  return { course, sections, slots, items, feedback, stageNames, milestones: termMilestones.filter((entry) => entry.studentCourseId === course.id), readiness: courseReadiness(sections, items), weightLabel: "Studio default" };
+  const benchmark = benchmarkLevel(course.benchmarkLevel) ?? benchmarkLevelForGrade(course.grade);
+  return { course, sections, slots, items, feedback, stageNames, milestones: termMilestones.filter((entry) => entry.studentCourseId === course.id), readiness: courseReadiness(sections, items), progress: sectionProgress(sections, items), lastSignOffAt: lastSignOff(feedback), benchmark, weightLabel: "Studio default" };
 }
 export const getStudentCourse = (studentId: string) => respond(courseState(studentId));
 export async function saveStudentCourse(studentId: string, input: Pick<StudentCourse, "targetTerm"> & { items: CourseItem[] }) {
   const state = courseState(studentId);
   if (!/^\d{4}-T[1-4]$/.test(input.targetTerm)) throw new Error("Choose a target term.");
-  if (input.items.some((item) => !item.title.trim() || !state.sections.some((section) => section.id === item.sectionId) || item.slotId && !state.slots.some((slot) => slot.id === item.slotId && slot.sectionId === item.sectionId) || !Number.isInteger(item.stage) || item.stage < 1 || item.stage > 5)) throw new Error("Give every item a title and a valid section, slot and stage.");
+  if (input.items.some((item) => !item.title.trim() || !state.sections.some((section) => section.id === item.sectionId) || item.slotId && !state.slots.some((slot) => slot.id === item.slotId && slot.sectionId === item.sectionId) || !Number.isInteger(item.stage) || item.stage < 1 || item.stage > 5 || item.kind !== undefined && !["piece", "technical", "checklist"].includes(item.kind) || item.score !== undefined && ![0, 50, 100].includes(item.score) || item.kind === "checklist" && item.score === 50)) throw new Error("Give every item a title and a valid section, slot and stage.");
   const ids = input.items.map((item) => item.id);
   if (new Set(ids).size !== ids.length || input.items.some((item) => courseItems.some((existing) => existing.id === item.id && existing.studentCourseId !== state.course.id))) throw new Error("Course items must have unique IDs.");
   await withLiveCourseSave(() => {
@@ -87,6 +90,58 @@ export async function recordCourseFeedback(input: Omit<Feedback, "id" | "created
   }, () => [state.course.id]);
   return getStudentCourse(input.studentId);
 }
+/** One-tap score for technical (0/50/100) and checklist (0/100) items, recorded as a checkpoint. */
+export async function scoreCourseItem(input: { studentId: string; courseItemId: string; score: 0 | 50 | 100; occurrenceId?: string }) {
+  const state = courseState(input.studentId);
+  const item = state.items.find((entry) => entry.id === input.courseItemId);
+  if (!item) throw new Error("Course item not found.");
+  if (item.kind !== "technical" && item.kind !== "checklist") throw new Error("Pieces use stages, not scores.");
+  if (![0, 50, 100].includes(input.score) || item.kind === "checklist" && input.score === 50) throw new Error("Choose a valid score.");
+  if (input.occurrenceId) {
+    const { getLessonOccurrence } = await import("./schedule");
+    const lesson = await getLessonOccurrence(input.occurrenceId);
+    if (!lesson || lesson.studentId !== input.studentId) throw new Error("Lesson does not belong to this student.");
+  }
+  const createdAt = isLiveStudio() ? new Date().toISOString() : new Date(Math.max(Date.parse("2027-03-15T12:00:00+11:00"), ...courseFeedback.map((entry) => Date.parse(entry.createdAt) + 1000))).toISOString();
+  const feedback: Feedback = { id: crypto.randomUUID(), courseItemId: item.id, occurrenceId: input.occurrenceId, outcome: input.score > (item.score ?? 0) ? "pass" : "stage_move", score: input.score, shared: false, createdAt };
+  await withLiveCourseSave(() => {
+    adoptStarter(state.course);
+    courseFeedback.push(feedback);
+    item.score = input.score; item.updatedAt = createdAt;
+  }, () => [state.course.id]);
+  return getStudentCourse(input.studentId);
+}
+
+/**
+ * Starts a new course from a Keystone benchmark level: the four pillars at 40/20/20/20, the
+ * level's technical, theory and ear checklists, and empty repertoire slots for the teacher's
+ * pieces. The current course is archived with its history, as "Assign to students" does.
+ */
+export async function startBenchmarkCourse(studentId: string, input: { levelId: string; pathway: BenchmarkPathway; targetTerm: string }) {
+  const student = students.find((entry) => entry.id === studentId);
+  if (!student) throw new Error("Student not found.");
+  const level = benchmarkLevel(input.levelId);
+  if (!level) throw new Error("Choose a level.");
+  const pathway = PATHWAYS.find((entry) => entry.id === input.pathway);
+  if (!pathway) throw new Error("Choose a pathway.");
+  if (!/^\d{4}-T[1-4]$/.test(input.targetTerm)) throw new Error("Choose a target term.");
+  const current = studentCourses.find((course) => course.studentId === studentId && course.status === "active");
+  const now = new Date().toISOString();
+  const course: StudentCourse = { id: crypto.randomUUID(), studentId, framework: pathway.framework, grade: level.label, targetTerm: input.targetTerm, weeklyPracticeGoalMin: current?.weeklyPracticeGoalMin ?? level.practiceMinPerDay[1] * 5, gradeHoursEstimate: current?.gradeHoursEstimate ?? 40, status: "active", benchmarkLevel: level.id, benchmarkVersion: BENCHMARK_VERSION, name: `${pathway.id === "recreational" ? "" : `${pathway.label} `}${level.label}` };
+  const sections: FrameworkSection[] = PILLARS.map((pillar) => ({ id: `${course.id}-${pillar.id}`, framework: course.framework, grade: course.grade, name: pillar.name, weightPct: pillar.weightPct }));
+  const slots: FrameworkSlot[] = repertoireSlotLabels(pathway.id, level.pieces).map((label, i) => ({ id: `${course.id}-repertoire-slot-${i}`, sectionId: `${course.id}-repertoire`, label }));
+  const items: CourseItem[] = PILLARS.filter((pillar) => pillar.kind !== "piece").flatMap((pillar) => level.pillars[pillar.id].items.map((title): CourseItem => ({ id: crypto.randomUUID(), studentCourseId: course.id, sectionId: `${course.id}-${pillar.id}`, title, kind: pillar.kind, score: 0, stage: 1, updatedAt: now })));
+  await withLiveCourseSave(() => {
+    if (current) { current.status = "archived"; current.archivedAt = now; }
+    starterCourses.delete(studentId);
+    studentCourses.push(course);
+    frameworkSections.push(...sections);
+    frameworkSlots.push(...slots);
+    courseItems.push(...items);
+  }, () => [course.id, ...(current ? [current.id] : [])]);
+  return getStudentCourse(studentId);
+}
+
 export async function getCourseReminders(studentId: string, beforeDate: string) {
   const state = courseState(studentId);
   const { getDayLessons } = await import("./schedule");

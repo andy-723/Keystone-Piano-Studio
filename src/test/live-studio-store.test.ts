@@ -691,8 +691,8 @@ describe("live courses and Library (0015)", () => {
     expect(first.sections.map((section) => section.name)).toEqual([
       "Repertoire",
       "Technical work",
-      "Musicianship",
-      "Theory",
+      "Theory and reading",
+      "Ear, sight-reading and pedal",
     ]);
     expect((await getStudentCourse(EXAMPLE_STUDENT)).course.id).toBe(first.course.id);
     expect(studentCourses).toHaveLength(0);
