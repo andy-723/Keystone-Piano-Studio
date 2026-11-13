@@ -25,6 +25,9 @@ GitHub Release with the same text. See `docs/release-process.md`.
   studios, Help for families, or the unsubscribe link in every email). Needs migration 0018 and
   the 15-minute schedule in `docs/security/notifications.md`.
 - The public website and the family portal can now be read in English, 中文 or Tiếng Việt. Legal documents stay in English.
+- The public Terms of use and Privacy pages, and the Keystone terms families accept in the app,
+  now show the full drafted version 3 text (Parts A to D, with the supplier list and retention
+  sections). Still a draft for solicitor review; bracketed fields are facts still to be filled in.
 - The calendar now works on the demo studio (Clarke Piano Studio), including for platform staff:
   it shows the demo timetable, and lessons you add, move or cancel there stay in that browser tab
   and reset on reload. Google Calendar is not offered on the demo. Demo data now shows a
