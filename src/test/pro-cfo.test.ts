@@ -97,7 +97,8 @@ describe("ops actions", () => {
     const chase = await sendOverdueChase(pack.overdue[0]!.invoiceId);
     expect(chase.payLink).toContain(pack.overdue[0]!.invoiceId);
     expect(messages.length).toBeGreaterThan(beforeMessages);
-    expect(messages.at(-1)?.body).toContain("pay.keystone.example");
+    expect(messages.at(-1)?.body).toContain("view=invoices");
+    expect(messages.at(-1)?.body).toContain(pack.overdue[0]!.invoiceId);
   });
 
   it("soft-gates Xero retry on Starter without hard-blocking the pack", async () => {

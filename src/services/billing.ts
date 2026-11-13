@@ -16,6 +16,7 @@ import type {
 import { respond } from "./_delay";
 import { isLiveStudio } from "@/lib/studio-workspace";
 import { studioNow, studioToday } from "@/lib/studio-clock";
+import { studioSenderFrom } from "@/lib/studio-mail";
 import { billingProfileState } from "@/mocks/billing-profile";
 import {
   issueLiveInvoice,
@@ -523,7 +524,7 @@ async function issueInvoice(id: string, opts: { notify: boolean }): Promise<Invo
           : undefined;
       await (await emailProvider()).send({
         to: guardian.email,
-        from: `${studio.name} <studio@keystone.example>`,
+        from: studioSenderFrom(studio.name, studio.email),
         subject: mail.subject,
         html: mail.html,
         text: mail.text,
@@ -632,7 +633,7 @@ async function recordPaymentImpl(
       });
       await (await emailProvider()).send({
         to: guardian.email,
-        from: `${studio.name} <studio@keystone.example>`,
+        from: studioSenderFrom(studio.name, studio.email),
         subject: mail.subject,
         html: mail.html,
         text: mail.text,
@@ -741,7 +742,7 @@ async function issueCreditNoteImpl(input: {
     });
     await (await emailProvider()).send({
       to: guardian.email,
-      from: `${studio.name} <studio@keystone.example>`,
+      from: studioSenderFrom(studio.name, studio.email),
       subject: mail.subject,
       html: mail.html,
       text: mail.text,

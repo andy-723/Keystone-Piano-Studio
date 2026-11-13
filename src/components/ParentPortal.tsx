@@ -1,4 +1,4 @@
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { getReacceptanceStatus } from "@/services/terms";
 import { Home, MessageCircle, ChartNoAxesColumnIncreasing, Receipt, Megaphone, LifeBuoy } from "lucide-react";
@@ -22,6 +22,15 @@ import { publicSupportEmail } from "@/components/public/PublicPage";
 import { TourHelpButton, TourProvider } from "@/components/tour/Tour";
 import { FAMILY_TOUR } from "@/lib/tour-steps";
 
+function invoiceDeepLink(): { view: "invoices"; invoiceId: string } | null {
+  if (typeof window === "undefined") return null;
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("view") !== "invoices") return null;
+  const invoiceId = params.get("invoice")?.trim();
+  if (!invoiceId) return null;
+  return { view: "invoices", invoiceId };
+}
+
 export function ParentPortal() {
   const { data } = useSuspenseQuery(parentSessionQuery);
   return <ParentLanguageProvider initial={data.guardian.preferredLanguage}><ParentViews /></ParentLanguageProvider>;
@@ -30,7 +39,10 @@ export function ParentPortal() {
 function ParentViews() {
   const { t, lang, setLang } = useParentLanguage();
   const { data: profile } = useSuspenseQuery(teacherProfileQuery());
-  const [view, setView] = useState<"news" | "home" | "chat" | "progress" | "invoices" | "help">("news");
+  const deepLink = invoiceDeepLink();
+  const [view, setView] = useState<"news" | "home" | "chat" | "progress" | "invoices" | "help">(
+    deepLink?.view ?? "news",
+  );
   const [quote, setQuote] = useState('');
   const [deferReaccept, setDeferReaccept] = useState(false);
   // Same query as ReacceptanceCard: a terms update comes before the tour.
@@ -40,7 +52,14 @@ function ParentViews() {
   });
   const termsFirst = !deferReaccept && (reaccept.isPending || Boolean(reaccept.data?.needed));
   const openNewsChat = (title: string) => { setQuote(`“${title}”\n`); setView('chat'); };
-  const [invoiceId, setInvoiceId] = useState<string | null>(null);
+  const [invoiceId, setInvoiceId] = useState<string | null>(deepLink?.invoiceId ?? null);
+
+  useEffect(() => {
+    const link = invoiceDeepLink();
+    if (!link) return;
+    setView("invoices");
+    setInvoiceId(link.invoiceId);
+  }, []);
   const tabs = [{ key: "news", Icon: Megaphone }, { key: "home", Icon: Home }, { key: "chat", Icon: MessageCircle }, { key: "progress", Icon: ChartNoAxesColumnIncreasing }, { key: "invoices", Icon: Receipt }] as const;
   return (
     <TourProvider

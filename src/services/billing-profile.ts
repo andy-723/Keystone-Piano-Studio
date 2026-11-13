@@ -1,3 +1,4 @@
+import { studioSenderFrom } from "@/lib/studio-mail";
 import { billingAuditLog, billingProfileState, seedBillingExtras } from "@/mocks/billing-profile";
 import type { IntegrationScope } from "@/mocks/integrations";
 import { newsState, type Announcement } from "@/mocks/news";
@@ -173,7 +174,7 @@ export async function savePayTo(
 
   const ownerEmail =
     scope === "demo" ? (studio.email ?? teacher.name) : (studio.email ?? "owner@studio.example");
-  const from = `${studio.name} <studio@keystone.example>`;
+  const from = studioSenderFrom(studio.name, studio.email);
   const mail = payToChangedEmail({
     studioName: current.tradingName || current.legalName || studio.name,
     accountName: nextPayTo.accountName ?? current.legalName,

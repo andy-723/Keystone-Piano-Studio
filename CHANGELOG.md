@@ -6,6 +6,7 @@ GitHub Release with the same text. See `docs/release-process.md`.
 
 ## Unreleased
 
+- Billing and invite mail no longer fall back to `studio@keystone.example`; they use the studio email or `noreply@keystonemusichq.com`. Pro CFO overdue chat links open the family invoices tab instead of `pay.keystone.example`. Support fallback is `support@keystonemusichq.com`. No migration.
 - Guardian-only sign-ins open the family portal (not the teacher screens). Studio members and platform staff still get the studio. No migration.
 - Invoice, renewals, Tax Lite, Pro CFO, parent practice and related studio dates now use the real studio day in live studios (demo still uses the fixture date). No migration.
 - Today page for real studios now shows the real date and the lessons from your calendar, including cancelled and moved ones, with a link to the calendar for changes. Attendance buttons, lesson notes, make-up credits and practice history are hidden for real studios until they are saved properly (they stay in the demo studio). No migration.

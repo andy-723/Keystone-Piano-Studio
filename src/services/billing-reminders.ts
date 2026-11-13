@@ -1,3 +1,4 @@
+import { studioSenderFrom } from "@/lib/studio-mail";
 import { invoices, families, studio, teacher } from "@/mocks/data";
 import { invoiceEvents } from "@/mocks/billing-profile";
 import type { IntegrationScope } from "@/mocks/integrations";
@@ -89,7 +90,7 @@ async function runBillingScheduleImpl(scope: IntegrationScope = "demo", today: s
         });
         await (await emailProvider()).send({
           to: email,
-          from: `${studio.name} <studio@keystone.example>`,
+          from: studioSenderFrom(studio.name, studio.email),
           subject: mail.subject,
           html: mail.html,
           text: mail.text,
@@ -112,7 +113,7 @@ async function runBillingScheduleImpl(scope: IntegrationScope = "demo", today: s
         });
         await (await emailProvider()).send({
           to: email,
-          from: `${studio.name} <studio@keystone.example>`,
+          from: studioSenderFrom(studio.name, studio.email),
           subject: mail.subject,
           html: mail.html,
           text: mail.text,
@@ -141,7 +142,7 @@ async function runBillingScheduleImpl(scope: IntegrationScope = "demo", today: s
         });
         await (await emailProvider()).send({
           to: email,
-          from: `${studio.name} <studio@keystone.example>`,
+          from: studioSenderFrom(studio.name, studio.email),
           subject: mail.subject,
           html: mail.html,
           text: mail.text,
@@ -233,7 +234,7 @@ async function sendPauseNoticeImpl(invoiceId: string) {
     });
     await (await emailProvider()).send({
       to: email,
-      from: `${studio.name} <studio@keystone.example>`,
+      from: studioSenderFrom(studio.name, studio.email),
       subject: mail.subject,
       html: mail.html,
       text: mail.text,

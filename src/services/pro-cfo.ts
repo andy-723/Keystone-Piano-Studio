@@ -1,3 +1,4 @@
+import { familyInvoiceLink } from "@/lib/studio-mail";
 /**
  * Pro CFO pack — margin, unearned tuition, churn, Xero ops UI, GST threshold monitor.
  * Composes billing / schedule / Tax Lite / integrations mocks. Not a ledger or live Xero API.
@@ -635,7 +636,7 @@ export async function sendOverdueChase(invoiceId: string) {
   const guardians =
     families.find((family) => family.id === invoice.familyId)?.guardians.map((g) => g.name.split(" ")[0]).join(" and ") ||
     "there";
-  const payLink = `https://pay.keystone.example/i/${invoice.id}`;
+  const payLink = familyInvoiceLink(invoice.id);
   const body = `Hi ${guardians}, a friendly reminder that invoice ${invoice.number ?? invoice.id} has ${formatDollars(balance)} outstanding (due ${invoice.dueDate}). You can pay securely here: ${payLink}\n\nWarmly,\n${studio.name}`;
   const message = await sendMessage({
     conversationId: conversation.id,
