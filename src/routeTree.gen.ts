@@ -14,6 +14,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as DemoRouteImport } from './routes/demo'
 import { Route as DisclaimerRouteImport } from './routes/disclaimer'
 import { Route as HelpRouteImport } from './routes/help'
 import { Route as InvoicesRouteImport } from './routes/invoices'
@@ -85,6 +86,11 @@ const ChatRoute = ChatRouteImport.update({
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DisclaimerRoute = DisclaimerRouteImport.update({
@@ -331,6 +337,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/chat': typeof ChatRouteWithChildren
   '/contact': typeof ContactRoute
+  '/demo': typeof DemoRoute
   '/disclaimer': typeof DisclaimerRoute
   '/help': typeof HelpRoute
   '/invoices': typeof InvoicesRouteWithChildren
@@ -384,6 +391,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
   '/contact': typeof ContactRoute
+  '/demo': typeof DemoRoute
   '/disclaimer': typeof DisclaimerRoute
   '/help': typeof HelpRoute
   '/library': typeof LibraryRoute
@@ -436,6 +444,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/chat': typeof ChatRouteWithChildren
   '/contact': typeof ContactRoute
+  '/demo': typeof DemoRoute
   '/disclaimer': typeof DisclaimerRoute
   '/help': typeof HelpRoute
   '/invoices': typeof InvoicesRouteWithChildren
@@ -492,6 +501,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/chat'
     | '/contact'
+    | '/demo'
     | '/disclaimer'
     | '/help'
     | '/invoices'
@@ -545,6 +555,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/admin'
     | '/contact'
+    | '/demo'
     | '/disclaimer'
     | '/help'
     | '/library'
@@ -596,6 +607,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/chat'
     | '/contact'
+    | '/demo'
     | '/disclaimer'
     | '/help'
     | '/invoices'
@@ -651,6 +663,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   ChatRoute: typeof ChatRouteWithChildren
   ContactRoute: typeof ContactRoute
+  DemoRoute: typeof DemoRoute
   DisclaimerRoute: typeof DisclaimerRoute
   HelpRoute: typeof HelpRoute
   InvoicesRoute: typeof InvoicesRouteWithChildren
@@ -720,6 +733,13 @@ declare module '@tanstack/react-router' {
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/disclaimer': {
@@ -1128,6 +1148,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   ChatRoute: ChatRouteWithChildren,
   ContactRoute: ContactRoute,
+  DemoRoute: DemoRoute,
   DisclaimerRoute: DisclaimerRoute,
   HelpRoute: HelpRoute,
   InvoicesRoute: InvoicesRouteWithChildren,

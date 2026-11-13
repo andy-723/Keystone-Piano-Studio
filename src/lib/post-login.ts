@@ -6,6 +6,8 @@ export type MfaGate = "ok" | "setup" | "challenge";
 
 export function mfaRequiredForAccount(account: ResolvedAccount): boolean {
   if (account.platformStaff) return true;
+  // The demo login only ever sees in-browser demo fixtures; staff server routes still need aal2.
+  if (account.demoOnly) return false;
   return account.memberships.some(
     (m) => m.role === "owner" || m.role === "admin" || m.role === "teacher",
   );
@@ -32,6 +34,19 @@ export function destinationForAccount(account: ResolvedAccount, next?: string | 
   return "/login";
 }
 
+/**
+ * Password sign-in is only for the demo account (ADR-062). Real people sign in with an email link,
+ * Google or Microsoft. If anyone else ends up with a password session (for example they set a
+ * password on their own account), it is refused and signed out.
+ */
+export function passwordSessionRefused(account: ResolvedAccount): boolean {
+  const usedPassword = (account.signInMethods ?? []).includes("password");
+  return usedPassword && !account.demoOnly;
+}
+
+export const DEMO_LOGIN_REFUSED_MESSAGE =
+  "That email and password didn't open the demo. Studio owners and families sign in on the main sign-in page.";
+
 export const NO_ACCOUNT_MESSAGE =
   "We couldn't find a Keystone Music HQ account for this sign-in. If your teacher invited you, use the same email address the invite was sent to.";
 
@@ -47,6 +62,8 @@ export type StudioAccessGate =
  */
 export function decideStudioAccessGate(account: ResolvedAccount): StudioAccessGate {
   if (account.platformStaff) return { kind: "ok" };
+  // The demo studio runs on in-browser fixtures, so its subscription row doesn't matter.
+  if (account.demoOnly) return { kind: "ok" };
   const entries = account.studioAccess ?? [];
   if (entries.length === 0) return { kind: "ok" };
   if (entries.some((entry) => entry.level === "full")) return { kind: "ok" };

@@ -42,12 +42,35 @@ export type ResolvedAccount = {
   guardianFamilyIds: string[];
   /** Subscription access for each studio this person belongs to (0006). */
   studioAccess: StudioAccessEntry[];
+  /**
+   * Demo login (ADR-062): true only when every studio this person belongs to is the demo studio
+   * (studio.is_demo), they are not platform staff and not a guardian anywhere. Such an account
+   * only ever sees the in-browser demo fixtures, so it may sign in with a password and skips the
+   * app's two-step gate. Server routes still demand aal2 for staff actions, so it can't use them.
+   */
+  demoOnly?: boolean;
+  /** How this session was signed in (JWT amr), e.g. ["password"] or ["otp", "totp"]. */
+  signInMethods?: string[];
 };
+
+/** True when the person belongs to at least one studio and every one of them is the demo studio. */
+export function isDemoOnlyAccount(input: {
+  platformStaff: unknown;
+  guardianFamilyIds: string[];
+  memberships: Array<{ studioId: string }>;
+  demoStudioIds: ReadonlySet<string>;
+}): boolean {
+  if (input.platformStaff) return false;
+  if (input.guardianFamilyIds.length > 0) return false;
+  if (input.memberships.length === 0) return false;
+  return input.memberships.every((m) => input.demoStudioIds.has(m.studioId));
+}
 
 export async function resolveAccountForUser(
   userId: string,
   email: string | null,
   aal: string | null,
+  signInMethods: string[] = [],
 ): Promise<ResolvedAccount> {
   if (isMockOnboarding()) {
     const staff = mockPlatformStaff.find((row) => row.userId === userId) ?? null;
@@ -62,6 +85,8 @@ export async function resolveAccountForUser(
       memberships,
       guardianFamilyIds: [],
       studioAccess: await studioAccessFor(memberships),
+      demoOnly: false,
+      signInMethods,
     };
   }
 
@@ -110,6 +135,8 @@ export async function resolveAccountForUser(
       platformStaff,
       memberships,
       guardianFamilyIds,
+      demoOnly: false,
+      signInMethods,
     };
   }
 
@@ -124,6 +151,25 @@ export async function resolveAccountForUser(
     guardianStudios = [...new Set((families ?? []).map((row) => row.studio_id as string))];
   }
   const memberStudios = new Set(memberships.map((m) => m.studioId));
+
+  // Which of this person's staff studios are the demo studio (service-key read, same user).
+  let demoStudioIds = new Set<string>();
+  if (!platformStaff && guardianFamilyIds.length === 0 && memberStudios.size > 0) {
+    const { data: demoRows, error: demoError } = await supabase
+      .from("studio")
+      .select("id")
+      .in("id", [...memberStudios])
+      .eq("is_demo", true);
+    if (demoError) throw new ProblemError(500, "Account lookup failed", demoError.message);
+    demoStudioIds = new Set((demoRows ?? []).map((row) => row.id as string));
+  }
+  const demoOnly = isDemoOnlyAccount({
+    platformStaff,
+    guardianFamilyIds,
+    memberships,
+    demoStudioIds,
+  });
+
   const studioAccess = await studioAccessFor([
     ...memberships.map((m) => ({
       studioId: m.studioId,
@@ -142,6 +188,8 @@ export async function resolveAccountForUser(
     platformStaff,
     memberships,
     guardianFamilyIds,
+    demoOnly,
+    signInMethods,
   };
 }
 
@@ -192,7 +240,7 @@ export const resolveAccountFn = createServerFn({ method: "POST" })
   .validator((data: { accessToken: string }) => data)
   .handler(async ({ data }) => {
     const session = await verifyAccessToken(data.accessToken);
-    return resolveAccountForUser(session.userId, session.email, session.aal);
+    return resolveAccountForUser(session.userId, session.email, session.aal, session.signInMethods);
   });
 
 export const recordNoAccountFn = createServerFn({ method: "POST" })

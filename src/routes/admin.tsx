@@ -68,13 +68,15 @@ function AdminPage() {
           <BrandLogo variant="horizontal" alt="Keystone Music HQ" />
           <span className="text-sm font-semibold text-[#604A19]">Keystone admin</span>
         </div>
-        <button
-          type="button"
-          onClick={() => void signOut()}
-          className="ks-btn ks-btn-secondary"
-        >
-          Sign out
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Platform staff with no studio role see the Clarke demo studio at "/". */}
+          <a href="/" className="ks-btn ks-btn-secondary">
+            Open demo studio
+          </a>
+          <button type="button" onClick={() => void signOut()} className="ks-btn ks-btn-secondary">
+            Sign out
+          </button>
+        </div>
       </header>
 
       <nav className="flex flex-wrap gap-2 px-4 py-3" aria-label="Admin sections">
@@ -331,11 +333,7 @@ function StudioAccessForm({
         </p>
       )}
       <div className="sm:col-span-2">
-        <button
-          type="submit"
-          disabled={busy}
-          className="ks-btn ks-btn-primary"
-        >
+        <button type="submit" disabled={busy} className="ks-btn ks-btn-primary">
           Save access
         </button>
       </div>
@@ -494,11 +492,7 @@ function NewStudioTab({ token, onError }: { token: string; onError: (m: string |
           </p>
         )}
       </fieldset>
-      <button
-        type="submit"
-        disabled={busy}
-        className="ks-btn ks-btn-primary"
-      >
+      <button type="submit" disabled={busy} className="ks-btn ks-btn-primary">
         Create studio and invite owner
       </button>
       {done && (
@@ -767,11 +761,7 @@ function AuditTab({ token, onError }: { token: string; onError: (m: string | nul
         >
           Previous
         </button>
-        <button
-          type="button"
-          className="ks-btn ks-btn-paper"
-          onClick={() => setPage((p) => p + 1)}
-        >
+        <button type="button" className="ks-btn ks-btn-paper" onClick={() => setPage((p) => p + 1)}>
           Next
         </button>
       </div>
