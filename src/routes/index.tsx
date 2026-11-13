@@ -17,6 +17,7 @@ import type { LessonStatus } from "@/mocks/types";
 import { LessonClientNotes, studentNotesQuery } from "@/components/LessonClientNotes";
 import { LiveToday } from "@/components/LiveToday";
 import { isLiveStudio } from "@/lib/studio-workspace";
+import { marketingHomeHead } from "@/lib/marketing-seo";
 
 const dayQuery = (date: string) => queryOptions({ queryKey: ["day", date], queryFn: () => getDayLessons(date) });
 
@@ -30,16 +31,8 @@ export const Route = createFileRoute("/")({
   },
   errorComponent: () => <p role="alert">The day-book could not be opened. Please refresh to try again.</p>,
   notFoundComponent: () => <p>No day-book page found.</p>,
-  head: () => ({
-    meta: [
-      { title: "Today — Keystone Music HQ day-book" },
-      { name: "description", content: "Today's piano lessons, listed by time like a paper day-book." },
-      { property: "og:title", content: "Today — Keystone Music HQ day-book" },
-      { property: "og:description", content: "Today's piano lessons, listed by time like a paper day-book." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
+  // Crawlers and link previews see `/` before the signed-out redirect to /welcome — advertise the marketing page.
+  head: () => marketingHomeHead(),
   component: Today,
 });
 
