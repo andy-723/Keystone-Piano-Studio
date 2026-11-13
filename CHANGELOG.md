@@ -6,6 +6,7 @@ GitHub Release with the same text. See `docs/release-process.md`.
 
 ## Unreleased
 
+- Live Stripe for Keystone studio subscriptions: Settings → Plan and billing opens Stripe Checkout or the customer portal when `STRIPE_SECRET_KEY` and the Base/Pro price ids are set; without those secrets the demo plan switch stays simulated. Family Stripe Connect (parent Pay) stays mock. No migration.
 - Session timeout for security: Keystone Music HQ signs everyone out after 30 minutes of inactivity, or after 8 hours from sign-in even if they stay active. Applies to all accounts including the demo account. No migration.
 - Sign-in page: a clear "Demo account? Sign in with a password" button under the email form opens the demo sign-in page (/demo). Everyone else still signs in with an email link, Google or Microsoft.
 - Guardian-only sign-ins open the family portal (not the teacher screens). Studio members and platform staff still get the studio. No migration.

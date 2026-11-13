@@ -43,6 +43,7 @@ export function getServerEnv() {
     // sign-in emails share that, so the default leaves 30 for them. Raise it on a paid plan.
     notifyDailyLimit: Number(read("NOTIFY_DAILY_LIMIT") ?? "70") || 70,
     // Keystone's own subscription billing (Synoratech → studios). Not Stripe Connect.
+    // Family Connect payments stay mock until Connect env + routes land; do not invent those here.
     stripeSecretKey: read("STRIPE_SECRET_KEY") ?? "",
     stripeBillingWebhookSecret: read("STRIPE_BILLING_WEBHOOK_SECRET") ?? "",
     stripePriceBase: read("STRIPE_PRICE_BASE") ?? "",
@@ -62,4 +63,19 @@ export function getServerEnv() {
 
 export function isMockOnboarding() {
   return getServerEnv().backend === "mock";
+}
+
+/**
+ * True when Checkout / Customer Portal can run (secret key + both price ids).
+ * Webhook signing is separate — see isStripeBillingWebhookConfigured.
+ * Absent keys keep local/demo mock; never treat empty strings as live.
+ */
+export function isStripeBillingConfigured() {
+  const env = getServerEnv();
+  return Boolean(env.stripeSecretKey && env.stripePriceBase && env.stripePricePro);
+}
+
+/** True when `/api/stripe/billing-webhook` can verify Stripe-Signature. */
+export function isStripeBillingWebhookConfigured() {
+  return Boolean(getServerEnv().stripeBillingWebhookSecret);
 }

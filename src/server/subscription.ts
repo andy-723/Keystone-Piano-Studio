@@ -1,5 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getServerEnv, isMockOnboarding } from "./env";
+import {
+  getServerEnv,
+  isMockOnboarding,
+  isStripeBillingConfigured,
+  isStripeBillingWebhookConfigured,
+} from "./env";
 import { requirePlatformAdmin, requireStudioRole } from "./authz";
 import { verifyAccessToken } from "./session";
 import { writePlatformAudit } from "./account";
@@ -219,6 +224,18 @@ export async function runSubscriptionEnforcement(now: Date = new Date()) {
 // Owner billing: start a subscription or open Stripe's customer portal
 // ---------------------------------------------------------------------------
 
+/** Safe status for the Settings UI — never returns key material. */
+export function stripeBillingStatus() {
+  return {
+    checkoutReady: isStripeBillingConfigured(),
+    webhookReady: isStripeBillingWebhookConfigured(),
+  };
+}
+
+export const getStripeBillingStatusFn = createServerFn({ method: "GET" }).handler(() =>
+  stripeBillingStatus(),
+);
+
 /** Owner-only. Returns a Stripe URL to pay: the portal if a customer exists, otherwise Checkout. */
 export async function createBillingSession(input: {
   userId: string;
@@ -232,6 +249,13 @@ export async function createBillingSession(input: {
     access: "skip",
   });
   const env = getServerEnv();
+  if (!isStripeBillingConfigured()) {
+    throw new ProblemError(
+      503,
+      "Billing is not set up yet",
+      "STRIPE_SECRET_KEY, STRIPE_PRICE_BASE and STRIPE_PRICE_PRO are required.",
+    );
+  }
   const sub = (await getSubscriptionStore().get(input.studioId)) ?? newSubscription(input.studioId);
   const returnUrl = billingUrl();
 
