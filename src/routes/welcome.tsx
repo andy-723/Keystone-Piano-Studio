@@ -25,30 +25,14 @@ import {
   MessageCircle,
   LayoutDashboard,
 } from "lucide-react";
+import { marketingHomeHead } from "@/lib/marketing-seo";
 
 const SIGN_IN = "/login";
 const ENQUIRE = "/contact?topic=studio";
 
 export const Route = createFileRoute("/welcome")({
   loader: ({ context }) => context.queryClient.ensureQueryData(marketingFinanceQuery),
-  head: () => ({
-    meta: [
-      { title: "Keystone Music HQ — Studio Snapshot & Tax Lite" },
-      {
-        name: "description",
-        content:
-          "Studio Snapshot for your teaching week. Tax Lite for EOFY. Explore the calm finance and operations workspace for independent Australian music studios.",
-      },
-      { property: "og:title", content: "Keystone Music HQ — Studio Snapshot & Tax Lite" },
-      {
-        property: "og:description",
-        content:
-          "Unpaid, unenrolled, not practising — one calm studio view. Discover Studio Snapshot and planned Tax Lite tools.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
+  head: () => marketingHomeHead(),
   component: Welcome,
 });
 

@@ -6,6 +6,7 @@ GitHub Release with the same text. See `docs/release-process.md`.
 
 ## Unreleased
 
+- Public SEO: `/` now advertises the welcome page title, description and a canonical link to `/welcome` (so crawlers and link previews no longer see the day-book). Added `sitemap.xml` and a Sitemap line in `robots.txt`. No migration.
 - Guardian-only sign-ins open the family portal (not the teacher screens). Studio members and platform staff still get the studio. No migration.
 - Invoice, renewals, Tax Lite, Pro CFO, parent practice and related studio dates now use the real studio day in live studios (demo still uses the fixture date). No migration.
 - Today page for real studios now shows the real date and the lessons from your calendar, including cancelled and moved ones, with a link to the calendar for changes. Attendance buttons, lesson notes, make-up credits and practice history are hidden for real studios until they are saved properly (they stay in the demo studio). No migration.
