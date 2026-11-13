@@ -13,6 +13,7 @@ import { ProfilePicture } from "@/components/ProfilePicture";
 import { StudentProfileGroups } from "@/components/StudentGroups";
 import { INVOICE_STATUS } from "@/lib/billing-queries";
 import { Suspense } from "react";
+import { isLiveStudio } from "@/lib/studio-workspace";
 
 export const Route = createFileRoute("/students/$studentId")({
   loader: async ({ context, params }) => {
@@ -33,6 +34,8 @@ function StudentProfile() {
   const { data } = useSuspenseQuery(studentProfileQuery(studentId));
   const { data: subscription } = useSuspenseQuery(planBillingQuery());
   const pro = subscription.plan !== "base";
+  // Make-up credits, attendance and practice are not saved for real studios yet (pilot): hide them.
+  const live = isLiveStudio();
   if (!data) return null;
   const { student, family } = data;
   const maxMinutes = Math.max(data.course.course.weeklyPracticeGoalMin, 1, ...data.practice.map((week) => week.studentMinutes + week.teacherMinutes));
@@ -46,6 +49,7 @@ function StudentProfile() {
       <h3 className="mt-6 text-xl font-semibold">Guardians</h3><div className="mt-3 space-y-4">{family?.guardians.map((guardian) => <div key={guardian.id}><p className="font-semibold">{guardian.name}</p><p className="break-all text-base text-muted-foreground">{guardian.email}</p>{guardian.mobile && <p className="text-base text-muted-foreground">{guardian.mobile}</p>}<p className="text-base text-muted-foreground">Preferred language: {guardian.preferredLanguage === "zh-CN" ? "中文" : "English"}</p></div>)}</div>
       <Suspense fallback={<p className="mt-6 text-muted-foreground">Loading groups…</p>}><StudentProfileGroups studentId={student.id} /></Suspense>
     </section>
+    {!live && <>
     <section className="border-t border-border py-7"><h2 className="text-2xl font-semibold">Make-up lessons · {data.credits.balance} owed</h2><LessonScheduling student={{ id: student.id, name: `${student.firstName} ${student.lastName}`, durationMin: student.durationMin }} movable={false} balance={data.credits.balance} history /></section>
     <section className="border-t border-border py-7" aria-labelledby="attendance-history"><h2 id="attendance-history" className="text-2xl font-semibold">Attendance history</h2><p className="mt-2 text-base text-muted-foreground">Term 1 to date · {data.attendance.filter((lesson) => lesson.status === "attended").length} attended of {data.attendance.length} lessons</p>
       <div className="mt-4 divide-y divide-border">{data.attendance.map((lesson) => <div key={lesson.id} className="flex flex-wrap justify-between gap-3 py-4"><div><p>{formatShortDate(lesson.date)} · {formatTime(lesson.startsAt)}</p><p className="text-base text-muted-foreground">{lesson.lessonType.name}</p></div><span className={`text-base font-semibold ${lesson.status === "absent" || lesson.status === "cancelled_late" ? "text-destructive" : lesson.status === "attended" ? "text-success" : "text-muted-foreground"}`}>{attendanceLabels[lesson.status]}</span></div>)}</div>{!data.attendance.length && <p className="mt-4 text-muted-foreground">No lessons in this period.</p>}
@@ -58,6 +62,7 @@ function StudentProfile() {
       </svg>
       <div className="mt-4 grid grid-cols-2 gap-5 sm:grid-cols-4">{data.practice.map((week) => <div key={week.start}><p className="text-base">{formatShortDate(week.start)} – {formatShortDate(week.end)}</p><p className="mt-1 font-semibold">{week.studentMinutes + week.teacherMinutes} min</p><p className="text-base text-muted-foreground">At home {week.studentMinutes} · In lessons {week.teacherMinutes}</p></div>)}</div>
     </section>
+    </>}
     <StudentCourse data={data.course} />
     <section className="border-t border-border py-7" aria-labelledby="student-invoices"><h2 id="student-invoices" className="text-2xl font-semibold">Family invoices</h2><p className="mt-2 text-base text-muted-foreground">{family?.displayName}</p><div className="mt-4 divide-y divide-border">{data.invoices.map((invoice) => <Button key={invoice.id} asChild variant="ghost" className="h-auto w-full justify-start whitespace-normal rounded-none px-0 py-4 text-left"><Link to="/invoices/$invoiceId" params={{ invoiceId: invoice.id }}><div className="min-w-0 flex-1"><p className="break-all">{invoice.number}</p><p className="mt-1 text-base font-normal text-muted-foreground">Due {formatNumericDate(invoice.dueDate)} · {INVOICE_STATUS[invoice.status]}</p></div><span className="shrink-0">{formatAUD(invoice.totalCents)}</span><ArrowRight className="shrink-0" aria-hidden /></Link></Button>)}</div>{!data.invoices.length && <p className="mt-4 text-muted-foreground">No invoices for this family.</p>}</section>
   </div>;

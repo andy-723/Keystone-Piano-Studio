@@ -15,6 +15,8 @@ import { formatLongDate, formatTime } from "@/lib/format";
 import { getDayLessons, markAttendance, type DayPlan, type LessonWithDetails } from "@/services/schedule";
 import type { LessonStatus } from "@/mocks/types";
 import { LessonClientNotes, studentNotesQuery } from "@/components/LessonClientNotes";
+import { LiveToday } from "@/components/LiveToday";
+import { isLiveStudio } from "@/lib/studio-workspace";
 
 const dayQuery = (date: string) => queryOptions({ queryKey: ["day", date], queryFn: () => getDayLessons(date) });
 
@@ -42,6 +44,13 @@ export const Route = createFileRoute("/")({
 });
 
 function Today() {
+  const { date } = Route.useSearch();
+  // A real studio sees its own lessons on the real date; the demo keeps the fixture day-book.
+  if (isLiveStudio()) return <LiveToday date={date} />;
+  return <DemoToday />;
+}
+
+function DemoToday() {
   const { date = PROTOTYPE_TODAY } = Route.useSearch();
   const { data } = useSuspenseQuery(dayQuery(date));
   const [view, setView] = useState<"day" | "week">("day");
