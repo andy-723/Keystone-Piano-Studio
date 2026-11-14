@@ -3,10 +3,10 @@ import { zhSite } from "./zh-CN";
 import { viSite } from "./vi";
 
 /**
- * Public website language (English, 中文, Tiếng Việt). Server and first client render are
- * always English; the saved choice is applied after mount by translating visible text in place
- * from English-keyed dictionaries. Anything inside [data-no-translate] (legal text, help
- * articles) is left alone.
+ * Shared UI language for the public site and the signed-in app (studio, parent, admin, demo).
+ * Marketing pages keep English on the server and first paint, then apply the saved choice after
+ * mount via DOM translation. Signed-in screens that already use i18n (parent JSON, shell labels)
+ * read the same store so one language control covers both.
  */
 export type SiteLang = "en" | "zh-CN" | "vi";
 export const SITE_LANGS: { value: SiteLang; label: string; short: string }[] = [
@@ -14,21 +14,74 @@ export const SITE_LANGS: { value: SiteLang; label: string; short: string }[] = [
   { value: "zh-CN", label: "中文", short: "中文" },
   { value: "vi", label: "Tiếng Việt", short: "VI" },
 ];
-const KEY = "keystone.siteLang";
+export const SITE_LANG_STORAGE_KEY = "keystone.siteLang";
+const KEY = SITE_LANG_STORAGE_KEY;
 const DICTS: Record<Exclude<SiteLang, "en">, Record<string, string>> = { "zh-CN": zhSite, vi: viSite };
 
 let current: SiteLang = "en";
 const listeners = new Set<() => void>();
 const isLang = (v: unknown): v is SiteLang => v === "en" || v === "zh-CN" || v === "vi";
 
+/** Read the browser preference without changing the in-memory store. */
+export function readStoredSiteLang(): SiteLang | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const saved = localStorage.getItem(KEY);
+    return isLang(saved) ? saved : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Apply localStorage (if any) to the in-memory store without notifying listeners. */
+export function hydrateSiteLangFromStorage(): SiteLang {
+  const saved = readStoredSiteLang();
+  if (saved) current = saved;
+  return current;
+}
+
+if (typeof window !== "undefined") hydrateSiteLangFromStorage();
+
+export function getSiteLang(): SiteLang {
+  return current;
+}
+
 export function setSiteLang(lang: SiteLang) {
   current = lang;
-  try { localStorage.setItem(KEY, lang); } catch { /* storage unavailable */ }
+  try {
+    localStorage.setItem(KEY, lang);
+  } catch {
+    /* storage unavailable */
+  }
   listeners.forEach((l) => l());
 }
+
+/**
+ * Seed the shared preference when this browser has never chosen a language.
+ * Used by the family portal to default to the guardian's preferred language.
+ * Safe to call during render: updates the in-memory value without notifying listeners.
+ */
+export function ensureSiteLang(fallback: SiteLang): SiteLang {
+  const saved = readStoredSiteLang();
+  if (saved) {
+    current = saved;
+    return saved;
+  }
+  current = fallback;
+  try {
+    localStorage.setItem(KEY, fallback);
+  } catch {
+    /* storage unavailable */
+  }
+  return fallback;
+}
+
 export function useSiteLang(): SiteLang {
   return useSyncExternalStore(
-    (l) => { listeners.add(l); return () => listeners.delete(l); },
+    (l) => {
+      listeners.add(l);
+      return () => listeners.delete(l);
+    },
     () => current,
     () => "en",
   );
@@ -70,7 +123,10 @@ function translateEl(el: Element, lang: SiteLang) {
   for (const a of ATTRS) {
     const v = el.getAttribute(a);
     if (v == null) continue;
-    if (!store) { store = {}; origAttr.set(el, store); }
+    if (!store) {
+      store = {};
+      origAttr.set(el, store);
+    }
     const prev = store[`__last_${a}`];
     if (store[a] === undefined || v !== prev) store[a] = v;
     const next = swap(store[a] ?? v, lang);
@@ -95,9 +151,8 @@ export function useSiteTranslation() {
   const lang = useSiteLang();
   useEffect(() => {
     const fromUrl = new URLSearchParams(window.location.search).get("lang");
-    let saved: string | null = null;
-    try { saved = localStorage.getItem(KEY); } catch { /* ignore */ }
-    const initial = isLang(fromUrl) ? fromUrl : isLang(saved) ? saved : "en";
+    const saved = readStoredSiteLang();
+    const initial = isLang(fromUrl) ? fromUrl : saved ?? "en";
     if (initial !== current) setSiteLang(initial);
   }, []);
   useEffect(() => {
@@ -119,7 +174,13 @@ export function useSiteTranslation() {
       run(nodes);
       obs.takeRecords();
     });
-    obs.observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: [...ATTRS] });
+    obs.observe(document.body, {
+      subtree: true,
+      childList: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: [...ATTRS],
+    });
     return () => {
       obs.disconnect();
       document.documentElement.lang = "en-AU";

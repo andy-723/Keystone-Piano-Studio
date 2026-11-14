@@ -660,9 +660,9 @@ Vì lý do bảo mật, Keystone Music HQ sẽ đăng xuất bạn sau 30 phút 
     topic: "using-the-app",
     title: { en: "Changing the language", "zh-CN": "切换语言" , vi: "Đổi ngôn ngữ" },
     body: {
-      en: `Tap EN or 中文 at the top of the family portal to switch between English and Chinese.`,
-      "zh-CN": `在家庭页面顶部点击 EN 或「中文」，即可在英文和中文之间切换。`,
-      vi: `Chạm EN, 中文 hoặc VI ở đầu cổng gia đình để chuyển giữa tiếng Anh, tiếng Trung và tiếng Việt.`,
+      en: `Tap EN, 中文 or VI at the top of the family portal (or in the studio header) to switch language. Your choice is kept in this browser, including after you reload or open the demo account.`,
+      "zh-CN": `在家庭页面顶部（或工作室页眉）点击 EN、「中文」或 VI 即可切换语言。此选择会保存在本浏览器中，刷新或打开演示账户后仍然有效。`,
+      vi: `Chạm EN, 中文 hoặc VI ở đầu cổng gia đình (hoặc trên thanh studio) để đổi ngôn ngữ. Lựa chọn được giữ trong trình duyệt này, kể cả sau khi tải lại hoặc mở tài khoản demo.`,
     },
     keywords: ["language", "chinese", "english", "translate", "语言", "中文", "英文", "翻译"],
   },
