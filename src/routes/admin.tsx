@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Fragment, useEffect, useState } from "react";
 import { BrandLogo } from "@/components/BrandLogo";
+import { AppLanguageSwitcher } from "@/components/AppLanguageSwitcher";
 import { getAuthClient, isLiveAuthConfigured } from "@/lib/auth-client";
 import { signOutLocal } from "@/lib/sign-out";
 import {
@@ -65,7 +66,8 @@ function AdminPage() {
           <BrandLogo variant="horizontal" alt="Keystone Music HQ" />
           <span className="text-sm font-semibold text-[#604A19]">Keystone admin</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <AppLanguageSwitcher />
           {/* Platform staff with no studio role see the Clarke demo studio at "/". */}
           <a href="/" className="ks-btn ks-btn-secondary">
             Open demo studio

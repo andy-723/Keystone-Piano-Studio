@@ -1,5 +1,11 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Lang } from "@/mocks/types";
+import {
+  hydrateSiteLangFromStorage,
+  setSiteLang,
+  useSiteLang,
+  type SiteLang,
+} from "@/i18n/marketing/site-lang";
 
 export type Role = "teacher" | "parent" | "new-teacher";
 
@@ -20,6 +26,7 @@ type Settings = {
   setStudioStaffRole: (r: StudioStaffRole) => void;
   largeText: boolean;
   setLargeText: (v: boolean) => void;
+  /** Shared UI language (same store as marketing `keystone.siteLang`). */
   parentLang: Lang;
   setParentLang: (lang: Lang) => void;
   videoLinksEnabled: boolean;
@@ -31,11 +38,20 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<Role>("teacher");
   const [studioStaffRole, setStudioStaffRole] = useState<StudioStaffRole>("owner");
   const [largeText, setLargeText] = useState(false);
-  const [parentLang, setParentLang] = useState<Lang>("zh-CN");
+  // Keep the shared language store hydrated for signed-in routes (marketing navbar may not mount).
+  useEffect(() => {
+    hydrateSiteLangFromStorage();
+  }, []);
+  const parentLang = useSiteLang();
+  const setParentLang = (lang: Lang) => setSiteLang(lang as SiteLang);
 
   useEffect(() => {
     document.documentElement.classList.toggle("text-large", largeText);
   }, [largeText]);
+
+  useEffect(() => {
+    document.documentElement.lang = parentLang === "en" ? "en-AU" : parentLang;
+  }, [parentLang]);
 
   return (
     <Ctx.Provider

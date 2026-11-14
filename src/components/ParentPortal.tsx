@@ -21,6 +21,7 @@ import { EmailNotificationSettings } from "@/components/EmailNotificationSetting
 import { publicSupportEmail } from "@/components/public/PublicPage";
 import { TourHelpButton, TourProvider } from "@/components/tour/Tour";
 import { FAMILY_TOUR } from "@/lib/tour-steps";
+import { AppLanguageSwitcher } from "@/components/AppLanguageSwitcher";
 
 export function ParentPortal() {
   const { data } = useSuspenseQuery(parentSessionQuery);
@@ -28,7 +29,7 @@ export function ParentPortal() {
 }
 
 function ParentViews() {
-  const { t, lang, setLang } = useParentLanguage();
+  const { t, lang } = useParentLanguage();
   const { data: profile } = useSuspenseQuery(teacherProfileQuery());
   const [view, setView] = useState<"news" | "home" | "chat" | "progress" | "invoices" | "help">("news");
   const [quote, setQuote] = useState('');
@@ -69,16 +70,7 @@ function ParentViews() {
               <LifeBuoy aria-hidden />{helpText(lang, "help")}
             </Button>
             <TourHelpButton />
-            <div
-              role="group"
-              aria-label={t("language")}
-              className="flex gap-1"
-              data-tour="family-language"
-            >
-              <Button variant={lang === "en" ? "secondary" : "ghost"} aria-pressed={lang === "en"} onClick={() => setLang("en")}>EN</Button>
-              <Button variant={lang === "zh-CN" ? "secondary" : "ghost"} aria-pressed={lang === "zh-CN"} onClick={() => setLang("zh-CN")} className="whitespace-nowrap">中文</Button>
-              <Button variant={lang === "vi" ? "secondary" : "ghost"} aria-pressed={lang === "vi"} onClick={() => setLang("vi")} lang="vi" aria-label="Tiếng Việt">VI</Button>
-            </div>
+            <AppLanguageSwitcher data-tour="family-language" aria-label={t("language")} />
           </div>
         </div>
         {isLiveAuthConfigured() && (

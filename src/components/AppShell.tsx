@@ -30,21 +30,22 @@ import {
   type StudioStaffRole,
 } from "@/lib/app-settings";
 import type { Studio } from "@/mocks/types";
-import { translate } from "@/i18n/parent";
+import { translate, type ParentKey } from "@/i18n/parent";
 import { BrandLogo } from "@/components/BrandLogo";
 import { isLiveAuthConfigured } from "@/lib/auth-client";
 import { signOutLocal } from "@/lib/sign-out";
 import { TourHelpButton } from "@/components/tour/Tour";
+import { AppLanguageSwitcher } from "@/components/AppLanguageSwitcher";
 
 const NAV = [
-  { to: "/", label: "Today", icon: BookOpen },
-  { to: "/snapshot", label: "Snapshot", icon: LayoutDashboard, ownerAdminOnly: true },
-  { to: "/calendar", label: "Calendar", icon: CalendarDays },
-  { to: "/news", label: "News", icon: Megaphone },
-  { to: "/students", label: "Students", icon: Users },
-  { to: "/chat", label: "Chat", icon: MessageCircle },
-  { to: "/invoices", label: "Invoices", icon: Receipt },
-  { to: "/settings", label: "Settings", icon: Settings },
+  { to: "/", labelKey: "navToday", icon: BookOpen },
+  { to: "/snapshot", labelKey: "navSnapshot", icon: LayoutDashboard, ownerAdminOnly: true },
+  { to: "/calendar", labelKey: "navCalendar", icon: CalendarDays },
+  { to: "/news", labelKey: "navNews", icon: Megaphone },
+  { to: "/students", labelKey: "navStudents", icon: Users },
+  { to: "/chat", labelKey: "navChat", icon: MessageCircle },
+  { to: "/invoices", labelKey: "navInvoices", icon: Receipt },
+  { to: "/settings", labelKey: "navSettings", icon: Settings },
 ] as const;
 
 export function AppShell({ children, studio }: { children: ReactNode; studio: Studio }) {
@@ -67,7 +68,7 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
   const { data: chatThreads } = useQuery({ ...chatThreadsQuery, enabled: isTeacher });
   const unread = chatThreads?.reduce((total, thread) => total + thread.unreadCount, 0) ?? 0;
   const chatNotification = unread > 0 ? <span role="status" aria-label={`${unread} unread chat messages`} className="absolute -right-5 -top-2 flex min-h-7 min-w-7 items-center justify-center rounded-full bg-destructive px-1.5 text-base font-semibold text-destructive-foreground">{unread > 99 ? "99+" : unread}</span> : null;
-  const shellText = (key: "largerText" | "viewingAs") => translate(role === "parent" ? parentLang : "en", key);
+  const shellText = (key: ParentKey) => translate(parentLang, key);
 
   return (
     <div className="min-h-dvh md:flex">
@@ -77,7 +78,7 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
           <BrandLogo variant="stacked" alt="Keystone Music HQ" />
         </div>
         <div className="mb-3 mt-4 flex flex-col items-start gap-3 border-t border-sidebar-border px-1 pt-3"><p className="break-words text-base font-semibold">{profile?.studioName || studio.name}</p>{planBadge}</div>
-        {navItems.map(({ to, label, icon: Icon }) => (
+        {navItems.map(({ to, labelKey, icon: Icon }) => (
           <Link
             key={to}
             to={to}
@@ -86,7 +87,7 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
             activeProps={{ className: "bg-sidebar-primary text-sidebar-primary-foreground fine-hover:hover:bg-sidebar-primary fine-hover:hover:text-sidebar-primary-foreground" }}
           >
             <span className="relative flex size-6 items-center justify-center"><Icon className="size-6" aria-hidden />{to === "/chat" && chatNotification}</span>
-            {label}
+            {shellText(labelKey)}
           </Link>
         ))}
       </nav>}
@@ -97,11 +98,12 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
             <span className={isTeacher ? "md:hidden" : undefined}>
               <BrandLogo variant="horizontal" alt="Keystone Music HQ" />
             </span>
-            <div className="min-w-0 break-words font-display text-xl font-semibold sm:flex-1">{profile.studioName || studio.name}{showDemoLabel && <span className="ml-3 inline-block rounded-full border border-amber-700/40 bg-amber-100 px-3 py-0.5 align-middle font-sans text-sm font-semibold text-amber-900" data-testid="demo-studio-label">Demo studio</span>}</div>
+            <div className="min-w-0 break-words font-display text-xl font-semibold sm:flex-1">{profile.studioName || studio.name}{showDemoLabel && <span className="ml-3 inline-block rounded-full border border-amber-700/40 bg-amber-100 px-3 py-0.5 align-middle font-sans text-sm font-semibold text-amber-900" data-testid="demo-studio-label">{shellText("demoStudio")}</span>}</div>
             {role !== "parent" && <ProfilePicture id="teacher" name={profile.name || "Teacher"} scope={role === "new-teacher" ? "new-studio" : "demo"} />}
             {role !== "parent" && <div className={isTeacher ? "md:hidden" : ""}>{planBadge}</div>}
           </div>
           <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-3 sm:flex sm:flex-wrap sm:gap-4">
+            {role !== "parent" && <AppLanguageSwitcher />}
             {isTeacher && <TourHelpButton />}
             <div className="relative flex min-h-12 shrink-0 items-center gap-2">
               <Switch id="larger-text" className="relative z-10" checked={largeText} onCheckedChange={setLargeText} />
@@ -111,7 +113,7 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
               <Button asChild variant="outline" className="min-h-12">
                 <Link to="/support" activeProps={{ "aria-current": "page" }}>
                   <LifeBuoy aria-hidden />
-                  Help
+                  {shellText("help")}
                 </Link>
               </Button>
             )}
@@ -119,7 +121,7 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
               <Button asChild variant="outline" className="min-h-12">
                 <a href="/help" target="_blank" rel="noreferrer">
                   <LifeBuoy aria-hidden />
-                  Help
+                  {shellText("help")}
                 </a>
               </Button>
             )}
@@ -163,7 +165,7 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
                   void signOutLocal({ redirectTo: "/login" });
                 }}
               >
-                Sign out
+                {shellText("signOut")}
               </Button>
             )}
           </div>
@@ -173,7 +175,7 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
 
       {/* Bottom tab bar on phones (teacher only) */}
       {isTeacher && <nav aria-label="Main" className={`fixed inset-x-0 bottom-0 z-20 grid grid-cols-4 ${navItems.length > 7 ? "sm:grid-cols-4" : "sm:grid-cols-7"} border-t border-sidebar-border bg-sidebar pb-[env(safe-area-inset-bottom)] md:hidden`}>
-        {navItems.map(({ to, label, icon: Icon }) => (
+        {navItems.map(({ to, labelKey, icon: Icon }) => (
           <Link
             key={to}
             to={to}
@@ -182,7 +184,7 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
             activeProps={{ className: "text-sidebar-primary underline underline-offset-4" }}
           >
             <span className="relative flex size-6 items-center justify-center"><Icon className="size-6" aria-hidden />{to === "/chat" && chatNotification}</span>
-            {label}
+            {shellText(labelKey)}
           </Link>
         ))}
       </nav>}

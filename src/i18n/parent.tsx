@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
+import { createContext, useContext, useEffect, type ReactNode } from "react";
 import en from "./en.json";
 import zh from "./zh-CN.json";
 import vi from "./vi.json";
@@ -6,6 +6,7 @@ const DICTS = { en, "zh-CN": zh, vi };
 const LOCALES = { en: "en-AU", "zh-CN": "zh-CN", vi: "vi-VN" } as const;
 import type { Lang } from "@/mocks/types";
 import { useAppSettings } from "@/lib/app-settings";
+import { ensureSiteLang, setSiteLang, useSiteLang } from "@/i18n/marketing/site-lang";
 export type ParentKey = keyof typeof en;
 export function translate(lang: Lang, key: ParentKey, values: Record<string, string | number> = {}) {
   let text: string = DICTS[lang][key];
@@ -13,11 +14,27 @@ export function translate(lang: Lang, key: ParentKey, values: Record<string, str
   return text;
 }
 const Context = createContext<{ lang: Lang; setLang: (lang: Lang) => void } | null>(null);
+
+/**
+ * Family portal language. Shares `keystone.siteLang` with marketing and the studio shell so a
+ * choice made anywhere in the browser applies after sign-in (including the demo account).
+ * When this browser has no saved preference yet, seeds from the guardian's preferred language.
+ */
 export function ParentLanguageProvider({ initial, children }: { initial: Lang; children: ReactNode }) {
-  const [lang, setLang] = useState(initial);
+  // Seed before subscribe so the first paint matches storage or the guardian default.
+  ensureSiteLang(initial);
+  const lang = useSiteLang();
+  const setLang = (next: Lang) => setSiteLang(next);
   const { setParentLang } = useAppSettings();
-  useEffect(() => { setParentLang(lang); }, [lang, setParentLang]);
-  useEffect(() => { document.documentElement.lang = lang === "en" ? "en-AU" : lang; return () => { document.documentElement.lang = "en-AU"; }; }, [lang]);
+  useEffect(() => {
+    setParentLang(lang);
+  }, [lang, setParentLang]);
+  useEffect(() => {
+    document.documentElement.lang = lang === "en" ? "en-AU" : lang;
+    return () => {
+      document.documentElement.lang = "en-AU";
+    };
+  }, [lang]);
   return <Context.Provider value={{ lang, setLang }}>{children}</Context.Provider>;
 }
 export function useParentLanguage() {
