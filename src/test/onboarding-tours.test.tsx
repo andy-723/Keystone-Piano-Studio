@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { FAMILY_TOUR, SETUP_TOUR, STUDIO_TOUR, tourControl, type TourStep } from "@/lib/tour-steps";
 import { getTourProgress, saveTourProgress, tourStorageKey } from "@/services/tour";
 import { TourHelpButton, TourProvider } from "@/components/tour/Tour";
+import { setSiteLang } from "@/i18n/marketing/site-lang";
 
 function sourceFiles(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
@@ -15,7 +16,10 @@ function sourceFiles(dir: string): string[] {
   });
 }
 
-beforeEach(() => window.localStorage.clear());
+beforeEach(() => {
+  window.localStorage.clear();
+  setSiteLang("en");
+});
 afterEach(cleanup);
 
 describe("tour steps", () => {
@@ -71,14 +75,21 @@ describe("tour steps", () => {
     }
   });
 
-  it("family tour is fully bilingual and studio steps name a route", () => {
-    for (const step of FAMILY_TOUR) {
-      expect(step.title["zh-CN"], step.id).toBeTruthy();
-      expect(step.body["zh-CN"], step.id).toBeTruthy();
+  it("family, studio and setup tours are bilingual and studio steps name a route", () => {
+    for (const step of [...FAMILY_TOUR, ...STUDIO_TOUR, ...SETUP_TOUR]) {
+      expect(step.title["zh-CN"], `${step.id} zh title`).toBeTruthy();
+      expect(step.body["zh-CN"], `${step.id} zh body`).toBeTruthy();
+      expect(step.title.vi, `${step.id} vi title`).toBeTruthy();
+      expect(step.body.vi, `${step.id} vi body`).toBeTruthy();
     }
+    const offer = STUDIO_TOUR.at(-1)?.offer;
+    expect(offer?.accept["zh-CN"]).toBeTruthy();
+    expect(offer?.decline.vi).toBeTruthy();
     for (const step of [...STUDIO_TOUR, ...SETUP_TOUR])
       if (step.target) expect(step.route, step.id).toMatch(/^\//);
     expect(tourControl("stepOf", "zh-CN", { n: 2, total: 8 })).toBe("第 2 步，共 8 步");
+    expect(tourControl("start", "zh-CN")).toBe("开始导览");
+    expect(tourControl("start", "vi")).toBe("Bắt đầu hướng dẫn");
   });
 });
 
@@ -205,6 +216,18 @@ describe("TourProvider", () => {
     expect(await screen.findByRole("dialog", { name: "欢迎使用家庭门户" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "开始导览" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "查看导览" })).toBeInTheDocument();
+  });
+
+  it("studio tour follows keystone.siteLang without an explicit lang prop", async () => {
+    setSiteLang("zh-CN");
+    render(
+      <TourProvider tourId="studio" steps={STUDIO_TOUR}>
+        <TourHelpButton />
+      </TourProvider>,
+    );
+    expect(await screen.findByRole("dialog", { name: "欢迎使用 Keystone Music HQ" })).toBeInTheDocument();
+    expect(screen.getByText("第 1 步，共 11 步")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "开始导览" })).toBeInTheDocument();
   });
 
   it("holds the tour back while paused (for example a terms update)", async () => {
