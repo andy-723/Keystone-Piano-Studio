@@ -6,6 +6,7 @@ GitHub Release with the same text. See `docs/release-process.md`.
 
 ## Unreleased
 
+- Studio and setup guided tours (the 11-step modal over Today) now follow the same English / 中文 / Tiếng Việt browser preference as the shell. No migration.
 - Onboarding wizards (family join, studio terms, new-studio setup) now follow the same English / 中文 / Tiếng Việt browser preference as the signed-in app and public site. No migration.
 - Language switch (English / 中文 / Tiếng Việt) now applies in the signed-in app — studio shell, family portal, admin and demo — and is kept in this browser via the same preference as the public site. No migration.
 - Live Stripe for Keystone studio subscriptions: Settings → Plan and billing opens Stripe Checkout or the customer portal when `STRIPE_SECRET_KEY` and the Base/Pro price ids are set; without those secrets the demo plan switch stays simulated. Family Stripe Connect (parent Pay) stays mock. No migration.

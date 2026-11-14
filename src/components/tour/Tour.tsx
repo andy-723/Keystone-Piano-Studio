@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { getTourProgress, saveTourProgress, type TourId } from "@/services/tour";
 import { tourControl, tourText, type TourStep } from "@/lib/tour-steps";
 import type { Lang } from "@/mocks/types";
+import { useSiteLang } from "@/i18n/marketing/site-lang";
 
 /** How long a step waits for its element to appear (route change, suspense) before centring. */
 export const TOUR_TARGET_WAIT_MS = 3000;
@@ -61,7 +62,7 @@ type Props = {
 export function TourProvider({
   tourId,
   steps,
-  lang = "en",
+  lang: langProp,
   onStep,
   autoStart = true,
   cardBottomClass = "bottom-4",
@@ -71,6 +72,9 @@ export function TourProvider({
   onOffer,
   children,
 }: Props) {
+  // Follow the shared browser language (keystone.siteLang) unless a caller overrides it.
+  const siteLang = useSiteLang();
+  const lang: Lang = langProp ?? siteLang;
   const [index, setIndex] = useState<number | null>(null);
   const onStepRef = useRef(onStep);
   onStepRef.current = onStep;
