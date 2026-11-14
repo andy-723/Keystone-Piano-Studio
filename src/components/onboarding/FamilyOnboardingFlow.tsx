@@ -11,6 +11,7 @@ import { TermsAcceptScreen } from "@/components/terms/TermsAcceptScreen";
 import { FocusLayout } from "./FocusLayout";
 import { ChoiceCards } from "./ChoiceCards";
 import { tOnboarding } from "@/i18n/onboarding";
+import { ensureSiteLang, useSiteLang } from "@/i18n/marketing/site-lang";
 import { allStudentsAdult, buildSteps, goalLabel } from "@/lib/onboarding/steps";
 import { enrolmentYear } from "@/lib/enrolment";
 import type { ChildAnswers, FamilyAnswers } from "@/mocks/invitations";
@@ -43,12 +44,7 @@ export function FamilyOnboardingFlow({
 }) {
   if (session.state === "unavailable") {
     return (
-      <FocusLayout
-        studioName="Keystone Music HQ"
-        progress={0}
-        lang="en"
-        onLangChange={() => undefined}
-      >
+      <FocusLayout studioName="Keystone Music HQ" progress={0}>
         <h1 className="text-3xl font-semibold">{session.message}</h1>
         {session.replyToEmail && (
           <a
@@ -67,7 +63,6 @@ export function FamilyOnboardingFlow({
         teacherName={session.teacherName}
         email={session.loginEmail}
         guardianName=""
-        lang="en"
       />
     );
   }
@@ -78,13 +73,12 @@ function DonePanel({
   teacherName,
   email,
   guardianName,
-  lang,
 }: {
   teacherName: string;
   email: string;
   guardianName: string;
-  lang: Lang;
 }) {
+  const lang = useSiteLang();
   const [sent, setSent] = useState(false);
   const [mfa, setMfa] = useState(false);
   const login = useMutation({
@@ -92,12 +86,7 @@ function DonePanel({
     onSuccess: () => setSent(true),
   });
   return (
-    <FocusLayout
-      studioName="Keystone Music HQ"
-      progress={1}
-      lang={lang}
-      onLangChange={() => undefined}
-    >
+    <FocusLayout studioName="Keystone Music HQ" progress={1}>
       <h1 className="text-3xl font-semibold">
         {guardianName
           ? tOnboarding(lang, "thanks", { name: guardianName, teacher: teacherName })
@@ -133,7 +122,9 @@ function ActiveFlow({
   onSessionChange?: ((session: JoinSession) => void) | undefined;
 }) {
   const { largeText } = useAppSettings();
-  const [lang, setLang] = useState<Lang>(session.language);
+  // Prefer the browser language control; seed from the invite language when nothing is saved yet.
+  ensureSiteLang(session.language);
+  const lang = useSiteLang();
   const [answers, setAnswers] = useState(session.answers);
   const [stepId, setStepId] = useState(session.currentStep || "collection");
   const [savedAt, setSavedAt] = useState<string | null>(null);
@@ -277,7 +268,6 @@ function ActiveFlow({
         teacherName={done.teacherName}
         email={done.email}
         guardianName={done.guardianName}
-        lang={lang}
       />
     );
   }
@@ -777,12 +767,7 @@ function ActiveFlow({
   }
 
   return (
-    <FocusLayout
-      studioName={session.studioName}
-      progress={progress}
-      lang={lang}
-      onLangChange={setLang}
-    >
+    <FocusLayout studioName={session.studioName} progress={progress}>
       <div className={frameClass}>
         {body}
         {savedAt && (

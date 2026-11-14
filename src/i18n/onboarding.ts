@@ -2,6 +2,7 @@ import type { Lang } from "@/mocks/types";
 
 const en = {
   powered: "Powered by Keystone Music HQ",
+  language: "Language",
   saved: "Saved",
   pressEnter: "press Enter ↵",
   ok: "OK ✓",
@@ -59,6 +60,7 @@ const en = {
 
 const zh: typeof en = {
   powered: "由 Keystone Music HQ 提供支持",
+  language: "语言",
   saved: "已保存",
   pressEnter: "按 Enter ↵",
   ok: "好的 ✓",
@@ -116,6 +118,7 @@ const zh: typeof en = {
 
 const vi: typeof en = {
   powered: "Vận hành bởi Keystone Music HQ",
+  language: "Ngôn ngữ",
   saved: "Đã lưu",
   pressEnter: "nhấn Enter ↵",
   ok: "OK ✓",
