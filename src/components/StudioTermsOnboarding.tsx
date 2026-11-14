@@ -11,6 +11,8 @@ import type { TermsScope } from "@/mocks/terms";
 import { STUDIO_STATES } from "@/mocks/setup";
 import { getStudioTermsDraft, saveStudioTermsDraft } from "@/services/terms";
 import { toast } from "sonner";
+import { useSiteLang } from "@/i18n/marketing/site-lang";
+import { tSetup } from "@/i18n/setup-wizard";
 
 const fieldClass = "mt-3 min-h-14 text-lg";
 
@@ -55,6 +57,7 @@ export function StudioTermsOnboarding({
   plan?: string | undefined;
 }) {
   const client = useQueryClient();
+  const lang = useSiteLang();
   const draftQuery = useQuery({ queryKey: ["terms-draft", scope], queryFn: () => getStudioTermsDraft(scope) });
   const [stepIndex, setStepIndex] = useState(0);
   const [value, setValue] = useState("");
@@ -93,7 +96,7 @@ export function StudioTermsOnboarding({
   });
 
   if (draftQuery.isLoading || !draftQuery.data || !step) {
-    return <p className="p-6">Opening studio terms setup…</p>;
+    return <p className="p-6">{tSetup(lang, "Opening studio terms setup…")}</p>;
   }
 
   const studioName = String(draftQuery.data.studio.name || "Your studio");
@@ -166,7 +169,7 @@ export function StudioTermsOnboarding({
     await save.mutateAsync(buildPayload());
     if (stepIndex >= steps.length - 1) {
       await save.mutateAsync({ onboardingCompleted: true, onboardingStep: "done" });
-      toast.success("Studio terms details saved");
+      toast.success(tSetup(lang, "Studio terms details saved"));
       onComplete?.();
       return;
     }
@@ -174,12 +177,14 @@ export function StudioTermsOnboarding({
   };
 
   return (
-    <FocusLayout studioName={studioName} progress={progress} lang="en" onLangChange={() => undefined}>
-      <p className="text-base text-muted-foreground">Studio terms · {stepIndex + 1} of {steps.length}</p>
+    <FocusLayout studioName={studioName} progress={progress}>
+      <p className="text-base text-muted-foreground">
+        {tSetup(lang, "Studio terms · {n} of {total}", { n: stepIndex + 1, total: steps.length })}
+      </p>
       <h1 ref={headingRef} tabIndex={-1} className="mt-3 text-3xl font-semibold outline-none">
-        {step.title}
+        {tSetup(lang, step.title)}
       </h1>
-      {step.help && <p className="mt-3 text-base text-muted-foreground">{step.help}</p>}
+      {step.help && <p className="mt-3 text-base text-muted-foreground">{tSetup(lang, step.help)}</p>}
 
       <div className="mt-8 space-y-4">
         {step.kind === "text" && (
@@ -193,32 +198,32 @@ export function StudioTermsOnboarding({
         )}
         {step.kind === "select" && (
           <select className="mt-3 min-h-14 w-full rounded-md border border-input bg-card px-3 text-lg" value={value} onChange={(event) => setValue(event.target.value)} autoFocus>
-            <option value="">Choose</option>
+            <option value="">{tSetup(lang, "Choose")}</option>
             {(step.options ?? []).map((option) => (
-              <option key={option.value} value={option.value}>{option.label}</option>
+              <option key={option.value} value={option.value}>{tSetup(lang, option.label)}</option>
             ))}
           </select>
         )}
         {step.kind === "switch" && (
           <label className="flex items-center justify-between gap-5 border-y border-border py-5">
-            <span className="text-lg font-semibold">{switchValue ? "Yes" : "No"}</span>
+            <span className="text-lg font-semibold">{switchValue ? tSetup(lang, "Yes") : tSetup(lang, "No")}</span>
             <Switch checked={switchValue} onCheckedChange={setSwitchValue} className="h-12 w-20 shrink-0 [&>span]:size-10 [&>span]:data-[state=checked]:translate-x-8" />
           </label>
         )}
         {step.kind === "childSafety" && (
           <div className="space-y-4">
-            <label className="block font-semibold">State
+            <label className="block font-semibold">{tSetup(lang, "State")}
               <select className="mt-2 min-h-14 w-full rounded-md border border-input bg-card px-3 text-lg" value={safety.state} onChange={(event) => setSafety({ ...safety, state: event.target.value })}>
                 {STUDIO_STATES.map((state) => <option key={state}>{state}</option>)}
               </select>
             </label>
-            <label className="block font-semibold">Check type
+            <label className="block font-semibold">{tSetup(lang, "Check type")}
               <Input className={fieldClass} value={safety.type} onChange={(event) => setSafety({ ...safety, type: event.target.value })} />
             </label>
-            <label className="block font-semibold">Check number (kept private)
+            <label className="block font-semibold">{tSetup(lang, "Check number (kept private)")}
               <Input className={fieldClass} value={safety.number} onChange={(event) => setSafety({ ...safety, number: event.target.value })} />
             </label>
-            <label className="block font-semibold">Expiry
+            <label className="block font-semibold">{tSetup(lang, "Expiry")}
               <Input type="date" className={fieldClass} value={safety.expiry} onChange={(event) => setSafety({ ...safety, expiry: event.target.value })} />
             </label>
           </div>
@@ -228,15 +233,20 @@ export function StudioTermsOnboarding({
       <footer className="mt-10 flex flex-wrap justify-between gap-3 border-t border-border pt-6">
         {stepIndex > 0 ? (
           <Button type="button" variant="outline" disabled={save.isPending} onClick={() => setStepIndex((index) => Math.max(0, index - 1))}>
-            <ArrowLeft aria-hidden />Back
+            <ArrowLeft aria-hidden />{tSetup(lang, "Back")}
           </Button>
         ) : <span />}
         <Button type="button" className="min-h-14" disabled={!canContinue() || save.isPending} onClick={() => void goNext()}>
-          {stepIndex >= steps.length - 1 ? "Save and continue" : "Continue"}
+          {stepIndex >= steps.length - 1 ? tSetup(lang, "Save and continue") : tSetup(lang, "Continue")}
           <ArrowRight aria-hidden />
         </Button>
       </footer>
-      <p className="mt-6 text-sm text-muted-foreground">Australian template for Keystone Music HQ studios. Publishing stays blocked until required fields are filled.</p>
+      <p className="mt-6 text-sm text-muted-foreground">
+        {tSetup(
+          lang,
+          "Australian template for Keystone Music HQ studios. Publishing stays blocked until required fields are filled.",
+        )}
+      </p>
     </FocusLayout>
   );
 }
