@@ -220,7 +220,8 @@ export async function writePlatformAudit(input: {
 export async function writeAuthAudit(input: {
   studioId: string;
   actorUserId: string | null;
-  event: "mfa_enrolled" | "sign_in";
+  event: "mfa_enrolled" | "sign_in" | "magic_link_requested";
+  guardianId?: string | undefined;
   ip?: string | undefined;
   userAgent?: string | undefined;
 }) {
@@ -230,6 +231,7 @@ export async function writeAuthAudit(input: {
   await supabase.from("auth_audit").insert({
     studio_id: input.studioId,
     actor_user_id: input.actorUserId,
+    ...(input.guardianId ? { guardian_id: input.guardianId } : {}),
     event: input.event,
     ip: input.ip ?? null,
     user_agent: input.userAgent ?? null,

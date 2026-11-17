@@ -15,6 +15,12 @@ import {
   resetMfaFn,
 } from "@/server/platform";
 import { setStudioAccessFn } from "@/server/subscription";
+import { sendOwnerSignInLinkFn, sendStaffSignInLinkFn } from "@/server/account-links";
+import {
+  AccountStatusBadge,
+  SendSignInLinkButton,
+  type AccountStatusView,
+} from "@/components/account/AccountStatus";
 import {
   listSupportRequestsFn,
   setSupportRequestStatusFn,
@@ -113,7 +119,11 @@ function AdminPage() {
         {token && tab === "team" && <TeamTab token={token} onError={setError} />}
         {token && tab === "audit" && <AuditTab token={token} onError={setError} />}
         <p className="mt-8 text-sm text-[#5A4F43]">
-          <Link to="/login" search={{ next: undefined, reason: undefined }} className="text-[#604A19] hover:underline">
+          <Link
+            to="/login"
+            search={{ next: undefined, reason: undefined }}
+            className="text-[#604A19] hover:underline"
+          >
             Sign-in page
           </Link>
         </p>
@@ -128,6 +138,7 @@ type StudioRow = {
   createdAt: string;
   memberCount: number;
   ownerEmailMasked: string;
+  ownerAccount?: AccountStatusView;
   status: string;
   plan?: "base" | "pro" | null;
   accessEndsAt?: string | null;
@@ -173,7 +184,23 @@ function StudiosTab({ token, onError }: { token: string; onError: (m: string | n
               <tr className="border-t border-[#E8DCC0]">
                 <td className="px-3 py-3 font-medium">{row.name}</td>
                 <td className="px-3 py-3">{new Date(row.createdAt).toLocaleDateString("en-AU")}</td>
-                <td className="px-3 py-3">{row.ownerEmailMasked}</td>
+                <td className="px-3 py-3">
+                  <span className="block">{row.ownerEmailMasked}</span>
+                  {row.ownerAccount && (
+                    <span className="mt-1 flex flex-col gap-1">
+                      <AccountStatusBadge status={row.ownerAccount} noAccountLabel="No owner" />
+                      {row.ownerAccount.state !== "no_account" && (
+                        <SendSignInLinkButton
+                          onSend={() =>
+                            sendOwnerSignInLinkFn({
+                              data: { accessToken: token, studioId: row.id },
+                            })
+                          }
+                        />
+                      )}
+                    </span>
+                  )}
+                </td>
                 <td className="px-3 py-3">{row.memberCount}</td>
                 <td className="px-3 py-3">
                   {row.plan === "pro" ? "Pro" : row.plan === "base" ? "Base" : "—"}
@@ -505,7 +532,13 @@ function NewStudioTab({ token, onError }: { token: string; onError: (m: string |
 
 function TeamTab({ token, onError }: { token: string; onError: (m: string | null) => void }) {
   const [staff, setStaff] = useState<
-    Array<{ userId: string; role: string; displayName: string; emailMasked: string }>
+    Array<{
+      userId: string;
+      role: string;
+      displayName: string;
+      emailMasked: string;
+      account?: AccountStatusView;
+    }>
   >([]);
   const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -533,6 +566,7 @@ function TeamTab({ token, onError }: { token: string; onError: (m: string | null
               <th className="px-3 py-3">Name</th>
               <th className="px-3 py-3">Email</th>
               <th className="px-3 py-3">Role</th>
+              <th className="px-3 py-3">Status</th>
               <th className="px-3 py-3">Actions</th>
             </tr>
           </thead>
@@ -543,19 +577,31 @@ function TeamTab({ token, onError }: { token: string; onError: (m: string | null
                 <td className="px-3 py-3">{row.emailMasked}</td>
                 <td className="px-3 py-3">{row.role}</td>
                 <td className="px-3 py-3">
-                  <button
-                    type="button"
-                    className="ks-btn ks-btn-link"
-                    onClick={() =>
-                      void removePlatformStaffFn({
-                        data: { accessToken: token, targetUserId: row.userId },
-                      })
-                        .then(() => reload())
-                        .catch((e) => onError(e instanceof Error ? e.message : "Remove failed"))
-                    }
-                  >
-                    Remove
-                  </button>
+                  {row.account && <AccountStatusBadge status={row.account} />}
+                </td>
+                <td className="px-3 py-3">
+                  <span className="flex flex-wrap items-start gap-x-4 gap-y-1">
+                    <SendSignInLinkButton
+                      onSend={() =>
+                        sendStaffSignInLinkFn({
+                          data: { accessToken: token, targetUserId: row.userId },
+                        })
+                      }
+                    />
+                    <button
+                      type="button"
+                      className="ks-btn ks-btn-link"
+                      onClick={() =>
+                        void removePlatformStaffFn({
+                          data: { accessToken: token, targetUserId: row.userId },
+                        })
+                          .then(() => reload())
+                          .catch((e) => onError(e instanceof Error ? e.message : "Remove failed"))
+                      }
+                    >
+                      Remove
+                    </button>
+                  </span>
                 </td>
               </tr>
             ))}
