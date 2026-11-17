@@ -1,4 +1,4 @@
-/* Street-scene animation — ported from docs/design/login-art-deco.html */
+/* Street-scene animation: ported from docs/design/login-art-deco.html, now over the Nutcracker painting (StreetScene.tsx). */
 .ks-street .col{opacity:0}
 .ks-street .note{opacity:0}
 .ks-street .mv{transform-box:fill-box;transform-origin:50% 100%}
