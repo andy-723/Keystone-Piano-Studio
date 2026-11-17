@@ -7,7 +7,8 @@ const StreetScene = lazy(() =>
   import("@/components/login/StreetScene").then((m) => ({ default: m.StreetScene })),
 );
 
-/** The Art Deco sign-in page frame (street scene + card), shared by /login and /demo. */
+/** The sign-in page frame (Nutcracker street scene + card), shared by /login and /demo. The card sits on the
+ *  left so the pianist and piano on the right of the painting stay visible. */
 export function LoginLayout({ children }: { children: ReactNode }) {
   return (
     <main
@@ -21,7 +22,7 @@ export function LoginLayout({ children }: { children: ReactNode }) {
     >
       <Suspense
         fallback={
-          <div className="absolute inset-0 bg-[#2B241F] max-[860px]:relative max-[860px]:h-[340px]" />
+          <div className="absolute inset-0 bg-[#5A4E45] max-[860px]:relative max-[860px]:h-[340px]" />
         }
       >
         <StreetScene />
@@ -37,11 +38,12 @@ export function LoginLayout({ children }: { children: ReactNode }) {
         <BrandLogo variant="horizontal" alt="Keystone Music HQ" />
       </HomeLogoLink>
 
-      <div className="absolute right-6 top-6 z-[3] rounded-xl bg-[rgba(251,247,238,0.92)] p-1.5">
+      {/* On narrow phones the switcher drops below the logo so the two never overlap. */}
+      <div className="absolute right-6 top-6 z-[3] rounded-xl bg-[rgba(251,247,238,0.92)] p-1.5 max-[520px]:right-3 max-[520px]:top-[92px]">
         <AppLanguageSwitcher />
       </div>
 
-      <aside className="absolute right-[5%] top-1/2 z-[2] flex max-h-[calc(100%-48px)] w-[32%] overflow-y-auto min-w-[380px] max-w-[460px] -translate-y-1/2 justify-center rounded-[22px] border border-[#D9C79E] bg-[#FBF7EE] px-9 py-10 shadow-[0_24px_60px_rgba(0,0,0,0.45),inset_0_0_0_6px_#FBF7EE,inset_0_0_0_7px_#E3D3AE] max-[860px]:relative max-[860px]:right-auto max-[860px]:top-auto max-[860px]:mx-3 max-[860px]:mt-[-36px] max-[860px]:mb-6 max-[860px]:w-auto max-[860px]:min-w-0 max-[860px]:max-w-none max-[860px]:max-h-none max-[860px]:translate-y-0 max-[860px]:overflow-visible max-[860px]:px-5 max-[860px]:py-7">
+      <aside className="absolute bottom-6 left-[5%] top-[100px] z-[2] my-auto flex h-fit max-h-[calc(100%-124px)] w-[32%] overflow-y-auto min-w-[380px] max-w-[460px] justify-center rounded-[22px] border border-[#D9C79E] bg-[#FBF7EE] px-9 py-10 shadow-[0_24px_60px_rgba(0,0,0,0.45),inset_0_0_0_6px_#FBF7EE,inset_0_0_0_7px_#E3D3AE] max-[860px]:relative max-[860px]:bottom-auto max-[860px]:left-auto max-[860px]:top-auto max-[860px]:mx-3 max-[860px]:mt-[-36px] max-[860px]:mb-6 max-[860px]:w-auto max-[860px]:min-w-0 max-[860px]:max-w-none max-[860px]:max-h-none max-[860px]:translate-y-0 max-[860px]:overflow-visible max-[860px]:px-5 max-[860px]:py-7">
         {children}
       </aside>
     </main>
