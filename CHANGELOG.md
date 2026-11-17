@@ -6,6 +6,7 @@ GitHub Release with the same text. See `docs/release-process.md`.
 
 ## Unreleased
 
+- Families of real studios now get invoice emails (with the PDF), payment receipts, credit notes and reminder/late fee/pause notices. They are sent by the server through Resend as "<Studio name> via Keystone Music HQ" from noreply@keystonemusichq.com, with replies going to the studio. Previously these went to a test outbox and never arrived. If an email fails, the invoice still stands and shows "email failed" in its history. No migration.
 - Studio and setup guided tours (the 11-step modal over Today) now follow the same English / 中文 / Tiếng Việt browser preference as the shell. No migration.
 - Onboarding wizards (family join, studio terms, new-studio setup) now follow the same English / 中文 / Tiếng Việt browser preference as the signed-in app and public site. No migration.
 - Language switch (English / 中文 / Tiếng Việt) now applies in the signed-in app — studio shell, family portal, admin and demo — and is kept in this browser via the same preference as the public site. No migration.

@@ -3,8 +3,7 @@ import type { IntegrationScope } from "@/mocks/integrations";
 import { newsState, type Announcement } from "@/mocks/news";
 import { studio, teacher } from "@/mocks/data";
 import type { StudioBillingProfile, StudioPayTo } from "@/mocks/types";
-import { emailProvider } from "./_lazy";
-import { payToChangedEmail } from "@/server/email/templates/billing";
+import { sendBillingMail } from "./billing-mail";
 import { integrationState } from "@/mocks/integrations";
 import { respond } from "./_delay";
 import { isLiveStudio } from "@/lib/studio-workspace";
@@ -173,24 +172,23 @@ export async function savePayTo(
 
   const ownerEmail =
     scope === "demo" ? (studio.email ?? teacher.name) : (studio.email ?? "owner@studio.example");
-  const from = `${studio.name} <studio@keystone.example>`;
-  const mail = payToChangedEmail({
-    studioName: current.tradingName || current.legalName || studio.name,
-    accountName: nextPayTo.accountName ?? current.legalName,
-    bsb: bsbLabel,
-    accountMasked: masked || "not set",
-    ...(nextPayTo.payId ? { payId: nextPayTo.payId } : {}),
-  });
-  await (
-    await emailProvider()
-  ).send({
-    to: ownerEmail.includes("@") ? ownerEmail : "owner@studio.example",
-    from,
-    subject: mail.subject,
-    html: mail.html,
-    text: mail.text,
-    tags: [{ name: "kind", value: "pay_to_changed" }],
-  });
+  // Real studios: the server sends this to the studio owners' sign-in emails (ignores `to`).
+  try {
+    await sendBillingMail({
+      kind: "pay_to_changed",
+      to: ownerEmail.includes("@") ? ownerEmail : "owner@studio.example",
+      studioName: current.tradingName || current.legalName || studio.name,
+      params: {
+        accountName: nextPayTo.accountName ?? current.legalName,
+        bsb: bsbLabel,
+        accountMasked: masked || "not set",
+        ...(nextPayTo.payId ? { payId: nextPayTo.payId } : {}),
+      },
+    });
+  } catch (error) {
+    // The bank details are already saved; a missed notice must not undo them.
+    console.error("[billing-profile] pay_to_changed email failed", error);
+  }
 
   // Studio news item — never include the full account number.
   const notice = {
