@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { getAuthClient, isLiveAuthConfigured } from "@/lib/auth-client";
 import { parseEmailLink, safeNextPath } from "@/lib/auth-paths";
+import { CODE_SIGN_IN_FAILED, finishCodeSignIn } from "@/lib/oauth-callback";
 import { rememberVerifiedAccess } from "@/lib/live-auth-cache";
 import {
   decideMfaGate,
@@ -88,14 +89,12 @@ function AuthCallbackPage() {
 
       const code = url.searchParams.get("code");
       if (!emailLink && code) {
-        const { error } = await client.auth.exchangeCodeForSession(code);
-        if (error) {
+        const result = await finishCodeSignIn(client.auth, code);
+        if (!result.ok) {
           if (!cancelled) {
             setFailed(true);
-            console.error("[auth] code exchange failed", error);
-            setMessage(
-              "This sign-in link has expired, was already used, or was opened in a different browser from the one you requested it in. Request a new link, then open it on the same device and browser (on a phone, open it in Safari or Chrome rather than inside your email app).",
-            );
+            console.error("[auth] code exchange failed", result.error);
+            setMessage(CODE_SIGN_IN_FAILED);
           }
           return;
         }
@@ -158,7 +157,11 @@ function AuthCallbackPage() {
         );
         return;
       }
-      rememberVerifiedAccess(session.access_token, decideStudioAccessGate(account), shellRoleForAccount(account));
+      rememberVerifiedAccess(
+        session.access_token,
+        decideStudioAccessGate(account),
+        shellRoleForAccount(account),
+      );
       markSessionStarted();
       window.location.replace(destinationForAccount(account, nextSafe));
     }
@@ -195,7 +198,9 @@ function AuthCallbackPage() {
       )}
       {failed && (
         <Button className="mt-6" asChild>
-          <Link to="/login" search={{ next: undefined, reason: undefined }}>Back to sign in</Link>
+          <Link to="/login" search={{ next: undefined, reason: undefined }}>
+            Back to sign in
+          </Link>
         </Button>
       )}
     </div>
