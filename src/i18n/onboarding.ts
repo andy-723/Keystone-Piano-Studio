@@ -56,6 +56,11 @@ const en = {
   finishContinue: "Continue",
   addAuthenticator: "Add an authenticator app",
   skipMfa: "Skip for now",
+  goToSignIn: "Sign in to the family app",
+  loginEmailed:
+    "Your family account is ready. We've emailed {email} a sign-in link. It works once, for about an hour.",
+  loginLater: "Your family account is ready. Sign in with {email} and we'll email you a link.",
+  securityCheckFirst: "Complete the security check first.",
 };
 
 const zh: typeof en = {
@@ -114,6 +119,11 @@ const zh: typeof en = {
   finishContinue: "继续",
   addAuthenticator: "添加身份验证应用",
   skipMfa: "暂时跳过",
+  goToSignIn: "登录家庭应用",
+  loginEmailed:
+    "您的家庭账户已创建。我们已向 {email} 发送登录链接，该链接仅可使用一次，约一小时内有效。",
+  loginLater: "您的家庭账户已创建。请使用 {email} 登录，我们会通过邮件发送登录链接。",
+  securityCheckFirst: "请先完成安全验证。",
 };
 
 const vi: typeof en = {
@@ -172,6 +182,12 @@ const vi: typeof en = {
   finishContinue: "Tiếp tục",
   addAuthenticator: "Thêm ứng dụng xác thực",
   skipMfa: "Bỏ qua lúc này",
+  goToSignIn: "Đăng nhập ứng dụng gia đình",
+  loginEmailed:
+    "Tài khoản gia đình đã sẵn sàng. Chúng tôi đã gửi liên kết đăng nhập tới {email}. Liên kết chỉ dùng được một lần, trong khoảng một giờ.",
+  loginLater:
+    "Tài khoản gia đình đã sẵn sàng. Hãy đăng nhập bằng {email} và chúng tôi sẽ gửi liên kết qua email.",
+  securityCheckFirst: "Hãy hoàn tất bước kiểm tra bảo mật trước.",
 };
 
 export const onboardingCopy: Record<Lang, typeof en> = { en, "zh-CN": zh, vi };

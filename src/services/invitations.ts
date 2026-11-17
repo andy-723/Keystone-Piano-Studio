@@ -1,6 +1,6 @@
 import { addDays } from "@/lib/calendar";
 import { bytesToHex, randomTokenBytes, sha256Hex } from "@/lib/onboarding/crypto";
-import { allStudentsAdult, buildSteps, goalLabel } from "@/lib/onboarding/steps";
+import { buildSteps } from "@/lib/onboarding/steps";
 import { families, students, studio, teacher } from "@/mocks/data";
 import { studioToday } from "@/lib/studio-clock";
 import { studioReplyTo } from "@/lib/studio-mail";
@@ -13,7 +13,8 @@ import {
   type InvitationStatus,
 } from "@/mocks/invitations";
 import { enrolmentDrafts } from "@/mocks/onboarding";
-import type { Intake, Lang } from "@/mocks/types";
+import type { Lang } from "@/mocks/types";
+import type { MoneyRules } from "@/lib/onboarding/money-rules";
 import { emailProvider, loadInviteEmails } from "./_lazy";
 import { getServerEnv, isMockOnboarding } from "@/server/env";
 import { checkTokenLookupRate, isIpLocked, recordAuthFailure } from "@/server/rate-limit";
@@ -21,9 +22,7 @@ import { verifyTurnstile } from "@/server/turnstile";
 import { acceptStudioTerms, getFamilyAppTerms, getPublishedStudioTerms } from "@/services/terms";
 import { getOrCreateFamilyConversation, sendMessage } from "@/services/chat";
 import { respond } from "./_delay";
-import { z } from "zod";
-import { isAdultStudent } from "@/lib/enrolment";
-import { isAuMobile } from "@/lib/onboarding/au-mobile";
+import { checkJoinStudents, parseJoinAnswers } from "@/lib/onboarding/submission";
 
 const DEMO_STUDIO_ID = "studio-1";
 
@@ -435,6 +434,19 @@ const opaqueError = {
   message: "This link has expired. Ask your teacher to send a new one.",
 };
 
+/** The studio agreement and Keystone app terms shown on the terms step. */
+export type JoinTermsBundle = {
+  versionId: string;
+  versionNo: number;
+  effectiveAt: string;
+  markdown: string;
+  moneyRules: MoneyRules;
+  appId: string;
+  appVersionNo: number;
+  appTermsMarkdown: string;
+  privacyNoticeMarkdown: string;
+};
+
 export type JoinSession =
   | {
       state: "active";
@@ -451,8 +463,12 @@ export type JoinSession =
       steps: ReturnType<typeof buildSteps>;
       turnstileSiteKey: string;
       mockCaptcha: boolean;
+      /** Real studio: the form saves through src/server/family-join.ts, not the in-memory demo. */
+      live?: true;
+      /** Real studio: the terms the family will accept, read from the database. */
+      terms?: JoinTermsBundle;
     }
-  | { state: "completed"; teacherName: string; loginEmail: string }
+  | { state: "completed"; teacherName: string; loginEmail: string; live?: true }
   | { state: "unavailable"; message: string; teacherName?: string; replyToEmail?: string };
 
 export async function loadJoinSession(
@@ -611,25 +627,6 @@ export async function autosaveJoinAnswers(input: {
   return respond({ savedAt: intake.updatedAt });
 }
 
-const submitSchema = z.object({
-  token: z.string().min(10),
-  turnstileToken: z.string().optional(),
-  answers: z.object({
-    fillerName: z.string().min(2),
-    relationship: z.enum(["parent", "legal_guardian", "self"]),
-    mobile: z.string().min(8),
-    collectionAcknowledged: z.literal(true),
-    terms: z.object({
-      studioAgreed: z.literal(true),
-      keystoneAgreed: z.literal(true),
-      guardianDeclaration: z.boolean(),
-      typedName: z.string().min(3),
-      relationship: z.enum(["parent", "legal_guardian", "self"]),
-    }),
-    children: z.record(z.any()),
-  }),
-});
-
 export async function submitJoinEnrolment(input: {
   token: string;
   answers: FamilyAnswers & { children?: Record<string, ChildAnswers> };
@@ -647,24 +644,7 @@ export async function submitJoinEnrolment(input: {
     }
   }
 
-  const parsed = submitSchema.safeParse({
-    token: input.token,
-    turnstileToken: input.turnstileToken,
-    answers: {
-      ...input.answers,
-      collectionAcknowledged: true,
-      terms: {
-        studioAgreed: true,
-        keystoneAgreed: true,
-        guardianDeclaration: Boolean(input.answers.terms?.guardianDeclaration),
-        typedName: input.answers.terms?.typedName ?? "",
-        relationship: input.answers.terms?.relationship || input.answers.relationship || "parent",
-      },
-    },
-  });
-  if (!parsed.success) throw new Error("Complete every required question.");
-  if (!isAuMobile(parsed.data.answers.mobile))
-    throw new Error("Enter an Australian mobile number.");
+  const parsed = parseJoinAnswers(input.answers);
 
   const hash = await hashToken(input.token);
   const invite = invitationState.invitations.find((entry) => entry.tokenHash === hash);
@@ -687,102 +667,34 @@ export async function submitJoinEnrolment(input: {
   const selected = invite.studentIds
     .map((id) => students.find((s) => s.id === id)!)
     .filter(Boolean);
-  const hasMinor = selected.some((student) => !isAdultStudent(student.birthYear));
-  const relationship = parsed.data.answers.relationship;
-  if (hasMinor) {
-    if (relationship === "self")
-      throw new Error("A parent or legal guardian must enrol students under 18.");
-    if (!parsed.data.answers.terms.guardianDeclaration)
-      throw new Error("Confirm you are the parent or legal guardian.");
-  }
-  if (!hasMinor && relationship === "self" && !allStudentsAdult(selected)) {
-    throw new Error("Self enrolment is only for adult students.");
-  }
-
-  for (const student of selected) {
-    const child = input.answers.children?.[student.id] as ChildAnswers | undefined;
-    if (
-      !child?.experience ||
-      !child.instrument ||
-      !child.goalKind ||
-      !child.daysPerWeek ||
-      !child.minutesPerDay
-    ) {
-      throw new Error(`Complete ${student.firstName}'s enrolment questions.`);
-    }
-    if (child.emergencyMedical == null || child.mediaPublic == null)
-      throw new Error("Answer every consent question.");
-    const notes = `${child.healthNotes ?? ""}${child.teacherNotes ?? ""}`.trim();
-    if (notes && child.healthNotesConsent == null)
-      throw new Error("Answer the health notes consent.");
-  }
+  const { capacity, consents, intakes } = checkJoinStudents(parsed, input.answers, selected);
+  const relationship = parsed.relationship;
 
   const published = await getPublishedStudioTerms("demo");
   const app = await getFamilyAppTerms();
   const version = published.pending ?? published.current;
   if (!version || !app.version) throw new Error("Studio terms are not available.");
 
-  const capacity = hasMinor ? "guardian" : relationship === "self" ? "self" : "guardian";
-  const consents = selected.flatMap((student) => {
-    const child = input.answers.children![student.id]!;
-    const rows: {
-      type: "emergency_medical" | "health_notes" | "media_public";
-      granted: boolean;
-      studentId: string;
-    }[] = [
-      {
-        type: "emergency_medical",
-        granted: Boolean(child.emergencyMedical),
-        studentId: student.id,
-      },
-      { type: "media_public", granted: Boolean(child.mediaPublic), studentId: student.id },
-    ];
-    const notes = `${child.healthNotes ?? ""}${child.teacherNotes ?? ""}`.trim();
-    if (notes)
-      rows.push({
-        type: "health_notes",
-        granted: Boolean(child.healthNotesConsent),
-        studentId: student.id,
-      });
-    return rows;
-  });
-
   await acceptStudioTerms({
     versionId: version.id,
     appTermsVersionId: app.version.id,
-    typedName: parsed.data.answers.terms.typedName,
+    typedName: parsed.terms.typedName,
     capacity,
     relationship,
-    guardianDeclaration: parsed.data.answers.terms.guardianDeclaration,
+    guardianDeclaration: parsed.terms.guardianDeclaration,
     studentIds: selected.map((s) => s.id),
     consents,
     method: "invite",
     scope: "demo",
   });
 
-  for (const student of selected) {
-    const child = input.answers.children![student.id]!;
-    const minutes = child.minutesPerDay ?? (child.minutesOther ? Number(child.minutesOther) : 0);
-    const intake: Intake = {
-      experience: child.experience === "transferring" ? "transferring" : "beginner",
-      previousGrades: child.previousGrades ?? "",
-      theoryExams: child.theoryExams ?? "",
-      instrument: child.instrument === "not_yet" ? "keyboard" : child.instrument!,
-      goal: goalLabel(child),
-      daysPerWeek: child.daysPerWeek!,
-      minutesPerDay: minutes,
-      ...(child.healthNotesConsent === false
-        ? {}
-        : child.healthNotes || child.teacherNotes
-          ? { healthNotes: [child.healthNotes, child.teacherNotes].filter(Boolean).join("\n") }
-          : {}),
-    };
+  for (const { studentId, intake } of intakes) {
     let draft = enrolmentDrafts.find(
-      (entry) => invite.enrolmentDraftIds.includes(entry.id) && entry.studentId === student.id,
+      (entry) => invite.enrolmentDraftIds.includes(entry.id) && entry.studentId === studentId,
     );
     if (!draft)
       draft = enrolmentDrafts.find(
-        (entry) => entry.studentId === student.id && entry.status === "intake_sent",
+        (entry) => entry.studentId === studentId && entry.status === "intake_sent",
       );
     if (draft && draft.status === "intake_sent") {
       draft.intake = structuredClone(intake);
@@ -804,7 +716,7 @@ export async function submitJoinEnrolment(input: {
   await sendMessage({
     conversationId: conv.id,
     authorRole: "guardian",
-    authorName: parsed.data.answers.fillerName,
+    authorName: parsed.fillerName,
     kind: "text",
     body: "Enrolment form completed. / 入学表已填写。",
   });
@@ -819,7 +731,7 @@ export async function submitJoinEnrolment(input: {
   return respond({
     ok: true as const,
     teacherName: teacher.name,
-    guardianName: parsed.data.answers.fillerName,
+    guardianName: parsed.fillerName,
     email: invite.email,
   });
 }

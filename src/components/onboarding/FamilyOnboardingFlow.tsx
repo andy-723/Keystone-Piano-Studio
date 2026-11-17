@@ -24,6 +24,9 @@ import {
   unlockJoinSession,
 } from "@/services/invitations";
 import { getFamilyAppTerms, getPublishedStudioTerms } from "@/services/terms";
+import { autosaveLiveJoinFn, submitLiveJoinFn, unlockLiveJoinFn } from "@/server/family-join";
+import { moneyRulesFrom } from "@/lib/onboarding/money-rules";
+import { TurnstileField } from "@/components/login/TurnstileField";
 import { useAppSettings } from "@/lib/app-settings";
 
 type ActiveSession = Extract<JoinSession, { state: "active" }>;
@@ -63,6 +66,8 @@ export function FamilyOnboardingFlow({
         teacherName={session.teacherName}
         email={session.loginEmail}
         guardianName=""
+        live={Boolean(session.live)}
+        loginLinkSent={false}
       />
     );
   }
@@ -70,6 +75,42 @@ export function FamilyOnboardingFlow({
 }
 
 function DonePanel({
+  teacherName,
+  email,
+  guardianName,
+  live = false,
+  loginLinkSent = false,
+}: {
+  teacherName: string;
+  email: string;
+  guardianName: string;
+  live?: boolean;
+  loginLinkSent?: boolean;
+}) {
+  const lang = useSiteLang();
+  if (live) {
+    // Real studio: the family account was made when the form was submitted, and the
+    // server emailed a one-time sign-in link. Later sign-ins go through /login.
+    return (
+      <FocusLayout studioName="Keystone Music HQ" progress={1}>
+        <h1 className="text-3xl font-semibold">
+          {guardianName
+            ? tOnboarding(lang, "thanks", { name: guardianName, teacher: teacherName })
+            : tOnboarding(lang, "alreadyDone")}
+        </h1>
+        <p className="mt-4 text-lg" data-testid="family-login-note">
+          {tOnboarding(lang, loginLinkSent ? "loginEmailed" : "loginLater", { email })}
+        </p>
+        <Button asChild className="mt-8 min-h-14">
+          <a href={`/login?next=${encodeURIComponent("/")}`}>{tOnboarding(lang, "goToSignIn")}</a>
+        </Button>
+      </FocusLayout>
+    );
+  }
+  return <MockDonePanel teacherName={teacherName} email={email} guardianName={guardianName} />;
+}
+
+function MockDonePanel({
   teacherName,
   email,
   guardianName,
@@ -132,7 +173,10 @@ function ActiveFlow({
     guardianName: string;
     teacherName: string;
     email: string;
+    loginLinkSent: boolean;
   } | null>(null);
+  const live = Boolean(session.live);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [termsMeta, setTermsMeta] = useState<{
     versionId: string;
     appId: string;
@@ -163,21 +207,14 @@ function ActiveFlow({
   const progress = steps.length <= 1 ? 0 : stepIndex / (steps.length - 1);
 
   useEffect(() => {
+    if (session.terms) {
+      setTermsMeta(session.terms);
+      return;
+    }
     getPublishedStudioTerms("demo").then(async (published) => {
       const version = published.pending ?? published.current;
       const app = await getFamilyAppTerms();
       if (!version || !app.version) return;
-      const billing = version.mergeValues["billing"] as {
-        cycle?: string;
-        lateFee?: number;
-        lateFeeAfterDays?: number;
-        withdrawalNoticeWeeks?: number;
-      };
-      const policies = version.mergeValues["policies"] as {
-        cancelNoticeHours?: number;
-        makeUpQuota?: number;
-        makeUpPeriod?: string;
-      };
       setTermsMeta({
         versionId: version.id,
         appId: app.version.id,
@@ -187,22 +224,29 @@ function ActiveFlow({
         appTermsMarkdown: app.appTermsMarkdown,
         privacyNoticeMarkdown: app.privacyNoticeMarkdown,
         appVersionNo: app.version.versionNo,
-        moneyRules: {
-          billingCycle: `Billing: ${billing?.cycle ?? "per_term"}`,
-          lateFee: `Late fee: $${billing?.lateFee ?? 15} after ${billing?.lateFeeAfterDays ?? 7} days`,
-          cancelNotice: `Cancel notice: ${policies?.cancelNoticeHours ?? 24} hours`,
-          makeUps: `Make-ups: ${policies?.makeUpQuota ?? 1} per ${policies?.makeUpPeriod ?? "term"}`,
-          stopNotice: `Stop notice: ${billing?.withdrawalNoticeWeeks ?? 4} weeks`,
-        },
+        moneyRules: moneyRulesFrom(version.mergeValues),
       });
     });
-  }, []);
+  }, [session.terms]);
 
   useEffect(() => {
     headingRef.current?.focus();
   }, [step.id]);
 
   const persist = useEffectEvent(async (nextAnswers: typeof answers, nextStep: string) => {
+    if (live) {
+      // Nothing is saved for a real studio until the security check has passed.
+      if (!nextAnswers.turnstileUnlocked) return;
+      try {
+        const result = await autosaveLiveJoinFn({
+          data: { token: session.token, answers: nextAnswers, currentStep: nextStep },
+        });
+        setSavedAt(result.savedAt);
+      } catch (error) {
+        console.error("[join] autosave failed", error);
+      }
+      return;
+    }
     const result = await autosaveJoinAnswers({
       token: session.token,
       answers: nextAnswers,
@@ -219,25 +263,44 @@ function ActiveFlow({
   }, [answers, step.id, persist]);
 
   const unlock = useMutation({
-    mutationFn: () => unlockJoinSession({ token: session.token, turnstileToken: "mock-ok" }),
+    mutationFn: async () => {
+      if (!live) return unlockJoinSession({ token: session.token, turnstileToken: "mock-ok" });
+      // A family coming back to a half-finished form already passed the check.
+      if (answers.turnstileUnlocked) return { ok: true as const };
+      if (!captchaToken) throw new Error(tOnboarding(lang, "securityCheckFirst"));
+      return unlockLiveJoinFn({ data: { token: session.token, turnstileToken: captchaToken } });
+    },
   });
   const submit = useMutation({
-    mutationFn: () =>
-      submitJoinEnrolment({
+    mutationFn: async () => {
+      if (live) {
+        return submitLiveJoinFn({
+          data: {
+            token: session.token,
+            answers,
+            ...(session.terms ? { termsVersionId: session.terms.versionId } : {}),
+          },
+        });
+      }
+      const result = await submitJoinEnrolment({
         token: session.token,
         answers,
         turnstileToken: "mock-ok",
-      }),
+      });
+      return { ...result, loginLinkSent: false };
+    },
     onSuccess: (result) => {
       setDone({
         guardianName: result.guardianName,
         teacherName: result.teacherName,
         email: result.email,
+        loginLinkSent: result.loginLinkSent,
       });
       onSessionChange?.({
         state: "completed",
         teacherName: result.teacherName,
         loginEmail: result.email,
+        ...(live ? { live: true as const } : {}),
       });
     },
   });
@@ -268,6 +331,8 @@ function ActiveFlow({
         teacherName={done.teacherName}
         email={done.email}
         guardianName={done.guardianName}
+        live={live}
+        loginLinkSent={done.loginLinkSent}
       />
     );
   }
@@ -305,16 +370,33 @@ function ActiveFlow({
           value={{ acknowledged: Boolean(answers.collectionAcknowledged) }}
           onChange={(value) => patchFamily({ collectionAcknowledged: value.acknowledged })}
           onNext={async () => {
-            await unlock.mutateAsync();
+            try {
+              await unlock.mutateAsync();
+            } catch {
+              return;
+            }
             patchFamily({ collectionAcknowledged: true, turnstileUnlocked: true });
             go(1);
           }}
         />
-        <div
-          aria-hidden
-          className="min-h-12 rounded-md border border-dashed border-border"
-          data-testid="turnstile-slot"
-        />
+        {live && !answers.turnstileUnlocked ? (
+          <TurnstileField
+            siteKey={session.turnstileSiteKey}
+            mock={session.mockCaptcha}
+            onToken={setCaptchaToken}
+          />
+        ) : (
+          <div
+            aria-hidden
+            className="min-h-12 rounded-md border border-dashed border-border"
+            data-testid="turnstile-slot"
+          />
+        )}
+        {unlock.error && (
+          <p className="text-destructive" role="alert">
+            {unlock.error.message}
+          </p>
+        )}
       </div>
     );
   } else if (step.id === "filler") {

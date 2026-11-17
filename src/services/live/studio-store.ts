@@ -33,6 +33,7 @@ import { loadLiveChat } from "./chat-store";
 import { loadLiveNews } from "./news-store";
 import { loadLiveCourses } from "./course-store";
 import { loadLiveBilling } from "./billing-store";
+import { loadLiveEnrolments } from "./enrolment-store";
 import {
   isLiveStudio,
   liveStudioId,
@@ -268,6 +269,7 @@ export async function loadLiveStudio(
   await loadLiveNews(workspace, c);
   await loadLiveCourses(workspace, c);
   await loadLiveBilling(workspace, c);
+  await loadLiveEnrolments(workspace, c, terms);
   if (workspace.guardianId) setParentGuardianId(workspace.guardianId);
   setStudioWorkspace(workspace);
   markWorkspaceLoaded(workspace);
