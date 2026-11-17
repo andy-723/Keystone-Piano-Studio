@@ -259,6 +259,13 @@ export const createStudioFn = createServerFn({ method: "POST" })
       ownerName,
       studioName: name,
       signInUrl: `${env.appUrl}/login`,
+      appUrl: env.appUrl,
+      supportEmail: env.supportEmail,
+      access: {
+        status: starting.status as "pilot" | "comp" | "none",
+        plan: starting.plan as "base" | "pro",
+        endsOn: starting.accessEndsOn ?? null,
+      },
     });
     // The studio and the Supabase sign-in invite already exist at this point, so a
     // failed welcome email must not surface as a failed create (a retry would make
