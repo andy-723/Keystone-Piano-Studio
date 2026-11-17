@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { accountStatusFor, allowLinkSend, resetLinkSendsForTests } from "@/server/account-links";
+import {
+  accountStatusFor,
+  allowLinkSend,
+  isBanned,
+  resetLinkSendsForTests,
+} from "@/server/account-links";
 import { signInLinkEmail } from "@/server/email/templates/sign-in-link";
 import { AUTHENTICATOR_APPS } from "@/lib/authenticator-apps";
 
@@ -23,6 +28,19 @@ describe("account status", () => {
         invitedAt: "2026-11-16T10:00:00Z",
       },
     );
+  });
+
+  it("shows Access revoked while a ban is in force, and goes back once it is lifted", () => {
+    const now = Date.parse("2026-11-18T00:00:00Z");
+    expect(isBanned({ banned_until: "2126-11-18T00:00:00Z" }, now)).toBe(true);
+    expect(isBanned({ banned_until: "2026-11-01T00:00:00Z" }, now)).toBe(false);
+    expect(isBanned({ banned_until: null }, now)).toBe(false);
+    expect(
+      accountStatusFor({
+        last_sign_in_at: "2026-11-17T10:00:00Z",
+        banned_until: "2126-11-18T00:00:00Z",
+      }).state,
+    ).toBe("revoked");
   });
 
   it("has no account when there is no auth user", () => {
