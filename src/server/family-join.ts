@@ -493,7 +493,14 @@ async function ensureFamilyAccount(supabase: SupabaseClient, email: string, name
 
 async function sendSignInEmail(
   supabase: SupabaseClient,
-  input: { email: string; guardianName: string; studioName: string },
+  input: {
+    email: string;
+    guardianName: string;
+    studioName: string;
+    teacherName: string;
+    studentNames: string[];
+    studioTermsVersionNo: number;
+  },
 ) {
   const env = getServerEnv();
   const link = await supabase.auth.admin.generateLink({ type: "magiclink", email: input.email });
@@ -504,6 +511,15 @@ async function sendSignInEmail(
     guardianName: input.guardianName,
     signInUrl: `${env.appUrl}/auth/callback?token_hash=${encodeURIComponent(tokenHash)}&type=magiclink`,
     loginUrl: `${env.appUrl}/login`,
+    teacherName: input.teacherName,
+    studentNames: input.studentNames,
+    studioTermsVersionNo: input.studioTermsVersionNo,
+    acceptedOn: new Intl.DateTimeFormat("en-AU", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      timeZone: "Australia/Melbourne",
+    }).format(new Date()),
   });
   await getEmailProvider().send({
     to: input.email,
@@ -723,6 +739,9 @@ export async function submitLiveJoin(
       email,
       guardianName: parsed.fillerName,
       studioName: studio.studioName,
+      teacherName: studio.teacherName,
+      studentNames: students.map((s) => s.firstName),
+      studioTermsVersionNo: studioTerms.version_no,
     });
     loginLinkSent = true;
     await audit(supabase, {
