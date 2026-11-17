@@ -29,12 +29,9 @@ import {
   allocateInvoiceNumber,
   readBillingProfile,
 } from "./billing-profile";
-import { emailProvider, renderInvoicePdf } from "./_lazy";
-import {
-  creditNoteEmail,
-  invoiceSentEmail,
-  paymentReceiptEmail,
-} from "@/server/email/templates/billing";
+import { renderInvoicePdf } from "./_lazy";
+import { sendBillingMail, type BillingMail } from "./billing-mail";
+import type { BillingEmailKind } from "@/server/email/templates/billing";
 
 /** GST-inclusive pricing: GST is one eleventh of the total, in whole cents. */
 export function gstFromInclusive(totalCents: number): number {
@@ -141,6 +138,26 @@ function pushEvent(
     at: studioNow(),
     ...(data ? { data } : {}),
   });
+}
+
+/**
+ * Sends a billing email without undoing the change it reports on: the invoice, payment or credit
+ * note is already numbered and saved, so a failed email is recorded on the invoice timeline
+ * ("email failed") instead of throwing.
+ */
+async function trySendBillingMail<K extends BillingEmailKind>(
+  invoiceId: string | null,
+  mail: BillingMail<K>,
+): Promise<boolean> {
+  try {
+    await sendBillingMail(mail);
+    return true;
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : "Email could not be sent";
+    console.error(`[billing] ${mail.kind} email failed`, detail);
+    if (invoiceId) pushEvent(invoiceId, "email_failed", { kind: mail.kind, to: mail.to, error: detail });
+    return false;
+  }
 }
 
 /** Credit note number from the database, mirrored in the local profile. */
@@ -504,33 +521,19 @@ async function issueInvoice(id: string, opts: { notify: boolean }): Promise<Invo
     const guardian =
       family?.guardians.find((entry) => entry.id === invoice.billToGuardianId) ?? family?.guardians[0];
     if (guardian?.email) {
-      const mail = invoiceSentEmail({
-        studioName: profile.tradingName || profile.legalName || studio.name,
-        familyName: family?.displayName ?? guardian.name,
-        invoiceNumber: invoice.number,
-        totalCents: invoice.totalCents,
-        dueDate: invoice.dueDate,
-      });
-      const attachments =
-        pdfBytes
-          ? [
-              {
-                filename: `${invoice.number}.pdf`,
-                content: pdfBytes,
-                contentType: "application/pdf",
-              },
-            ]
-          : undefined;
-      await (await emailProvider()).send({
+      const emailed = await trySendBillingMail(invoice.id, {
+        kind: "invoice_sent",
         to: guardian.email,
-        from: `${studio.name} <studio@keystone.example>`,
-        subject: mail.subject,
-        html: mail.html,
-        text: mail.text,
-        tags: [{ name: "kind", value: "invoice_sent" }],
-        ...(attachments ? { attachments } : {}),
+        studioName: profile.tradingName || profile.legalName || studio.name,
+        params: {
+          familyName: family?.displayName ?? guardian.name,
+          invoiceNumber: invoice.number,
+          totalCents: invoice.totalCents,
+          dueDate: invoice.dueDate,
+        },
+        ...(pdfBytes ? { pdf: { filename: `${invoice.number}.pdf`, bytes: pdfBytes } } : {}),
       });
-      pushEvent(invoice.id, "emailed", { to: guardian.email });
+      if (emailed) pushEvent(invoice.id, "emailed", { to: guardian.email });
     }
   }
 
@@ -622,21 +625,17 @@ async function recordPaymentImpl(
     const guardian =
       family?.guardians.find((entry) => entry.id === invoice.billToGuardianId) ?? family?.guardians[0];
     if (guardian?.email) {
-      const mail = paymentReceiptEmail({
-        studioName: profile.tradingName || profile.legalName || studio.name,
-        familyName: family?.displayName ?? guardian.name,
-        invoiceNumber: invoice.number ?? id,
-        amountCents: payment.amountCents,
-        methodLabel: method,
-        receivedOn: payment.receivedOn,
-      });
-      await (await emailProvider()).send({
+      await trySendBillingMail(invoice.id, {
+        kind: "payment_receipt",
         to: guardian.email,
-        from: `${studio.name} <studio@keystone.example>`,
-        subject: mail.subject,
-        html: mail.html,
-        text: mail.text,
-        tags: [{ name: "kind", value: "payment_receipt" }],
+        studioName: profile.tradingName || profile.legalName || studio.name,
+        params: {
+          familyName: family?.displayName ?? guardian.name,
+          invoiceNumber: invoice.number ?? id,
+          amountCents: payment.amountCents,
+          methodLabel: method,
+          receivedOn: payment.receivedOn,
+        },
       });
     }
   }
@@ -732,20 +731,16 @@ async function issueCreditNoteImpl(input: {
   const guardian = family.guardians[0];
   if (guardian?.email) {
     const profile = readBillingProfile("demo");
-    const mail = creditNoteEmail({
-      studioName: profile.tradingName || profile.legalName || studio.name,
-      familyName: family.displayName,
-      creditNoteNumber: note.number,
-      amountCents: note.amountCents,
-      reason: note.reason,
-    });
-    await (await emailProvider()).send({
+    await trySendBillingMail(input.invoiceId ?? null, {
+      kind: "credit_note",
       to: guardian.email,
-      from: `${studio.name} <studio@keystone.example>`,
-      subject: mail.subject,
-      html: mail.html,
-      text: mail.text,
-      tags: [{ name: "kind", value: "credit_note" }],
+      studioName: profile.tradingName || profile.legalName || studio.name,
+      params: {
+        familyName: family.displayName,
+        creditNoteNumber: note.number,
+        amountCents: note.amountCents,
+        reason: note.reason,
+      },
     });
   }
   return respond(note);

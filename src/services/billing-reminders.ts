@@ -9,12 +9,8 @@ import { newRecordId } from "./live/studio-store";
 import { studioNow, studioToday } from "@/lib/studio-clock";
 import { readBillingProfile } from "./billing-profile";
 import { lateFeeForInvoice } from "./terms";
-import { emailProvider } from "./_lazy";
-import {
-  lateFeeNoticeEmail,
-  pauseNoticeEmail,
-  reminderEmail,
-} from "@/server/email/templates/billing";
+import { sendBillingMail, type BillingMail } from "./billing-mail";
+import type { BillingEmailKind } from "@/server/email/templates/billing";
 
 function eventsFor(invoiceId: string) {
   return invoiceEvents.filter((event) => event.invoiceId === invoiceId);
@@ -37,6 +33,17 @@ function pushEvent(
     at: studioNow("09:15"),
     ...(data ? { data } : {}),
   });
+}
+
+/** Sends a reminder or notice; a failure is recorded on the invoice ("email failed"), not thrown. */
+async function mailOrRecord<K extends BillingEmailKind>(invoiceId: string, mail: BillingMail<K>) {
+  try {
+    await sendBillingMail(mail);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : "Email could not be sent";
+    console.error(`[billing-reminders] ${mail.kind} email failed`, detail);
+    pushEvent(invoiceId, "email_failed", { kind: mail.kind, to: mail.to, error: detail });
+  }
 }
 
 function familyName(familyId: string) {
@@ -79,21 +86,16 @@ async function runBillingScheduleImpl(scope: IntegrationScope = "demo", today: s
       !hasEvent(enriched.id, "reminder_pre_due")
     ) {
       if (email) {
-        const mail = reminderEmail({
-          studioName,
-          familyName: familyName(enriched.familyId),
-          invoiceNumber: enriched.number ?? enriched.id,
-          totalCents: balance,
-          dueDate: enriched.dueDate,
-          kind: "pre_due",
-        });
-        await (await emailProvider()).send({
+        await mailOrRecord(enriched.id, {
+          kind: "reminder_pre_due",
           to: email,
-          from: `${studio.name} <studio@keystone.example>`,
-          subject: mail.subject,
-          html: mail.html,
-          text: mail.text,
-          tags: [{ name: "kind", value: "reminder_pre_due" }],
+          studioName,
+          params: {
+            familyName: familyName(enriched.familyId),
+            invoiceNumber: enriched.number ?? enriched.id,
+            totalCents: balance,
+            dueDate: enriched.dueDate,
+          },
         });
       }
       pushEvent(enriched.id, "reminder_pre_due", { dueDate: enriched.dueDate });
@@ -102,21 +104,16 @@ async function runBillingScheduleImpl(scope: IntegrationScope = "demo", today: s
 
     if (enriched.isOverdue && !hasEvent(enriched.id, "reminder_overdue")) {
       if (email) {
-        const mail = reminderEmail({
-          studioName,
-          familyName: familyName(enriched.familyId),
-          invoiceNumber: enriched.number ?? enriched.id,
-          totalCents: balance,
-          dueDate: enriched.dueDate,
-          kind: "overdue",
-        });
-        await (await emailProvider()).send({
+        await mailOrRecord(enriched.id, {
+          kind: "reminder_overdue",
           to: email,
-          from: `${studio.name} <studio@keystone.example>`,
-          subject: mail.subject,
-          html: mail.html,
-          text: mail.text,
-          tags: [{ name: "kind", value: "reminder_overdue" }],
+          studioName,
+          params: {
+            familyName: familyName(enriched.familyId),
+            invoiceNumber: enriched.number ?? enriched.id,
+            totalCents: balance,
+            dueDate: enriched.dueDate,
+          },
         });
       }
       pushEvent(enriched.id, "reminder_overdue", { daysOverdue: enriched.daysOverdue });
@@ -133,19 +130,15 @@ async function runBillingScheduleImpl(scope: IntegrationScope = "demo", today: s
       const feeCents = lateFeeForInvoice(enriched.totalCents, termsScope);
       pushEvent(enriched.id, "late_fee_proposed", { amountCents: feeCents, afterDays: lateAfter });
       if (email) {
-        const mail = lateFeeNoticeEmail({
-          studioName,
-          familyName: familyName(enriched.familyId),
-          invoiceNumber: enriched.number ?? enriched.id,
-          feeCents,
-        });
-        await (await emailProvider()).send({
+        await mailOrRecord(enriched.id, {
+          kind: "late_fee_proposed",
           to: email,
-          from: `${studio.name} <studio@keystone.example>`,
-          subject: mail.subject,
-          html: mail.html,
-          text: mail.text,
-          tags: [{ name: "kind", value: "late_fee_proposed" }],
+          studioName,
+          params: {
+            familyName: familyName(enriched.familyId),
+            invoiceNumber: enriched.number ?? enriched.id,
+            feeCents,
+          },
         });
       }
       actions.push(`late_fee_proposed:${enriched.id}`);
@@ -226,18 +219,14 @@ async function sendPauseNoticeImpl(invoiceId: string) {
   const profile = readBillingProfile("demo");
   const email = guardianEmail(invoice.familyId, invoice.billToGuardianId);
   if (email) {
-    const mail = pauseNoticeEmail({
-      studioName: profile.tradingName || profile.legalName || studio.name,
-      familyName: familyName(invoice.familyId),
-      invoiceNumber: invoice.number ?? invoice.id,
-    });
-    await (await emailProvider()).send({
+    await mailOrRecord(invoice.id, {
+      kind: "pause_notice",
       to: email,
-      from: `${studio.name} <studio@keystone.example>`,
-      subject: mail.subject,
-      html: mail.html,
-      text: mail.text,
-      tags: [{ name: "kind", value: "pause_notice" }],
+      studioName: profile.tradingName || profile.legalName || studio.name,
+      params: {
+        familyName: familyName(invoice.familyId),
+        invoiceNumber: invoice.number ?? invoice.id,
+      },
     });
   }
   pushEvent(invoiceId, "pause_notice_sent");

@@ -133,3 +133,46 @@ export function payToChangedEmail(input: {
     `Pay-to details for ${input.studioName} were updated.\n\nAccount name: ${input.accountName}\nBSB: ${input.bsb}\nAccount: ${input.accountMasked}.${payIdLine}\n\nFull account numbers are never included in this notice.`,
   );
 }
+
+/**
+ * Every billing email by kind. The browser names a kind and its details; for a real studio the
+ * server renders the email itself from this list (src/server/billing-email.ts), with the studio
+ * name taken from the database, so no HTML ever comes from the browser.
+ */
+export const billingEmailTemplates = {
+  invoice_sent: invoiceSentEmail,
+  payment_receipt: paymentReceiptEmail,
+  credit_note: creditNoteEmail,
+  reminder_pre_due: (input: Omit<Parameters<typeof reminderEmail>[0], "kind">) =>
+    reminderEmail({ ...input, kind: "pre_due" }),
+  reminder_overdue: (input: Omit<Parameters<typeof reminderEmail>[0], "kind">) =>
+    reminderEmail({ ...input, kind: "overdue" }),
+  late_fee_proposed: lateFeeNoticeEmail,
+  pause_notice: pauseNoticeEmail,
+  pay_to_changed: payToChangedEmail,
+} as const;
+
+export type BillingEmailKind = keyof typeof billingEmailTemplates;
+
+/** A kind's details without the studio name (the server fills that in for real studios). */
+export type BillingEmailParams<K extends BillingEmailKind> = Omit<
+  Parameters<(typeof billingEmailTemplates)[K]>[0],
+  "studioName"
+>;
+
+export function isBillingEmailKind(value: unknown): value is BillingEmailKind {
+  return typeof value === "string" && Object.hasOwn(billingEmailTemplates, value);
+}
+
+export function renderBillingEmail<K extends BillingEmailKind>(
+  kind: K,
+  studioName: string,
+  params: BillingEmailParams<K>,
+) {
+  const template = billingEmailTemplates[kind] as (input: Record<string, unknown>) => {
+    subject: string;
+    html: string;
+    text: string;
+  };
+  return template({ ...(params as Record<string, unknown>), studioName });
+}

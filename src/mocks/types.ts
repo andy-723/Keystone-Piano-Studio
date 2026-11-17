@@ -222,6 +222,7 @@ export type InvoiceEventKind =
   | "sent"
   | "emailed"
   | "email_bounced"
+  | "email_failed"
   | "reminder_pre_due"
   | "reminder_overdue"
   | "late_fee_proposed"
