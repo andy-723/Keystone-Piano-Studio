@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ownerWelcomeEmail } from "@/server/email/templates/owner-welcome";
 import { familyWelcomeEmail } from "@/server/email/templates/family-welcome";
+import { AUTHENTICATOR_APPS } from "@/lib/authenticator-apps";
 
 const APP = "https://www.keystonemusichq.com";
 
@@ -30,6 +31,22 @@ describe("Welcome to Keystone Music HQ emails", () => {
     expect(mail.text).not.toContain("<");
   });
 
+  it("studio owner gets App Store and Google Play links for an authenticator, before the sign-in button", () => {
+    const mail = ownerWelcomeEmail({
+      ownerName: "Winnie Lee",
+      studioName: "Sunny Keys Studio",
+      signInUrl: `${APP}/login`,
+    });
+    for (const app of AUTHENTICATOR_APPS) {
+      expect(mail.html).toContain(`href="${app.appStore}"`);
+      expect(mail.html).toContain(`href="${app.googlePlay}"`);
+      expect(mail.text).toContain(app.googlePlay);
+    }
+    expect(mail.html.indexOf(AUTHENTICATOR_APPS[0]!.appStore)).toBeLessThan(
+      mail.html.indexOf("Sign in to Keystone</a>"),
+    );
+  });
+
   it("studio owner without free access is told how to subscribe", () => {
     const mail = ownerWelcomeEmail({
       ownerName: "Sam",
@@ -57,6 +74,8 @@ describe("Welcome to Keystone Music HQ emails", () => {
     expect(mail.text).toContain("studio terms (version 2), accepted on 17 November 2026");
     expect(mail.html).toContain("token_hash=abc12345&amp;type=magiclink");
     expect(mail.text).toContain("message Ms Lee in the family app");
+    expect(mail.text).toContain("A short tour opens the first time you sign in");
+    expect(mail.text).not.toContain("authenticator");
     expect(mail.html).toContain(`href="${APP}/help"`);
     expect(mail.html).toContain(`href="${APP}/privacy"`);
   });

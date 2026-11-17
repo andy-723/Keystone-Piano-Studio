@@ -2,10 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { MfaCodeInputs } from "@/components/auth/MfaCodeInputs";
 import { getAuthClient } from "@/lib/auth-client";
+import { AUTHENTICATOR_APPS } from "@/lib/authenticator-apps";
 import { safeNextPath } from "@/lib/auth-paths";
 import { rememberVerifiedAccess } from "@/lib/live-auth-cache";
-import { decideStudioAccessGate,
-  shellRoleForAccount, destinationForAccount } from "@/lib/post-login";
+import {
+  decideStudioAccessGate,
+  shellRoleForAccount,
+  destinationForAccount,
+} from "@/lib/post-login";
 import { markSessionStarted } from "@/lib/session-timeout";
 import { recordMfaEnrolledFn, resolveAccountFn } from "@/server/account";
 
@@ -98,6 +102,34 @@ function MfaSetupPage() {
           Scan this QR code with your authenticator app, or enter the secret manually. Then enter
           the 6-digit code to confirm.
         </p>
+        <div className="mt-4 rounded-[14px] border border-[#D9C79E] bg-[#F5EBD6] px-4 py-3 text-sm">
+          <p className="font-semibold">No authenticator app yet? Get one free:</p>
+          <ul className="mt-2 space-y-2">
+            {AUTHENTICATOR_APPS.map((app) => (
+              <li key={app.name}>
+                <span className="font-medium">{app.name}</span>
+                <span className="mt-1 flex flex-wrap gap-2">
+                  <a
+                    href={app.appStore}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex min-h-[44px] items-center rounded-[10px] bg-[#15100D] px-3 text-[#FBF7EE]"
+                  >
+                    iPhone: App Store
+                  </a>
+                  <a
+                    href={app.googlePlay}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex min-h-[44px] items-center rounded-[10px] bg-[#15100D] px-3 text-[#FBF7EE]"
+                  >
+                    Android: Google Play
+                  </a>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
         {qrIsSvg && qr && (
           <div
             className="mt-6 flex justify-center"
