@@ -33,6 +33,11 @@ export async function verifyAccessToken(accessToken: string): Promise<VerifiedSe
   if (error || !data.user) {
     throw new ProblemError(401, "Unauthorized", "Invalid or expired session.");
   }
+  // Revoked access (Supabase Auth ban): refuse at once, not only when the token expires.
+  const bannedUntil = (data.user as { banned_until?: string | null }).banned_until;
+  if (bannedUntil && Date.parse(bannedUntil) > Date.now()) {
+    throw new ProblemError(401, "Access revoked", "Your access has been revoked.");
+  }
 
   let aal: string | null = null;
   let signInMethods: string[] = [];

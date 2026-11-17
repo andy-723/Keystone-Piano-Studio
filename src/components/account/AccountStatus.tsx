@@ -1,9 +1,10 @@
 import { useState } from "react";
 
 export type AccountStatusView = {
-  state: "active" | "not_signed_in" | "no_account";
+  state: "active" | "not_signed_in" | "no_account" | "revoked";
   lastSignInAt: string | null;
   invitedAt: string | null;
+  revokedAt?: string | null;
 };
 
 function shortDate(iso: string | null) {
@@ -21,6 +22,17 @@ export function AccountStatusBadge({
   status: AccountStatusView;
   noAccountLabel?: string;
 }) {
+  if (status.state === "revoked") {
+    const when = shortDate(status.revokedAt ?? null);
+    return (
+      <span className="inline-flex flex-col">
+        <span className="inline-flex w-fit items-center rounded-full bg-[#F4D9D6] px-2.5 py-0.5 text-xs font-semibold text-[#8B1E1E]">
+          Access revoked
+        </span>
+        {when && <span className="mt-0.5 text-xs text-[#5A4F43]">Since {when}</span>}
+      </span>
+    );
+  }
   if (status.state === "active") {
     const last = shortDate(status.lastSignInAt);
     return (
@@ -88,6 +100,80 @@ export function SendSignInLinkButton({
           className={`text-xs ${state === "error" ? "text-[#8B1E1E]" : "text-[#5A4F43]"}`}
         >
           {note}
+        </span>
+      )}
+    </span>
+  );
+}
+
+/**
+ * Revoke needs a second press ("Confirm revoke") so a stray tap can't lock someone out.
+ * Restore is one press. No browser dialogs.
+ */
+export function AccessToggleButton({
+  revoked,
+  onChange,
+  onDone,
+  className = "ks-btn ks-btn-link",
+}: {
+  revoked: boolean;
+  onChange: (revoke: boolean) => Promise<unknown>;
+  onDone?: () => void;
+  className?: string;
+}) {
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  function run(revoke: boolean) {
+    setBusy(true);
+    setError(null);
+    onChange(revoke)
+      .then(() => {
+        setConfirming(false);
+        onDone?.();
+      })
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : "Could not change access."))
+      .finally(() => setBusy(false));
+  }
+
+  return (
+    <span className="inline-flex flex-col">
+      {revoked ? (
+        <button type="button" className={className} disabled={busy} onClick={() => run(false)}>
+          {busy ? "Restoring…" : "Restore access"}
+        </button>
+      ) : confirming ? (
+        <span className="inline-flex flex-wrap gap-3">
+          <button
+            type="button"
+            className={`${className} text-[#8B1E1E]`}
+            disabled={busy}
+            onClick={() => run(true)}
+          >
+            {busy ? "Revoking…" : "Confirm revoke"}
+          </button>
+          <button
+            type="button"
+            className={className}
+            disabled={busy}
+            onClick={() => setConfirming(false)}
+          >
+            Cancel
+          </button>
+        </span>
+      ) : (
+        <button
+          type="button"
+          className={`${className} text-[#8B1E1E]`}
+          onClick={() => setConfirming(true)}
+        >
+          Revoke access
+        </button>
+      )}
+      {error && (
+        <span role="alert" className="text-xs text-[#8B1E1E]">
+          {error}
         </span>
       )}
     </span>

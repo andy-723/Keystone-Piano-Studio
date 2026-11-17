@@ -220,7 +220,7 @@ export async function writePlatformAudit(input: {
 export async function writeAuthAudit(input: {
   studioId: string;
   actorUserId: string | null;
-  event: "mfa_enrolled" | "sign_in" | "magic_link_requested";
+  event: "mfa_enrolled" | "sign_in" | "magic_link_requested" | "access_revoked" | "access_restored";
   guardianId?: string | undefined;
   ip?: string | undefined;
   userAgent?: string | undefined;

@@ -15,8 +15,14 @@ import {
   resetMfaFn,
 } from "@/server/platform";
 import { setStudioAccessFn } from "@/server/subscription";
-import { sendOwnerSignInLinkFn, sendStaffSignInLinkFn } from "@/server/account-links";
 import {
+  sendOwnerSignInLinkFn,
+  sendStaffSignInLinkFn,
+  setOwnerAccessFn,
+  setStaffAccessFn,
+} from "@/server/account-links";
+import {
+  AccessToggleButton,
   AccountStatusBadge,
   SendSignInLinkButton,
   type AccountStatusView,
@@ -189,13 +195,25 @@ function StudiosTab({ token, onError }: { token: string; onError: (m: string | n
                   {row.ownerAccount && (
                     <span className="mt-1 flex flex-col gap-1">
                       <AccountStatusBadge status={row.ownerAccount} noAccountLabel="No owner" />
-                      {row.ownerAccount.state !== "no_account" && (
+                      {(row.ownerAccount.state === "active" ||
+                        row.ownerAccount.state === "not_signed_in") && (
                         <SendSignInLinkButton
                           onSend={() =>
                             sendOwnerSignInLinkFn({
                               data: { accessToken: token, studioId: row.id },
                             })
                           }
+                        />
+                      )}
+                      {row.ownerAccount.state !== "no_account" && (
+                        <AccessToggleButton
+                          revoked={row.ownerAccount.state === "revoked"}
+                          onChange={(revoke) =>
+                            setOwnerAccessFn({
+                              data: { accessToken: token, studioId: row.id, revoke },
+                            })
+                          }
+                          onDone={() => setVersion((v) => v + 1)}
                         />
                       )}
                     </span>
@@ -581,11 +599,26 @@ function TeamTab({ token, onError }: { token: string; onError: (m: string | null
                 </td>
                 <td className="px-3 py-3">
                   <span className="flex flex-wrap items-start gap-x-4 gap-y-1">
-                    <SendSignInLinkButton
-                      onSend={() =>
-                        sendStaffSignInLinkFn({
-                          data: { accessToken: token, targetUserId: row.userId },
+                    {row.account?.state !== "revoked" && (
+                      <SendSignInLinkButton
+                        onSend={() =>
+                          sendStaffSignInLinkFn({
+                            data: { accessToken: token, targetUserId: row.userId },
+                          })
+                        }
+                      />
+                    )}
+                    <AccessToggleButton
+                      revoked={row.account?.state === "revoked"}
+                      onChange={(revoke) =>
+                        setStaffAccessFn({
+                          data: { accessToken: token, targetUserId: row.userId, revoke },
                         })
+                      }
+                      onDone={() =>
+                        void reload().catch((e) =>
+                          onError(e instanceof Error ? e.message : "Staff load failed"),
+                        )
                       }
                     />
                     <button
