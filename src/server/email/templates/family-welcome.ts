@@ -49,6 +49,9 @@ export function familyWelcomeEmail(input: {
           "News from the studio, and your child's progress.",
           "English, 中文 or Tiếng Việt: switch language at the top of any page.",
         ],
+        paragraphs: [
+          "A short tour opens the first time you sign in and shows you around. Press the ? button at the top to replay it any time.",
+        ],
       },
       {
         heading: "What to expect",

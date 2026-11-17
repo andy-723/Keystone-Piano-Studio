@@ -1,3 +1,4 @@
+import { AUTHENTICATOR_APPS } from "@/lib/authenticator-apps";
 import { plain, renderWelcomeEmail } from "./welcome-layout";
 
 export type OwnerWelcomeAccess = {
@@ -55,8 +56,19 @@ export function ownerWelcomeEmail(input: {
     intro: [
       `Welcome to Keystone Music HQ. ${studio} is ready for you. Keystone keeps your students, lessons, families, invoices and messages in one place, so you spend less time on admin.`,
       ...(access ? [access] : []),
-      "You'll also get a separate sign-in email. Install an authenticator app on your phone first (Google Authenticator, Microsoft Authenticator or 1Password), because your first sign-in sets up two-step sign-in.",
+      "You'll also get a separate sign-in email. Before you sign in, install an authenticator app on your phone, because your first sign-in sets up two-step sign-in.",
     ],
+    appDownloads: {
+      heading: "Before you sign in: get an authenticator app (2 minutes)",
+      note: "Tap your phone's store below. Either app works, and so does 1Password if you already use it.",
+      apps: AUTHENTICATOR_APPS.map((app) => ({
+        name: app.name,
+        links: [
+          { label: "iPhone: App Store", url: app.appStore },
+          { label: "Android: Google Play", url: app.googlePlay },
+        ],
+      })),
+    },
     button: { label: "Sign in to Keystone", url: input.signInUrl },
     buttonNote: `Sign in with this email address. If the button doesn't work, open ${input.signInUrl}`,
     sections: [
