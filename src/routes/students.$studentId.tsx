@@ -14,6 +14,8 @@ import { StudentProfileGroups } from "@/components/StudentGroups";
 import { INVOICE_STATUS } from "@/lib/billing-queries";
 import { Suspense } from "react";
 import { isLiveStudio } from "@/lib/studio-workspace";
+import { GuardianSignInStatus } from "@/components/account/GuardianSignInStatus";
+import { useGuardianAccounts } from "@/lib/guardian-accounts";
 
 export const Route = createFileRoute("/students/$studentId")({
   loader: async ({ context, params }) => {
@@ -36,6 +38,7 @@ function StudentProfile() {
   const pro = subscription.plan !== "base";
   // Make-up credits, attendance and practice are not saved for real studios yet (pilot): hide them.
   const live = isLiveStudio();
+  const guardianAccounts = useGuardianAccounts(data?.family?.id);
   if (!data) return null;
   const { student, family } = data;
   const maxMinutes = Math.max(data.course.course.weeklyPracticeGoalMin, 1, ...data.practice.map((week) => week.studentMinutes + week.teacherMinutes));
@@ -46,7 +49,7 @@ function StudentProfile() {
     {student.risk.band !== "green" && (pro || student.risk.band !== "red") && <section aria-label="Needs attention" className="mt-6 border-l-4 border-warning pl-5"><h2 className="text-xl font-semibold">Needs attention</h2><ul className="my-3 space-y-1">{student.risk.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul>{pro && student.risk.band === "red" && <StudentCheckIn studentId={student.id} />}</section>}
     <section className="mt-8 border-t border-border py-7" aria-labelledby="student-details"><h2 id="student-details" className="text-2xl font-semibold">Details & family</h2>
       <dl className="mt-5 grid gap-4 sm:grid-cols-2"><div><dt className="text-base text-muted-foreground">Birth year</dt><dd className="mt-1">{student.birthYear}</dd></div><div><dt className="text-base text-muted-foreground">Family</dt><dd className="mt-1">{family?.displayName ?? "Not recorded"}</dd></div><div><dt className="text-base text-muted-foreground">Exam goal</dt><dd className="mt-1">{student.examDate ? formatNumericDate(student.examDate) : student.targetTerm}</dd></div></dl>
-      <h3 className="mt-6 text-xl font-semibold">Guardians</h3><div className="mt-3 space-y-4">{family?.guardians.map((guardian) => <div key={guardian.id}><p className="font-semibold">{guardian.name}</p><p className="break-all text-base text-muted-foreground">{guardian.email}</p>{guardian.mobile && <p className="text-base text-muted-foreground">{guardian.mobile}</p>}<p className="text-base text-muted-foreground">Preferred language: {guardian.preferredLanguage === "zh-CN" ? "中文" : "English"}</p></div>)}</div>
+      <h3 className="mt-6 text-xl font-semibold">Guardians</h3><div className="mt-3 space-y-4">{family?.guardians.map((guardian) => <div key={guardian.id}><p className="font-semibold">{guardian.name}</p><p className="break-all text-base text-muted-foreground">{guardian.email}</p>{guardian.mobile && <p className="text-base text-muted-foreground">{guardian.mobile}</p>}<p className="text-base text-muted-foreground">Preferred language: {guardian.preferredLanguage === "zh-CN" ? "中文" : "English"}</p><GuardianSignInStatus guardianId={guardian.id} accounts={guardianAccounts.data} /></div>)}</div>
       <Suspense fallback={<p className="mt-6 text-muted-foreground">Loading groups…</p>}><StudentProfileGroups studentId={student.id} /></Suspense>
     </section>
     {!live && <>
