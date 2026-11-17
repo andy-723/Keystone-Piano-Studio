@@ -17,7 +17,7 @@ export function publicAppOrigin(): string {
   ).env?.VITE_APP_URL?.trim();
   if (vite) return vite.replace(/\/$/, "");
   if (typeof process !== "undefined") {
-    const appUrl = process.env?.APP_URL?.trim() || process.env?.VITE_APP_URL?.trim();
+    const appUrl = process.env?.["APP_URL"]?.trim() || process.env?.["VITE_APP_URL"]?.trim();
     if (appUrl) return appUrl.replace(/\/$/, "");
   }
   if (typeof window !== "undefined" && window.location?.origin) {

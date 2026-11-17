@@ -43,19 +43,19 @@ vi.mock("@/server/supabase", () => {
     const filters: Record<string, string> = {};
     const rows = () => {
       if (table === "studio") {
-        return filters.id === "studio-a"
+        return filters["id"] === "studio-a"
           ? [{ name: "Sunny Keys Studio", reply_to_email: "hello@sunnykeys.test" }]
           : [];
       }
       if (table === "guardian") {
         return fake.guardians.filter(
           (row) =>
-            row.studio_id === filters.studio_id &&
-            row.email.toLowerCase() === (filters.email ?? "").toLowerCase(),
+            row.studio_id === filters["studio_id"] &&
+            row.email.toLowerCase() === (filters["email"] ?? "").toLowerCase(),
         );
       }
       if (table === "studio_member") {
-        return fake.owners.filter((row) => row.studio_id === filters.studio_id);
+        return fake.owners.filter((row) => row.studio_id === filters["studio_id"]);
       }
       return [];
     };
