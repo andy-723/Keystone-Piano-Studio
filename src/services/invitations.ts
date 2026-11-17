@@ -3,6 +3,7 @@ import { bytesToHex, randomTokenBytes, sha256Hex } from "@/lib/onboarding/crypto
 import { allStudentsAdult, buildSteps, goalLabel } from "@/lib/onboarding/steps";
 import { families, students, studio, teacher } from "@/mocks/data";
 import { studioToday } from "@/lib/studio-clock";
+import { studioReplyTo } from "@/lib/studio-mail";
 import {
   invitationState,
   type AuthAuditEvent,
@@ -191,7 +192,7 @@ async function sendInviteEmail(
       guardianFirstName: guardianFirstName(guardian?.name ?? "there"),
       childNames: childNamesLabel(invite.studentIds),
       studioName: studio.name,
-      replyTo: studio.email ?? "studio@keystone.example",
+      replyTo: studioReplyTo(studio.email),
       joinUrl: `${env.appUrl}/join/${token}`,
       expiresAt: invite.expiresAt,
       logoUrl: null,
@@ -481,7 +482,7 @@ export async function loadJoinSession(
       state: "unavailable",
       message: `This link has expired. Ask ${teacher.name} to send a new one.`,
       teacherName: teacher.name,
-      replyToEmail: studio.email ?? "studio@keystone.example",
+      replyToEmail: studioReplyTo(studio.email),
     };
   }
   if (invite.status === "completed") {
@@ -515,7 +516,7 @@ export async function loadJoinSession(
     language: invite.language,
     teacherName: teacher.name,
     studioName: studio.name,
-    replyToEmail: studio.email ?? "studio@keystone.example",
+    replyToEmail: studioReplyTo(studio.email),
     students: selected.map((s) => ({
       id: s.id,
       firstName: s.firstName,

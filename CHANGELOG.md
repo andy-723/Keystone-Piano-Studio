@@ -6,6 +6,7 @@ GitHub Release with the same text. See `docs/release-process.md`.
 
 ## Unreleased
 
+- Overdue reminders sent from Pro CFO now link to the invoice in the family portal (instead of a placeholder pay link), invite emails reply to the studio or support@keystonemusichq.com (never a keystone.example address), and the default support address is support@keystonemusichq.com. Replaces PR #71. No migration.
 - Sign-in page has a new Nutcracker street-parade wallpaper. The same looping colour reveal and Für Elise music play over it; the sign-in card now sits on the left so the pianist stays in view. The page also loads lighter (the old 360 KB drawing is gone; phones fetch about 170 KB of images). No migration.
 - Families of real studios now get invoice emails (with the PDF), payment receipts, credit notes and reminder/late fee/pause notices. They are sent by the server through Resend as "<Studio name> via Keystone Music HQ" from noreply@keystonemusichq.com, with replies going to the studio. Previously these went to a test outbox and never arrived. If an email fails, the invoice still stands and shows "email failed" in its history. No migration.
 - Studio and setup guided tours (the 11-step modal over Today) now follow the same English / 中文 / Tiếng Việt browser preference as the shell. No migration.
