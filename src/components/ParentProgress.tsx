@@ -35,7 +35,7 @@ const COPY: Record<Lang, { intro: string; personal: string; ready: string; goal:
     goal: (grade, term) => `目标：${term}前完成 ${grade}`,
     done: (done, total) => `已完成 ${done}/${total}`,
     benchmark: (level) => `${level} 通常的样子`,
-    benchmarkNote: "Keystone 基准是通用指南（英文），不是考试机构的大纲。曲目和进度由老师决定。",
+    benchmarkNote: "Keystone 基准是通用指南，不是考试机构的大纲。曲目和进度由老师决定。",
     practice: (min, max) => `建议每天练习 ${min === max ? min : `${min}–${max}`} 分钟`,
   },
   vi: {
@@ -45,7 +45,7 @@ const COPY: Record<Lang, { intro: string; personal: string; ready: string; goal:
     goal: (grade, term) => `Mục tiêu: ${grade} trước ${term}`,
     done: (done, total) => `Xong ${done}/${total}`,
     benchmark: (level) => `${level} thường trông như thế nào`,
-    benchmarkNote: "Chuẩn Keystone là hướng dẫn chung (tiếng Anh), không phải đề cương của hội đồng thi. Giáo viên chọn bài và tốc độ.",
+    benchmarkNote: "Chuẩn Keystone là hướng dẫn chung, không phải đề cương của hội đồng thi. Giáo viên chọn bài và tốc độ.",
     practice: (min, max) => `Gợi ý luyện tập: ${min === max ? min : `${min}–${max}`} phút mỗi ngày`,
   },
 };

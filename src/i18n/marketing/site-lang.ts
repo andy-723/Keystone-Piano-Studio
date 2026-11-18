@@ -1,6 +1,8 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { zhSite } from "./zh-CN";
 import { viSite } from "./vi";
+import { appDate, appPattern, appText } from "@/i18n/app";
+import { tSetup } from "@/i18n/setup-wizard";
 
 /**
  * Shared UI language for the public site and the signed-in app (studio, parent, admin, demo).
@@ -16,7 +18,10 @@ export const SITE_LANGS: { value: SiteLang; label: string; short: string }[] = [
 ];
 export const SITE_LANG_STORAGE_KEY = "keystone.siteLang";
 const KEY = SITE_LANG_STORAGE_KEY;
-const DICTS: Record<Exclude<SiteLang, "en">, Record<string, string>> = { "zh-CN": zhSite, vi: viSite };
+const DICTS: Record<Exclude<SiteLang, "en">, Record<string, string>> = {
+  "zh-CN": zhSite,
+  vi: viSite,
+};
 
 let current: SiteLang = "en";
 const listeners = new Set<() => void>();
@@ -93,32 +98,94 @@ export function siteText(lang: SiteLang, english: string): string {
   return DICTS[lang][english] ?? english;
 }
 
+/**
+ * Whole-UI lookup used by the DOM translator: marketing copy first, then signed-in app copy
+ * (`src/i18n/app/`), then the setup-wizard dictionary. Falls back to `{placeholder}` patterns
+ * for strings with numbers, names or dates in them. Returns null when nothing matches.
+ */
+export function uiText(lang: SiteLang, english: string): string | null {
+  if (lang === "en") return english;
+  const direct = DICTS[lang][english] ?? appText(lang, english);
+  if (direct != null) return direct;
+  const wizard = tSetup(lang, english);
+  if (wizard !== english) return wizard;
+  const date = appDate(lang, english);
+  if (date != null) return date;
+  const pattern = appPattern(lang, english, (part) => {
+    const exact = DICTS[lang][part] ?? appText(lang, part);
+    if (exact != null) return exact;
+    return appDate(lang, part) ?? tSetup(lang, part);
+  });
+  if (pattern != null) return pattern;
+  // "Mon 12 Apr · Mon 19 Apr" or "All families · 22 families · Seen by 14 of 22 families"
+  if (english.includes(" · ")) {
+    const parts = english.split(" · ");
+    const out = parts.map((part) => uiText(lang, part) ?? part);
+    if (out.some((part, i) => part !== parts[i])) return out.join(" · ");
+  }
+  return null;
+}
+
 const ATTRS = ["aria-label", "alt", "placeholder", "title"] as const;
 const origText = new WeakMap<Node, string>();
 const lastText = new WeakMap<Node, string>();
 const origAttr = new WeakMap<Element, Record<string, string>>();
+/** User content, form values and legal text are never translated. */
+const SKIP_TEXT = "script,style,textarea,[contenteditable=true],[data-no-translate]";
+/** Placeholders and labels on inputs are translated; only opted-out areas are skipped. */
+const SKIP_ATTR = "script,style,[data-no-translate]";
 
 function swap(value: string, lang: SiteLang) {
   const key = value.replace(/\s+/g, " ").trim();
   if (!key) return value;
-  const out = siteText(lang, key);
-  if (out === key) return value;
+  const out = uiText(lang, key);
+  if (out == null || out === key) return value;
   const lead = value.match(/^\s*/)?.[0] ?? "";
   const trail = value.match(/\s*$/)?.[0] ?? "";
   return lead + out + trail;
 }
-function skip(el: Element | null) {
-  return !el || !!el.closest("script,style,[data-no-translate]");
+function skip(el: Element | null, selector = SKIP_TEXT) {
+  return !el || !!el.closest(selector);
 }
-function translateText(n: Text, lang: SiteLang) {
-  if (skip(n.parentElement)) return;
+function original(n: Text) {
   if (!origText.has(n) || n.nodeValue !== lastText.get(n)) origText.set(n, n.nodeValue ?? "");
-  const next = swap(origText.get(n) ?? "", lang);
+  return origText.get(n) ?? "";
+}
+function write(n: Text, next: string) {
   lastText.set(n, next);
   if (n.nodeValue !== next) n.nodeValue = next;
 }
+/**
+ * React renders `Lessons in Term {term}` as two text nodes. When every child of an element is a
+ * text node, translate the joined sentence first (so word order can change), then fall back to
+ * each piece on its own.
+ */
+function translateGroup(parent: Element, lang: SiteLang): boolean {
+  const kids = parent.childNodes;
+  if (kids.length < 2) return false;
+  for (const k of kids) if (k.nodeType !== Node.TEXT_NODE) return false;
+  const texts = [...kids] as Text[];
+  const origs = texts.map(original);
+  const joined = origs.join("");
+  const key = joined.replace(/\s+/g, " ").trim();
+  const out = key ? uiText(lang, key) : null;
+  if (out == null || out === key) {
+    texts.forEach((t, i) => write(t, swap(origs[i] ?? "", lang)));
+    return true;
+  }
+  const lead = joined.match(/^\s*/)?.[0] ?? "";
+  const trail = joined.match(/\s*$/)?.[0] ?? "";
+  texts.forEach((t, i) => write(t, i === 0 ? lead + out + trail : ""));
+  return true;
+}
+function translateText(n: Text, lang: SiteLang) {
+  const parent = n.parentElement;
+  if (skip(parent)) return;
+  if (parent && translateGroup(parent, lang)) return;
+  write(n, swap(original(n), lang));
+}
 function translateEl(el: Element, lang: SiteLang) {
-  if (skip(el)) return;
+  if (skip(el, SKIP_ATTR)) return;
   let store = origAttr.get(el);
   for (const a of ATTRS) {
     const v = el.getAttribute(a);
@@ -146,13 +213,17 @@ function walk(root: Node, lang: SiteLang) {
   }
 }
 
-/** Mounted once per public page (by the marketing navbar). */
+/**
+ * Mounted once at the app root: translates the public site and the signed-in app (studio,
+ * family portal, admin, login, wizards) from English-keyed dictionaries after mount.
+ * English stays the source of truth in code and on the server, so there is no hydration mismatch.
+ */
 export function useSiteTranslation() {
   const lang = useSiteLang();
   useEffect(() => {
     const fromUrl = new URLSearchParams(window.location.search).get("lang");
     const saved = readStoredSiteLang();
-    const initial = isLang(fromUrl) ? fromUrl : saved ?? "en";
+    const initial = isLang(fromUrl) ? fromUrl : (saved ?? "en");
     if (initial !== current) setSiteLang(initial);
   }, []);
   useEffect(() => {
@@ -183,6 +254,8 @@ export function useSiteTranslation() {
     });
     return () => {
       obs.disconnect();
+      // Restore English when switching back so React's own text is shown again.
+      if (lang !== "en") walk(document.body, "en");
       document.documentElement.lang = "en-AU";
     };
   }, [lang]);
