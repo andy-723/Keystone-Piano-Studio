@@ -232,7 +232,9 @@ export function useSiteTranslation() {
     const run = (nodes: Iterable<Node>) => {
       if (busy) return;
       busy = true;
-      for (const n of nodes) walk(n, lang);
+      // The Keystone admin console is staff-only and stays English.
+      const effective = window.location.pathname.startsWith("/admin") ? "en" : lang;
+      for (const n of nodes) walk(n, effective);
       busy = false;
     };
     run([document.body]);
