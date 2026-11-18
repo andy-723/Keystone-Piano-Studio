@@ -283,6 +283,7 @@ export const createStudioFn = createServerFn({ method: "POST" })
     // Supabase only sends its invite email to a brand-new account. When the owner already
     // has one (for example a teacher who is also a parent, or a re-used test email), nothing
     // else would arrive, even though the welcome email promises a separate sign-in email.
+    let signInLinkError: string | null = null;
     if (existing) {
       try {
         await sendSignInLink(supabase, {
@@ -292,11 +293,8 @@ export const createStudioFn = createServerFn({ method: "POST" })
           studioName: name,
         });
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Sign-in link failed";
-        console.error("[platform] owner sign-in link failed", message);
-        welcomeEmailError = welcomeEmailError
-          ? `${welcomeEmailError}; sign-in link: ${message}`
-          : `sign-in link: ${message}. Use Send sign-in link under Studios.`;
+        signInLinkError = err instanceof Error ? err.message : "Sign-in link failed";
+        console.error("[platform] owner sign-in link failed", signInLinkError);
       }
     }
 
@@ -304,6 +302,7 @@ export const createStudioFn = createServerFn({ method: "POST" })
       studioId: resolvedStudioId,
       inviteSentTo: maskEmail(ownerEmail),
       welcomeEmailError,
+      signInLinkError,
     };
   });
 

@@ -416,9 +416,15 @@ function NewStudioTab({ token, onError }: { token: string; onError: (m: string |
           userAgent: navigator.userAgent,
         },
       });
+      const problems = [
+        result.welcomeEmailError ? `the welcome email failed (${result.welcomeEmailError})` : null,
+        result.signInLinkError
+          ? `the sign-in link email failed (${result.signInLinkError}); use Send sign-in link under the owner in Studios`
+          : null,
+      ].filter(Boolean);
       setDone(
-        result.welcomeEmailError
-          ? `Studio created and sign-in invite sent to ${result.inviteSentTo}, but the welcome email failed: ${result.welcomeEmailError}. Don't create the studio again.`
+        problems.length
+          ? `Studio created for ${result.inviteSentTo}, but ${problems.join(" and ")}. Don't create the studio again.`
           : `Invite sent to ${result.inviteSentTo}`,
       );
       onError(null);
