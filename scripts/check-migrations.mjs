@@ -13,7 +13,7 @@
 //  4. A new migration is numbered above everything on main.
 //  5. Destructive statements (drop/rename/type change) need a "-- release: contract" header line,
 //     so they only ship after the code that stopped using the old shape is live.
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -66,8 +66,8 @@ for (const file of files) {
 
 const baseRef = process.env.BASE_REF;
 if (baseRef) {
-  const diff = git(`diff --name-status ${baseRef}...HEAD -- ${MIGRATIONS}`);
-  const onMain = git(`ls-tree --name-only ${baseRef} ${MIGRATIONS}/`)
+  const diff = git(["diff", "--name-status", `${baseRef}...HEAD`, "--", MIGRATIONS]);
+  const onMain = git(["ls-tree", "--name-only", baseRef, `${MIGRATIONS}/`])
     .split("\n")
     .filter(Boolean)
     .map((p) => p.split("/").pop())
@@ -101,8 +101,9 @@ console.log(
   `Migration checks passed (${files.length} migrations${baseRef ? `, compared with ${baseRef}` : ""}).`,
 );
 
+// Argument array, no shell: a branch name can never be read as a shell command.
 function git(args) {
-  return execSync(`git ${args}`, { encoding: "utf8" }).trim();
+  return execFileSync("git", args, { encoding: "utf8" }).trim();
 }
 
 function stripComments(sql) {

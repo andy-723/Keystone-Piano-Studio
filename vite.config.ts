@@ -6,6 +6,17 @@ import tsConfigPaths from "vite-tsconfig-paths";
 import { nitro } from "nitro/vite";
 import { devtools } from "@tanstack/devtools-vite";
 
+// Sent on every page and API response (scan 18 Nov 2026). frame-ancestors / X-Frame-Options stop
+// other sites framing the sign-in and MFA pages (clickjacking). A full script CSP is a later step:
+// Turnstile, Google Fonts, Supabase and SSR hydration scripts all need allow-listing first.
+const securityHeaders = {
+  "Content-Security-Policy": "frame-ancestors 'none'; base-uri 'self'; object-src 'none'",
+  "X-Frame-Options": "DENY",
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Strict-Transport-Security": "max-age=63072000; includeSubDomains",
+};
+
 export default defineConfig({
   resolve: {
     dedupe: [
@@ -28,13 +39,18 @@ export default defineConfig({
     nitro(
       process.env["VERCEL"]
         ? {
-      preset: "vercel",
-      // Run server functions in Sydney, next to Supabase (ap-southeast-2). Vercel's default
-      // region is Washington DC (iad1), which adds ~200 ms to every database round trip.
-      vercel: { functions: { regions: ["syd1"] } },
+            preset: "vercel",
+            routeRules: { "/**": { headers: securityHeaders } },
+            // Run server functions in Sydney, next to Supabase (ap-southeast-2). Vercel's default
+            // region is Washington DC (iad1), which adds ~200 ms to every database round trip.
+            vercel: { functions: { regions: ["syd1"] } },
           }
         : // Lovable builds (no VERCEL env) must write the deployable app to dist/.
-          { preset: "cloudflare-module", output: { dir: "dist" } },
+          {
+            preset: "cloudflare-module",
+            output: { dir: "dist" },
+            routeRules: { "/**": { headers: securityHeaders } },
+          },
     ),
   ],
 });
