@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { FocusLayout } from "@/components/onboarding/FocusLayout";
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import { visibleOnboardingSteps, type StudioTermsOnboardingStep } from "@/lib/studio-terms-onboarding-steps";
 import type { TermsOptionalSwitch } from "@/mocks/legal-template-au";
 import type { TermsScope } from "@/mocks/terms";
@@ -64,6 +65,8 @@ export function StudioTermsOnboarding({
   const [switchValue, setSwitchValue] = useState(false);
   const [safety, setSafety] = useState({ state: "VIC", type: "Working with Children Check", number: "", expiry: "" });
   const headingRef = useRef<HTMLHeadingElement>(null);
+  // State/territory read from a picked address, saved with it so the next question is prefilled.
+  const pickedState = useRef<string | null>(null);
 
   const switches = draftQuery.data?.switches ?? {};
   const steps = useMemo(() => visibleOnboardingSteps(switches, plan ?? draftQuery.data?.studio?.plan), [switches, plan, draftQuery.data?.studio?.plan]);
@@ -113,6 +116,13 @@ export function StudioTermsOnboarding({
       };
     }
     const numeric = step.kind === "number" ? Number(value) : value;
+    if (step.kind === "address") {
+      const state = pickedState.current;
+      return {
+        studio: { address: value.trim(), ...(state ? { state } : {}) } as NonNullable<Parameters<typeof saveStudioTermsDraft>[1]["studio"]>,
+        onboardingStep: step.id,
+      };
+    }
     if (step.field.startsWith("billing.")) {
       const path = step.field.slice("billing.".length);
       const billing = { ...(draftQuery.data.studio.billing ?? {}) } as Record<string, unknown>;
@@ -190,6 +200,21 @@ export function StudioTermsOnboarding({
         {step.kind === "text" && (
           <Input className={fieldClass} value={value} onChange={(event) => setValue(event.target.value)} autoFocus />
         )}
+        {step.kind === "address" && (
+          <AddressAutocomplete
+            className={fieldClass}
+            value={value}
+            autoFocus
+            placeholder={tSetup(lang, "Start typing your street address or suburb")}
+            onChange={(next) => {
+              pickedState.current = null;
+              setValue(next);
+            }}
+            onPick={(details) => {
+              pickedState.current = details.state || null;
+            }}
+          />
+        )}
         {step.kind === "number" && (
           <Input type="number" className={fieldClass} value={value} onChange={(event) => setValue(event.target.value)} autoFocus />
         )}
@@ -199,6 +224,7 @@ export function StudioTermsOnboarding({
         {step.kind === "select" && (
           <select className="mt-3 min-h-14 w-full rounded-md border border-input bg-card px-3 text-lg" value={value} onChange={(event) => setValue(event.target.value)} autoFocus>
             <option value="">{tSetup(lang, "Choose")}</option>
+            {value && !(step.options ?? []).some((option) => option.value === value) && <option value={value}>{value}</option>}
             {(step.options ?? []).map((option) => (
               <option key={option.value} value={option.value}>{tSetup(lang, option.label)}</option>
             ))}

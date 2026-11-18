@@ -3,6 +3,7 @@ import type { TermsOptionalSwitch } from "@/mocks/legal-template-au";
 
 export type OnboardingFieldKind =
   | "text"
+  | "address"
   | "select"
   | "number"
   | "switch"
@@ -28,11 +29,18 @@ export interface StudioTermsOnboardingStep {
   when?: { switch?: TermsOptionalSwitch; pro?: boolean };
 }
 
+/** Values are the words that fill clause 5.3: "tuned ... at least {{policies.tuningFrequency}}". */
+export const TUNING_FREQUENCY_OPTIONS = [
+  { value: "once a year", label: "Once a year (recommended)" },
+  { value: "twice a year", label: "Twice a year" },
+  { value: "every three months", label: "Every three months" },
+];
+
 export const STUDIO_TERMS_ONBOARDING_STEPS: StudioTermsOnboardingStep[] = [
   { id: "legalName", title: "What is your studio's legal name?", help: "The name on your ABN registration.", kind: "text", field: "legalName", required: true },
   { id: "tradingName", title: "What trading name do families see?", help: "Often the same as your studio name.", kind: "text", field: "name", required: true },
   { id: "abn", title: "What is your ABN?", kind: "text", field: "abn", required: true },
-  { id: "address", title: "What is your studio address?", kind: "text", field: "address", required: true },
+  { id: "address", title: "What is your studio address?", help: "Start typing and pick your address or suburb from the list. You can also type it in full.", kind: "address", field: "address", required: true },
   {
     id: "state",
     title: "Which Australian state or territory?",
@@ -43,7 +51,6 @@ export const STUDIO_TERMS_ONBOARDING_STEPS: StudioTermsOnboardingStep[] = [
   },
   { id: "email", title: "Studio email for families?", kind: "text", field: "email", required: true },
   { id: "phone", title: "Studio phone number?", kind: "text", field: "phone", required: true },
-  { id: "privacyEmail", title: "Privacy contact email?", help: "Where families send privacy requests.", kind: "text", field: "privacyEmail", required: true },
   {
     id: "entityType",
     title: "How is the studio structured?",
@@ -119,17 +126,26 @@ export const STUDIO_TERMS_ONBOARDING_STEPS: StudioTermsOnboardingStep[] = [
   { id: "onlinePlatform", title: "Online lesson platform?", help: "e.g. Zoom, Google Meet", kind: "text", field: "policies.onlinePlatform", required: true },
   {
     id: "publicHolidays",
-    title: "Public holiday lesson rule?",
+    title: "What happens to lessons on public holidays?",
+    help: "This uses the public holidays of the state or territory you chose earlier.",
     kind: "select",
     field: "policies.publicHolidays",
     required: true,
     options: [
-      { value: "skip", label: "Skip with no charge" },
-      { value: "make_up", label: "Offer a make-up" },
-      { value: "charge", label: "Still charge as scheduled" },
+      { value: "skip", label: "No lesson and no charge" },
+      { value: "make_up", label: "No lesson, and a make-up lesson is offered" },
+      { value: "charge", label: "Lessons go ahead as normal" },
     ],
   },
-  { id: "tuningFrequency", title: "How often should acoustic pianos be tuned?", kind: "text", field: "policies.tuningFrequency", required: true },
+  {
+    id: "tuningFrequency",
+    title: "How often should families tune an acoustic piano?",
+    help: "Most piano technicians recommend at least once a year. Families see this as a recommendation.",
+    kind: "select",
+    field: "policies.tuningFrequency",
+    required: true,
+    options: TUNING_FREQUENCY_OPTIONS,
+  },
   { id: "inactiveRetentionMonths", title: "Months to keep personal info after lessons stop?", kind: "number", field: "policies.inactiveRetentionMonths", required: true },
   {
     id: "asyncLessonPolicy",
