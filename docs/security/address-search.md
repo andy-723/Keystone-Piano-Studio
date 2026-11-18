@@ -13,7 +13,7 @@ sets the State question from it.
 - Each typing session uses one session token. Google bills a session that ends in a Place Details
   call as that Details call, so keystrokes are not billed one by one. Check current prices and free
   allowances at https://developers.google.com/maps/billing-and-pricing/pricing before launch.
-- 60 lookups per minute per IP, in memory, to protect the quota.
+- Live site: only signed-in users (verified Supabase access token) can look up addresses. Plus 60 lookups per minute per IP, in memory per server instance. The Google daily quota is the hard cap.
 - No key, an error, or a quota hit: the field behaves as a plain text box. Owners can always type.
 - The list shows "Address suggestions by Google" (Google's attribution rule when no Google map is shown).
 

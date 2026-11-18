@@ -1,11 +1,20 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
+import { getAuthClient } from "@/lib/auth-client";
 import {
   addressDetailsFn,
   searchAddressFn,
   type AddressDetails,
   type AddressSuggestion,
 } from "@/server/address-search";
+
+async function currentAccessToken(): Promise<string> {
+  try {
+    return (await getAuthClient()?.auth.getSession())?.data.session?.access_token ?? "";
+  } catch {
+    return "";
+  }
+}
 
 function newSessionToken(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID();
@@ -55,7 +64,10 @@ export function AddressAutocomplete({
     }
     const request = ++latest.current;
     const timer = setTimeout(() => {
-      searchAddressFn({ data: { query, sessionToken: session.current } })
+      currentAccessToken()
+        .then((accessToken) =>
+          searchAddressFn({ data: { query, sessionToken: session.current, accessToken } }),
+        )
         .then((result) => {
           if (request !== latest.current) return;
           if (!result.enabled) {
@@ -80,7 +92,11 @@ export function AddressAutocomplete({
     onChange(suggestion.label);
     try {
       const details = await addressDetailsFn({
-        data: { placeId: suggestion.placeId, sessionToken: session.current },
+        data: {
+          placeId: suggestion.placeId,
+          sessionToken: session.current,
+          accessToken: await currentAccessToken(),
+        },
       });
       if (details) {
         onChange(details.formatted);

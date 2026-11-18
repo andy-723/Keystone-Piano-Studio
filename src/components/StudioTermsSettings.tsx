@@ -184,7 +184,7 @@ export function StudioTermsSettings({ scope = "demo" }: { scope?: TermsScope }) 
         </label>
         <label className="block font-semibold">
           State
-          <select className="mt-2 min-h-12 w-full rounded-md border border-input bg-card px-3" defaultValue={studioForm.state ?? "VIC"} onChange={(event) => save.mutate({ studio: { state: event.target.value } })}>
+          <select key={studioForm.state ?? "VIC"} className="mt-2 min-h-12 w-full rounded-md border border-input bg-card px-3" defaultValue={studioForm.state ?? "VIC"} onChange={(event) => save.mutate({ studio: { state: event.target.value } })}>
             {STUDIO_STATES.map((state) => <option key={state}>{state}</option>)}
           </select>
         </label>

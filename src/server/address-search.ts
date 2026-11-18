@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestIP } from "@tanstack/react-start/server";
+import { isMockOnboarding } from "./env";
+import { verifyAccessToken } from "./session";
 
 /**
  * Australian address autocomplete for the studio address question.
@@ -48,7 +50,12 @@ export function allowAddressLookup(ip: string, now = Date.now()): boolean {
   }
   recent.push(now);
   buckets.set(ip, recent);
-  if (buckets.size > 5000) buckets.clear();
+  if (buckets.size > 5000) {
+    // Drop only IPs with nothing in the last minute, so an active IP never gets a fresh window.
+    for (const [key, times] of buckets) {
+      if (!times.some((at) => now - at < 60_000)) buckets.delete(key);
+    }
+  }
   return true;
 }
 
@@ -156,12 +163,26 @@ export async function addressDetails(
   return parseAddressComponents(data.formattedAddress ?? "", data.addressComponents ?? []);
 }
 
+/** Live site: only signed-in users may spend the Places quota. Mock/dev builds skip the check. */
+async function signedIn(accessToken: unknown): Promise<boolean> {
+  if (isMockOnboarding()) return true;
+  if (typeof accessToken !== "string" || !accessToken) return false;
+  try {
+    await verifyAccessToken(accessToken);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export const searchAddressFn = createServerFn({ method: "POST" })
-  .validator((data: { query: string; sessionToken?: string }) => data)
+  .validator((data: { query: string; sessionToken?: string; accessToken?: string }) => data)
   .handler(async ({ data }) => {
     if (!placesKey()) return { enabled: false, suggestions: [] as AddressSuggestion[] };
     if (!allowAddressLookup(requestIp()))
       return { enabled: true, suggestions: [] as AddressSuggestion[] };
+    if (!(await signedIn(data.accessToken)))
+      return { enabled: false, suggestions: [] as AddressSuggestion[] };
     try {
       return await searchAddresses(String(data.query ?? ""), cleanToken(data.sessionToken));
     } catch {
@@ -170,9 +191,10 @@ export const searchAddressFn = createServerFn({ method: "POST" })
   });
 
 export const addressDetailsFn = createServerFn({ method: "POST" })
-  .validator((data: { placeId: string; sessionToken?: string }) => data)
+  .validator((data: { placeId: string; sessionToken?: string; accessToken?: string }) => data)
   .handler(async ({ data }) => {
     if (!allowAddressLookup(requestIp())) return null;
+    if (!(await signedIn(data.accessToken))) return null;
     try {
       return await addressDetails(String(data.placeId ?? ""), cleanToken(data.sessionToken));
     } catch {
