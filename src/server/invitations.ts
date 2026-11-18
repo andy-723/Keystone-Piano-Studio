@@ -6,7 +6,6 @@ import {
   loadJoinSession,
   requestFamilyMagicLink,
   resendInvitation,
-  runInviteReminders,
   submitJoinEnrolment,
   unlockJoinSession,
 } from "@/services/invitations";
@@ -603,6 +602,16 @@ export const createInvitationFn = createServerFn({ method: "POST" })
     }) => data,
   )
   .handler(({ data }) => {
+    // A user id or MFA level sent by the browser is not proof of anything. Outside the demo
+    // (mock) backend this function refuses; live invitations go through enrolAndInviteFn,
+    // which verifies the signed-in session.
+    if (!isMockOnboarding()) {
+      throw new ProblemError(
+        400,
+        "Use enrol invite",
+        "Create family invitations through enrolAndInviteFn in live mode.",
+      );
+    }
     if (data.actorUserId) {
       return createInvitationPrivileged({
         actorUserId: data.actorUserId,
@@ -636,6 +645,11 @@ export const resendInvitationFn = createServerFn({ method: "POST" })
         aal: session.aal,
         teacherName: data.teacherName,
       });
+    }
+    // Without a verified session, only the demo (mock) backend may resend. A user id sent by
+    // the browser is never trusted on the live site.
+    if (!isMockOnboarding()) {
+      throw new ProblemError(401, "Sign in again", "Sign in again to resend the invite email.");
     }
     if (data.actorUserId) {
       return resendInvitationPrivileged({
@@ -684,6 +698,3 @@ export const requestFamilyMagicLinkFn = createServerFn({ method: "POST" })
     return requestFamilyMagicLink(data);
   });
 
-export const runInviteRemindersFn = createServerFn({ method: "POST" }).handler(() =>
-  runInviteReminders(),
-);

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getServerEnv } from "@/server/env";
+import { isCronAuthorized } from "@/server/cron-auth";
 import { runNotifications } from "@/server/notifications";
 
 /**
@@ -8,9 +8,7 @@ import { runNotifications } from "@/server/notifications";
  * See docs/security/notifications.md.
  */
 async function handle(request: Request) {
-  const env = getServerEnv();
-  const auth = request.headers.get("authorization") ?? "";
-  if (!env.cronSecret || auth !== `Bearer ${env.cronSecret}`) {
+  if (!isCronAuthorized(request)) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
   const result = await runNotifications();

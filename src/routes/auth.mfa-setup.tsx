@@ -130,15 +130,14 @@ function MfaSetupPage() {
             ))}
           </ul>
         </div>
-        {qrIsSvg && qr && (
-          <div
-            className="mt-6 flex justify-center"
-            // Supabase TOTP QR SVG from MFA enroll — trusted vendor payload.
-            dangerouslySetInnerHTML={{ __html: qr }}
+        {qr && (
+          // Shown as an image, never injected as HTML: an <img> cannot run script, even if
+          // the SVG from Supabase MFA enroll were ever tampered with.
+          <img
+            src={qrIsSvg ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(qr)}` : qr}
+            alt="Authenticator QR code"
+            className="mx-auto mt-6 h-48 w-48"
           />
-        )}
-        {qr && !qrIsSvg && (
-          <img src={qr} alt="Authenticator QR code" className="mx-auto mt-6 h-48 w-48" />
         )}
         {secret && (
           <p className="mt-4 break-all rounded-[10px] bg-[#F5EBD6] px-3 py-2 font-mono text-sm">
