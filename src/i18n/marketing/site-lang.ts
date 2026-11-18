@@ -227,13 +227,14 @@ export function useSiteTranslation() {
     if (initial !== current) setSiteLang(initial);
   }, []);
   useEffect(() => {
-    document.documentElement.lang = lang === "en" ? "en-AU" : lang;
     let busy = false;
     const run = (nodes: Iterable<Node>) => {
       if (busy) return;
       busy = true;
       // The Keystone admin console is staff-only and stays English.
       const effective = window.location.pathname.startsWith("/admin") ? "en" : lang;
+      const htmlLang = effective === "en" ? "en-AU" : effective;
+      if (document.documentElement.lang !== htmlLang) document.documentElement.lang = htmlLang;
       for (const n of nodes) walk(n, effective);
       busy = false;
     };
