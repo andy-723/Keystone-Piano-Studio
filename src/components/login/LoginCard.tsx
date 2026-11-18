@@ -166,7 +166,7 @@ export function LoginCard({ nextPath, siteKey = "", sessionTimedOut = false }: P
           </h1>
           <p className="mt-2 text-[15px] leading-normal text-[#5A4F43]" aria-live="polite">
             If there is a Keystone Music HQ account for {maskEmail(sentTo)}, we sent a sign-in link.
-            Open it on this device.
+            Open it on this device. If you ask for another link, only the newest one works.
           </p>
         </div>
         <button type="button" className={btnSecondary} onClick={() => setSentTo(null)}>

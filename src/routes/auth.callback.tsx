@@ -2,7 +2,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { getAuthClient, isLiveAuthConfigured } from "@/lib/auth-client";
 import { parseEmailLink, safeNextPath } from "@/lib/auth-paths";
-import { CODE_SIGN_IN_FAILED, finishCodeSignIn } from "@/lib/oauth-callback";
+import {
+  CODE_SIGN_IN_FAILED,
+  emailLinkFailureMessage,
+  finishCodeSignIn,
+} from "@/lib/oauth-callback";
 import { rememberVerifiedAccess } from "@/lib/live-auth-cache";
 import {
   decideMfaGate,
@@ -76,12 +80,14 @@ function AuthCallbackPage() {
           type: emailLink.type,
         });
         if (error) {
-          console.error("[auth] email link verify failed", error);
+          console.error("[auth] email link verify failed", {
+            code: (error as { code?: string }).code,
+            status: (error as { status?: number }).status,
+            message: error.message,
+          });
           if (!cancelled) {
             setFailed(true);
-            setMessage(
-              "This sign-in link has expired or was already used. Request a new link from the sign-in page.",
-            );
+            setMessage(emailLinkFailureMessage(error));
           }
           return;
         }
