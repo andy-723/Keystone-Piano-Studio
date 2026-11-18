@@ -579,7 +579,7 @@ export function TaxLitePanel({
               {pack.kmEntries.map((entry) => (
                 <li key={entry.id} className="flex flex-wrap justify-between gap-2 py-2 text-base">
                   <span className="text-[#5A4F43]">
-                    {formatNumericDate(entry.date)} · {entry.purpose}
+                    {formatNumericDate(entry.date)} · <span data-no-translate>{entry.purpose}</span>
                   </span>
                   <span className="font-semibold text-[#15100D]">{entry.kilometres} km</span>
                 </li>
