@@ -142,4 +142,37 @@ export const extraStrings: AppStrings = {
     "输入问题，例如：如何重新发送邀请",
     "Nhập câu hỏi, ví dụ: làm sao gửi lại lời mời",
   ],
+
+  // Studio terms settings: address search, public holidays, tuning, clause editor (PR #89)
+  "Address suggestions by Google": ["地址建议由 Google 提供", "Gợi ý địa chỉ do Google cung cấp"],
+  "Privacy email (optional)": ["隐私联系邮箱（可选）", "Email về quyền riêng tư (không bắt buộc)"],
+  "Leave blank and privacy requests go to your studio email.": [
+    "留空则隐私请求将发送到您的工作室邮箱。",
+    "Để trống thì yêu cầu về quyền riêng tư sẽ gửi đến email của studio.",
+  ],
+  "Financial retention: {n} years": ["财务记录保存：{n} 年", "Lưu hồ sơ tài chính: {n} năm"],
+  years: ["年", "năm"],
+  "Public holidays": ["公共假期", "Ngày lễ"],
+  "Piano tuning (recommended to families)": [
+    "钢琴调音（向家庭建议）",
+    "Lên dây đàn piano (khuyến nghị cho gia đình)",
+  ],
+  "once a year": ["每年一次", "mỗi năm một lần"],
+  "twice a year": ["每年两次", "mỗi năm hai lần"],
+  "every three months": ["每三个月一次", "ba tháng một lần"],
+  "Words in [square brackets] are filled in from your answers:": [
+    "[方括号] 中的内容会根据您的回答自动填写：",
+    "Các từ trong [ngoặc vuông] được điền từ câu trả lời của bạn:",
+  ],
+  "not answered yet": ["尚未回答", "chưa trả lời"],
+  "To change an answer, use Review fill-in questions or the settings above. Keep the brackets so the clause updates when your answers change.":
+    [
+      "如需更改回答，请使用“检查填写问题”或上方的设置。请保留方括号，以便回答更改时条款自动更新。",
+      "Để đổi câu trả lời, hãy dùng Xem lại các câu hỏi cần điền hoặc phần cài đặt ở trên. Giữ nguyên dấu ngoặc để điều khoản tự cập nhật khi câu trả lời thay đổi.",
+    ],
+  "How families will read it": ["家庭看到的内容", "Gia đình sẽ đọc như sau"],
+  "You're responsible for edited wording. We recommend getting your own advice.": [
+    "您需对修改后的措辞负责。我们建议您自行咨询专业意见。",
+    "Bạn chịu trách nhiệm về câu chữ đã sửa. Chúng tôi khuyên bạn nên tự tham khảo ý kiến chuyên môn.",
+  ],
 };
