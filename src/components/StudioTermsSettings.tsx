@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { StudioTermsOnboarding } from "@/components/StudioTermsOnboarding";
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
+import { clauseFields, fromFriendlyClause, previewClause, toFriendlyClause } from "@/lib/clause-placeholders";
+import { TUNING_FREQUENCY_OPTIONS } from "@/lib/studio-terms-onboarding-steps";
 import { downloadDocumentPdf } from "@/lib/download-terms-pdf";
 import { STUDIO_STATES } from "@/mocks/setup";
 import type { TermsScope } from "@/mocks/terms";
@@ -38,6 +41,7 @@ export function StudioTermsSettings({ scope = "demo" }: { scope?: TermsScope }) 
   const [paperFamilyId, setPaperFamilyId] = useState("");
   const [paperFile, setPaperFile] = useState("");
   const [forceOnboarding, setForceOnboarding] = useState(false);
+  const [address, setAddress] = useState<string | null>(null);
 
   const refresh = () =>
     Promise.all([
@@ -130,10 +134,6 @@ export function StudioTermsSettings({ scope = "demo" }: { scope?: TermsScope }) 
           ["legalName", "Legal name"],
           ["name", "Trading name"],
           ["abn", "ABN"],
-          ["address", "Address"],
-          ["email", "Email"],
-          ["phone", "Phone"],
-          ["privacyEmail", "Privacy email"],
         ] as const).map(([key, label]) => (
           <label key={key} className="block font-semibold">
             {label}
@@ -144,6 +144,44 @@ export function StudioTermsSettings({ scope = "demo" }: { scope?: TermsScope }) 
             />
           </label>
         ))}
+        <div className="block font-semibold">
+          <label htmlFor="studio-terms-address">Address</label>
+          <div className="mt-2">
+            <AddressAutocomplete
+              id="studio-terms-address"
+              value={address ?? String(studioForm.address ?? "")}
+              onChange={setAddress}
+              onPick={(details) => save.mutate({ studio: { address: details.formatted, ...(details.state ? { state: details.state } : {}) } })}
+              onBlur={(next) => {
+                if (next !== String(studioForm.address ?? "")) save.mutate({ studio: { address: next } });
+              }}
+            />
+          </div>
+        </div>
+        {([
+          ["email", "Email"],
+          ["phone", "Phone"],
+        ] as const).map(([key, label]) => (
+          <label key={key} className="block font-semibold">
+            {label}
+            <Input
+              className="mt-2"
+              defaultValue={String(studioForm[key] ?? "")}
+              onBlur={(event) => save.mutate({ studio: { [key]: event.target.value } })}
+            />
+          </label>
+        ))}
+        <label className="block font-semibold">
+          Privacy email (optional)
+          <Input
+            className="mt-2"
+            type="email"
+            placeholder={String(studioForm.email ?? "")}
+            defaultValue={String(studioForm.privacyEmail ?? "")}
+            onBlur={(event) => save.mutate({ studio: { privacyEmail: event.target.value.trim() } })}
+          />
+          <span className="mt-1 block text-sm font-normal text-muted-foreground">Leave blank and privacy requests go to your studio email.</span>
+        </label>
         <label className="block font-semibold">
           State
           <select className="mt-2 min-h-12 w-full rounded-md border border-input bg-card px-3" defaultValue={studioForm.state ?? "VIC"} onChange={(event) => save.mutate({ studio: { state: event.target.value } })}>
@@ -192,7 +230,19 @@ export function StudioTermsSettings({ scope = "demo" }: { scope?: TermsScope }) 
         <label className="block font-semibold">Cancel notice (hours)<Input type="number" className="mt-2" defaultValue={studioForm.policies?.cancelNoticeHours ?? 24} onBlur={(event) => save.mutate({ studio: { policies: { ...studioForm.policies!, cancelNoticeHours: Number(event.target.value) } } })} /></label>
         <label className="block font-semibold">Make-up quota<Input type="number" className="mt-2" defaultValue={studioForm.policies?.makeUpQuota ?? 1} onBlur={(event) => save.mutate({ studio: { policies: { ...studioForm.policies!, makeUpQuota: Number(event.target.value) } } })} /></label>
         <label className="block font-semibold">Online platform<Input className="mt-2" defaultValue={studioForm.policies?.onlinePlatform ?? "Zoom"} onBlur={(event) => save.mutate({ studio: { policies: { ...studioForm.policies!, onlinePlatform: event.target.value } } })} /></label>
-        <label className="block font-semibold">Tuning frequency<Input className="mt-2" defaultValue={studioForm.policies?.tuningFrequency ?? "once a year"} onBlur={(event) => save.mutate({ studio: { policies: { ...studioForm.policies!, tuningFrequency: event.target.value } } })} /></label>
+        <label className="block font-semibold">Public holidays
+          <select className="mt-2 min-h-12 w-full rounded-md border border-input bg-card px-3" defaultValue={studioForm.policies?.publicHolidays ?? "skip"} onChange={(event) => save.mutate({ studio: { policies: { ...studioForm.policies!, publicHolidays: event.target.value as "skip" | "make_up" | "charge" } } })}>
+            <option value="skip">No lesson and no charge</option>
+            <option value="make_up">No lesson, and a make-up lesson is offered</option>
+            <option value="charge">Lessons go ahead as normal</option>
+          </select>
+        </label>
+        <label className="block font-semibold">Piano tuning (recommended to families)
+          <select className="mt-2 min-h-12 w-full rounded-md border border-input bg-card px-3" defaultValue={studioForm.policies?.tuningFrequency ?? "once a year"} onChange={(event) => save.mutate({ studio: { policies: { ...studioForm.policies!, tuningFrequency: event.target.value } } })}>
+            {studioForm.policies?.tuningFrequency && !TUNING_FREQUENCY_OPTIONS.some((option) => option.value === studioForm.policies?.tuningFrequency) && <option value={studioForm.policies.tuningFrequency}>{studioForm.policies.tuningFrequency}</option>}
+            {TUNING_FREQUENCY_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+          </select>
+        </label>
         <label className="block font-semibold">Inactive retention (months)<Input type="number" className="mt-2" defaultValue={studioForm.policies?.inactiveRetentionMonths ?? 24} onBlur={(event) => save.mutate({ studio: { policies: { ...studioForm.policies!, inactiveRetentionMonths: Number(event.target.value) } } })} /></label>
       </section>
 
@@ -226,15 +276,36 @@ export function StudioTermsSettings({ scope = "demo" }: { scope?: TermsScope }) 
           <div key={clause.id} className="border-b border-border py-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h3 className="text-lg font-semibold">Part {clause.part}: {clause.heading}{clause.edited && <span className="ml-2 text-base font-normal text-muted-foreground">Edited from Keystone template</span>}</h3>
-              <Button variant="outline" onClick={() => { setEditingClause(clause.id); setClauseText(clause.body); }}>Edit wording</Button>
+              <Button variant="outline" onClick={() => { setEditingClause(clause.id); setClauseText(toFriendlyClause(clause.body)); }}>Edit wording</Button>
             </div>
-            {editingClause === clause.id && (
-              <div className="mt-3 space-y-3">
-                <textarea className="min-h-32 w-full rounded-md border border-input bg-card px-3 py-2" value={clauseText} onChange={(event) => setClauseText(event.target.value)} />
-                <p className="text-base text-muted-foreground">You&apos;re responsible for edited wording. We recommend getting your own advice.</p>
-                <Button onClick={() => { save.mutate({ clauseEdits: { [clause.id]: clauseText } }); setEditingClause(null); }}>Save clause</Button>
-              </div>
-            )}
+            {editingClause === clause.id && (() => {
+              const body = fromFriendlyClause(clauseText);
+              const fields = clauseFields(body, draft.mergeValues);
+              return (
+                <div className="mt-3 space-y-3">
+                  <textarea className="min-h-32 w-full rounded-md border border-input bg-card px-3 py-2" value={clauseText} onChange={(event) => setClauseText(event.target.value)} />
+                  {fields.length > 0 && (
+                    <div className="rounded-md border border-border bg-muted/40 p-3 text-base">
+                      <p className="font-semibold">Words in [square brackets] are filled in from your answers:</p>
+                      <ul className="mt-2 space-y-1">
+                        {fields.map((field) => (
+                          <li key={field.path}>
+                            [{field.label}] = {field.value ? <span className="font-semibold">{field.value}</span> : <span className="text-destructive">not answered yet</span>}
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="mt-2 text-sm text-muted-foreground">To change an answer, use Review fill-in questions or the settings above. Keep the brackets so the clause updates when your answers change.</p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="font-semibold">How families will read it</p>
+                    <p className="mt-1 whitespace-pre-wrap rounded-md border border-border bg-card p-3 text-base">{previewClause(body, draft.mergeValues)}</p>
+                  </div>
+                  <p className="text-base text-muted-foreground">You&apos;re responsible for edited wording. We recommend getting your own advice.</p>
+                  <Button onClick={() => { save.mutate({ clauseEdits: { [clause.id]: body } }); setEditingClause(null); }}>Save clause</Button>
+                </div>
+              );
+            })()}
           </div>
         ))}
       </section>

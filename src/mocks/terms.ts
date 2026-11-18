@@ -158,12 +158,12 @@ export function childSafetyStatus(expiry: string | undefined, today = PROTOTYPE_
 function publicHolidayRule(policy: string | undefined): string {
   switch (policy) {
     case "make_up":
-      return "are offered as a make-up lesson";
+      return "are not held, and we offer a make-up lesson instead";
     case "charge":
-      return "are still charged as scheduled lessons";
+      return "go ahead as normal and are charged as usual";
     case "skip":
     default:
-      return "are skipped with no charge";
+      return "are not held and are not charged";
   }
 }
 
@@ -211,7 +211,8 @@ export function buildMergeValues(input: {
       state: input.state ?? "",
       email: input.email ?? "",
       phone: input.phone ?? "",
-      privacyEmail: input.privacyEmail ?? "",
+      // No separate privacy inbox needed: privacy requests go to the studio email unless one is set.
+      privacyEmail: input.privacyEmail?.trim() || input.email || "",
       entityTypeLabel: (input.entityType ?? "sole_trader").replaceAll("_", " "),
       asyncLessonPolicyLabel:
         input.asyncLessonPolicy === "counts_as_lesson"
