@@ -106,7 +106,7 @@ export function ParentProgress() {
                             ? `Giai đoạn ${item.stage}/5 · ${vietStages[item.stage]}`
                             : `Stage ${item.stage} of 5 · ${child.course.stageNames[item.stage]}`}
                     </p>
-                    {item.comment && <p className="mt-3 border-l-2 border-primary pl-3 text-base">{item.comment}</p>}
+                    {item.comment && <p data-no-translate className="mt-3 border-l-2 border-primary pl-3 text-base">{item.comment}</p>}
                   </div>
                 ))}
             </section>

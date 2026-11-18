@@ -547,7 +547,7 @@ export function TaxLitePanel({
                 {pack.homeStudio.adminSessions.map((session) => (
                   <li key={session.id} className="flex flex-wrap justify-between gap-2 py-2 text-base">
                     <span className="text-[#5A4F43]">
-                      {formatNumericDate(session.date)} · {session.note}
+                      {formatNumericDate(session.date)} · <span data-no-translate>{session.note}</span>
                     </span>
                     <span className="font-semibold text-[#15100D]">{session.hours} hrs</span>
                   </li>

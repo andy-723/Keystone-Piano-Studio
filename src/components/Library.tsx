@@ -156,7 +156,7 @@ export function Library({ scope = "demo" }: { scope?: ImportScope }) {
                 <p className="mt-2 capitalize text-muted-foreground">
                   {item.kind === "video_link" ? "Video link" : item.kind}
                 </p>
-                {item.body && <p className="mt-3 whitespace-pre-wrap">{item.body}</p>}
+                {item.body && <p data-no-translate className="mt-3 whitespace-pre-wrap">{item.body}</p>}
                 {item.url && (
                   <a
                     className="mt-3 block break-all text-primary underline"
@@ -178,7 +178,7 @@ export function Library({ scope = "demo" }: { scope?: ImportScope }) {
                   {item.steps.map((step, i) => (
                     <li key={i}>
                       {data.content.find((content) => content.id === step.contentItemId)?.title}
-                      {step.note && <p className="pl-5 text-muted-foreground">{step.note}</p>}
+                      {step.note && <p data-no-translate className="pl-5 text-muted-foreground">{step.note}</p>}
                     </li>
                   ))}
                 </ol>

@@ -194,7 +194,7 @@ export function ParentIntakes({ recordId }: { recordId?: string } = {}) {
               {entry.status === "active" && (
                 <div className="mt-5">
                   <h3 className="text-xl font-semibold">{t.assignment}</h3>
-                  <p className="mt-2 whitespace-pre-wrap">{entry.assignment?.body}</p>
+                  <p data-no-translate className="mt-2 whitespace-pre-wrap">{entry.assignment?.body}</p>
                   <p className="mt-2">
                     {t.practice}: {entry.practiceGoal} min/week
                   </p>

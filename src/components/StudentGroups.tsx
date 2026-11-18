@@ -150,7 +150,7 @@ export function StudentGroupsPage({ scope = "demo" }: { scope?: CommunityScope }
             <article key={group.id} className="flex flex-wrap items-start justify-between gap-4 py-5">
               <div className="min-w-0">
                 <h3 className="text-xl font-semibold">{group.name}</h3>
-                {group.description && <p className="mt-1 text-base text-muted-foreground">{group.description}</p>}
+                {group.description && <p data-no-translate className="mt-1 text-base text-muted-foreground">{group.description}</p>}
                 <p className="mt-2 text-base text-muted-foreground">
                   {group.memberCount} {group.memberCount === 1 ? "student" : "students"} · {group.familyCount}{" "}
                   {group.familyCount === 1 ? "family" : "families"}
@@ -181,7 +181,7 @@ export function StudentGroupsPage({ scope = "demo" }: { scope?: CommunityScope }
           {data.smart.map((group) => (
             <article key={group.id} className="py-4">
               <h3 className="text-lg font-semibold">{group.name}</h3>
-              {group.description && <p className="mt-1 text-base text-muted-foreground">{group.description}</p>}
+              {group.description && <p data-no-translate className="mt-1 text-base text-muted-foreground">{group.description}</p>}
               <p className="mt-2 text-base text-muted-foreground">
                 {group.memberCount} {group.memberCount === 1 ? "student" : "students"} · {group.familyCount}{" "}
                 {group.familyCount === 1 ? "family" : "families"}
@@ -327,7 +327,7 @@ export function StudentProfileGroups({ studentId, scope = "demo" }: { studentId:
                 />
                 <span>
                   <span className="font-semibold">{group.name}</span>
-                  {group.description && <span className="mt-0.5 block text-base text-muted-foreground">{group.description}</span>}
+                  {group.description && <span data-no-translate className="mt-0.5 block text-base text-muted-foreground">{group.description}</span>}
                 </span>
               </label>
             ))}
