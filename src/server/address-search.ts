@@ -181,8 +181,9 @@ export const searchAddressFn = createServerFn({ method: "POST" })
     if (!placesKey()) return { enabled: false, suggestions: [] as AddressSuggestion[] };
     if (!allowAddressLookup(requestIp()))
       return { enabled: true, suggestions: [] as AddressSuggestion[] };
+    // Not signed in (or token expired): no suggestions this time, but keep the box live so a refreshed session can retry.
     if (!(await signedIn(data.accessToken)))
-      return { enabled: false, suggestions: [] as AddressSuggestion[] };
+      return { enabled: true, suggestions: [] as AddressSuggestion[] };
     try {
       return await searchAddresses(String(data.query ?? ""), cleanToken(data.sessionToken));
     } catch {
