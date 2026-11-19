@@ -171,6 +171,6 @@
   "paymentLive": "Bạn sẽ thanh toán an toàn trên Stripe, vào tài khoản riêng của trung tâm. Keystone không bao giờ thấy thông tin thẻ của bạn.",
   "paymentContinue": "Tiếp tục thanh toán an toàn",
   "paymentRedirecting": "Đang mở Stripe…",
-  "paymentReturnDone": "Cảm ơn, thanh toán đã thành công. Có thể mất một phút để hiển thị ở đây.",
+  "paymentReturnDone": "Cảm ơn. Thanh toán bằng thẻ sẽ hiện ở đây trong vòng một phút. Ghi nợ trực tiếp cần vài ngày làm việc.",
   "paymentReturnCancelled": "Đã hủy thanh toán. Không có khoản nào bị trừ."
 }

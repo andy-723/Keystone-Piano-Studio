@@ -24,10 +24,14 @@ This is separate from Keystone's own subscription billing (`docs/security/subscr
 | Stripe tells Keystone the payment went through | `/api/stripe/connect-webhook` (signature checked with `STRIPE_CONNECT_WEBHOOK_SECRET`) → `handleConnectEvent`: inserts one `payment` row (method `stripe_card` or `stripe_becs`, unique per PaymentIntent), sets the invoice to paid or partially paid and adds a `payment_recorded` invoice event. The studio id in the session metadata must match the account the event came from. |
 | Owner presses **Disconnect Stripe** | Sets `disconnected_at`. Families see bank details again. The studio's Stripe account and money stay theirs; Keystone cannot close it. |
 
-Events handled: `account.updated`, `account.application.deauthorized`,
-`checkout.session.completed` (card, paid straight away), `checkout.session.async_payment_succeeded`
-(BECS direct debit, a few days later). Each event id is handled once (`connect_webhook_event`); if
-handling fails the id is forgotten so Stripe's retry is processed.
+Events handled: `account.updated`, `account.application.deauthorized` (the studio removed Keystone
+in Stripe; the next Connect with Stripe creates a fresh account, because the old one no longer
+accepts Keystone's requests), `checkout.session.completed` (card: paid straight away; BECS direct
+debit: accepted but not settled, so the invoice is held in `connect_pending_payment` and Pay now
+refuses a second payment), `checkout.session.async_payment_succeeded` (the debit settled a few
+business days later: payment recorded, hold cleared) and `checkout.session.async_payment_failed`
+(the debit bounced: hold cleared, the family can pay again). Each event id is handled once
+(`connect_webhook_event`); if handling fails the id is forgotten so Stripe's retry is processed.
 
 Security: writes to `stripe_connect_account`, `connect_webhook_event` and Stripe payments are
 service-role only, after `requireStudioRole` (staff, MFA) or a guardian check or a verified Stripe
@@ -48,7 +52,7 @@ signature. Staff can read their own studio's link row through RLS. No card data 
      notification cron uses, so Stripe is not sent through a redirect).
    - **Listen to: Events on Connected accounts** (not "Your account").
    - Events: `account.updated`, `account.application.deauthorized`,
-     `checkout.session.completed`, `checkout.session.async_payment_succeeded`.
+     `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`.
    - Save, then **Reveal** the signing secret (starts `whsec_`). This is a different secret from the
      billing webhook.
 

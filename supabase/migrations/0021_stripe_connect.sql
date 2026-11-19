@@ -16,6 +16,9 @@ create table if not exists public.stripe_connect_account (
   livemode boolean not null default false,
   created_by uuid,
   disconnected_at timestamptz,
+  -- Set when the studio removes Keystone in Stripe: that account can't be used again, so the
+  -- next Connect with Stripe creates a fresh one.
+  deauthorized_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -50,5 +53,20 @@ create table if not exists public.connect_webhook_event (
 );
 alter table public.connect_webhook_event enable row level security;
 revoke all on table public.connect_webhook_event from anon, authenticated, public;
+
+-- BECS direct debits that Stripe accepted but has not settled yet (a few business days). While
+-- one is open, Keystone won't start another online payment for that invoice, so a family can't
+-- pay twice. Cleared when the debit succeeds or fails. Service role only.
+create table if not exists public.connect_pending_payment (
+  checkout_session_id text primary key,
+  studio_id uuid not null references public.studio(id) on delete cascade,
+  invoice_id uuid not null references public.invoice(id) on delete cascade,
+  amount_cents int not null,
+  created_at timestamptz not null default now()
+);
+create index if not exists connect_pending_payment_invoice_idx
+  on public.connect_pending_payment (invoice_id);
+alter table public.connect_pending_payment enable row level security;
+revoke all on table public.connect_pending_payment from anon, authenticated, public;
 
 notify pgrst, 'reload schema';

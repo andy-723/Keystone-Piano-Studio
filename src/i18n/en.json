@@ -171,6 +171,6 @@
   "paymentLive": "You'll pay securely on Stripe, on your studio's own account. Keystone never sees your card details.",
   "paymentContinue": "Continue to secure payment",
   "paymentRedirecting": "Opening Stripe…",
-  "paymentReturnDone": "Thanks, your payment went through. It can take a minute to show here.",
+  "paymentReturnDone": "Thanks. Card payments show here within a minute. Direct debits take a few business days to clear.",
   "paymentReturnCancelled": "Payment cancelled. Nothing was charged."
 }

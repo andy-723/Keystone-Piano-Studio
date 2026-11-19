@@ -158,7 +158,8 @@ describe("Connect webhook", () => {
         metadata: { invoice_id: "inv-2", studio_id: STUDIO },
       }),
     );
-    expect(pending.handled).toBe(false);
+    expect(pending).toEqual({ handled: true, note: "pending" });
+    expect(recorded).toHaveLength(0);
     const settled = await handleConnectEvent(
       event("checkout.session.async_payment_succeeded", {
         id: "cs_2",
@@ -213,5 +214,43 @@ describe("Connect webhook retries", () => {
     await expect(handleConnectEvent(e)).rejects.toThrow("database down");
     expect(await handleConnectEvent(e)).toEqual({ handled: true, note: "recorded" });
     setPaymentRecorderForTests(null);
+  });
+});
+
+describe("BECS direct debit hold", () => {
+  beforeEach(() => {
+    resetMockConnect([linked()]);
+    setPaymentRecorderForTests(async () => "recorded");
+  });
+  afterEach(() => setPaymentRecorderForTests(null));
+  const session = (payment_status: string) => ({
+    id: "cs_becs",
+    payment_status,
+    amount_total: 5000,
+    payment_intent: "pi_becs",
+    metadata: { invoice_id: "inv-becs", studio_id: STUDIO },
+  });
+
+  it("holds the invoice while the debit is processing, then clears it when it settles", async () => {
+    expect(
+      await handleConnectEvent(event("checkout.session.completed", session("unpaid"))),
+    ).toEqual({
+      handled: true,
+      note: "pending",
+    });
+    expect(await getConnectStore().hasPending("inv-becs")).toBe(true);
+    await handleConnectEvent(event("checkout.session.async_payment_succeeded", session("paid")));
+    expect(await getConnectStore().hasPending("inv-becs")).toBe(false);
+  });
+
+  it("clears the hold when the debit fails, so the family can pay again", async () => {
+    await handleConnectEvent(event("checkout.session.completed", session("unpaid")));
+    await handleConnectEvent(event("checkout.session.async_payment_failed", session("unpaid")));
+    expect(await getConnectStore().hasPending("inv-becs")).toBe(false);
+  });
+
+  it("marks a deauthorized account so the next link creates a fresh one", async () => {
+    await handleConnectEvent(event("account.application.deauthorized", {}));
+    expect((await getConnectStore().get(STUDIO))?.deauthorizedAt).toBeTruthy();
   });
 });

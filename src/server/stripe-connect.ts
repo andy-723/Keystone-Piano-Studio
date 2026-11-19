@@ -25,6 +25,8 @@ export type ConnectAccountRow = {
   businessName: string | null;
   livemode: boolean;
   disconnectedAt: string | null;
+  /** The studio removed Keystone in Stripe; this account can't be used again. */
+  deauthorizedAt?: string | null;
 };
 
 export type ConnectStatus = {
@@ -63,14 +65,25 @@ export interface ConnectStore {
   ): Promise<boolean>;
   /** Undo recordEvent when handling failed, so Stripe's retry is processed. */
   forgetEvent(id: string): Promise<void>;
+  /** BECS direct debits accepted by Stripe but not settled yet. */
+  markPending(input: {
+    checkoutSessionId: string;
+    studioId: string;
+    invoiceId: string;
+    amountCents: number;
+  }): Promise<void>;
+  clearPending(checkoutSessionId: string): Promise<void>;
+  hasPending(invoiceId: string): Promise<boolean>;
 }
 
 const mockRows = new Map<string, ConnectAccountRow>();
 const mockEvents = new Set<string>();
+const mockPending = new Map<string, string>();
 
 export function resetMockConnect(rows: ConnectAccountRow[] = []) {
   mockRows.clear();
   mockEvents.clear();
+  mockPending.clear();
   for (const row of rows) mockRows.set(row.studioId, { ...row });
 }
 
@@ -94,6 +107,15 @@ const mockStore: ConnectStore = {
   async forgetEvent(id) {
     mockEvents.delete(id);
   },
+  async markPending(input) {
+    mockPending.set(input.checkoutSessionId, input.invoiceId);
+  },
+  async clearPending(id) {
+    mockPending.delete(id);
+  },
+  async hasPending(invoiceId) {
+    return [...mockPending.values()].includes(invoiceId);
+  },
 };
 
 type DbRow = {
@@ -105,9 +127,10 @@ type DbRow = {
   business_name: string | null;
   livemode: boolean;
   disconnected_at: string | null;
+  deauthorized_at: string | null;
 };
 const COLUMNS =
-  "studio_id, stripe_account_id, charges_enabled, payouts_enabled, details_submitted, business_name, livemode, disconnected_at";
+  "studio_id, stripe_account_id, charges_enabled, payouts_enabled, details_submitted, business_name, livemode, disconnected_at, deauthorized_at";
 const fromDb = (row: DbRow): ConnectAccountRow => ({
   studioId: row.studio_id,
   stripeAccountId: row.stripe_account_id,
@@ -117,6 +140,7 @@ const fromDb = (row: DbRow): ConnectAccountRow => ({
   businessName: row.business_name,
   livemode: row.livemode,
   disconnectedAt: row.disconnected_at,
+  deauthorizedAt: row.deauthorized_at,
 });
 
 const supabaseStore: ConnectStore = {
@@ -151,6 +175,7 @@ const supabaseStore: ConnectStore = {
           business_name: row.businessName,
           livemode: row.livemode,
           disconnected_at: row.disconnectedAt,
+          deauthorized_at: row.deauthorizedAt ?? null,
           ...(createdBy ? { created_by: createdBy } : {}),
         },
         { onConflict: "studio_id" },
@@ -167,6 +192,34 @@ const supabaseStore: ConnectStore = {
   },
   async forgetEvent(id) {
     await createServiceSupabase().from("connect_webhook_event").delete().eq("id", id);
+  },
+  async markPending(input) {
+    const { error } = await createServiceSupabase().from("connect_pending_payment").upsert(
+      {
+        checkout_session_id: input.checkoutSessionId,
+        studio_id: input.studioId,
+        invoice_id: input.invoiceId,
+        amount_cents: input.amountCents,
+      },
+      { onConflict: "checkout_session_id" },
+    );
+    if (error) throw new ProblemError(500, "Pending payment save failed", error.message);
+  },
+  async clearPending(id) {
+    const { error } = await createServiceSupabase()
+      .from("connect_pending_payment")
+      .delete()
+      .eq("checkout_session_id", id);
+    if (error) throw new ProblemError(500, "Pending payment clear failed", error.message);
+  },
+  async hasPending(invoiceId) {
+    const { data, error } = await createServiceSupabase()
+      .from("connect_pending_payment")
+      .select("checkout_session_id")
+      .eq("invoice_id", invoiceId)
+      .limit(1);
+    if (error) throw new ProblemError(500, "Pending payment lookup failed", error.message);
+    return Boolean(data?.length);
   },
 };
 
@@ -195,6 +248,7 @@ export function rowFromAccount(
       null,
     livemode: Boolean(account.livemode),
     disconnectedAt: previous?.disconnectedAt ?? null,
+    deauthorizedAt: previous?.deauthorizedAt ?? null,
   };
 }
 
@@ -272,7 +326,10 @@ export async function startStripeOnboarding(input: StudioRequest): Promise<{ url
   const store = getConnectStore();
   let row = await store.get(input.studioId);
 
-  if (!row) {
+  // No account yet, or the studio removed Keystone in Stripe (that account no longer accepts
+  // Keystone's requests): create a fresh account.
+  if (!row || row.deauthorizedAt) {
+    const previousAccount = row?.stripeAccountId ?? "first";
     const { data: studio } = await createServiceSupabase()
       .from("studio")
       .select("name")
@@ -294,7 +351,7 @@ export async function startStripeOnboarding(input: StudioRequest): Promise<{ url
         "business_profile[mcc]": "8299",
         "metadata[studio_id]": input.studioId,
       },
-      `connect-account-${input.studioId}`,
+      `connect-account-${input.studioId}-${previousAccount}`,
     );
     row = rowFromAccount(input.studioId, account, null);
     await store.save(row, session.userId);
@@ -376,6 +433,14 @@ export async function createInvoiceCheckout(input: {
   const row = await getConnectStore().get(invoice.studio_id as string);
   if (!row || row.disconnectedAt || !row.chargesEnabled) {
     throw new ProblemError(409, "Online payments are off", "Your studio will send bank details.");
+  }
+
+  if (await getConnectStore().hasPending(invoice.id as string)) {
+    throw new ProblemError(
+      409,
+      "Payment already on its way",
+      "A direct debit for this invoice is still processing. It usually takes a few business days.",
+    );
   }
 
   const { data: payments, error: payError } = await supabase
@@ -548,17 +613,31 @@ async function applyConnectEvent(
         ...link,
         chargesEnabled: false,
         disconnectedAt: new Date().toISOString(),
+        deauthorizedAt: new Date().toISOString(),
       });
       return { handled: true };
     }
     case "checkout.session.completed":
     case "checkout.session.async_payment_succeeded": {
       const session = event.data.object as unknown as CheckoutSession;
-      if (session.payment_status !== "paid") return { handled: false, note: "not paid yet" };
       const invoiceId = session.metadata?.["invoice_id"];
       // Only trust a studio id that matches the account the event came from.
       if (!invoiceId || session.metadata?.["studio_id"] !== link.studioId) {
         return { handled: false, note: "not a Keystone invoice" };
+      }
+      if (session.payment_status !== "paid") {
+        // BECS direct debit: accepted, settles in a few business days. Hold the invoice so the
+        // family can't start a second payment meanwhile.
+        if (event.type === "checkout.session.completed") {
+          await store.markPending({
+            checkoutSessionId: session.id,
+            studioId: link.studioId,
+            invoiceId,
+            amountCents: session.amount_total ?? 0,
+          });
+          return { handled: true, note: "pending" };
+        }
+        return { handled: false, note: "not paid yet" };
       }
       if (
         (session.currency ?? "aud") !== "aud" ||
@@ -579,7 +658,17 @@ async function applyConnectEvent(
           event.type === "checkout.session.async_payment_succeeded" ? "stripe_becs" : "stripe_card",
         receivedOn: sydneyDate(event.created),
       });
+      await store.clearPending(session.id);
       return { handled: result === "recorded", note: result };
+    }
+    case "checkout.session.async_payment_failed": {
+      // The direct debit bounced: nothing was paid, so the family can pay again.
+      const session = event.data.object as unknown as CheckoutSession;
+      if (session.metadata?.["studio_id"] !== link.studioId) {
+        return { handled: false, note: "not a Keystone invoice" };
+      }
+      await store.clearPending(session.id);
+      return { handled: true, note: "debit failed" };
     }
     default:
       return { handled: false, note: "ignored" };

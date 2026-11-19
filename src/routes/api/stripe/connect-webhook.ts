@@ -9,7 +9,7 @@ import { handleConnectEvent } from "@/server/stripe-connect";
  * Stripe Connect webhook: events from studios' own Stripe accounts (family payments).
  * Register in Stripe as a "Connected accounts" endpoint, separate from the billing webhook.
  * Events: account.updated, account.application.deauthorized, checkout.session.completed,
- * checkout.session.async_payment_succeeded. See docs/security/stripe-connect.md.
+ * checkout.session.async_payment_succeeded, checkout.session.async_payment_failed. See docs/security/stripe-connect.md.
  */
 export const Route = createFileRoute("/api/stripe/connect-webhook")({
   server: {
