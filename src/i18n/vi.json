@@ -167,5 +167,10 @@
   "clapRhythm": "Vỗ lại tiết tấu",
   "singMelody": "Hát lại giai điệu ngắn",
   "sightTitle": "Đọc nhạc ở trình độ {grade}",
-  "invoiceLine": "{student} – {duration}, {term}"
+  "invoiceLine": "{student} – {duration}, {term}",
+  "paymentLive": "Bạn sẽ thanh toán an toàn trên Stripe, vào tài khoản riêng của trung tâm. Keystone không bao giờ thấy thông tin thẻ của bạn.",
+  "paymentContinue": "Tiếp tục thanh toán an toàn",
+  "paymentRedirecting": "Đang mở Stripe…",
+  "paymentReturnDone": "Cảm ơn, thanh toán đã thành công. Có thể mất một phút để hiển thị ở đây.",
+  "paymentReturnCancelled": "Đã hủy thanh toán. Không có khoản nào bị trừ."
 }

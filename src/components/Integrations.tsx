@@ -17,6 +17,7 @@ import {
   connectXero,
   disconnectStripe,
   disconnectXero,
+  startLiveStripeOnboarding,
 } from "@/services/integrations";
 import type { IntegrationScope } from "@/mocks/integrations";
 
@@ -44,7 +45,19 @@ export function Integrations({
     onSuccess: refresh,
     onError: () => toast.error("Connection could not be updated. Please try again."),
   });
+  const live = Boolean(data.stripe.live);
+  // Real studios: Stripe-hosted onboarding on the studio's own account (no simulation).
+  const goToStripe = useMutation({
+    mutationFn: startLiveStripeOnboarding,
+    onSuccess: (url) => window.location.assign(url),
+    onError: (error) =>
+      toast.error(error instanceof Error && error.message ? error.message : "Stripe could not be opened. Please try again."),
+  });
   const begin = () => {
+    if (live) {
+      goToStripe.mutate();
+      return;
+    }
     setStep("choose");
     setPath(null);
     setStripeOpen(true);
@@ -88,9 +101,20 @@ export function Integrations({
             </Badge>
           </header>
           <p className="mt-3 text-lg">
-            Families pay your studio directly through your own Stripe account. Online payments are
-            not switched on yet.
+            {live
+              ? "Families pay your studio directly through your own Stripe account. Money goes straight to you; Stripe charges you its standard fees and Keystone takes nothing."
+              : "Families pay your studio directly through your own Stripe account. Online payments are not switched on yet."}
           </p>
+          {live && data.stripe.configured === false && (
+            <p role="status" className="mt-3 text-base text-muted-foreground">
+              Online payments are being switched on for Keystone. You can link Stripe soon.
+            </p>
+          )}
+          {live && data.stripe.status === "setting_up" && (
+            <p role="status" className="mt-3 text-base text-muted-foreground">
+              Stripe still needs some details or is checking them. Continue setup to finish; families see bank details until then.
+            </p>
+          )}
           <p className="mt-2 text-base text-muted-foreground">{NO_SURCHARGE_NOTE}</p>
           {data.stripe.status === "connected" && (
             <p role="status" className="mt-4 flex items-start gap-2 text-lg text-success">
@@ -109,25 +133,43 @@ export function Integrations({
                   <Unplug aria-hidden />
                   Disconnect Stripe
                 </Button>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="inline-flex">
-                        <Button variant="outline" disabled aria-disabled="true">
-                          Open Stripe Dashboard
-                        </Button>
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>Opens your Stripe Dashboard once live</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                {live ? (
+                  <Button variant="outline" asChild>
+                    <a href="https://dashboard.stripe.com" target="_blank" rel="noopener noreferrer">
+                      Open Stripe Dashboard
+                    </a>
+                  </Button>
+                ) : (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="inline-flex">
+                          <Button variant="outline" disabled aria-disabled="true">
+                            Open Stripe Dashboard
+                          </Button>
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>Opens your Stripe Dashboard once live</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
               </>
             ) : (
-              <Button disabled={action.isPending} onClick={begin}>
+              <Button
+                disabled={
+                  action.isPending ||
+                  goToStripe.isPending ||
+                  goToStripe.isSuccess ||
+                  (live && data.stripe.configured === false)
+                }
+                onClick={begin}
+              >
                 <Link2 aria-hidden />
-                {data.stripe.status === "setting_up"
-                  ? "Continue Stripe setup"
-                  : "Connect with Stripe"}
+                {goToStripe.isPending || goToStripe.isSuccess
+                  ? "Opening Stripe…"
+                  : data.stripe.status === "setting_up"
+                    ? "Continue Stripe setup"
+                    : "Connect with Stripe"}
               </Button>
             )}
           </div>
@@ -174,6 +216,10 @@ export function Integrations({
                   <Unplug aria-hidden />
                   Disconnect
                 </Button>
+              ) : live ? (
+                <p role="status" className="text-base text-muted-foreground">
+                  Xero connection is coming soon.
+                </p>
               ) : (
                 <Button
                   disabled={action.isPending}

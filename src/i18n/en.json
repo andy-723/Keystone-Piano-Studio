@@ -167,5 +167,10 @@
   "clapRhythm": "Clap back a rhythm",
   "singMelody": "Sing back a short melody",
   "sightTitle": "Sight-reading at {grade} level",
-  "invoiceLine": "{student} – {duration}, {term}"
+  "invoiceLine": "{student} – {duration}, {term}",
+  "paymentLive": "You'll pay securely on Stripe, on your studio's own account. Keystone never sees your card details.",
+  "paymentContinue": "Continue to secure payment",
+  "paymentRedirecting": "Opening Stripe…",
+  "paymentReturnDone": "Thanks, your payment went through. It can take a minute to show here.",
+  "paymentReturnCancelled": "Payment cancelled. Nothing was charged."
 }
