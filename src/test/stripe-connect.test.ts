@@ -254,3 +254,41 @@ describe("BECS direct debit hold", () => {
     expect((await getConnectStore().get(STUDIO))?.deauthorizedAt).toBeTruthy();
   });
 });
+
+describe("Events from an account the studio replaced", () => {
+  it("still records a late BECS debit from the old account and clears its hold", async () => {
+    resetMockConnect([linked({ stripeAccountId: "acct_new", previousAccountIds: [ACCOUNT] })]);
+    const recorded: string[] = [];
+    setPaymentRecorderForTests(async (input) => {
+      recorded.push(input.studioId);
+      return "recorded";
+    });
+    const session = {
+      id: "cs_old",
+      payment_status: "unpaid",
+      amount_total: 5000,
+      payment_intent: "pi_old",
+      metadata: { invoice_id: "inv-old", studio_id: STUDIO },
+    };
+    await handleConnectEvent(event("checkout.session.completed", session, ACCOUNT));
+    await handleConnectEvent(
+      event(
+        "checkout.session.async_payment_succeeded",
+        { ...session, payment_status: "paid" },
+        ACCOUNT,
+      ),
+    );
+    expect(recorded).toEqual([STUDIO]);
+    expect(await getConnectStore().hasPending("inv-old")).toBe(false);
+    setPaymentRecorderForTests(null);
+  });
+
+  it("ignores account updates from the old account", async () => {
+    resetMockConnect([linked({ stripeAccountId: "acct_new", previousAccountIds: [ACCOUNT] })]);
+    const result = await handleConnectEvent(
+      event("account.updated", { charges_enabled: false }, ACCOUNT),
+    );
+    expect(result.note).toBe("replaced account");
+    expect((await getConnectStore().get(STUDIO))?.chargesEnabled).toBe(true);
+  });
+});

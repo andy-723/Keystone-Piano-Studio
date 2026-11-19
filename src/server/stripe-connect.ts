@@ -27,6 +27,8 @@ export type ConnectAccountRow = {
   disconnectedAt: string | null;
   /** The studio removed Keystone in Stripe; this account can't be used again. */
   deauthorizedAt?: string | null;
+  /** Accounts used before a re-link; late events from them still belong to this studio. */
+  previousAccountIds?: string[];
 };
 
 export type ConnectStatus = {
@@ -93,7 +95,9 @@ const mockStore: ConnectStore = {
     return row ? { ...row } : null;
   },
   async findByAccount(id) {
-    for (const row of mockRows.values()) if (row.stripeAccountId === id) return { ...row };
+    for (const row of mockRows.values()) {
+      if (row.stripeAccountId === id || row.previousAccountIds?.includes(id)) return { ...row };
+    }
     return null;
   },
   async save(row) {
@@ -128,9 +132,10 @@ type DbRow = {
   livemode: boolean;
   disconnected_at: string | null;
   deauthorized_at: string | null;
+  previous_stripe_account_ids: string[] | null;
 };
 const COLUMNS =
-  "studio_id, stripe_account_id, charges_enabled, payouts_enabled, details_submitted, business_name, livemode, disconnected_at, deauthorized_at";
+  "studio_id, stripe_account_id, charges_enabled, payouts_enabled, details_submitted, business_name, livemode, disconnected_at, deauthorized_at, previous_stripe_account_ids";
 const fromDb = (row: DbRow): ConnectAccountRow => ({
   studioId: row.studio_id,
   stripeAccountId: row.stripe_account_id,
@@ -141,6 +146,7 @@ const fromDb = (row: DbRow): ConnectAccountRow => ({
   livemode: row.livemode,
   disconnectedAt: row.disconnected_at,
   deauthorizedAt: row.deauthorized_at,
+  previousAccountIds: row.previous_stripe_account_ids ?? [],
 });
 
 const supabaseStore: ConnectStore = {
@@ -157,7 +163,12 @@ const supabaseStore: ConnectStore = {
     const { data, error } = await createServiceSupabase()
       .from("stripe_connect_account")
       .select(COLUMNS)
-      .eq("stripe_account_id", id)
+      // id comes from a verified Stripe event; still only allow Stripe's account id shape here.
+      .or(
+        /^acct_[A-Za-z0-9]+$/.test(id)
+          ? `stripe_account_id.eq.${id},previous_stripe_account_ids.cs.{${id}}`
+          : "stripe_account_id.eq.__none__",
+      )
       .maybeSingle();
     if (error) throw new ProblemError(500, "Stripe link lookup failed", error.message);
     return data ? fromDb(data as DbRow) : null;
@@ -176,6 +187,7 @@ const supabaseStore: ConnectStore = {
           livemode: row.livemode,
           disconnected_at: row.disconnectedAt,
           deauthorized_at: row.deauthorizedAt ?? null,
+          previous_stripe_account_ids: row.previousAccountIds ?? [],
           ...(createdBy ? { created_by: createdBy } : {}),
         },
         { onConflict: "studio_id" },
@@ -249,6 +261,7 @@ export function rowFromAccount(
     livemode: Boolean(account.livemode),
     disconnectedAt: previous?.disconnectedAt ?? null,
     deauthorizedAt: previous?.deauthorizedAt ?? null,
+    previousAccountIds: previous?.previousAccountIds ?? [],
   };
 }
 
@@ -353,7 +366,10 @@ export async function startStripeOnboarding(input: StudioRequest): Promise<{ url
       },
       `connect-account-${input.studioId}-${previousAccount}`,
     );
-    row = rowFromAccount(input.studioId, account, null);
+    row = {
+      ...rowFromAccount(input.studioId, account, null),
+      previousAccountIds: row ? [...(row.previousAccountIds ?? []), row.stripeAccountId] : [],
+    };
     await store.save(row, session.userId);
   } else if (row.disconnectedAt) {
     row = { ...row, disconnectedAt: null };
@@ -602,6 +618,10 @@ async function applyConnectEvent(
   link: ConnectAccountRow,
 ): Promise<ConnectEventResult> {
   const store = getConnectStore();
+  // An account the studio has since replaced: only its late payment events still count.
+  if (account !== link.stripeAccountId && event.type.startsWith("account.")) {
+    return { handled: false, note: "replaced account" };
+  }
   switch (event.type) {
     case "account.updated": {
       const object = event.data.object as unknown as StripeAccountObject;

@@ -19,6 +19,9 @@ create table if not exists public.stripe_connect_account (
   -- Set when the studio removes Keystone in Stripe: that account can't be used again, so the
   -- next Connect with Stripe creates a fresh one.
   deauthorized_at timestamptz,
+  -- Accounts this studio used before a re-link. Late events from them (a BECS debit that was
+  -- still clearing) are still matched to the studio and recorded.
+  previous_stripe_account_ids text[] not null default '{}',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
