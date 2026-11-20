@@ -175,4 +175,71 @@ export const extraStrings: AppStrings = {
     "您需对修改后的措辞负责。我们建议您自行咨询专业意见。",
     "Bạn chịu trách nhiệm về câu chữ đã sửa. Chúng tôi khuyên bạn nên tự tham khảo ý kiến chuyên môn.",
   ],
+
+  // Stripe Connect and Xero settings (merged from main 20 Nov)
+  "Stripe could not be opened. Please try again.": [
+    "无法打开 Stripe，请重试。",
+    "Không mở được Stripe. Vui lòng thử lại.",
+  ],
+  "Xero connected. Choose your accounts below.": [
+    "已连接 Xero。请在下方选择您的账户。",
+    "Đã kết nối Xero. Hãy chọn tài khoản bên dưới.",
+  ],
+  "Xero could not be connected. Please try again.": [
+    "无法连接 Xero，请重试。",
+    "Không kết nối được Xero. Vui lòng thử lại.",
+  ],
+  "Xero connection cancelled.": ["已取消连接 Xero。", "Đã hủy kết nối Xero."],
+  "Xero could not be opened. Please try again.": [
+    "无法打开 Xero，请重试。",
+    "Không mở được Xero. Vui lòng thử lại.",
+  ],
+  "Families pay your studio directly through your own Stripe account. Money goes straight to you; Stripe charges you its standard fees and Keystone takes nothing.":
+    [
+      "家庭通过您自己的 Stripe 账户直接向您的工作室付款。款项直接进入您的账户；Stripe 向您收取标准手续费，Keystone 不收取任何费用。",
+      "Gia đình thanh toán trực tiếp cho studio qua tài khoản Stripe của bạn. Tiền chuyển thẳng cho bạn; Stripe thu phí tiêu chuẩn của họ và Keystone không lấy gì.",
+    ],
+  "Online payments are being switched on for Keystone. You can link Stripe soon.": [
+    "Keystone 正在开通在线付款。您很快就可以关联 Stripe。",
+    "Keystone đang bật thanh toán trực tuyến. Bạn sẽ sớm liên kết được Stripe.",
+  ],
+  "Stripe still needs some details or is checking them. Continue setup to finish; families see bank details until then.":
+    [
+      "Stripe 仍需要一些信息或正在核实。请继续设置以完成；在此之前家庭会看到银行转账信息。",
+      "Stripe vẫn cần thêm thông tin hoặc đang kiểm tra. Hãy tiếp tục thiết lập để hoàn tất; trước đó gia đình sẽ thấy thông tin chuyển khoản ngân hàng.",
+    ],
+  "Xero is being switched on for Keystone. You can connect it soon.": [
+    "Keystone 正在开通 Xero。您很快就可以连接。",
+    "Keystone đang bật Xero. Bạn sẽ sớm kết nối được.",
+  ],
+  "Xero connections are full right now. Contact support and we'll open one for you.": [
+    "Xero 连接名额目前已满。请联系支持，我们会为您开通。",
+    "Hiện đã hết suất kết nối Xero. Hãy liên hệ hỗ trợ và chúng tôi sẽ mở cho bạn.",
+  ],
+  "Opening Xero…": ["正在打开 Xero…", "Đang mở Xero…"],
+  "Reconnect Xero": ["重新连接 Xero", "Kết nối lại Xero"],
+  "Xero accounts saved": ["Xero 账户已保存", "Đã lưu tài khoản Xero"],
+  "Xero accounts could not be saved. Please try again.": [
+    "无法保存 Xero 账户，请重试。",
+    "Không lưu được tài khoản Xero. Vui lòng thử lại.",
+  ],
+  "Xero sync could not run. Please try again.": [
+    "Xero 同步无法运行，请重试。",
+    "Không chạy được đồng bộ Xero. Vui lòng thử lại.",
+  ],
+  "Xero needs reconnecting. Press Reconnect Xero below.": [
+    "Xero 需要重新连接。请点击下方的“重新连接 Xero”。",
+    "Cần kết nối lại Xero. Hãy bấm Kết nối lại Xero bên dưới.",
+  ],
+  "Sent invoices and payments go to Xero every 15 minutes. Drafts never do.": [
+    "已发送的发票和付款每 15 分钟同步到 Xero。草稿不会同步。",
+    "Hóa đơn đã gửi và các khoản thanh toán được chuyển sang Xero mỗi 15 phút. Bản nháp thì không.",
+  ],
+  "Income account for lessons": ["课程收入账户", "Tài khoản thu nhập cho buổi học"],
+  "Bank account families pay into": [
+    "家庭付款的银行账户",
+    "Tài khoản ngân hàng gia đình chuyển tiền vào",
+  ],
+  "Save accounts": ["保存账户", "Lưu tài khoản"],
+  "Sending to Xero…": ["正在发送到 Xero…", "Đang gửi sang Xero…"],
 };
