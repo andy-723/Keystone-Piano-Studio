@@ -12,7 +12,7 @@ import { maskEmail } from "@/lib/auth-paths";
 import { getSubscriptionStore } from "./subscription-store";
 import { accessLevel, statusLabel } from "@/lib/subscription";
 import { applyStudioAccessUpdate } from "./subscription";
-import { accountStatusFor, authUsersById } from "./account-links";
+import { accountStatusFor, authUsersById, isBanned, sendSignInLink } from "./account-links";
 
 const AU_TIMEZONES = [
   "Australia/Melbourne",
@@ -174,6 +174,15 @@ export const createStudioFn = createServerFn({ method: "POST" })
     const listed = await supabase.auth.admin.listUsers({ page: 1, perPage: 200 });
     const existing = listed.data.users.find((user) => user.email?.toLowerCase() === ownerEmail);
     if (existing) {
+      // Revoked accounts must be restored first, or the owner gets a welcome email and a
+      // link that Supabase refuses ("user banned"), which looks like an expired link.
+      if (isBanned(existing as { banned_until?: string | null })) {
+        throw new ProblemError(
+          409,
+          "Access revoked",
+          "This email's Keystone access is revoked. Restore it under Team or Studios before making them an owner.",
+        );
+      }
       ownerUserId = existing.id;
     } else {
       const invited = await supabase.auth.admin.inviteUserByEmail(ownerEmail, {
@@ -271,10 +280,29 @@ export const createStudioFn = createServerFn({ method: "POST" })
       console.error("[platform] owner welcome email failed", welcomeEmailError);
     }
 
+    // Supabase only sends its invite email to a brand-new account. When the owner already
+    // has one (for example a teacher who is also a parent, or a re-used test email), nothing
+    // else would arrive, even though the welcome email promises a separate sign-in email.
+    let signInLinkError: string | null = null;
+    if (existing) {
+      try {
+        await sendSignInLink(supabase, {
+          userId: existing.id,
+          name: ownerName,
+          audience: "owner",
+          studioName: name,
+        });
+      } catch (err) {
+        signInLinkError = err instanceof Error ? err.message : "Sign-in link failed";
+        console.error("[platform] owner sign-in link failed", signInLinkError);
+      }
+    }
+
     return {
       studioId: resolvedStudioId,
       inviteSentTo: maskEmail(ownerEmail),
       welcomeEmailError,
+      signInLinkError,
     };
   });
 

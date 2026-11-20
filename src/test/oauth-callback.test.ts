@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { finishCodeSignIn } from "@/lib/oauth-callback";
+import { emailLinkFailureMessage, finishCodeSignIn } from "@/lib/oauth-callback";
 
 function fakeAuth(opts: {
   sessionBefore: boolean;
@@ -45,5 +45,31 @@ describe("Google / Microsoft sign-in callback", () => {
     const auth = fakeAuth({ sessionBefore: false, exchangeError: "invalid flow state" });
     const result = await finishCodeSignIn(auth, "abc");
     expect(result.ok).toBe(false);
+  });
+});
+
+describe("emailed sign-in link failures", () => {
+  it("says the link expired for otp_expired", () => {
+    expect(emailLinkFailureMessage({ code: "otp_expired", status: 403 })).toMatch(
+      /expired or was already used.*newest link/,
+    );
+  });
+
+  it("says access is turned off for a revoked (banned) account, not that the link expired", () => {
+    const msg = emailLinkFailureMessage({ code: "user_banned", status: 403 });
+    expect(msg).toMatch(/turned off/);
+    expect(msg).not.toMatch(/expired/);
+  });
+
+  it("asks to wait on rate limits", () => {
+    expect(emailLinkFailureMessage({ code: "over_request_rate_limit", status: 429 })).toMatch(
+      /Wait a minute/,
+    );
+  });
+
+  it("does not blame the link for a network failure", () => {
+    const msg = emailLinkFailureMessage(new TypeError("Failed to fetch"));
+    expect(msg).toMatch(/connection/);
+    expect(msg).not.toMatch(/expired/);
   });
 });
