@@ -1,7 +1,7 @@
 import { NO_SURCHARGE_NOTE, XERO_DISCLOSURE } from "@/lib/tax-copy";
 import { ProSheet } from "./ProSheet";
 import { planBillingQuery } from "@/lib/plan-queries";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, Check, CreditCard, Landmark, Link2, Unplug, X } from "lucide-react";
 import { toast } from "sonner";
@@ -17,7 +17,12 @@ import {
   connectXero,
   disconnectStripe,
   disconnectXero,
+  saveLiveXeroAccounts,
+  startLiveStripeOnboarding,
+  startLiveXeroConnect,
+  syncLiveXeroNow,
 } from "@/services/integrations";
+import type { IntegrationState } from "@/mocks/integrations";
 import type { IntegrationScope } from "@/mocks/integrations";
 
 export function Integrations({
@@ -44,7 +49,32 @@ export function Integrations({
     onSuccess: refresh,
     onError: () => toast.error("Connection could not be updated. Please try again."),
   });
+  const live = Boolean(data.stripe.live);
+  // Real studios: Stripe-hosted onboarding on the studio's own account (no simulation).
+  const goToStripe = useMutation({
+    mutationFn: startLiveStripeOnboarding,
+    onSuccess: (url) => window.location.assign(url),
+    onError: (error) =>
+      toast.error(error instanceof Error && error.message ? error.message : "Stripe could not be opened. Please try again."),
+  });
+  // Back from Xero's sign-in page (/api/xero/callback redirects here with ?xero=…).
+  useEffect(() => {
+    const result = new URLSearchParams(window.location.search).get("xero");
+    if (result === "connected") toast.success("Xero connected. Choose your accounts below.");
+    if (result === "failed") toast.error("Xero could not be connected. Please try again.");
+    if (result === "cancelled") toast("Xero connection cancelled.");
+  }, []);
+  const goToXero = useMutation({
+    mutationFn: startLiveXeroConnect,
+    onSuccess: (url) => window.location.assign(url),
+    onError: (error) =>
+      toast.error(error instanceof Error && error.message ? error.message : "Xero could not be opened. Please try again."),
+  });
   const begin = () => {
+    if (live) {
+      goToStripe.mutate();
+      return;
+    }
     setStep("choose");
     setPath(null);
     setStripeOpen(true);
@@ -88,9 +118,20 @@ export function Integrations({
             </Badge>
           </header>
           <p className="mt-3 text-lg">
-            Families pay your studio directly through your own Stripe account. Online payments are
-            not switched on yet.
+            {live
+              ? "Families pay your studio directly through your own Stripe account. Money goes straight to you; Stripe charges you its standard fees and Keystone takes nothing."
+              : "Families pay your studio directly through your own Stripe account. Online payments are not switched on yet."}
           </p>
+          {live && data.stripe.configured === false && (
+            <p role="status" className="mt-3 text-base text-muted-foreground">
+              Online payments are being switched on for Keystone. You can link Stripe soon.
+            </p>
+          )}
+          {live && data.stripe.status === "setting_up" && (
+            <p role="status" className="mt-3 text-base text-muted-foreground">
+              Stripe still needs some details or is checking them. Continue setup to finish; families see bank details until then.
+            </p>
+          )}
           <p className="mt-2 text-base text-muted-foreground">{NO_SURCHARGE_NOTE}</p>
           {data.stripe.status === "connected" && (
             <p role="status" className="mt-4 flex items-start gap-2 text-lg text-success">
@@ -109,25 +150,43 @@ export function Integrations({
                   <Unplug aria-hidden />
                   Disconnect Stripe
                 </Button>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="inline-flex">
-                        <Button variant="outline" disabled aria-disabled="true">
-                          Open Stripe Dashboard
-                        </Button>
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>Opens your Stripe Dashboard once live</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                {live ? (
+                  <Button variant="outline" asChild>
+                    <a href="https://dashboard.stripe.com" target="_blank" rel="noopener noreferrer">
+                      Open Stripe Dashboard
+                    </a>
+                  </Button>
+                ) : (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="inline-flex">
+                          <Button variant="outline" disabled aria-disabled="true">
+                            Open Stripe Dashboard
+                          </Button>
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>Opens your Stripe Dashboard once live</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
               </>
             ) : (
-              <Button disabled={action.isPending} onClick={begin}>
+              <Button
+                disabled={
+                  action.isPending ||
+                  goToStripe.isPending ||
+                  goToStripe.isSuccess ||
+                  (live && data.stripe.configured === false)
+                }
+                onClick={begin}
+              >
                 <Link2 aria-hidden />
-                {data.stripe.status === "setting_up"
-                  ? "Continue Stripe setup"
-                  : "Connect with Stripe"}
+                {goToStripe.isPending || goToStripe.isSuccess
+                  ? "Opening Stripe…"
+                  : data.stripe.status === "setting_up"
+                    ? "Continue Stripe setup"
+                    : "Connect with Stripe"}
               </Button>
             )}
           </div>
@@ -159,6 +218,9 @@ export function Integrations({
             {data.xero.status === "connected" && (
               <p className="mt-2 text-base text-muted-foreground">Last synced: {syncedTime}</p>
             )}
+            {live && data.xero.live && (
+              <LiveXeroDetails xero={data.xero} onChanged={refresh} />
+            )}
             {subscription.plan === "base" && (
               <p className="mt-3 text-muted-foreground">
                 Xero sync is paused on Base. Nothing is deleted.
@@ -174,6 +236,33 @@ export function Integrations({
                   <Unplug aria-hidden />
                   Disconnect
                 </Button>
+              ) : live ? (
+                !data.xero.live?.configured ? (
+                  <p role="status" className="text-base text-muted-foreground">
+                    Xero is being switched on for Keystone. You can connect it soon.
+                  </p>
+                ) : subscription.plan === "base" ? (
+                  <Button onClick={() => setProOpen(true)}>
+                    <Link2 aria-hidden />
+                    Connect Xero
+                  </Button>
+                ) : !data.xero.live.canConnect ? (
+                  <p role="status" className="text-base text-muted-foreground">
+                    Xero connections are full right now. Contact support and we'll open one for you.
+                  </p>
+                ) : (
+                  <Button
+                    disabled={goToXero.isPending || goToXero.isSuccess}
+                    onClick={() => goToXero.mutate()}
+                  >
+                    <Link2 aria-hidden />
+                    {goToXero.isPending || goToXero.isSuccess
+                      ? "Opening Xero…"
+                      : data.xero.live.needsReconnect
+                        ? "Reconnect Xero"
+                        : "Connect Xero"}
+                  </Button>
+                )
               ) : (
                 <Button
                   disabled={action.isPending}
@@ -324,5 +413,97 @@ export function Integrations({
       </Dialog>
       <ProSheet open={proOpen} close={() => setProOpen(false)} />
     </section>
+  );
+}
+
+
+/** Real studios: account pickers, Sync now and the last problem for a connected Xero. */
+function LiveXeroDetails({
+  xero,
+  onChanged,
+}: {
+  xero: IntegrationState["xero"];
+  onChanged: () => Promise<unknown>;
+}) {
+  const live = xero.live!;
+  const [sales, setSales] = useState(live.salesAccountCode);
+  const [bank, setBank] = useState(live.paymentAccountCode ?? "");
+  const save = useMutation({
+    mutationFn: () =>
+      saveLiveXeroAccounts({ salesAccountCode: sales, ...(bank ? { paymentAccountCode: bank } : {}) }),
+    onSuccess: async () => {
+      toast.success("Xero accounts saved");
+      await onChanged();
+    },
+    onError: () => toast.error("Xero accounts could not be saved. Please try again."),
+  });
+  const sync = useMutation({
+    mutationFn: syncLiveXeroNow,
+    onSuccess: async (result) => {
+      toast.success(
+        result.skipped
+          ? `Xero sync stopped: ${result.skipped}`
+          : `Sent ${result.invoices} invoice${result.invoices === 1 ? "" : "s"} and ${result.payments} payment${result.payments === 1 ? "" : "s"} to Xero`,
+      );
+      await onChanged();
+    },
+    onError: () => toast.error("Xero sync could not run. Please try again."),
+  });
+  if (live.needsReconnect) {
+    return (
+      <p role="alert" className="mt-3 text-base text-destructive">
+        Xero needs reconnecting. Press Reconnect Xero below.
+      </p>
+    );
+  }
+  if (xero.status !== "connected") return null;
+  const select = "mt-1 block min-h-12 w-full rounded-md border border-border bg-background px-3 text-base";
+  return (
+    <div className="mt-4 space-y-4">
+      {live.lastError && (
+        <p role="alert" className="text-base text-destructive">
+          {live.lastError}
+        </p>
+      )}
+      <p className="text-base text-muted-foreground">
+        Sent invoices and payments go to Xero every 15 minutes. Drafts never do.
+      </p>
+      {live.accounts && (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="text-base">
+            Income account for lessons
+            <select className={select} value={sales} onChange={(e) => setSales(e.target.value)}>
+              {!live.accounts.revenue.some((a) => a.code === sales) && <option value={sales}>{sales}</option>}
+              {live.accounts.revenue.map((a) => (
+                <option key={a.code} value={a.code}>
+                  {a.code} · {a.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-base">
+            Bank account families pay into
+            <select className={select} value={bank} onChange={(e) => setBank(e.target.value)}>
+              <option value="">Choose…</option>
+              {live.accounts.bank.map((a) => (
+                <option key={a.code} value={a.code}>
+                  {a.code} · {a.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      )}
+      <div className="flex flex-wrap gap-3">
+        {live.accounts && (
+          <Button variant="outline" disabled={save.isPending} onClick={() => save.mutate()}>
+            {save.isPending ? "Saving…" : "Save accounts"}
+          </Button>
+        )}
+        <Button variant="outline" disabled={sync.isPending} onClick={() => sync.mutate()}>
+          {sync.isPending ? "Sending to Xero…" : "Sync now"}
+        </Button>
+      </div>
+    </div>
   );
 }

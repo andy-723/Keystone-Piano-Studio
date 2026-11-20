@@ -59,9 +59,12 @@ import { Route as ApiCronBillingRemindersRouteImport } from './routes/api/cron/b
 import { Route as ApiCronInviteRemindersRouteImport } from './routes/api/cron/invite-reminders'
 import { Route as ApiCronNotificationsRouteImport } from './routes/api/cron/notifications'
 import { Route as ApiCronSubscriptionEnforcementRouteImport } from './routes/api/cron/subscription-enforcement'
+import { Route as ApiCronXeroSyncRouteImport } from './routes/api/cron/xero-sync'
 import { Route as ApiNotificationsUnsubscribeRouteImport } from './routes/api/notifications/unsubscribe'
 import { Route as ApiStripeBillingWebhookRouteImport } from './routes/api/stripe/billing-webhook'
+import { Route as ApiStripeConnectWebhookRouteImport } from './routes/api/stripe/connect-webhook'
 import { Route as ApiTermsPdfRouteImport } from './routes/api/terms/pdf'
+import { Route as ApiXeroCallbackRouteImport } from './routes/api/xero/callback'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -314,6 +317,11 @@ const ApiCronSubscriptionEnforcementRoute =
     path: '/api/cron/subscription-enforcement',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiCronXeroSyncRoute = ApiCronXeroSyncRouteImport.update({
+  id: '/api/cron/xero-sync',
+  path: '/api/cron/xero-sync',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiNotificationsUnsubscribeRoute =
   ApiNotificationsUnsubscribeRouteImport.update({
     id: '/api/notifications/unsubscribe',
@@ -325,9 +333,19 @@ const ApiStripeBillingWebhookRoute = ApiStripeBillingWebhookRouteImport.update({
   path: '/api/stripe/billing-webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiStripeConnectWebhookRoute = ApiStripeConnectWebhookRouteImport.update({
+  id: '/api/stripe/connect-webhook',
+  path: '/api/stripe/connect-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiTermsPdfRoute = ApiTermsPdfRouteImport.update({
   id: '/api/terms/pdf',
   path: '/api/terms/pdf',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiXeroCallbackRoute = ApiXeroCallbackRouteImport.update({
+  id: '/api/xero/callback',
+  path: '/api/xero/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -382,9 +400,12 @@ export interface FileRoutesByFullPath {
   '/api/cron/invite-reminders': typeof ApiCronInviteRemindersRoute
   '/api/cron/notifications': typeof ApiCronNotificationsRoute
   '/api/cron/subscription-enforcement': typeof ApiCronSubscriptionEnforcementRoute
+  '/api/cron/xero-sync': typeof ApiCronXeroSyncRoute
   '/api/notifications/unsubscribe': typeof ApiNotificationsUnsubscribeRoute
   '/api/stripe/billing-webhook': typeof ApiStripeBillingWebhookRoute
+  '/api/stripe/connect-webhook': typeof ApiStripeConnectWebhookRoute
   '/api/terms/pdf': typeof ApiTermsPdfRoute
+  '/api/xero/callback': typeof ApiXeroCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -433,9 +454,12 @@ export interface FileRoutesByTo {
   '/api/cron/invite-reminders': typeof ApiCronInviteRemindersRoute
   '/api/cron/notifications': typeof ApiCronNotificationsRoute
   '/api/cron/subscription-enforcement': typeof ApiCronSubscriptionEnforcementRoute
+  '/api/cron/xero-sync': typeof ApiCronXeroSyncRoute
   '/api/notifications/unsubscribe': typeof ApiNotificationsUnsubscribeRoute
   '/api/stripe/billing-webhook': typeof ApiStripeBillingWebhookRoute
+  '/api/stripe/connect-webhook': typeof ApiStripeConnectWebhookRoute
   '/api/terms/pdf': typeof ApiTermsPdfRoute
+  '/api/xero/callback': typeof ApiXeroCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -489,9 +513,12 @@ export interface FileRoutesById {
   '/api/cron/invite-reminders': typeof ApiCronInviteRemindersRoute
   '/api/cron/notifications': typeof ApiCronNotificationsRoute
   '/api/cron/subscription-enforcement': typeof ApiCronSubscriptionEnforcementRoute
+  '/api/cron/xero-sync': typeof ApiCronXeroSyncRoute
   '/api/notifications/unsubscribe': typeof ApiNotificationsUnsubscribeRoute
   '/api/stripe/billing-webhook': typeof ApiStripeBillingWebhookRoute
+  '/api/stripe/connect-webhook': typeof ApiStripeConnectWebhookRoute
   '/api/terms/pdf': typeof ApiTermsPdfRoute
+  '/api/xero/callback': typeof ApiXeroCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -546,9 +573,12 @@ export interface FileRouteTypes {
     | '/api/cron/invite-reminders'
     | '/api/cron/notifications'
     | '/api/cron/subscription-enforcement'
+    | '/api/cron/xero-sync'
     | '/api/notifications/unsubscribe'
     | '/api/stripe/billing-webhook'
+    | '/api/stripe/connect-webhook'
     | '/api/terms/pdf'
+    | '/api/xero/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -597,9 +627,12 @@ export interface FileRouteTypes {
     | '/api/cron/invite-reminders'
     | '/api/cron/notifications'
     | '/api/cron/subscription-enforcement'
+    | '/api/cron/xero-sync'
     | '/api/notifications/unsubscribe'
     | '/api/stripe/billing-webhook'
+    | '/api/stripe/connect-webhook'
     | '/api/terms/pdf'
+    | '/api/xero/callback'
   id:
     | '__root__'
     | '/'
@@ -652,9 +685,12 @@ export interface FileRouteTypes {
     | '/api/cron/invite-reminders'
     | '/api/cron/notifications'
     | '/api/cron/subscription-enforcement'
+    | '/api/cron/xero-sync'
     | '/api/notifications/unsubscribe'
     | '/api/stripe/billing-webhook'
+    | '/api/stripe/connect-webhook'
     | '/api/terms/pdf'
+    | '/api/xero/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -693,9 +729,12 @@ export interface RootRouteChildren {
   ApiCronInviteRemindersRoute: typeof ApiCronInviteRemindersRoute
   ApiCronNotificationsRoute: typeof ApiCronNotificationsRoute
   ApiCronSubscriptionEnforcementRoute: typeof ApiCronSubscriptionEnforcementRoute
+  ApiCronXeroSyncRoute: typeof ApiCronXeroSyncRoute
   ApiNotificationsUnsubscribeRoute: typeof ApiNotificationsUnsubscribeRoute
   ApiStripeBillingWebhookRoute: typeof ApiStripeBillingWebhookRoute
+  ApiStripeConnectWebhookRoute: typeof ApiStripeConnectWebhookRoute
   ApiTermsPdfRoute: typeof ApiTermsPdfRoute
+  ApiXeroCallbackRoute: typeof ApiXeroCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1050,6 +1089,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiCronSubscriptionEnforcementRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/cron/xero-sync': {
+      id: '/api/cron/xero-sync'
+      path: '/api/cron/xero-sync'
+      fullPath: '/api/cron/xero-sync'
+      preLoaderRoute: typeof ApiCronXeroSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/notifications/unsubscribe': {
       id: '/api/notifications/unsubscribe'
       path: '/api/notifications/unsubscribe'
@@ -1064,11 +1110,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiStripeBillingWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/stripe/connect-webhook': {
+      id: '/api/stripe/connect-webhook'
+      path: '/api/stripe/connect-webhook'
+      fullPath: '/api/stripe/connect-webhook'
+      preLoaderRoute: typeof ApiStripeConnectWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/terms/pdf': {
       id: '/api/terms/pdf'
       path: '/api/terms/pdf'
       fullPath: '/api/terms/pdf'
       preLoaderRoute: typeof ApiTermsPdfRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/xero/callback': {
+      id: '/api/xero/callback'
+      path: '/api/xero/callback'
+      fullPath: '/api/xero/callback'
+      preLoaderRoute: typeof ApiXeroCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -1178,9 +1238,12 @@ const rootRouteChildren: RootRouteChildren = {
   ApiCronInviteRemindersRoute: ApiCronInviteRemindersRoute,
   ApiCronNotificationsRoute: ApiCronNotificationsRoute,
   ApiCronSubscriptionEnforcementRoute: ApiCronSubscriptionEnforcementRoute,
+  ApiCronXeroSyncRoute: ApiCronXeroSyncRoute,
   ApiNotificationsUnsubscribeRoute: ApiNotificationsUnsubscribeRoute,
   ApiStripeBillingWebhookRoute: ApiStripeBillingWebhookRoute,
+  ApiStripeConnectWebhookRoute: ApiStripeConnectWebhookRoute,
   ApiTermsPdfRoute: ApiTermsPdfRoute,
+  ApiXeroCallbackRoute: ApiXeroCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

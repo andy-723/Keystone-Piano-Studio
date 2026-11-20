@@ -12,6 +12,11 @@ export const BODY_LIMIT_EXCEPTIONS: Array<{ route: string; reason: string }> = [
     reason:
       "Reads the raw body as text for the Stripe signature check; still rejects bodies over the default limit.",
   },
+  {
+    route: "/api/stripe/connect-webhook",
+    reason:
+      "Stripe Connect events: raw body for the signature check; still rejects bodies over the default limit.",
+  },
 ];
 
 export async function readJsonWithLimit<T>(

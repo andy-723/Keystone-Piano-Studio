@@ -43,11 +43,13 @@ export function getServerEnv() {
     // sign-in emails share that, so the default leaves 30 for them. Raise it on a paid plan.
     notifyDailyLimit: Number(read("NOTIFY_DAILY_LIMIT") ?? "70") || 70,
     // Keystone's own subscription billing (Synoratech → studios). Not Stripe Connect.
-    // Family Connect payments stay mock until Connect env + routes land; do not invent those here.
+    // Stripe Connect (families pay studios on the studio's own Stripe account) uses the same
+    // STRIPE_SECRET_KEY (Keystone is the Connect platform) and its own webhook signing secret.
     stripeSecretKey: read("STRIPE_SECRET_KEY") ?? "",
     stripeBillingWebhookSecret: read("STRIPE_BILLING_WEBHOOK_SECRET") ?? "",
     stripePriceBase: read("STRIPE_PRICE_BASE") ?? "",
     stripePricePro: read("STRIPE_PRICE_PRO") ?? "",
+    stripeConnectWebhookSecret: read("STRIPE_CONNECT_WEBHOOK_SECRET") ?? "",
     requireLive() {
       requireWhen(true, "SUPABASE_URL");
       requireWhen(true, "SUPABASE_ANON_KEY");
@@ -78,4 +80,10 @@ export function isStripeBillingConfigured() {
 /** True when `/api/stripe/billing-webhook` can verify Stripe-Signature. */
 export function isStripeBillingWebhookConfigured() {
   return Boolean(getServerEnv().stripeBillingWebhookSecret);
+}
+
+/** True when studios can link Stripe and families can pay online (Connect). */
+export function isStripeConnectConfigured() {
+  const env = getServerEnv();
+  return Boolean(env.stripeSecretKey && env.stripeConnectWebhookSecret);
 }
