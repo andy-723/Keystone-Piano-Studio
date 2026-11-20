@@ -168,5 +168,10 @@
   "clapRhythm": "拍出听到的节奏",
   "singMelody": "唱出听到的短旋律",
   "sightTitle": "{grade} 程度视奏",
-  "invoiceLine": "{student} — {duration}，{term}"
+  "invoiceLine": "{student} — {duration}，{term}",
+  "paymentLive": "您将在 Stripe 上安全付款，款项直接进入老师工作室的账户。Keystone 不会看到您的银行卡信息。",
+  "paymentContinue": "前往安全付款",
+  "paymentRedirecting": "正在打开 Stripe…",
+  "paymentReturnDone": "谢谢。银行卡付款会在一分钟内显示在这里；直接借记需要几个工作日到账。",
+  "paymentReturnCancelled": "付款已取消，没有扣款。"
 }

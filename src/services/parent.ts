@@ -88,6 +88,21 @@ export async function payParentInvoice(id: string, method: "payto" | "becs" | "c
   return recordInvoicePayment(id, method);
 }
 
+/**
+ * Real studios: opens Stripe Checkout on the studio's own Stripe account for what is still owing.
+ * The payment is recorded by the Connect webhook, never by the browser.
+ */
+export async function startParentInvoiceCheckout(id: string): Promise<string> {
+  const { getAuthClient } = await import("@/lib/auth-client");
+  const session = (await getAuthClient()?.auth.getSession())?.data.session;
+  if (!session?.access_token) throw new Error("Sign in again to pay this invoice.");
+  const { createInvoiceCheckoutFn } = await import("@/server/stripe-connect");
+  const { url } = await createInvoiceCheckoutFn({
+    data: { accessToken: session.access_token, invoiceId: id },
+  });
+  return url;
+}
+
 /** Family queries an invoice — pauses reminders until a teacher marks resolved. */
 export async function queryParentInvoice(id: string, messageBody: string) {
   const invoice = await getParentInvoice(id);
