@@ -12,7 +12,6 @@ import { ParentProgress } from "@/components/ParentProgress";
 import { ParentInvoices } from "@/components/ParentInvoices";
 import { parentSessionQuery } from "@/lib/parent-queries";
 import { ReacceptanceCard } from "@/components/terms/ReacceptanceCard";
-import { BrandLogo } from "@/components/BrandLogo";
 import { teacherProfileQuery } from "@/lib/community-queries";
 import { isLiveAuthConfigured } from "@/lib/auth-client";
 import { HelpCentre } from "@/components/help/HelpCentre";
@@ -93,10 +92,11 @@ function ParentViews() {
     >
       <div className="mx-auto max-w-xl pb-24">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
+          {/* The app header above already shows the logo and studio name, so they are not repeated here
+              (on phones the repeat pushed the family's content below the fold). */}
           <div className="min-w-0">
-            <BrandLogo variant="horizontal" alt="Keystone Music HQ" />
-            <h1 className="mt-3 font-display text-2xl font-semibold">{profile.studioName}</h1>
-            <p className="mt-1 text-base text-muted-foreground">{t("family")}</p>
+            <h1 className="sr-only">{profile.studioName}</h1>
+            <p className="font-display text-xl font-semibold">{t("family")}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Button variant={view === "help" ? "secondary" : "outline"} aria-pressed={view === "help"} className="min-h-11" onClick={() => { setView("help"); setQuote(''); window.scrollTo({ top: 0 }); }}>
@@ -151,7 +151,7 @@ function ParentViews() {
                 variant="ghost"
                 aria-pressed={view === key}
                 onClick={() => { setView(key); setQuote(''); setInvoiceId(null); window.scrollTo({ top: 0 }); }}
-                className={`min-h-20 min-w-0 flex-col gap-1 whitespace-normal rounded-none px-1 text-base transition-[background-color,color] duration-150 focus-visible:ring-inset ${view === key ? "bg-secondary text-primary" : "text-muted-foreground hover:bg-accent-hover hover:text-accent-foreground"}`}
+                className={`min-h-20 min-w-0 flex-col gap-1 whitespace-normal break-words rounded-none px-0.5 text-sm min-[400px]:text-base transition-[background-color,color] duration-150 focus-visible:ring-inset ${view === key ? "bg-secondary text-primary" : "text-muted-foreground hover:bg-accent-hover hover:text-accent-foreground"}`}
               >
                 <Icon className="size-6" aria-hidden />
                 {key === 'news' ? newsText(lang, 'news') : t(key)}

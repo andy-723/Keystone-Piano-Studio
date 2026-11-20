@@ -99,8 +99,8 @@ export function LegalMarkdown({ markdown }: { markdown: string }) {
         if (lines.length >= 2 && lines.every((line) => line.trim().startsWith("|"))) {
           const [head = "", , ...body] = lines;
           return (
-            <div key={index} className="overflow-x-auto">
-              <table className="w-full border-collapse text-left text-base">
+            <div key={index} className="w-full max-w-full overflow-x-auto">
+              <table className="w-full border-collapse text-left text-sm sm:text-base">
                 <thead>
                   <tr>
                     {cells(head).map((cell, i) => (
