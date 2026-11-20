@@ -39,7 +39,7 @@ export function MfaCodeInputs({ value, onChange, onComplete, disabled, error }: 
 
   return (
     <div>
-      <div className="flex gap-2" role="group" aria-label="Authenticator code">
+      <div className="flex w-full gap-1.5 min-[400px]:gap-2" role="group" aria-label="Authenticator code">
         {digits.map((digit, index) => (
           <input
             key={index}
@@ -56,7 +56,7 @@ export function MfaCodeInputs({ value, onChange, onComplete, disabled, error }: 
             onChange={(e) => setDigit(index, e.target.value)}
             onKeyDown={(e) => onKeyDown(index, e)}
             onPaste={onPaste}
-            className="h-12 w-11 rounded-[10px] border border-[#CDBF9F] bg-white text-center text-lg font-semibold text-[#15100D] focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-[#604A19]"
+            className="h-12 w-full min-w-0 max-w-11 flex-1 rounded-[10px] border border-[#CDBF9F] bg-white text-center text-lg font-semibold text-[#15100D] focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-[#604A19]"
           />
         ))}
       </div>

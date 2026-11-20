@@ -4,11 +4,13 @@ import {
   CalendarDays,
   LayoutDashboard,
   LifeBuoy,
+  Menu,
   MessageCircle,
   Receipt,
   Settings,
   Users,
   Megaphone,
+  X,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
@@ -55,6 +57,9 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
   const { data: profile } = useSuspenseQuery(teacherProfileQuery(role === "new-teacher" ? "new-studio" : "demo"));
   const [newNewsOpen, setNewNewsOpen] = useState(false);
   const [newPlanOpen, setNewPlanOpen] = useState(false);
+  // Phones: the header tools (language, larger text, help, sign out...) fold behind a Menu button so the
+  // header is one short row instead of half the screen. From 640px up they always show.
+  const [toolsOpen, setToolsOpen] = useState(false);
   // Sample data (the demo studio, platform staff, local mock mode) is labelled so it is never
   // mistaken for a real studio, e.g. in screen recordings.
   const showDemoLabel = (role === "teacher" || role === "parent") && getStudioWorkspace().mode === "mock";
@@ -73,7 +78,7 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
   return (
     <div className="min-h-dvh md:flex">
       {/* Left rail on tablet and up (teacher only) */}
-      {isTeacher && <nav aria-label="Main" className="hidden md:flex md:w-32 lg:w-40 shrink-0 flex-col gap-2 border-r border-sidebar-border bg-sidebar p-3 sticky top-0 h-screen">
+      {isTeacher && <nav aria-label="Main" className="hidden md:flex md:w-32 lg:w-40 shrink-0 flex-col gap-2 border-r border-sidebar-border bg-sidebar p-3 sticky top-0 h-dvh overflow-y-auto overscroll-contain">
         <div className="flex justify-center px-1 py-3">
           <BrandLogo variant="stacked" alt="Keystone Music HQ" />
         </div>
@@ -93,16 +98,29 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
       </nav>}
 
       <div className={`flex min-w-0 flex-1 flex-col ${isTeacher ? "pb-[calc(9rem+env(safe-area-inset-bottom))] sm:pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0" : ""}`}>
-        <header className="grid min-w-0 gap-2 border-b border-border bg-background/95 px-4 py-3 lg:flex lg:items-center lg:justify-between md:px-8">
-          <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-3 sm:flex sm:flex-wrap">
-            <span className={isTeacher ? "md:hidden" : undefined}>
-              <BrandLogo variant="horizontal" alt="Keystone Music HQ" />
+        <header className="grid min-w-0 gap-2 border-b border-border bg-background/95 px-4 py-3 md:px-8 xl:flex xl:items-center xl:justify-between">
+          <div className="flex min-w-0 items-center gap-3 sm:flex-wrap">
+            <span className={isTeacher ? "shrink-0 md:hidden" : "shrink-0"}>
+              <BrandLogo variant="mark" alt="Keystone Music HQ" className="sm:hidden" />
+              <BrandLogo variant="horizontal" alt="Keystone Music HQ" className="hidden sm:block" />
             </span>
-            <div className="min-w-0 break-words font-display text-xl font-semibold sm:flex-1">{profile.studioName || studio.name}{showDemoLabel && <span className="ml-3 inline-block rounded-full border border-amber-700/40 bg-amber-100 px-3 py-0.5 align-middle font-sans text-sm font-semibold text-amber-900" data-testid="demo-studio-label">{shellText("demoStudio")}</span>}</div>
-            {role !== "parent" && <ProfilePicture id="teacher" name={profile.name || "Teacher"} scope={role === "new-teacher" ? "new-studio" : "demo"} />}
-            {role !== "parent" && <div className={isTeacher ? "md:hidden" : ""}>{planBadge}</div>}
+            <div className="min-w-0 flex-1 break-words font-display text-lg font-semibold leading-tight sm:text-xl">{profile.studioName || studio.name}{showDemoLabel && <span className="mt-1 block w-fit rounded-full border border-amber-700/40 bg-amber-100 px-3 py-0.5 align-middle font-sans text-sm font-semibold whitespace-nowrap text-amber-900 sm:ml-3 sm:mt-0 sm:inline-block" data-testid="demo-studio-label">{shellText("demoStudio")}</span>}</div>
+            {role !== "parent" && <div className="hidden sm:block"><ProfilePicture id="teacher" name={profile.name || "Teacher"} scope={role === "new-teacher" ? "new-studio" : "demo"} /></div>}
+            {role !== "parent" && <div className={isTeacher ? "hidden sm:block md:hidden" : "hidden sm:block"}>{planBadge}</div>}
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-12 shrink-0 sm:hidden"
+              aria-expanded={toolsOpen}
+              aria-controls="app-header-tools"
+              onClick={() => setToolsOpen((open) => !open)}
+            >
+              {toolsOpen ? <X aria-hidden /> : <Menu aria-hidden />}
+              {toolsOpen ? shellText("close") : shellText("menu")}
+            </Button>
           </div>
-          <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-3 sm:flex sm:flex-wrap sm:gap-4">
+          <div id="app-header-tools" className={`${toolsOpen ? "flex" : "hidden"} min-w-0 flex-wrap items-center gap-3 border-t border-border pt-3 sm:flex sm:border-t-0 sm:pt-0 sm:gap-4`}>
+            {role !== "parent" && <div className="sm:hidden">{planBadge}</div>}
             {role !== "parent" && <AppLanguageSwitcher />}
             {isTeacher && <TourHelpButton />}
             <div className="relative flex min-h-12 shrink-0 items-center gap-2">
@@ -127,7 +145,7 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
             )}
             {!isLiveAuthConfigured() && (
               <>
-                <label className="flex min-w-0 max-w-full items-center gap-2 text-base">
+                <label className="flex w-full min-w-0 max-w-full items-center gap-2 text-base sm:w-auto">
                   <span className="sr-only sm:not-sr-only sm:text-muted-foreground">{shellText("viewingAs")}</span>
                   <select
                     value={role}
@@ -140,7 +158,7 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
                   </select>
                 </label>
                 {isTeacher && (
-                  <label className="flex min-w-0 max-w-full items-center gap-2 text-base">
+                  <label className="flex w-full min-w-0 max-w-full items-center gap-2 text-base sm:w-auto">
                     <span className="sr-only sm:not-sr-only sm:text-muted-foreground">Studio role</span>
                     <select
                       aria-label="Studio role"

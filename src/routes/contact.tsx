@@ -37,14 +37,14 @@ function ContactPage() {
       <ul className="list-disc space-y-1 pl-6">
         <li>
           Studios, plans and support:{" "}
-          <a className="text-mk-bronze underline underline-offset-2" href={`mailto:${support}`}>
+          <a className="text-mk-bronze underline underline-offset-2 [overflow-wrap:anywhere]" href={`mailto:${support}`}>
             {support}
           </a>
         </li>
         <li>
           Privacy questions:{" "}
           <a
-            className="text-mk-bronze underline underline-offset-2"
+            className="text-mk-bronze underline underline-offset-2 [overflow-wrap:anywhere]"
             href={`mailto:${KEYSTONE_PRIVACY_EMAIL}`}
           >
             {KEYSTONE_PRIVACY_EMAIL}
