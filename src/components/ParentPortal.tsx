@@ -21,6 +21,7 @@ import { publicSupportEmail } from "@/components/public/PublicPage";
 import { TourHelpButton, TourProvider } from "@/components/tour/Tour";
 import { FAMILY_TOUR } from "@/lib/tour-steps";
 import { AppLanguageSwitcher } from "@/components/AppLanguageSwitcher";
+import { toast } from "sonner";
 
 function invoiceDeepLink(): { view: "invoices"; invoiceId: string } | null {
   if (typeof window === "undefined") return null;
@@ -59,6 +60,19 @@ function ParentViews() {
     if (!link) return;
     setView("invoices");
     setInvoiceId(link.invoiceId);
+    // Back from Stripe Checkout. The Connect webhook records the payment a moment later, so
+    // reload the invoice (without the payment flag) once it has had time to land.
+    const payment = new URLSearchParams(window.location.search).get("payment");
+    if (payment === "done") {
+      toast.success(t("paymentReturnDone"));
+      const timer = window.setTimeout(() => {
+        window.location.replace(`/?view=invoices&invoice=${encodeURIComponent(link.invoiceId)}`);
+      }, 6000);
+      return () => window.clearTimeout(timer);
+    }
+    if (payment === "cancelled") toast(t("paymentReturnCancelled"));
+    return undefined;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const tabs = [{ key: "news", Icon: Megaphone }, { key: "home", Icon: Home }, { key: "chat", Icon: MessageCircle }, { key: "progress", Icon: ChartNoAxesColumnIncreasing }, { key: "invoices", Icon: Receipt }] as const;
   return (

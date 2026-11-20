@@ -5,7 +5,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useParentLanguage } from "@/i18n/parent";
-import { payParentInvoice } from "@/services/parent";
+import { payParentInvoice, startParentInvoiceCheckout } from "@/services/parent";
+import { isLiveStudio } from "@/lib/studio-workspace";
 import { formatAUD } from "@/lib/format";
 import { stripeStatusQuery } from "@/lib/integration-queries";
 import { formatBsb, getBillingProfile } from "@/services/billing-profile";
@@ -46,6 +47,12 @@ export function ParentPayment({ invoice }: { invoice: Invoice }) {
       ]);
     }
   };
+  const live = isLiveStudio();
+  const checkout = useMutation({
+    mutationFn: () => startParentInvoiceCheckout(invoice.id),
+    onSuccess: (url) => window.location.assign(url),
+    onError: () => toast.error(t("paymentError")),
+  });
   const paying = useMutation({
     mutationFn: () => payParentInvoice(invoice.id, method),
     onSuccess: () => {
@@ -151,9 +158,20 @@ export function ParentPayment({ invoice }: { invoice: Invoice }) {
         <DialogContent className="max-w-md [&>button:last-child]:hidden" aria-describedby="payment-description">
           <DialogTitle>{done ? t("paymentDone") : t("paymentTitle")}</DialogTitle>
           <p id="payment-description" className="text-base text-muted-foreground">
-            {stripeStatus === "connected" ? t("paymentMock") : t("bankTransferHint")}
+            {stripeStatus !== "connected" ? t("bankTransferHint") : live ? t("paymentLive") : t("paymentMock")}
           </p>
-          {done ? (
+          {stripeStatus === "connected" && live ? (
+            <>
+              <p className="text-2xl font-semibold">{formatAUD(invoice.balanceCents ?? invoice.totalCents)}</p>
+              <Button
+                disabled={checkout.isPending || checkout.isSuccess}
+                className="whitespace-normal"
+                onClick={() => checkout.mutate()}
+              >
+                {checkout.isPending || checkout.isSuccess ? t("paymentRedirecting") : t("paymentContinue")}
+              </Button>
+            </>
+          ) : done ? (
             <Check aria-hidden className="size-12 text-success" />
           ) : stripeStatus !== "connected" ? (
             bankBlock

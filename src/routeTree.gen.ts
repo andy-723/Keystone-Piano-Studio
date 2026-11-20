@@ -61,6 +61,7 @@ import { Route as ApiCronNotificationsRouteImport } from './routes/api/cron/noti
 import { Route as ApiCronSubscriptionEnforcementRouteImport } from './routes/api/cron/subscription-enforcement'
 import { Route as ApiNotificationsUnsubscribeRouteImport } from './routes/api/notifications/unsubscribe'
 import { Route as ApiStripeBillingWebhookRouteImport } from './routes/api/stripe/billing-webhook'
+import { Route as ApiStripeConnectWebhookRouteImport } from './routes/api/stripe/connect-webhook'
 import { Route as ApiTermsPdfRouteImport } from './routes/api/terms/pdf'
 
 const IndexRoute = IndexRouteImport.update({
@@ -325,6 +326,11 @@ const ApiStripeBillingWebhookRoute = ApiStripeBillingWebhookRouteImport.update({
   path: '/api/stripe/billing-webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiStripeConnectWebhookRoute = ApiStripeConnectWebhookRouteImport.update({
+  id: '/api/stripe/connect-webhook',
+  path: '/api/stripe/connect-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiTermsPdfRoute = ApiTermsPdfRouteImport.update({
   id: '/api/terms/pdf',
   path: '/api/terms/pdf',
@@ -384,6 +390,7 @@ export interface FileRoutesByFullPath {
   '/api/cron/subscription-enforcement': typeof ApiCronSubscriptionEnforcementRoute
   '/api/notifications/unsubscribe': typeof ApiNotificationsUnsubscribeRoute
   '/api/stripe/billing-webhook': typeof ApiStripeBillingWebhookRoute
+  '/api/stripe/connect-webhook': typeof ApiStripeConnectWebhookRoute
   '/api/terms/pdf': typeof ApiTermsPdfRoute
 }
 export interface FileRoutesByTo {
@@ -435,6 +442,7 @@ export interface FileRoutesByTo {
   '/api/cron/subscription-enforcement': typeof ApiCronSubscriptionEnforcementRoute
   '/api/notifications/unsubscribe': typeof ApiNotificationsUnsubscribeRoute
   '/api/stripe/billing-webhook': typeof ApiStripeBillingWebhookRoute
+  '/api/stripe/connect-webhook': typeof ApiStripeConnectWebhookRoute
   '/api/terms/pdf': typeof ApiTermsPdfRoute
 }
 export interface FileRoutesById {
@@ -491,6 +499,7 @@ export interface FileRoutesById {
   '/api/cron/subscription-enforcement': typeof ApiCronSubscriptionEnforcementRoute
   '/api/notifications/unsubscribe': typeof ApiNotificationsUnsubscribeRoute
   '/api/stripe/billing-webhook': typeof ApiStripeBillingWebhookRoute
+  '/api/stripe/connect-webhook': typeof ApiStripeConnectWebhookRoute
   '/api/terms/pdf': typeof ApiTermsPdfRoute
 }
 export interface FileRouteTypes {
@@ -548,6 +557,7 @@ export interface FileRouteTypes {
     | '/api/cron/subscription-enforcement'
     | '/api/notifications/unsubscribe'
     | '/api/stripe/billing-webhook'
+    | '/api/stripe/connect-webhook'
     | '/api/terms/pdf'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -599,6 +609,7 @@ export interface FileRouteTypes {
     | '/api/cron/subscription-enforcement'
     | '/api/notifications/unsubscribe'
     | '/api/stripe/billing-webhook'
+    | '/api/stripe/connect-webhook'
     | '/api/terms/pdf'
   id:
     | '__root__'
@@ -654,6 +665,7 @@ export interface FileRouteTypes {
     | '/api/cron/subscription-enforcement'
     | '/api/notifications/unsubscribe'
     | '/api/stripe/billing-webhook'
+    | '/api/stripe/connect-webhook'
     | '/api/terms/pdf'
   fileRoutesById: FileRoutesById
 }
@@ -695,6 +707,7 @@ export interface RootRouteChildren {
   ApiCronSubscriptionEnforcementRoute: typeof ApiCronSubscriptionEnforcementRoute
   ApiNotificationsUnsubscribeRoute: typeof ApiNotificationsUnsubscribeRoute
   ApiStripeBillingWebhookRoute: typeof ApiStripeBillingWebhookRoute
+  ApiStripeConnectWebhookRoute: typeof ApiStripeConnectWebhookRoute
   ApiTermsPdfRoute: typeof ApiTermsPdfRoute
 }
 
@@ -1064,6 +1077,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiStripeBillingWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/stripe/connect-webhook': {
+      id: '/api/stripe/connect-webhook'
+      path: '/api/stripe/connect-webhook'
+      fullPath: '/api/stripe/connect-webhook'
+      preLoaderRoute: typeof ApiStripeConnectWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/terms/pdf': {
       id: '/api/terms/pdf'
       path: '/api/terms/pdf'
@@ -1180,6 +1200,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiCronSubscriptionEnforcementRoute: ApiCronSubscriptionEnforcementRoute,
   ApiNotificationsUnsubscribeRoute: ApiNotificationsUnsubscribeRoute,
   ApiStripeBillingWebhookRoute: ApiStripeBillingWebhookRoute,
+  ApiStripeConnectWebhookRoute: ApiStripeConnectWebhookRoute,
   ApiTermsPdfRoute: ApiTermsPdfRoute,
 }
 export const routeTree = rootRouteImport

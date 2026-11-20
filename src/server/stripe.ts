@@ -80,6 +80,7 @@ export async function stripePost<T>(
   path: string,
   params: Record<string, string | number | boolean | undefined | null>,
   idempotencyKey?: string,
+  options: { stripeAccount?: string } = {},
 ): Promise<T> {
   if (!secretKey)
     throw new ProblemError(503, "Billing is not set up yet", "STRIPE_SECRET_KEY is missing.");
@@ -89,8 +90,36 @@ export async function stripePost<T>(
       Authorization: `Bearer ${secretKey}`,
       "Content-Type": "application/x-www-form-urlencoded",
       ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
+      // Stripe Connect: act on the studio's own account (direct charges).
+      ...(options.stripeAccount ? { "Stripe-Account": options.stripeAccount } : {}),
     },
     body: formEncode(params),
+  });
+  const json = (await response.json().catch(() => ({}))) as T & { error?: { message?: string } };
+  if (!response.ok) {
+    throw new ProblemError(
+      502,
+      "Stripe request failed",
+      json.error?.message ?? `HTTP ${response.status}`,
+    );
+  }
+  return json;
+}
+
+/** GET from the Stripe API with the platform secret key (optionally on a connected account). */
+export async function stripeGet<T>(
+  secretKey: string,
+  path: string,
+  options: { stripeAccount?: string } = {},
+): Promise<T> {
+  if (!secretKey)
+    throw new ProblemError(503, "Stripe is not set up yet", "STRIPE_SECRET_KEY is missing.");
+  const response = await fetch(`https://api.stripe.com/v1/${path}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${secretKey}`,
+      ...(options.stripeAccount ? { "Stripe-Account": options.stripeAccount } : {}),
+    },
   });
   const json = (await response.json().catch(() => ({}))) as T & { error?: { message?: string } };
   if (!response.ok) {
