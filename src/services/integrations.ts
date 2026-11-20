@@ -1,4 +1,9 @@
-import { integrationState, type IntegrationScope, type StripeStatus } from "@/mocks/integrations";
+import {
+  integrationState,
+  type IntegrationScope,
+  type IntegrationState,
+  type StripeStatus,
+} from "@/mocks/integrations";
 import { invoices, studio } from "@/mocks/data";
 import { setupSession } from "@/mocks/setup";
 import { PROTOTYPE_TODAY, melbourneIso } from "@/lib/calendar";
@@ -25,7 +30,8 @@ async function liveRequest() {
 
 async function liveIntegrations() {
   const { getStripeConnectStatusFn } = await import("@/server/stripe-connect");
-  const status = await getStripeConnectStatusFn({ data: await liveRequest() });
+  const request = await liveRequest();
+  const status = await getStripeConnectStatusFn({ data: request });
   return {
     stripe: {
       status: status.status,
@@ -34,8 +40,53 @@ async function liveIntegrations() {
       live: true,
       configured: status.configured,
     },
-    xero: { status: "not_connected" as const, organisationName: null, lastSyncedAt: null },
+    xero: await liveXero(request),
   };
+}
+
+type LiveXero = IntegrationState["xero"];
+async function liveXero(request: { accessToken: string; studioId: string }): Promise<LiveXero> {
+  try {
+    const { getXeroStatusFn } = await import("@/server/xero");
+    const x = await getXeroStatusFn({ data: request });
+    return {
+      status: x.status === "connected" ? "connected" : "not_connected",
+      organisationName: x.organisationName,
+      lastSyncedAt: x.lastSyncedAt,
+      live: {
+        configured: x.configured,
+        needsReconnect: x.status === "needs_reconnect",
+        canConnect: x.canConnect,
+        lastError: x.lastError,
+        salesAccountCode: x.settings.salesAccountCode,
+        paymentAccountCode: x.settings.paymentAccountCode,
+        ...(x.accounts ? { accounts: x.accounts } : {}),
+      },
+    };
+  } catch {
+    // Teachers can't see Xero settings; show it as not connected rather than failing the page.
+    return { status: "not_connected", organisationName: null, lastSyncedAt: null };
+  }
+}
+
+/** Real studios: Xero's sign-in page for the studio owner (Pro). */
+export async function startLiveXeroConnect(): Promise<string> {
+  const { startXeroConnectFn } = await import("@/server/xero");
+  const { url } = await startXeroConnectFn({ data: await liveRequest() });
+  return url;
+}
+
+export async function saveLiveXeroAccounts(input: {
+  salesAccountCode?: string;
+  paymentAccountCode?: string;
+}) {
+  const { saveXeroSettingsFn } = await import("@/server/xero");
+  await saveXeroSettingsFn({ data: { ...(await liveRequest()), ...input } });
+}
+
+export async function syncLiveXeroNow() {
+  const { syncXeroNowFn } = await import("@/server/xero");
+  return syncXeroNowFn({ data: await liveRequest() });
 }
 
 /** Real studios: Stripe-hosted onboarding URL for the studio's own account. */
@@ -90,7 +141,7 @@ export async function disconnectStripe(scope: IntegrationScope = "demo") {
 }
 export async function connectXero(scope: IntegrationScope = "demo") {
   if (!proFeaturesEnabled(scope)) throw new Error("Available on Pro. Pro is A$49 a month.");
-  if (isLive(scope)) throw new Error("Xero connection is coming soon.");
+  if (isLive(scope)) throw new Error("Use startLiveXeroConnect for real studios.");
   const xero = integrationState[scope].xero;
   xero.status = "connected";
   xero.organisationName =
@@ -98,6 +149,11 @@ export async function connectXero(scope: IntegrationScope = "demo") {
   return respond(xero);
 }
 export async function disconnectXero(scope: IntegrationScope = "demo") {
+  if (isLive(scope)) {
+    const { disconnectXeroFn } = await import("@/server/xero");
+    await disconnectXeroFn({ data: await liveRequest() });
+    return liveIntegrations().then((state) => state.xero);
+  }
   integrationState[scope].xero = {
     status: "not_connected",
     organisationName: null,
