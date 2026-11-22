@@ -15,6 +15,12 @@ export function setEmailProviderForTests(provider: EmailProvider | null) {
 
 export function getEmailProvider(): EmailProvider {
   if (providerOverride) return providerOverride;
-  if (isMockOnboarding() || !getServerEnv().resendApiKey) return outboxEmailProvider;
+  if (isMockOnboarding()) return outboxEmailProvider;
+  // A real studio without RESEND_API_KEY used to fall back to the in-memory outbox, so invites
+  // showed as "sent" while nothing left the server. Now the send fails (Resend provider throws
+  // "Missing required environment variable: RESEND_API_KEY") and the teacher sees the error.
+  if (!getServerEnv().resendApiKey) {
+    console.error("[email] RESEND_API_KEY is not set; live emails cannot be sent");
+  }
   return createResendEmailProvider();
 }

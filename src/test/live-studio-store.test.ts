@@ -339,6 +339,48 @@ describe("live studio data (0011)", () => {
     ).toBe("mock");
   });
 
+  it("loads a parent's studio through the server, never the demo, because parents can't read the studio table", async () => {
+    const parent = {
+      userId: "parent-1",
+      platformStaff: null,
+      memberships: [],
+      studioAccess: [{ studioId: STUDIO_ID, role: "guardian", plan: "pro" as const }],
+    };
+    // The browser client would return nothing for `studio` under RLS; it must not be asked.
+    const noStudioRead = {
+      from: () => {
+        throw new Error("parents must not read studio directly");
+      },
+    } as never;
+    const choice = await chooseStudioWorkspace(parent, noStudioRead, async (studioId) => ({
+      id: studioId,
+      name: "Andrew Test Studio",
+      is_demo: false,
+      profile: {},
+      guardianId: "guardian-1",
+    }));
+    expect(choice.workspace).toEqual({
+      mode: "live",
+      studioId: STUDIO_ID,
+      userId: "parent-1",
+      role: "guardian",
+      guardianId: "guardian-1",
+    });
+    expect(choice.row?.name).toBe("Andrew Test Studio");
+
+    await expect(chooseStudioWorkspace(parent, noStudioRead, async () => null)).rejects.toThrow(
+      /couldn't find your studio/,
+    );
+    const demo = await chooseStudioWorkspace(parent, noStudioRead, async (studioId) => ({
+      id: studioId,
+      name: "Clarke",
+      is_demo: true,
+      profile: {},
+      guardianId: "g",
+    }));
+    expect(demo.workspace.mode).toBe("mock");
+  });
+
   it("stays on demo data (today's behaviour) if the studio lookup fails, e.g. 0011 not applied", async () => {
     const broken = {
       from: () => ({

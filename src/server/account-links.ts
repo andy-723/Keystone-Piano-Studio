@@ -96,6 +96,25 @@ export async function authUsersById(
   return result;
 }
 
+/**
+ * Finds a sign-in account by email. The Admin API has no lookup by email, and every parent who
+ * finishes an enrolment form gets an account, so only reading the first page (as before) would
+ * stop finding existing people once there are more than a page of accounts.
+ */
+export async function findAuthUserByEmail(supabase: SupabaseClient, email: string) {
+  const wanted = email.trim().toLowerCase();
+  const perPage = 1000;
+  for (let page = 1; page <= 100; page += 1) {
+    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage });
+    if (error) throw new ProblemError(500, "Account lookup failed", error.message);
+    const users = data?.users ?? [];
+    const found = users.find((user) => user.email?.toLowerCase() === wanted);
+    if (found) return found;
+    if (users.length < perPage) return null;
+  }
+  return null;
+}
+
 /** One link per person per minute, so a double press doesn't send two emails. */
 const recentSends = new Map<string, number>();
 export function allowLinkSend(key: string, now = Date.now()): boolean {
