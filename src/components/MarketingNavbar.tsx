@@ -3,7 +3,6 @@ import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { HomeLogoLink } from "@/components/HomeLogoLink";
 import { SiteLanguageSwitcher } from "@/components/SiteLanguageSwitcher";
-import { useSiteTranslation } from "@/i18n/marketing/site-lang";
 import { Menu, MenuItem, MenuLink } from "@/components/ui/navbar-menu";
 import logo from "@/assets/brand/keystone-lockup-horizontal-40@3x.png";
 import {
@@ -35,7 +34,6 @@ function NavUtilities({ className }: { className: string }) {
 
 export function MarketingNavbar() {
   const [expanded, setExpanded] = useState(false);
-  useSiteTranslation();
   return (
     <header className="mk-navbar-header font-mk-sans text-mk-ink">
       <div className="mk-navbar-bar">
