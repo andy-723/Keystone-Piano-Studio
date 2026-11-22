@@ -215,6 +215,30 @@ export const shellStrings: AppStrings = {
   "Data hosted in Sydney, Australia": ["数据托管于澳大利亚悉尼", "Dữ liệu lưu trữ tại Sydney, Úc"],
   "Enter your email address.": ["请输入您的电子邮箱地址。", "Nhập địa chỉ email của bạn."],
   "Check your inbox": ["请查看收件箱", "Kiểm tra hộp thư"],
+  "If there is a Keystone Music HQ account for {email}, we sent a sign-in link. Open it on this device. If you ask for another link, only the newest one works.":
+    [
+      "如果 {email} 有 Keystone Music HQ 账户，我们已发送登录链接。请在此设备上打开。如果您再次请求链接，只有最新的链接有效。",
+      "Nếu {email} có tài khoản Keystone Music HQ, chúng tôi đã gửi liên kết đăng nhập. Hãy mở nó trên thiết bị này. Nếu bạn yêu cầu liên kết khác, chỉ liên kết mới nhất có hiệu lực.",
+    ],
+  ", we sent a sign-in link. Open it on this device. If you ask for another link, only the newest one works.":
+    [
+      "，我们已发送登录链接。请在此设备上打开。如果您再次请求链接，只有最新的链接有效。",
+      ", chúng tôi đã gửi liên kết đăng nhập. Hãy mở trên thiết bị này. Nếu bạn yêu cầu liên kết khác, chỉ liên kết mới nhất có hiệu lực.",
+    ],
+  "Access for this account has been turned off. Contact your studio, or support@keystonemusichq.com if you run the studio.":
+    [
+      "此账户的访问权限已被关闭。请联系您的工作室；如果您是工作室负责人，请联系 support@keystonemusichq.com。",
+      "Quyền truy cập của tài khoản này đã bị tắt. Hãy liên hệ studio của bạn, hoặc support@keystonemusichq.com nếu bạn là chủ studio.",
+    ],
+  "Too many sign-in attempts. Wait a minute, then request a new link from the sign-in page.": [
+    "登录尝试次数过多。请等待一分钟，然后在登录页面请求新链接。",
+    "Quá nhiều lần thử đăng nhập. Hãy đợi một phút rồi yêu cầu liên kết mới từ trang đăng nhập.",
+  ],
+  "This sign-in link has expired or was already used. Only the newest link we email you works, and each link works once within an hour. Request a new link from the sign-in page.":
+    [
+      "此登录链接已过期或已被使用。只有我们最新发送的链接有效，且每个链接只能在一小时内使用一次。请在登录页面请求新链接。",
+      "Liên kết đăng nhập này đã hết hạn hoặc đã được dùng. Chỉ liên kết mới nhất chúng tôi gửi có hiệu lực, và mỗi liên kết chỉ dùng được một lần trong vòng một giờ. Hãy yêu cầu liên kết mới từ trang đăng nhập.",
+    ],
   "If there is a Keystone Music HQ account for {email}, we sent a sign-in link. Open it on this device.":
     [
       "如果 {email} 有 Keystone Music HQ 账户，我们已发送登录链接。请在此设备上打开。",
