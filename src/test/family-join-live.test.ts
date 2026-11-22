@@ -81,6 +81,14 @@ function makeClient() {
         filters.push((row) => (value(row, column) ?? null) !== v),
         chain
       ),
+      ilike: (column: string, pattern: string) => (
+        filters.push(
+          (row) =>
+            String(value(row, column) ?? "").toLowerCase() ===
+            pattern.replace(/\\([\\%_])/g, "$1").toLowerCase(),
+        ),
+        chain
+      ),
       in: (column: string, values: unknown[]) => (
         filters.push((row) => values.includes(value(row, column))),
         chain
@@ -156,6 +164,19 @@ vi.mock("@/server/supabase", () => ({ createServiceSupabase: () => makeClient() 
 vi.mock("@/server/subscription-store", () => ({
   getStudioAccess: async () => ({ level: fake.accessLevel, subscription: null }),
 }));
+vi.mock("@/server/session", () => ({
+  verifyAccessToken: async () => ({
+    userId: "teacher-1",
+    aal: "aal2",
+    email: null,
+    signInMethods: [],
+    accessToken: "t",
+  }),
+}));
+vi.mock("@/server/authz", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/server/authz")>()),
+  requireStudioRole: async () => ({ role: "owner" }),
+}));
 vi.mock("@/server/turnstile", () => ({
   verifyTurnstile: async (token: string | undefined) => token === "captcha-ok",
 }));
@@ -168,6 +189,7 @@ import {
   submitLiveJoin,
   unlockLiveJoin,
 } from "@/server/family-join";
+import { enrolAndInviteStudent, TERMS_NOT_PUBLISHED_MESSAGE } from "@/server/invitations";
 import { draftForInvitedStudent, loadLiveEnrolments } from "@/services/live/enrolment-store";
 import { enrolmentDrafts } from "@/mocks/onboarding";
 import type { TermsState } from "@/mocks/terms";
@@ -470,6 +492,16 @@ describe("family enrolment form for real studios", () => {
     expect(fake.tables["invitation"]![0]!["status"]).not.toBe("completed");
   });
 
+  it("won't give a revoked parent their access back through a new invite link", async () => {
+    Object.assign(fake.tables["guardian"]![0]!, { user_id: null, revoked_user_id: "old-user" });
+    await unlockLiveJoin({ token: TOKEN, turnstileToken: "captcha-ok" }, meta());
+    await expect(submitLiveJoin({ token: TOKEN, answers: answers() }, meta())).rejects.toThrow(
+      "turned off",
+    );
+    expect(fake.tables["guardian"]![0]!["user_id"]).toBeNull();
+    expect(fake.tables["invitation"]![0]!["status"]).not.toBe("completed");
+  });
+
   it("refuses new families while the studio is paused", async () => {
     fake.accessLevel = "read_only";
     expect(await loadLiveJoin(TOKEN, meta())).toMatchObject({ state: "unavailable" });
@@ -528,5 +560,71 @@ describe("teacher side: completed forms show up as saved enrolments", () => {
     );
     expect(enrolmentDrafts).toHaveLength(0);
     expect(draftForInvitedStudent(STUDENT, null).status).toBe("intake_sent");
+  });
+});
+
+describe("teacher side: sending an invite", () => {
+  const sent: SendEmailInput[] = [];
+  const input = {
+    accessToken: "t",
+    firstName: "Leo",
+    lastName: "Nguyen",
+    birthYear: 2018,
+    guardianName: "Jane Nguyen",
+    guardianEmail: "jane@family.test",
+    guardianMobile: "0412 345 678",
+    language: "en" as const,
+  };
+
+  beforeEach(async () => {
+    sent.length = 0;
+    fake.users = [];
+    fake.accessLevel = "full";
+    await seed();
+    fake.tables["studio_member"] = [{ studio_id: STUDIO, user_id: "teacher-1", role: "owner" }];
+    fake.tables["email_log"] = [];
+    setEmailProviderForTests({
+      async send(mail) {
+        sent.push(mail);
+        return { id: `email-${sent.length}` };
+      },
+    });
+  });
+  afterEach(() => setEmailProviderForTests(null));
+
+  it("refuses until the studio has published its terms, before adding anything", async () => {
+    await seed({ withTerms: false });
+    fake.tables["studio_member"] = [{ studio_id: STUDIO, user_id: "teacher-1", role: "owner" }];
+    await expect(enrolAndInviteStudent(input)).rejects.toThrow(TERMS_NOT_PUBLISHED_MESSAGE);
+    expect(fake.tables["student"]).toHaveLength(1);
+    expect(sent).toHaveLength(0);
+  });
+
+  it("adds a sibling to the existing family and emails the invite", async () => {
+    const result = await enrolAndInviteStudent(input);
+    expect(result.familyId).toBe(FAMILY);
+    expect(fake.tables["student"]!.map((row) => row["first_name"])).toEqual(["Mia", "Leo"]);
+    expect(sent.map((mail) => mail.to)).toEqual(["jane@family.test"]);
+  });
+
+  it("a retry after a failed invite email doesn't add the same child twice", async () => {
+    setEmailProviderForTests({
+      send: async () => {
+        throw new Error("Resend is down");
+      },
+    });
+    await expect(enrolAndInviteStudent(input)).rejects.toThrow("Resend is down");
+    setEmailProviderForTests({
+      async send(mail) {
+        sent.push(mail);
+        return { id: "ok" };
+      },
+    });
+    const retry = await enrolAndInviteStudent({ ...input, firstName: "leo" });
+    const leos = fake.tables["student"]!.filter((row) => row["first_name"] === "Leo");
+    expect(leos).toHaveLength(1);
+    expect(retry.draft.studentId).toBe(leos[0]!["id"]);
+    const invites = fake.tables["invitation"]!.filter((row) => row["id"] !== INVITE);
+    expect(invites.map((row) => row["status"]).sort()).toEqual(["revoked", "sent"]);
   });
 });

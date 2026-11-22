@@ -60,9 +60,12 @@ export async function seedLocalEnrolmentFromLiveInvite(input: {
       birthYear: input.birthYear,
     });
   }
-  if (!enrolmentDrafts.some((entry) => entry.id === input.draft.id)) {
-    enrolmentDrafts.push(structuredClone(input.draft));
-  }
+  // A resent or retried invite for the same child replaces that child's draft, not a second one.
+  const existing = enrolmentDrafts.findIndex(
+    (entry) => entry.id === input.draft.id || entry.studentId === input.studentId,
+  );
+  if (existing >= 0) enrolmentDrafts.splice(existing, 1, structuredClone(input.draft));
+  else enrolmentDrafts.push(structuredClone(input.draft));
   return respond(structuredClone(input.draft));
 }
 

@@ -29,6 +29,8 @@ import type {
   Teacher,
 } from "@/mocks/types";
 import { client, friendly, setStudioStoreClientForTests, type Client } from "./client";
+import { getAuthClient } from "@/lib/auth-client";
+import { guardianStudioFn } from "@/server/guardian-studio";
 import { loadLiveChat } from "./chat-store";
 import { loadLiveNews } from "./news-store";
 import { loadLiveCourses } from "./course-store";
@@ -95,14 +97,33 @@ export type AccountForWorkspace = {
 
 const STAFF_ORDER = ["owner", "admin", "teacher"] as const;
 
+/** A parent's studio, from the server (parents can't read the studio table themselves). */
+export type GuardianStudioLoader = (
+  studioId: string,
+) => Promise<(StudioRow & { guardianId: string }) | null>;
+
+async function guardianStudioFromServer(studioId: string) {
+  const session = (await getAuthClient()?.auth.getSession())?.data.session;
+  if (!session) throw new Error("Your sign-in has ended. Please sign in again.");
+  const { studio } = await guardianStudioFn({
+    data: { accessToken: session.access_token, studioId },
+  });
+  return studio as (StudioRow & { guardianId: string }) | null;
+}
+
 /**
  * Picks the studio this person works in and whether it is live or the demo. Platform staff and
- * the demo studio stay on the mock fixtures. Any lookup error also stays on mock (today's
- * behaviour) so a missing migration never locks a studio out; it is logged.
+ * the demo studio stay on the mock fixtures. For staff, any lookup error also stays on mock
+ * (today's behaviour) so a missing migration never locks a studio out; it is logged.
+ *
+ * Parents never fall back to the demo: a parent who saw the demo studio's families, invoices
+ * and chat would think it was their own. If their studio can't load, this throws and the
+ * app shows "Your studio didn't load" with a Reload button.
  */
 export async function chooseStudioWorkspace(
   account: AccountForWorkspace,
   c: Client = client(),
+  loadGuardianStudio: GuardianStudioLoader = guardianStudioFromServer,
 ): Promise<{ workspace: StudioWorkspace; row: StudioRow | null; plan: StudioPlan | null }> {
   const mock = { workspace: { mode: "mock" } as StudioWorkspace, row: null, plan: null };
   const staff = STAFF_ORDER.map((role) => account.memberships.find((m) => m.role === role)).find(
@@ -111,6 +132,27 @@ export async function chooseStudioWorkspace(
   const guardianEntry = account.studioAccess?.find((entry) => entry.role === "guardian");
   const studioId = staff?.studioId ?? guardianEntry?.studioId;
   if (!studioId) return mock;
+  const plan = account.studioAccess?.find((entry) => entry.studioId === studioId)?.plan ?? null;
+
+  if (!staff) {
+    // Parents: RLS gives them no read on `studio`, so the server looks it up from their own
+    // guardian row.
+    const found = await loadGuardianStudio(studioId);
+    if (!found) throw new Error("We couldn't find your studio. Please contact your teacher.");
+    const { guardianId, ...row } = found;
+    if (row.is_demo) return { ...mock, row };
+    return {
+      workspace: {
+        mode: "live",
+        studioId: row.id,
+        userId: account.userId,
+        role: "guardian",
+        guardianId,
+      },
+      row,
+      plan,
+    };
+  }
 
   const { data, error } = await c
     .from("studio")
@@ -123,38 +165,12 @@ export async function chooseStudioWorkspace(
   }
   const row = data as StudioRow;
   if (row.is_demo) return { ...mock, row };
-  const plan = account.studioAccess?.find((entry) => entry.studioId === studioId)?.plan ?? null;
-
-  if (staff) {
-    return {
-      workspace: {
-        mode: "live",
-        studioId,
-        userId: account.userId,
-        role: staff.role as "owner" | "admin" | "teacher",
-      },
-      row,
-      plan,
-    };
-  }
-  const guardian = await c
-    .from("guardian")
-    .select("id")
-    .eq("user_id", account.userId)
-    .eq("studio_id", studioId)
-    .limit(1)
-    .maybeSingle();
-  if (guardian.error || !guardian.data) {
-    console.error("[studio-store] guardian lookup failed", guardian.error?.message);
-    return mock;
-  }
   return {
     workspace: {
       mode: "live",
       studioId,
       userId: account.userId,
-      role: "guardian",
-      guardianId: (guardian.data as { id: string }).id,
+      role: staff.role as "owner" | "admin" | "teacher",
     },
     row,
     plan,
