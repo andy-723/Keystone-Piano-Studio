@@ -3,8 +3,22 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-libra
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { FAMILY_TOUR, SETUP_TOUR, STUDIO_TOUR, tourControl, type TourStep } from "@/lib/tour-steps";
-import { getTourProgress, saveTourProgress, tourStorageKey } from "@/services/tour";
+import {
+  FAMILY_TOUR,
+  SETUP_TOUR,
+  STUDENT_TOUR,
+  STUDIO_TOUR,
+  familyTourSteps,
+  tourControl,
+  type TourStep,
+} from "@/lib/tour-steps";
+import {
+  getFamilyTourAudience,
+  getTourProgress,
+  saveFamilyTourAudience,
+  saveTourProgress,
+  tourStorageKey,
+} from "@/services/tour";
 import { TourHelpButton, TourProvider } from "@/components/tour/Tour";
 import { setSiteLang } from "@/i18n/marketing/site-lang";
 
@@ -26,6 +40,7 @@ describe("tour steps", () => {
   it.each([
     ["studio", STUDIO_TOUR],
     ["family", FAMILY_TOUR],
+    ["student", STUDENT_TOUR],
     ["setup", SETUP_TOUR],
   ] as const)("%s tour has unique ids and a short length", (_name, steps) => {
     expect(new Set(steps.map((s) => s.id)).size).toBe(steps.length);
@@ -36,6 +51,44 @@ describe("tour steps", () => {
     expect(FAMILY_TOUR[0]?.target).toBeNull();
     expect(FAMILY_TOUR.at(-1)?.target).toBeNull();
     expect(SETUP_TOUR.at(-1)?.target).toBeNull();
+    expect(STUDENT_TOUR.at(-1)?.target).toBeNull();
+  });
+
+  it("family and student tours share a first card that asks who is taking the tour", () => {
+    expect(STUDENT_TOUR[0]).toBe(FAMILY_TOUR[0]);
+    expect(FAMILY_TOUR[0]?.choices?.map((c) => c.value)).toEqual(["student", "guardian"]);
+    for (const choice of FAMILY_TOUR[0]?.choices ?? []) {
+      expect(choice.label["zh-CN"]).toBeTruthy();
+      expect(choice.label.vi).toBeTruthy();
+    }
+    expect(
+      [...FAMILY_TOUR, ...STUDENT_TOUR, ...STUDIO_TOUR, ...SETUP_TOUR]
+        .slice(1)
+        .filter((s) => s.choices),
+    ).toEqual([STUDENT_TOUR[0]]);
+    expect(familyTourSteps("student")).toBe(STUDENT_TOUR);
+    expect(familyTourSteps("guardian")).toBe(FAMILY_TOUR);
+    expect(familyTourSteps(null)).toBe(FAMILY_TOUR);
+  });
+
+  it("walks families through lessons, practice, marking, chat and help; invoices for guardians only", () => {
+    expect(FAMILY_TOUR.map((s) => s.id)).toEqual([
+      "welcome",
+      "news",
+      "next-lesson",
+      "practice",
+      "progress",
+      "log-practice",
+      "chat",
+      "invoices",
+      "help",
+      "language",
+      "done",
+    ]);
+    expect(STUDENT_TOUR.map((s) => s.id)).toEqual(
+      FAMILY_TOUR.map((s) => s.id).filter((id) => id !== "invoices"),
+    );
+    expect(STUDENT_TOUR.some((s) => s.target === "family-tab-invoices")).toBe(false);
   });
 
   it("studio tour follows the owner's setup order and ends back on studio details with a setup offer", () => {
@@ -64,7 +117,7 @@ describe("tour steps", () => {
       .map((file) => readFileSync(file, "utf8"))
       .join("\n");
     const portal = readFileSync(join(process.cwd(), "src/components/ParentPortal.tsx"), "utf8");
-    for (const step of [...STUDIO_TOUR, ...FAMILY_TOUR, ...SETUP_TOUR]) {
+    for (const step of [...STUDIO_TOUR, ...FAMILY_TOUR, ...STUDENT_TOUR, ...SETUP_TOUR]) {
       if (!step.target) continue;
       if (step.target.startsWith("family-tab-")) {
         expect(portal).toContain("data-tour={`family-tab-${key}`}");
@@ -76,7 +129,7 @@ describe("tour steps", () => {
   });
 
   it("family, studio and setup tours are bilingual and studio steps name a route", () => {
-    for (const step of [...FAMILY_TOUR, ...STUDIO_TOUR, ...SETUP_TOUR]) {
+    for (const step of [...FAMILY_TOUR, ...STUDENT_TOUR, ...STUDIO_TOUR, ...SETUP_TOUR]) {
       expect(step.title["zh-CN"], `${step.id} zh title`).toBeTruthy();
       expect(step.body["zh-CN"], `${step.id} zh body`).toBeTruthy();
       expect(step.title.vi, `${step.id} vi title`).toBeTruthy();
@@ -99,6 +152,14 @@ describe("tour progress service", () => {
     await saveTourProgress("studio", { stepIndex: 3, status: "in_progress" });
     expect(await getTourProgress("studio")).toEqual({ stepIndex: 3, status: "in_progress" });
     expect(await getTourProgress("family")).toEqual({ stepIndex: 0, status: "not_started" });
+  });
+
+  it("remembers who took the family tour", () => {
+    expect(getFamilyTourAudience()).toBeNull();
+    saveFamilyTourAudience("student");
+    expect(getFamilyTourAudience()).toBe("student");
+    window.localStorage.setItem("keystone.tour.v1.family.audience", "teacher");
+    expect(getFamilyTourAudience()).toBeNull();
   });
 
   it("ignores corrupt storage and rejects bad values", async () => {
@@ -213,9 +274,44 @@ describe("TourProvider", () => {
         <TourHelpButton />
       </TourProvider>,
     );
-    expect(await screen.findByRole("dialog", { name: "欢迎使用家庭门户" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "开始导览" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("dialog", { name: "欢迎使用 Keystone Music HQ" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "我是学生" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "我是家长或监护人" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "查看导览" })).toBeInTheDocument();
+  });
+
+  it("choosing I'm the student switches to the student path and skips invoices", async () => {
+    function Harness() {
+      const [audience, setAudience] = useState<"student" | "guardian" | null>(null);
+      return (
+        <TourProvider
+          tourId="family"
+          steps={familyTourSteps(audience)}
+          onChoose={(value) => setAudience(value === "student" ? "student" : "guardian")}
+        >
+          <TourHelpButton />
+        </TourProvider>
+      );
+    }
+    render(<Harness />);
+    expect(await screen.findByRole("button", { name: "Not now" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Start tour" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "I'm the student" }));
+    // The new path's steps must not send the person back to the first card.
+    await act(async () => {});
+    expect(screen.getByRole("dialog", { name: "Studio news" })).toBeInTheDocument();
+    expect(screen.getByText(`Step 2 of ${STUDENT_TOUR.length}`)).toBeInTheDocument();
+    for (let i = 2; i < STUDENT_TOUR.length; i++)
+      fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(screen.getByRole("dialog", { name: "You're ready" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Finish" }));
+    expect(await getTourProgress("family")).toEqual({ stepIndex: 0, status: "completed" });
+    // Replay offers the choice again; a guardian gets the invoices card.
+    fireEvent.click(screen.getByRole("button", { name: "Take the tour" }));
+    fireEvent.click(screen.getByRole("button", { name: "I'm a parent or guardian" }));
+    expect(screen.getByText(`Step 2 of ${FAMILY_TOUR.length}`)).toBeInTheDocument();
   });
 
   it("studio tour follows keystone.siteLang without an explicit lang prop", async () => {
@@ -225,7 +321,9 @@ describe("TourProvider", () => {
         <TourHelpButton />
       </TourProvider>,
     );
-    expect(await screen.findByRole("dialog", { name: "欢迎使用 Keystone Music HQ" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("dialog", { name: "欢迎使用 Keystone Music HQ" }),
+    ).toBeInTheDocument();
     expect(screen.getByText("第 1 步，共 11 步")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "开始导览" })).toBeInTheDocument();
   });

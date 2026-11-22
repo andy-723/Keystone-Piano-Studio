@@ -62,7 +62,7 @@ export function ParentProgress() {
       <p className="mt-3 max-w-2xl text-base text-muted-foreground">{copy.intro}</p>
       {data.map((child) => (
         <section key={child.student.id} className="mt-6 border-t border-border py-6">
-          <div className="flex flex-wrap items-center justify-between gap-5">
+          <div data-tour="family-progress-course" className="flex flex-wrap items-center justify-between gap-5">
             <div>
               <h2 className="text-2xl font-semibold">
                 {child.student.firstName} {child.student.lastName}

@@ -6,6 +6,7 @@ import { BookOpen, Check, CheckCheck } from "lucide-react";
 import { ChatComposer } from "@/components/ChatComposer";
 import { ChatMedia } from "@/components/ChatMedia";
 import { parentChatQuery } from "@/lib/parent-queries";
+import { teacherProfileQuery } from "@/lib/community-queries";
 import { readParentChat } from "@/services/parent";
 import { useParentLanguage, parentDate, parentGrade } from "@/i18n/parent";
 import { messageDay } from "@/lib/chat-queries";
@@ -13,12 +14,13 @@ import { formatTime } from "@/lib/format";
 
 export function ParentChat({initialText=''}:{initialText?:string}) {
   const { data } = useSuspenseQuery(parentChatQuery);
+  const { data: teacherProfile } = useSuspenseQuery(teacherProfileQuery());
   const { t, lang } = useParentLanguage();
   const client = useQueryClient();
   const bottom = useRef<HTMLDivElement>(null);
   useEffect(() => { void readParentChat().then(() => { void client.invalidateQueries({ queryKey: ["parent", "chat"] }); void client.invalidateQueries({ queryKey: ["messages"] }); }); }, [client]);
   useEffect(() => { bottom.current?.scrollIntoView({ block: "nearest" }); }, [data?.messages.length]);
-  return <div><h1 className="mb-5 text-3xl font-semibold">{t("chat")}</h1><section className="flex min-h-0 flex-col border-y border-border bg-card"><div className="max-h-[60dvh] overflow-y-auto p-3"><p className="mb-4 text-base text-muted-foreground">{t("family")} · Ms Clarke</p>{data?.messages.map((message, index) => {
+  return <div><h1 className="mb-5 text-3xl font-semibold">{t("chat")}</h1><section className="flex min-h-0 flex-col border-y border-border bg-card"><div className="max-h-[60dvh] overflow-y-auto p-3"><p className="mb-4 text-base text-muted-foreground">{t("family")} · <span data-no-translate>{teacherProfile.name}</span></p>{data?.messages.map((message, index) => {
     const own = message.authorRole !== "teacher";
     const previous = data.messages[index - 1];
     return <article key={message.id} className="mb-5">{(!previous || messageDay(previous.sentAt) !== messageDay(message.sentAt)) && <p className="my-5 text-center text-base text-muted-foreground">{parentDate(message.sentAt, lang)}</p>}<p className="mb-2 text-base font-semibold">{message.authorName} <span className="font-normal text-muted-foreground">· {t(message.authorRole === "guardian" ? "parent" : message.authorRole)}</span></p>
