@@ -12,7 +12,13 @@ import { maskEmail } from "@/lib/auth-paths";
 import { getSubscriptionStore } from "./subscription-store";
 import { accessLevel, statusLabel } from "@/lib/subscription";
 import { applyStudioAccessUpdate } from "./subscription";
-import { accountStatusFor, authUsersById, isBanned, sendSignInLink } from "./account-links";
+import {
+  accountStatusFor,
+  authUsersById,
+  findAuthUserByEmail,
+  isBanned,
+  sendSignInLink,
+} from "./account-links";
 
 const AU_TIMEZONES = [
   "Australia/Melbourne",
@@ -171,8 +177,7 @@ export const createStudioFn = createServerFn({ method: "POST" })
     const env = getServerEnv();
 
     let ownerUserId: string | null = null;
-    const listed = await supabase.auth.admin.listUsers({ page: 1, perPage: 200 });
-    const existing = listed.data.users.find((user) => user.email?.toLowerCase() === ownerEmail);
+    const existing = await findAuthUserByEmail(supabase, ownerEmail);
     if (existing) {
       // Revoked accounts must be restored first, or the owner gets a welcome email and a
       // link that Supabase refuses ("user banned"), which looks like an expired link.
@@ -361,8 +366,7 @@ export const addPlatformStaffFn = createServerFn({ method: "POST" })
     // Service-key auth + platform_staff write — guarded by requirePlatformAdmin.
     const supabase = createServiceSupabase();
     const env = getServerEnv();
-    const listed = await supabase.auth.admin.listUsers({ page: 1, perPage: 200 });
-    let user = listed.data.users.find((entry) => entry.email?.toLowerCase() === email);
+    let user = await findAuthUserByEmail(supabase, email);
     if (!user) {
       const invited = await supabase.auth.admin.inviteUserByEmail(email, {
         redirectTo: `${env.appUrl}/auth/callback`,

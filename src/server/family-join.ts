@@ -585,13 +585,35 @@ export async function submitLiveJoin(
   const email = invite.email.trim().toLowerCase();
 
   // Guardian row for the invite email (the teacher created it; add it if it went missing).
-  const { data: guardianRows, error: guardianError } = await supabase
+  // revoked_user_id comes with 0020; without it there is nothing revoked to respect.
+  type GuardianLookup = {
+    data: Array<{
+      id: string;
+      user_id: string | null;
+      email: string;
+      revoked_user_id?: string | null;
+    }> | null;
+    error: { message: string } | null;
+  };
+  let guardianRes: GuardianLookup = await supabase
     .from("guardian")
-    .select("id, user_id, email")
+    .select("id, user_id, email, revoked_user_id")
     .eq("family_id", invite.family_id);
+  if (guardianRes.error) {
+    guardianRes = await supabase
+      .from("guardian")
+      .select("id, user_id, email")
+      .eq("family_id", invite.family_id);
+  }
+  const { data: guardianRows, error: guardianError } = guardianRes;
   if (guardianError) throw new ProblemError(500, "Guardian lookup failed", guardianError.message);
   let guardian = (guardianRows ?? []).find((g) => String(g.email).toLowerCase() === email) as
-    { id: string; user_id: string | null } | undefined;
+    { id: string; user_id: string | null; revoked_user_id?: string | null } | undefined;
+  // A parent whose access the studio revoked can't get it back through a new invite link;
+  // the owner restores it on the student's profile.
+  if (guardian && !guardian.user_id && guardian.revoked_user_id) {
+    fail("Your access to this studio's family app is turned off. Please contact your teacher.");
+  }
   if (!guardian) {
     const inserted = await supabase
       .from("guardian")

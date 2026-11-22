@@ -22,6 +22,11 @@ import type { EnrolmentDraft } from "@/mocks/onboarding";
 
 const DEMO_STUDIO_ID = "studio-1";
 
+/** An ilike pattern that matches the text exactly (case-insensitive), with % and _ escaped. */
+function likeExact(text: string) {
+  return text.replace(/[\\%_]/g, (ch) => `\\${ch}`);
+}
+
 function guardianFirstName(name: string) {
   return name.trim().split(/\s+/)[0] ?? name;
 }
@@ -82,7 +87,7 @@ export async function createInvitationPrivileged(input: {
   enrolmentDraftIds?: string[] | undefined;
   /** Forged client studio — ignored unless it mismatches the derived studio (then refused). */
   studioId?: string | undefined;
-  aal?: string | null;
+  aal?: string | null | undefined;
 }) {
   const derivedStudioId = await resolveStaffStudioId(
     input.actorUserId,
@@ -108,9 +113,9 @@ export async function createInvitationPrivileged(input: {
 export async function resendInvitationPrivileged(input: {
   actorUserId: string;
   invitationId: string;
-  studioId?: string;
-  aal?: string | null;
-  teacherName?: string;
+  studioId?: string | undefined;
+  aal?: string | null | undefined;
+  teacherName?: string | undefined;
 }) {
   const derivedStudioId = await resolveStaffStudioId(
     input.actorUserId,
@@ -149,6 +154,25 @@ async function logEmail(input: {
   });
 }
 
+/**
+ * A family can't open the enrolment form until the studio has published its terms
+ * (src/server/family-join.ts shows "hasn't published its studio terms yet"). Refuse the invite
+ * up front so the teacher fixes it, instead of the family hitting a dead end.
+ */
+export const TERMS_NOT_PUBLISHED_MESSAGE =
+  "Publish your studio terms first (Settings, then Terms). Families can't open the enrolment form until your terms are published.";
+
+async function requirePublishedStudioTerms(supabase: ReturnType<typeof createServiceSupabase>, studioId: string) {
+  const { data, error } = await supabase
+    .from("terms_version")
+    .select("id, terms_document!inner(kind)")
+    .eq("studio_id", studioId)
+    .eq("terms_document.kind", "studio_agreement")
+    .limit(1);
+  if (error) throw new ProblemError(500, "Terms lookup failed", error.message);
+  if (!(data ?? []).length) throw new ProblemError(409, "Studio terms not published", TERMS_NOT_PUBLISHED_MESSAGE);
+}
+
 export async function resendLiveInvitation(input: {
   actorUserId: string;
   invitationId: string;
@@ -170,6 +194,7 @@ export async function resendLiveInvitation(input: {
   if (existing.status === "completed") {
     throw new Error("This enrolment is already completed.");
   }
+  await requirePublishedStudioTerms(supabase, existing.studio_id as string);
 
   const { data: studentRows } = await supabase
     .from("invitation_student")
@@ -372,7 +397,7 @@ export async function enrolAndInviteStudent(input: EnrolAndInviteInput): Promise
     !input.lastName.trim() ||
     !Number.isInteger(input.birthYear) ||
     input.birthYear < 1900 ||
-    input.birthYear > enrolmentYear
+    input.birthYear > enrolmentYear()
   ) {
     throw new Error("Enter the student’s name and a valid birth year.");
   }
@@ -388,6 +413,8 @@ export async function enrolAndInviteStudent(input: EnrolAndInviteInput): Promise
   if (studioError || !studioRow) {
     throw new ProblemError(500, "Studio lookup failed", studioError?.message ?? "Studio not found.");
   }
+
+  await requirePublishedStudioTerms(supabase, studioId);
 
   const teacherName = input.teacherName?.trim() || "Your teacher";
 
@@ -423,16 +450,49 @@ export async function enrolAndInviteStudent(input: EnrolAndInviteInput): Promise
     guardianName = contactName;
   }
 
-  const studentId = crypto.randomUUID();
-  const { error: studentError } = await supabase.from("student").insert({
-    id: studentId,
-    family_id: familyId,
-    studio_id: studioId,
-    first_name: input.firstName.trim(),
-    last_name: input.lastName.trim(),
-    birth_year: input.birthYear,
-  });
-  if (studentError) throw new ProblemError(500, "Student create failed", studentError.message);
+  // A retry after a failed invite email must not add the same child twice: reuse a student in
+  // this family with the same name and birth year.
+  const { data: sameStudents } = await supabase
+    .from("student")
+    .select("id")
+    .eq("family_id", familyId)
+    .eq("studio_id", studioId)
+    .ilike("first_name", likeExact(input.firstName.trim()))
+    .ilike("last_name", likeExact(input.lastName.trim()))
+    .eq("birth_year", input.birthYear)
+    .limit(1);
+  const reusedStudentId = (sameStudents ?? [])[0]?.id as string | undefined;
+  const studentId = reusedStudentId ?? crypto.randomUUID();
+  if (!reusedStudentId) {
+    const { error: studentError } = await supabase.from("student").insert({
+      id: studentId,
+      family_id: familyId,
+      studio_id: studioId,
+      first_name: input.firstName.trim(),
+      last_name: input.lastName.trim(),
+      birth_year: input.birthYear,
+    });
+    if (studentError) {
+      if (studentError.message.includes("base_plan_student_limit")) {
+        throw new Error("The Base plan allows up to 30 students. Upgrade to Pro to add more.");
+      }
+      throw new ProblemError(500, "Student create failed", studentError.message);
+    }
+  } else {
+    // Any earlier unfinished invite for this child is replaced by the new one.
+    const { data: openLinks } = await supabase
+      .from("invitation_student")
+      .select("invitation_id")
+      .eq("student_id", studentId);
+    const openIds = (openLinks ?? []).map((row) => row.invitation_id as string);
+    if (openIds.length) {
+      await supabase
+        .from("invitation")
+        .update({ status: "revoked" })
+        .in("id", openIds)
+        .in("status", ["sent", "opened"]);
+    }
+  }
 
   const raw = bytesToHex(randomTokenBytes(32));
   const tokenHash = await sha256Hex(raw);
