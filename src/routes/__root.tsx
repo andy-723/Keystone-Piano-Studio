@@ -23,6 +23,7 @@ import { AppShell } from "@/components/AppShell";
 import { LiveAuthGuard } from "@/components/LiveAuthGuard";
 import { isFocusFlowPath } from "@/lib/auth-paths";
 import { ParentPortal } from "@/components/ParentPortal";
+import { useSiteTranslation } from "@/i18n/marketing/site-lang";
 import { Toaster } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
 import { getStudio } from "@/services/roster";
@@ -158,6 +159,8 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  // One translator for the whole site and app: English in code, 中文 / VI from src/i18n.
+  useSiteTranslation();
 
   return (
     <QueryClientProvider client={queryClient}>

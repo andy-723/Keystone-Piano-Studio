@@ -100,7 +100,7 @@ export function LiveToday({ date }: { date?: string | undefined }) {
               {lesson.status === "moved" && (
                 <p className="mt-3 text-base font-semibold">Moved to this time for this week.</p>
               )}
-              {lesson.note && <p className="mt-3 text-base text-muted-foreground">{lesson.note}</p>}
+              {lesson.note && <p data-no-translate className="mt-3 text-base text-muted-foreground">{lesson.note}</p>}
             </section>
           ))}
         </div>
