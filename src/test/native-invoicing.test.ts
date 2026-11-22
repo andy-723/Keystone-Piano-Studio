@@ -208,10 +208,17 @@ describe("emails and PDF", () => {
       familyId: "fam-1",
       lines: [{ description: "Books", qty: 1, unitCents: 1100, lineTotalCents: 1100, taxCents: 0, taxCode: "gst_free" }],
     });
-    const sent = await sendInvoice(draft.id);
-    expect(sent?.pdf?.sha256).toMatch(/^[a-f0-9]{64}$/);
-    const pdf = await renderInvoicePdf(sent!);
-    expect(pdf.sha256).toBe(sent?.pdf?.sha256);
+    // Freeze the clock so the PDF creation timestamp can't tick over a second between the two renders.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-20T10:00:00Z"));
+    try {
+      const sent = await sendInvoice(draft.id);
+      expect(sent?.pdf?.sha256).toMatch(/^[a-f0-9]{64}$/);
+      const pdf = await renderInvoicePdf(sent!);
+      expect(pdf.sha256).toBe(sent?.pdf?.sha256);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 

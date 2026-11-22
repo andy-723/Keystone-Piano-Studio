@@ -86,7 +86,7 @@ export function IntakeForm({
             required
             className={intakeField}
             value={form.goal}
-            placeholder={lang === "en" ? "Exam board or non-exam goal" : "考试委员会或非考试目标"}
+            placeholder="Exam board or non-exam goal"
             onChange={(event) => setForm({ ...form, goal: event.target.value })}
           />
         </label>
@@ -194,9 +194,9 @@ export function ParentIntakes({ recordId }: { recordId?: string } = {}) {
               {entry.status === "active" && (
                 <div className="mt-5">
                   <h3 className="text-xl font-semibold">{t.assignment}</h3>
-                  <p className="mt-2 whitespace-pre-wrap">{entry.assignment?.body}</p>
+                  <p data-no-translate className="mt-2 whitespace-pre-wrap">{entry.assignment?.body}</p>
                   <p className="mt-2">
-                    {t.practice}: {entry.practiceGoal} {lang === "en" ? "min/week" : "分钟/周"}
+                    {t.practice}: {entry.practiceGoal} min/week
                   </p>
                 </div>
               )}
