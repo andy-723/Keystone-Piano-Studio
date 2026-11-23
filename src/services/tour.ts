@@ -52,3 +52,16 @@ export async function saveTourProgress(id: TourId, progress: TourProgress): Prom
   storage()?.setItem(tourStorageKey(id), JSON.stringify(value));
   return value;
 }
+
+/** Who took the family tour last (student or guardian), so a reload resumes the same path. */
+export type FamilyTourAudience = "student" | "guardian";
+export const familyAudienceKey = "keystone.tour.v1.family.audience";
+
+export function getFamilyTourAudience(): FamilyTourAudience | null {
+  const value = storage()?.getItem(familyAudienceKey);
+  return value === "student" || value === "guardian" ? value : null;
+}
+
+export function saveFamilyTourAudience(audience: FamilyTourAudience): void {
+  storage()?.setItem(familyAudienceKey, audience);
+}

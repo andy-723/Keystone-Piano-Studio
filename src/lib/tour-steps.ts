@@ -16,6 +16,8 @@ export type TourStep = {
   body: TourText;
   /** Last step only: offer another tour instead of a plain Finish. */
   offer?: { accept: TourText; decline: TourText; starts: TourId };
+  /** First step only: buttons that pick a path through the tour instead of Start tour. */
+  choices?: { value: string; label: TourText }[];
 };
 
 export function tourText(text: TourText, lang: Lang): string {
@@ -62,8 +64,7 @@ export const STUDIO_TOUR: TourStep[] = [
     title: { en: "Your studio terms", "zh-CN": "工作室条款", vi: "Điều khoản studio" },
     body: {
       en: "Fill in your legal name, ABN, fees and cancellation rules. Keystone builds your studio agreement from them, and families accept it when they enrol.",
-      "zh-CN":
-        "填写法定名称、ABN、费用和取消规则。Keystone 据此生成工作室协议，家庭在入学时接受。",
+      "zh-CN": "填写法定名称、ABN、费用和取消规则。Keystone 据此生成工作室协议，家庭在入学时接受。",
       vi: "Điền tên pháp lý, ABN, học phí và quy tắc hủy. Keystone tạo thỏa thuận studio từ đó; gia đình chấp nhận khi ghi danh.",
     },
   },
@@ -212,8 +213,7 @@ export const SETUP_TOUR: TourStep[] = [
     },
     body: {
       en: "Enter your legal name, trading name, ABN, address, email, phone and privacy email. Each field saves when you move to the next one.",
-      "zh-CN":
-        "填写法定名称、营业名称、ABN、地址、邮箱、电话和隐私邮箱。移到下一项时会自动保存。",
+      "zh-CN": "填写法定名称、营业名称、ABN、地址、邮箱、电话和隐私邮箱。移到下一项时会自动保存。",
       vi: "Nhập tên pháp lý, tên giao dịch, ABN, địa chỉ, email, điện thoại và email quyền riêng tư. Mỗi mục lưu khi bạn sang mục tiếp theo.",
     },
   },
@@ -224,8 +224,7 @@ export const SETUP_TOUR: TourStep[] = [
     title: { en: "3. Billing rules", "zh-CN": "3. 计费规则", vi: "3. Quy tắc thanh toán" },
     body: {
       en: "Choose how often you bill, when invoices are due, any late fee, and how many weeks' notice a family gives to stop lessons.",
-      "zh-CN":
-        "选择开票频率、到期日、滞纳金，以及家庭停课需提前几周通知。",
+      "zh-CN": "选择开票频率、到期日、滞纳金，以及家庭停课需提前几周通知。",
       vi: "Chọn chu kỳ tính phí, hạn hóa đơn, phí trễ và số tuần báo trước khi gia đình dừng học.",
     },
   },
@@ -240,8 +239,7 @@ export const SETUP_TOUR: TourStep[] = [
     },
     body: {
       en: "Set the cancellation notice and how many make-up lessons a family gets. Anything still missing is listed in red here.",
-      "zh-CN":
-        "设置取消通知时限以及每个家庭可补几节课。仍缺的内容会以红色列出。",
+      "zh-CN": "设置取消通知时限以及每个家庭可补几节课。仍缺的内容会以红色列出。",
       vi: "Đặt thời hạn hủy và số buổi học bù mỗi gia đình được. Phần còn thiếu hiện màu đỏ tại đây.",
     },
   },
@@ -272,8 +270,7 @@ export const SETUP_TOUR: TourStep[] = [
     },
     body: {
       en: "Check the live preview above, add a short summary and publish. New families accept this version when they enrol.",
-      "zh-CN":
-        "查看上方实时预览，填写简短摘要并发布。新家庭入学时会接受此版本。",
+      "zh-CN": "查看上方实时预览，填写简短摘要并发布。新家庭入学时会接受此版本。",
       vi: "Xem bản xem trước phía trên, thêm tóm tắt ngắn rồi xuất bản. Gia đình mới chấp nhận bản này khi ghi danh.",
     },
   },
@@ -288,8 +285,7 @@ export const SETUP_TOUR: TourStep[] = [
     },
     body: {
       en: "Enter the account name, BSB and account number (or PayID) for invoices, then Save payment details.",
-      "zh-CN":
-        "填写账单用的账户名、BSB 和账号（或 PayID），然后保存付款信息。",
+      "zh-CN": "填写账单用的账户名、BSB 和账号（或 PayID），然后保存付款信息。",
       vi: "Nhập tên tài khoản, BSB và số tài khoản (hoặc PayID) cho hóa đơn, rồi Lưu chi tiết thanh toán.",
     },
   },
@@ -303,42 +299,104 @@ export const SETUP_TOUR: TourStep[] = [
     },
     body: {
       en: "Next, enrol your first family from Students. The ? button at the top replays the studio tour.",
-      "zh-CN":
-        "接下来可在「学生」中招收第一个家庭。顶部的 ? 按钮可重新查看工作室导览。",
+      "zh-CN": "接下来可在「学生」中招收第一个家庭。顶部的 ? 按钮可重新查看工作室导览。",
       vi: "Tiếp theo, ghi danh gia đình đầu tiên từ Học sinh. Nút ? ở trên cùng xem lại hướng dẫn studio.",
     },
   },
 ];
 
-/** For guardians in the family portal, in English and Simplified Chinese. */
-export const FAMILY_TOUR: TourStep[] = [
-  {
-    id: "welcome",
-    target: null,
-    title: { en: "Welcome to your family portal", "zh-CN": "欢迎使用家庭门户", vi: "Chào mừng đến với cổng gia đình" },
-    body: {
-      en: "A quick look at where to find news, lessons, messages and invoices. It takes about a minute.",
-      "zh-CN": "快速了解在哪里查看动态、课程、消息和账单，大约需要一分钟。", vi: "Xem nhanh nơi có tin tức, bài học, tin nhắn và hóa đơn — khoảng một phút.",
-    },
+/** Who is taking the family tour. Students under 13 use their family's sign-in (ADR-022). */
+export type FamilyAudience = "student" | "guardian";
+
+const FAMILY_WELCOME: TourStep = {
+  id: "welcome",
+  target: null,
+  title: {
+    en: "Welcome to Keystone Music HQ",
+    "zh-CN": "欢迎使用 Keystone Music HQ",
+    vi: "Chào mừng đến với Keystone Music HQ",
   },
+  body: {
+    en: "A quick look around: lessons, practice, your teacher's marking, news, chat and help. It takes about two minutes. Who's taking the tour?",
+    "zh-CN": "快速了解：课程、练习、老师的评分、动态、聊天和帮助，大约两分钟。谁来参加导览？",
+    vi: "Xem nhanh: buổi học, luyện tập, nhận xét của giáo viên, tin tức, trò chuyện và trợ giúp — khoảng hai phút. Ai đang xem hướng dẫn?",
+  },
+  choices: [
+    {
+      value: "student",
+      label: { en: "I'm the student", "zh-CN": "我是学生", vi: "Em là học sinh" },
+    },
+    {
+      value: "guardian",
+      label: {
+        en: "I'm a parent or guardian",
+        "zh-CN": "我是家长或监护人",
+        vi: "Tôi là phụ huynh hoặc người giám hộ",
+      },
+    },
+  ],
+};
+
+/** For parents and guardians in the family portal (English, 中文, Tiếng Việt). */
+export const FAMILY_TOUR: TourStep[] = [
+  FAMILY_WELCOME,
   {
     id: "news",
     target: "family-tab-news",
     view: "news",
     title: { en: "Studio news", "zh-CN": "工作室动态", vi: "Tin tức studio" },
     body: {
-      en: "Announcements from your teacher appear here. Tap Got it so they know you've read it.",
-      "zh-CN": "老师发布的通知会显示在这里。点击“知道了”，让老师知道您已阅读。", vi: "Thông báo của giáo viên hiển thị ở đây. Chạm \"Đã hiểu\" để giáo viên biết bạn đã đọc.",
+      en: "Announcements from your teacher appear here, like concerts, holidays and exam dates. Tap Got it so they know you've read it, or message them about a post.",
+      "zh-CN":
+        "老师的通知会显示在这里，例如音乐会、假期和考试日期。点击“知道了”让老师知道您已阅读，也可以就某条动态给老师发消息。",
+      vi: 'Thông báo của giáo viên hiển thị ở đây, như buổi biểu diễn, ngày nghỉ và ngày thi. Chạm "Đã hiểu" để giáo viên biết bạn đã đọc, hoặc nhắn tin về bài đăng.',
     },
   },
   {
-    id: "home",
-    target: "family-tab-home",
+    id: "next-lesson",
+    target: "family-next-lesson",
     view: "home",
-    title: { en: "Home", "zh-CN": "首页", vi: "Trang chủ" },
+    title: { en: "Next lesson", "zh-CN": "下一节课", vi: "Buổi học tới" },
     body: {
-      en: "Your next lesson, this week's practice and anything that needs you.",
-      "zh-CN": "查看下一节课、本周练习以及需要您处理的事项。", vi: "Xem buổi học tới, luyện tập tuần này và những việc cần bạn xử lý.",
+      en: "Home always shows your child's next lesson. Anything that needs you, like a form to sign or an unpaid invoice, shows up on this screen too.",
+      "zh-CN":
+        "首页始终显示孩子的下一节课。需要您处理的事项，例如待签表格或未付账单，也会显示在这里。",
+      vi: "Trang chủ luôn hiển thị buổi học tới của con. Những việc cần bạn xử lý, như biểu mẫu cần ký hoặc hóa đơn chưa trả, cũng hiện ở đây.",
+    },
+  },
+  {
+    id: "practice",
+    target: "family-assignments",
+    view: "home",
+    title: { en: "This week's practice", "zh-CN": "本周练习", vi: "Luyện tập tuần này" },
+    body: {
+      en: "The teacher sets practice tasks after each lesson. Mark them done with the minutes practised, and record a video or audio clip when a task asks for one.",
+      "zh-CN":
+        "老师每节课后会布置练习任务。完成后标记并填写练习分钟数；任务需要时，可以录制视频或音频。",
+      vi: "Giáo viên giao bài luyện sau mỗi buổi học. Đánh dấu hoàn thành kèm số phút đã luyện, và quay video hoặc ghi âm khi bài yêu cầu.",
+    },
+  },
+  {
+    id: "progress",
+    target: "family-progress-course",
+    view: "progress",
+    title: { en: "Progress and marking", "zh-CN": "进度与评分", vi: "Tiến độ và nhận xét" },
+    body: {
+      en: "See how your child is going in each part of their course. Each piece shows its stage, and your teacher's comments appear underneath when they mark it.",
+      "zh-CN": "查看孩子在课程各部分的进展。每首曲目都会显示所处阶段，老师评分后会在下方留下评语。",
+      vi: "Xem con tiến bộ thế nào ở từng phần của khóa học. Mỗi bài hiển thị giai đoạn hiện tại, và nhận xét của giáo viên hiện bên dưới khi chấm.",
+    },
+  },
+  {
+    id: "log-practice",
+    target: "family-practice-log",
+    view: "progress",
+    title: { en: "Log practice", "zh-CN": "记录练习", vi: "Ghi thời gian luyện tập" },
+    body: {
+      en: "Add practice minutes on any day. Regular practice is what your teacher looks at most, so a quick log after each session helps.",
+      "zh-CN":
+        "可随时添加任意一天的练习分钟数。老师最看重规律练习，每次练完简单记录一下就很有帮助。",
+      vi: "Thêm số phút luyện tập cho bất kỳ ngày nào. Giáo viên chú ý nhất đến việc luyện đều đặn, nên ghi nhanh sau mỗi lần luyện rất có ích.",
     },
   },
   {
@@ -347,18 +405,10 @@ export const FAMILY_TOUR: TourStep[] = [
     view: "chat",
     title: { en: "Message your teacher", "zh-CN": "给老师发消息", vi: "Nhắn tin cho giáo viên" },
     body: {
-      en: "Send messages, photos and voice notes to your teacher. Only your family and the studio can see them.",
-      "zh-CN": "直接向老师发送文字、照片和语音。只有您的家庭和工作室能看到。", vi: "Gửi chữ, ảnh và tin nhắn thoại trực tiếp cho giáo viên. Chỉ gia đình bạn và studio thấy được.",
-    },
-  },
-  {
-    id: "progress",
-    target: "family-tab-progress",
-    view: "progress",
-    title: { en: "Progress", "zh-CN": "学习进度", vi: "Tiến độ" },
-    body: {
-      en: "See how your child is going in each part of their course, and log practice.",
-      "zh-CN": "查看孩子在课程各部分的进展，并记录练习时间。", vi: "Xem con tiến bộ thế nào ở từng phần của khóa học và ghi thời gian luyện tập.",
+      en: "Send messages, photos and voice notes to your teacher. Lesson summaries arrive here too. Only your family and the studio can see this chat.",
+      "zh-CN":
+        "向老师发送文字、照片和语音，课程总结也会发到这里。只有您的家庭和工作室能看到此聊天。",
+      vi: "Gửi chữ, ảnh và tin nhắn thoại cho giáo viên. Tóm tắt buổi học cũng gửi về đây. Chỉ gia đình bạn và studio thấy cuộc trò chuyện này.",
     },
   },
   {
@@ -367,17 +417,37 @@ export const FAMILY_TOUR: TourStep[] = [
     view: "invoices",
     title: { en: "Invoices", "zh-CN": "账单", vi: "Hóa đơn" },
     body: {
-      en: "View your invoices, and pay online if your studio has it turned on.",
-      "zh-CN": "查看账单；如果工作室已开通，还可以在线付款。", vi: "Xem hóa đơn và thanh toán trực tuyến nếu studio đã bật tính năng này.",
+      en: "View and download your invoices, and pay online if your studio has it turned on. You'll also get an email when a new invoice is sent.",
+      "zh-CN": "查看和下载账单；如果工作室已开通，还可以在线付款。有新账单时您也会收到电子邮件。",
+      vi: "Xem và tải hóa đơn, và thanh toán trực tuyến nếu studio đã bật. Bạn cũng nhận email khi có hóa đơn mới.",
+    },
+  },
+  {
+    id: "help",
+    target: "family-help",
+    title: {
+      en: "Help and email alerts",
+      "zh-CN": "帮助与邮件提醒",
+      vi: "Trợ giúp và thông báo email",
+    },
+    body: {
+      en: "Answers to common questions live here, along with your email alert settings. Questions about lessons or fees go straight to your teacher.",
+      "zh-CN": "常见问题的解答和邮件提醒设置都在这里。有关课程或费用的问题会直接转给老师。",
+      vi: "Câu trả lời cho các câu hỏi thường gặp và cài đặt thông báo email nằm ở đây. Câu hỏi về buổi học hoặc học phí sẽ được gửi thẳng cho giáo viên.",
     },
   },
   {
     id: "language",
     target: "family-language",
-    title: { en: "English, 中文 or Tiếng Việt", "zh-CN": "English、中文 或 Tiếng Việt", vi: "English, 中文 hoặc Tiếng Việt" },
+    title: {
+      en: "English, 中文 or Tiếng Việt",
+      "zh-CN": "English、中文 或 Tiếng Việt",
+      vi: "English, 中文 hoặc Tiếng Việt",
+    },
     body: {
       en: "Switch language any time. The whole portal follows your choice.",
-      "zh-CN": "随时切换语言，整个门户都会使用您选择的语言。", vi: "Đổi ngôn ngữ bất cứ lúc nào; toàn bộ cổng sẽ dùng ngôn ngữ bạn chọn.",
+      "zh-CN": "随时切换语言，整个门户都会使用您选择的语言。",
+      vi: "Đổi ngôn ngữ bất cứ lúc nào; toàn bộ cổng sẽ dùng ngôn ngữ bạn chọn.",
     },
   },
   {
@@ -385,11 +455,123 @@ export const FAMILY_TOUR: TourStep[] = [
     target: null,
     title: { en: "All set", "zh-CN": "完成", vi: "Hoàn tất" },
     body: {
-      en: "Replay this tour any time from the ? button at the top.",
-      "zh-CN": "随时可以点击顶部的 ? 按钮重新查看本导览。", vi: "Chạm nút ? ở trên cùng bất cứ lúc nào để xem lại hướng dẫn này.",
+      en: "Replay this tour any time from the ? button at the top. Your child can take their own version too: tap ? and choose I'm the student.",
+      "zh-CN":
+        "随时点击顶部的 ? 按钮重新查看本导览。孩子也可以看自己的版本：点击 ? 并选择“我是学生”。",
+      vi: 'Chạm nút ? ở trên cùng để xem lại hướng dẫn bất cứ lúc nào. Con bạn cũng có thể xem phiên bản riêng: chạm ? và chọn "Em là học sinh".',
     },
   },
 ];
+
+/** The same portal explained to the student: no invoices, plain words, "you" means the student. */
+export const STUDENT_TOUR: TourStep[] = [
+  FAMILY_WELCOME,
+  {
+    id: "news",
+    target: "family-tab-news",
+    view: "news",
+    title: { en: "Studio news", "zh-CN": "工作室动态", vi: "Tin tức studio" },
+    body: {
+      en: "Your teacher posts news here, like concerts, holidays and exam dates. Check it after each lesson.",
+      "zh-CN": "老师会在这里发布音乐会、假期和考试日期等动态。每节课后看一看吧。",
+      vi: "Giáo viên đăng tin ở đây, như buổi biểu diễn, ngày nghỉ và ngày thi. Hãy xem sau mỗi buổi học nhé.",
+    },
+  },
+  {
+    id: "next-lesson",
+    target: "family-next-lesson",
+    view: "home",
+    title: { en: "Your next lesson", "zh-CN": "你的下一节课", vi: "Buổi học tới của em" },
+    body: {
+      en: "Home shows when your next lesson is, so you always know how many practice days you have left.",
+      "zh-CN": "首页会显示下一节课的时间，让你知道还剩几天可以练习。",
+      vi: "Trang chủ cho biết khi nào có buổi học tới, để em luôn biết còn mấy ngày luyện tập.",
+    },
+  },
+  {
+    id: "practice",
+    target: "family-assignments",
+    view: "home",
+    title: { en: "Your practice tasks", "zh-CN": "你的练习任务", vi: "Bài luyện của em" },
+    body: {
+      en: "After each lesson your teacher adds tasks here. When you finish one, mark it done and say how many minutes you played. Some tasks ask you to record yourself playing.",
+      "zh-CN":
+        "每节课后老师会在这里添加任务。完成后标记“完成”，并写上弹了多少分钟。有些任务需要你录下自己的演奏。",
+      vi: "Sau mỗi buổi học giáo viên thêm bài ở đây. Xong bài nào thì đánh dấu hoàn thành và ghi số phút đã chơi. Có bài yêu cầu em quay lại phần mình chơi.",
+    },
+  },
+  {
+    id: "progress",
+    target: "family-progress-course",
+    view: "progress",
+    title: { en: "Your progress", "zh-CN": "你的进度", vi: "Tiến độ của em" },
+    body: {
+      en: "The ring fills up as you get closer to your goal. Each piece moves through five stages, and your teacher's comments show up underneath when they mark your playing.",
+      "zh-CN": "离目标越近，圆环就越满。每首曲目分五个阶段，老师评分后会在下方写评语。",
+      vi: "Vòng tròn đầy dần khi em tiến gần mục tiêu. Mỗi bài qua năm giai đoạn, và nhận xét của giáo viên hiện bên dưới khi chấm phần em chơi.",
+    },
+  },
+  {
+    id: "log-practice",
+    target: "family-practice-log",
+    view: "progress",
+    title: { en: "Log your practice", "zh-CN": "记录你的练习", vi: "Ghi lại giờ luyện tập" },
+    body: {
+      en: "Played today? Add your minutes here. A little practice most days beats one long session before your lesson.",
+      "zh-CN": "今天练琴了吗？在这里填上分钟数。每天练一点，比课前突击练一次效果好。",
+      vi: "Hôm nay em đã chơi chưa? Ghi số phút ở đây. Luyện một chút mỗi ngày tốt hơn luyện thật lâu ngay trước buổi học.",
+    },
+  },
+  {
+    id: "chat",
+    target: "family-tab-chat",
+    view: "chat",
+    title: { en: "Chat with your teacher", "zh-CN": "和老师聊天", vi: "Trò chuyện với giáo viên" },
+    body: {
+      en: "Ask your teacher a question or send a voice note. This is your family's chat, so your parent or guardian can see it too.",
+      "zh-CN": "可以向老师提问或发送语音。这是你们家庭的聊天，家长或监护人也能看到。",
+      vi: "Hỏi giáo viên hoặc gửi tin nhắn thoại. Đây là cuộc trò chuyện của gia đình, nên phụ huynh của em cũng thấy được.",
+    },
+  },
+  {
+    id: "help",
+    target: "family-help",
+    title: { en: "Need help?", "zh-CN": "需要帮助？", vi: "Cần trợ giúp?" },
+    body: {
+      en: "Stuck on something in the app? Help has quick answers. For anything about your lessons, ask your teacher in chat.",
+      "zh-CN": "使用中遇到问题？帮助里有快速解答。课程相关的问题，请在聊天里问老师。",
+      vi: "Gặp khó khi dùng ứng dụng? Mục Trợ giúp có câu trả lời nhanh. Mọi điều về buổi học, hãy hỏi giáo viên trong mục trò chuyện.",
+    },
+  },
+  {
+    id: "language",
+    target: "family-language",
+    title: {
+      en: "English, 中文 or Tiếng Việt",
+      "zh-CN": "English、中文 或 Tiếng Việt",
+      vi: "English, 中文 hoặc Tiếng Việt",
+    },
+    body: {
+      en: "Change the language here whenever you like.",
+      "zh-CN": "随时可以在这里切换语言。",
+      vi: "Em có thể đổi ngôn ngữ ở đây bất cứ lúc nào.",
+    },
+  },
+  {
+    id: "done",
+    target: null,
+    title: { en: "You're ready", "zh-CN": "准备好了", vi: "Em đã sẵn sàng" },
+    body: {
+      en: "Happy practising! Tap the ? button at the top to see this tour again.",
+      "zh-CN": "练琴愉快！点击顶部的 ? 按钮可以再看一次导览。",
+      vi: "Chúc em luyện tập vui! Chạm nút ? ở trên cùng để xem lại hướng dẫn.",
+    },
+  },
+];
+
+export function familyTourSteps(audience: FamilyAudience | null): TourStep[] {
+  return audience === "student" ? STUDENT_TOUR : FAMILY_TOUR;
+}
 
 export const TOURS: Record<TourId, TourStep[]> = {
   studio: STUDIO_TOUR,
@@ -407,7 +589,11 @@ const CONTROLS: Record<ControlKey, TourText> = {
   skip: { en: "Skip tour", "zh-CN": "跳过导览", vi: "Bỏ qua hướng dẫn" },
   finish: { en: "Finish", "zh-CN": "完成", vi: "Hoàn tất" },
   replay: { en: "Take the tour", "zh-CN": "查看导览", vi: "Xem hướng dẫn" },
-  stepOf: { en: "Step {n} of {total}", "zh-CN": "第 {n} 步，共 {total} 步", vi: "Bước {n} / {total}" },
+  stepOf: {
+    en: "Step {n} of {total}",
+    "zh-CN": "第 {n} 步，共 {total} 步",
+    vi: "Bước {n} / {total}",
+  },
   label: { en: "Guided tour", "zh-CN": "导览", vi: "Hướng dẫn" },
 };
 

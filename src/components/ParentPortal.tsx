@@ -19,7 +19,8 @@ import { helpText } from "@/lib/help/ui-text";
 import { EmailNotificationSettings } from "@/components/EmailNotificationSettings";
 import { publicSupportEmail } from "@/components/public/PublicPage";
 import { TourHelpButton, TourProvider } from "@/components/tour/Tour";
-import { FAMILY_TOUR } from "@/lib/tour-steps";
+import { familyTourSteps } from "@/lib/tour-steps";
+import { getFamilyTourAudience, saveFamilyTourAudience } from "@/services/tour";
 import { AppLanguageSwitcher } from "@/components/AppLanguageSwitcher";
 import { toast } from "sonner";
 
@@ -54,6 +55,9 @@ function ParentViews() {
   const termsFirst = !deferReaccept && (reaccept.isPending || Boolean(reaccept.data?.needed));
   const openNewsChat = (title: string) => { setQuote(`“${title}”\n`); setView('chat'); };
   const [invoiceId, setInvoiceId] = useState<string | null>(deepLink?.invoiceId ?? null);
+  // Student or guardian path through the tour; read after mount so server and client HTML match.
+  const [audience, setAudience] = useState<"student" | "guardian" | null>(null);
+  useEffect(() => setAudience(getFamilyTourAudience()), []);
 
   useEffect(() => {
     const link = invoiceDeepLink();
@@ -78,10 +82,15 @@ function ParentViews() {
   return (
     <TourProvider
       tourId="family"
-      steps={FAMILY_TOUR}
+      steps={familyTourSteps(audience)}
       lang={lang}
       cardBottomClass="bottom-[calc(6rem+env(safe-area-inset-bottom))]"
       paused={termsFirst}
+      onChoose={(value) => {
+        const next = value === "student" ? "student" : "guardian";
+        saveFamilyTourAudience(next);
+        setAudience(next);
+      }}
       onStep={(step) => {
         if (step.view) {
           setView(step.view);
@@ -99,7 +108,7 @@ function ParentViews() {
             <p className="font-display text-xl font-semibold">{t("family")}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant={view === "help" ? "secondary" : "outline"} aria-pressed={view === "help"} className="min-h-11" onClick={() => { setView("help"); setQuote(''); window.scrollTo({ top: 0 }); }}>
+            <Button data-tour="family-help" variant={view === "help" ? "secondary" : "outline"} aria-pressed={view === "help"} className="min-h-11" onClick={() => { setView("help"); setQuote(''); window.scrollTo({ top: 0 }); }}>
               <LifeBuoy aria-hidden />{helpText(lang, "help")}
             </Button>
             <TourHelpButton />

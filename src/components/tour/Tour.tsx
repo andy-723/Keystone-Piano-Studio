@@ -56,6 +56,8 @@ type Props = {
   startToken?: number;
   /** Called when the person accepts a last-step offer (see TourStep.offer). */
   onOffer?: (tourId: TourId) => void;
+  /** Called when the person picks one of the first step's choices (see TourStep.choices). */
+  onChoose?: (value: string) => void;
   children: ReactNode;
 };
 
@@ -70,6 +72,7 @@ export function TourProvider({
   introCard = true,
   startToken = 0,
   onOffer,
+  onChoose,
   children,
 }: Props) {
   // Follow the shared browser language (keystone.siteLang) unless a caller overrides it.
@@ -79,18 +82,22 @@ export function TourProvider({
   const onStepRef = useRef(onStep);
   onStepRef.current = onStep;
 
+  // Read saved progress once per tour. Not on a change of steps: picking a path on the first
+  // card swaps the steps, and re-reading then would send the person back to the first card.
+  const stepCount = useRef(steps.length);
+  stepCount.current = steps.length;
   useEffect(() => {
     let cancelled = false;
     void getTourProgress(tourId).then((progress) => {
       if (cancelled) return;
       if (progress.status === "in_progress")
-        setIndex(Math.min(progress.stepIndex, steps.length - 1));
+        setIndex(Math.min(progress.stepIndex, stepCount.current - 1));
       else if (progress.status === "not_started" && autoStart) setIndex(0);
     });
     return () => {
       cancelled = true;
     };
-  }, [tourId, steps.length, autoStart]);
+  }, [tourId, autoStart]);
 
   useEffect(() => {
     if (index === null || paused) return;
@@ -133,6 +140,11 @@ export function TourProvider({
             const next = steps[index]?.offer?.starts;
             close("completed");
             if (next) onOffer?.(next);
+          }}
+          onChoose={(value) => {
+            // The caller swaps in that path's steps; the move to step 2 renders with them.
+            onChoose?.(value);
+            setIndex(1);
           }}
           onBack={() => setIndex((i) => (i === null ? i : Math.max(0, i - 1)))}
           onNext={() => (index >= steps.length - 1 ? close("completed") : setIndex(index + 1))}
@@ -225,6 +237,7 @@ function TourCard({
   cardBottomClass,
   introCard,
   onAccept,
+  onChoose,
   onBack,
   onNext,
   onSkip,
@@ -236,6 +249,7 @@ function TourCard({
   cardBottomClass: string;
   introCard: boolean;
   onAccept: () => void;
+  onChoose: (value: string) => void;
   onBack: () => void;
   onNext: () => void;
   onSkip: () => void;
@@ -323,7 +337,24 @@ function TourCard({
         </h2>
         <p className="mt-2 text-base">{tourText(step.body, lang)}</p>
         <div className="mt-5 flex flex-wrap items-center justify-end gap-2">
-          {first ? (
+          {first && step.choices?.length ? (
+            <>
+              <div className="flex w-full flex-col gap-2 sm:flex-row sm:justify-end">
+                {step.choices.map((choice) => (
+                  <Button
+                    key={choice.value}
+                    className="min-h-12 whitespace-normal"
+                    onClick={() => onChoose(choice.value)}
+                  >
+                    {tourText(choice.label, lang)}
+                  </Button>
+                ))}
+              </div>
+              <Button variant="ghost" className="min-h-12" onClick={onSkip}>
+                {tourControl("notNow", lang)}
+              </Button>
+            </>
+          ) : first ? (
             <>
               <Button variant="ghost" className="min-h-12" onClick={onSkip}>
                 {tourControl("notNow", lang)}
