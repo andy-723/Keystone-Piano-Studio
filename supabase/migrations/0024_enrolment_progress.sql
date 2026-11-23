@@ -26,7 +26,8 @@ create table public.enrolment_progress (
 create index enrolment_progress_student_idx on public.enrolment_progress (student_id);
 
 alter table public.enrolment_progress enable row level security;
-revoke all on table public.enrolment_progress from anon, public;
+-- Supabase default privileges grant everything to authenticated, so revoke from it too: no delete.
+revoke all on table public.enrolment_progress from anon, authenticated, public;
 grant select, insert, update on table public.enrolment_progress to authenticated;
 
 -- The student must belong to the same studio, a row cannot move to another student or studio,
