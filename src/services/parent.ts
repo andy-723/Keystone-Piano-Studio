@@ -11,7 +11,11 @@ import { parentMakeUpRequests } from "@/mocks/scheduling";
 import { getNotes } from "./notes";
 import { getStripeStatus } from "./integrations";
 import { studioToday } from "@/lib/studio-clock";
+import { isLiveStudio } from "@/lib/studio-workspace";
+import { familyPortalState } from "./live/family-store";
+import { wallClockIso } from "@/lib/family-portal";
 
+export type ParentUpcomingLesson = { key: string; student: import("@/mocks/types").Student; startsAt: string; durationMin: number; status: "scheduled" | "cancelled" | "moved"; originalDate: string };
 function parentGuardian(guardian: Guardian) { return { id: guardian.id, name: guardian.name, email: guardian.email, preferredLanguage: guardian.preferredLanguage }; }
 
 export async function getParentSession() {
@@ -44,13 +48,24 @@ export async function sendParentMessage(input: Pick<Message, "body" | "kind" | "
 }
 export async function getParentHome() {
   const [session, invoices, thread] = await Promise.all([getParentSession(), getParentInvoices(), getParentChat()]);
-  let nextLesson: Awaited<ReturnType<typeof getDayLessons>>["lessons"][number] | undefined;
-  for (let offset = 0; offset < 365 && !nextLesson; offset++) {
-    const day = await getDayLessons(addDays(studioToday(), offset));
-    nextLesson = day.lessons.find((lesson) => lesson.student.familyId === session.family.id && lesson.status === "scheduled");
+  let nextLesson: { student: (typeof session.children)[number]; startsAt: string; lessonType: { durationMin: number } } | undefined;
+  let upcoming: ParentUpcomingLesson[] = [];
+  if (isLiveStudio()) {
+    // Real studios: the next 4 weeks from the studio calendar, sent by the server (family-safe).
+    upcoming = familyPortalState.lessons.flatMap((lesson) => {
+      const student = session.children.find((child) => child.id === lesson.studentId);
+      return student ? [{ key: lesson.key, student, startsAt: wallClockIso(lesson.date, lesson.startTime), durationMin: lesson.durationMin, status: lesson.status, originalDate: lesson.originalDate }] : [];
+    });
+    const next = upcoming.find((lesson) => lesson.status !== "cancelled");
+    if (next) nextLesson = { student: next.student, startsAt: next.startsAt, lessonType: { durationMin: next.durationMin } };
+  } else {
+    for (let offset = 0; offset < 365 && !nextLesson; offset++) {
+      const day = await getDayLessons(addDays(studioToday(), offset));
+      nextLesson = day.lessons.find((lesson) => lesson.student.familyId === session.family.id && lesson.status === "scheduled");
+    }
   }
   const latestTeacher = thread?.messages.filter((message) => message.authorRole === "teacher").at(-1);
-  return { ...session, nextLesson: nextLesson ?? null, unpaid: invoices.filter((invoice) => ["sent", "partially_paid"].includes(invoice.status) && (invoice.balanceCents ?? invoice.totalCents) > 0), latestTeacher: latestTeacher ?? null, makeUps: await Promise.all(session.children.map(async (child) => ({ studentId: child.id, name: child.firstName, ...await getCredits(child.id) }))), sharedNotes: await getParentSharedNotes() };
+  return { ...session, nextLesson: nextLesson ?? null, upcoming, unpaid: invoices.filter((invoice) => ["sent", "partially_paid"].includes(invoice.status) && (invoice.balanceCents ?? invoice.totalCents) > 0), latestTeacher: latestTeacher ?? null, makeUps: await Promise.all(session.children.map(async (child) => ({ studentId: child.id, name: child.firstName, ...await getCredits(child.id) }))), sharedNotes: await getParentSharedNotes() };
 }
 export async function getParentSharedNotes() {
   const { family, children } = await getParentSession();

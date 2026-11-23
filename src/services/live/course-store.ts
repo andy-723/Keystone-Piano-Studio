@@ -71,7 +71,7 @@ export function courseDocument(courseId: string): CourseDocument | null {
   });
 }
 
-function pushCourseDocument(doc: CourseDocument) {
+export function pushCourseDocument(doc: CourseDocument) {
   studentCourses.push(doc.course);
   frameworkSections.push(...(doc.sections ?? []));
   frameworkSlots.push(...(doc.slots ?? []));

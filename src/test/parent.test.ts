@@ -43,4 +43,21 @@ it.each(["payto", "becs", "card"] as const)("simulates %s only for an unpaid fam
   expect(await payParentInvoice("inv-1", method)).toMatchObject({ status: "paid" });
   expect(parentPayments).toEqual([{ invoiceId: "inv-1", method }]);
   await expect(payParentInvoice("inv-4", method)).rejects.toThrow("Unpaid family invoice not found");
+});it("real studios: next lesson and the next 4 weeks come from the studio calendar", async () => {
+  const { setStudioWorkspace, resetStudioWorkspaceForTests } = await import("@/lib/studio-workspace");
+  const { familyPortalState } = await import("@/services/live/family-store");
+  setStudioWorkspace({ mode: "live", studioId: "s-a", userId: "u-1", role: "guardian", guardianId: "g-1" } as never);
+  familyPortalState.lessons = [
+    { key: "a", studentId: "stu-1", date: "2026-12-01", startTime: "16:00", durationMin: 30, status: "cancelled", originalDate: "2026-12-01" },
+    { key: "b", studentId: "stu-2", date: "2026-12-02", startTime: "15:30", durationMin: 45, status: "moved", originalDate: "2026-12-01" },
+    { key: "c", studentId: "stu-3", date: "2026-12-03", startTime: "15:30", durationMin: 45, status: "scheduled", originalDate: "2026-12-03" },
+  ];
+  try {
+    const home = await getParentHome();
+    expect(home.upcoming.map((lesson) => lesson.key)).toEqual(["a", "b"]);
+    expect(home.nextLesson).toMatchObject({ student: { id: "stu-2" }, startsAt: "2026-12-02T15:30:00+11:00", lessonType: { durationMin: 45 } });
+  } finally {
+    familyPortalState.lessons = [];
+    resetStudioWorkspaceForTests();
+  }
 });

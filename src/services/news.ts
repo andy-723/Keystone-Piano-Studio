@@ -92,6 +92,8 @@ export async function saveAnnouncement(input: AnnouncementInput, scope: Communit
   if (post.status === 'scheduled' && Date.parse(post.publishAt) <= Date.parse(newsNow(scope))) post.status = 'published';
   validateAudience(post,scope);
   if (post.audience.kind === 'my_students') post.audience.familyIds = [...new Set(roster(scope).students.filter(s=>ownedIds(scope).includes(s.id)).map(s=>s.familyId))];
+  // Group posts keep the families they reached, so a real studio's family portal can find them on the server (smart groups only exist in the app).
+  if (post.audience.kind === 'groups') post.audience.familyIds = audienceFamilies({ ...post, audience: { kind: 'groups', groupIds: post.audience.groupIds ?? [] } }, scope);
   if (post.status !== 'draft') post.attachments.forEach(a => validateAttachment(a,scope));
   if (old?.status === 'published') post.editedAt = newsNow(scope);
   if (scope === 'demo') await saveLivePost(post, !old);
