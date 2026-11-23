@@ -5,6 +5,9 @@
  * student in intake_response (student_id set), the terms acceptance and the consents.
  * Here each invited student without a course becomes a saved enrolment in Students > Enrol:
  * "intake_sent" while the family is still filling in, "intake_done" with their answers after.
+ * Wizard progress after the intake (steps 2-4: welcome lesson, goal and pace, summary) is saved
+ * in enrolment_progress (0024) and laid over the draft here, so Resume opens where the teacher
+ * left off. Staff only (RLS); families never read it.
  */
 import { libraryState } from "@/mocks/library";
 import { studentCourses } from "@/mocks/curriculum";
@@ -12,7 +15,9 @@ import { enrolmentDrafts, type EnrolmentDraft } from "@/mocks/onboarding";
 import type { ConsentRecord, TermsAcceptance, TermsState } from "@/mocks/terms";
 import type { Intake } from "@/mocks/types";
 import type { StudioWorkspace } from "@/lib/studio-workspace";
-import type { Client } from "./client";
+import { defaultTargetTerm } from "@/lib/onboarding";
+import { liveStudioId } from "@/lib/studio-workspace";
+import { client, friendly, type Client } from "./client";
 
 type InvitationRow = { id: string; status: string; created_at: string };
 type LinkRow = { invitation_id: string; student_id: string };
@@ -33,6 +38,27 @@ type AcceptanceRow = {
   accepted_at: string;
   receipt_id: string;
 };
+/** The wizard answers saved per student (enrolment_progress.answers). */
+export type EnrolmentAnswers = Pick<
+  EnrolmentDraft,
+  | "diagnostic"
+  | "startingStages"
+  | "welcomeChecks"
+  | "practiceGoal"
+  | "templateId"
+  | "targetTerm"
+  | "gradeHours"
+  | "lessonMinutes"
+  | "strengths"
+  | "workOn"
+>;
+type ProgressRow = {
+  student_id: string;
+  step: number;
+  status: EnrolmentDraft["status"];
+  answers: Partial<EnrolmentAnswers> | null;
+  completed_at: string | null;
+};
 type ConsentRow = {
   id: string;
   student_id: string;
@@ -52,7 +78,11 @@ function defaultTemplateId() {
 }
 
 /** Saved enrolment for one invited student, as the enrol wizard expects it. */
-export function draftForInvitedStudent(studentId: string, intake: Intake | null): EnrolmentDraft {
+export function draftForInvitedStudent(
+  studentId: string,
+  intake: Intake | null,
+  live = true,
+): EnrolmentDraft {
   const draft: EnrolmentDraft = {
     id: `live-enrol-${studentId}`,
     studentId,
@@ -65,7 +95,7 @@ export function draftForInvitedStudent(studentId: string, intake: Intake | null)
     status: intake ? "intake_done" : "intake_sent",
     step: 1,
     templateId: defaultTemplateId(),
-    targetTerm: "2027-T3",
+    targetTerm: defaultTargetTerm(live),
     gradeHours: 40,
     lessonMinutes: 30,
     strengths: "",
@@ -80,6 +110,107 @@ export function draftForInvitedStudent(studentId: string, intake: Intake | null)
   return draft;
 }
 
+const isStage = (value: unknown): value is 1 | 2 | 3 | 4 | 5 =>
+  typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= 5;
+function stages(value: unknown): Record<string, 1 | 2 | 3 | 4 | 5> {
+  if (!value || typeof value !== "object") return {};
+  return Object.fromEntries(Object.entries(value).filter(([, stage]) => isStage(stage))) as Record<
+    string,
+    1 | 2 | 3 | 4 | 5
+  >;
+}
+const num = (value: unknown, fallback: number) =>
+  typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : fallback;
+const text = (value: unknown, fallback: string) => (typeof value === "string" ? value : fallback);
+
+/**
+ * Lays saved wizard progress over a draft built from the family's intake. Anything malformed
+ * falls back to the draft's own value, and without an intake the wizard stays on step 1.
+ */
+export function applySavedProgress(draft: EnrolmentDraft, row: ProgressRow): EnrolmentDraft {
+  const a = row.answers ?? {};
+  const next: EnrolmentDraft = {
+    ...draft,
+    diagnostic: stages(a.diagnostic),
+    startingStages: stages(a.startingStages),
+    welcomeChecks: Array.isArray(a.welcomeChecks)
+      ? a.welcomeChecks.filter((id): id is string => typeof id === "string")
+      : [],
+    practiceGoal: Math.round(num(a.practiceGoal, draft.practiceGoal)),
+    templateId: text(a.templateId, draft.templateId) || draft.templateId,
+    targetTerm: /^\d{4}-T[1-4]$/.test(text(a.targetTerm, ""))
+      ? (a.targetTerm as string)
+      : draft.targetTerm,
+    gradeHours: num(a.gradeHours, draft.gradeHours),
+    lessonMinutes: Math.max(1, Math.round(num(a.lessonMinutes, draft.lessonMinutes))),
+    strengths: text(a.strengths, ""),
+    workOn: text(a.workOn, ""),
+  };
+  if (!draft.intake) return { ...next, step: 1, status: draft.status };
+  const step = [1, 2, 3, 4].includes(row.step) ? row.step : 1;
+  return {
+    ...next,
+    step,
+    status: step >= 3 && row.status !== "intake_sent" ? "welcome_done" : "intake_done",
+  };
+}
+
+function answersOf(draft: EnrolmentDraft): EnrolmentAnswers {
+  return structuredClone({
+    diagnostic: draft.diagnostic,
+    startingStages: draft.startingStages,
+    welcomeChecks: draft.welcomeChecks,
+    practiceGoal: draft.practiceGoal,
+    templateId: draft.templateId,
+    targetTerm: draft.targetTerm,
+    gradeHours: draft.gradeHours,
+    lessonMinutes: draft.lessonMinutes,
+    strengths: draft.strengths,
+    workOn: draft.workOn,
+  });
+}
+
+/** True when the 0024 table isn't there yet (migration not run): progress stays session-only. */
+function missingTable(error: { code?: string; message?: string } | null) {
+  return (
+    error?.code === "42P01" ||
+    error?.code === "PGRST205" ||
+    (/enrolment_progress/.test(error?.message ?? "") &&
+      /does not exist|schema cache/i.test(error?.message ?? ""))
+  );
+}
+
+/**
+ * Saves a real studio's wizard progress before the screen moves on. Returns false for the demo,
+ * or when migration 0024 hasn't been run yet (logged, progress kept for this session only).
+ */
+export async function saveLiveEnrolmentProgress(draft: EnrolmentDraft): Promise<boolean> {
+  const studioId = liveStudioId();
+  if (!studioId || draft.scope !== "demo") return false;
+  const { error } = await client()
+    .from("enrolment_progress")
+    .upsert(
+      {
+        studio_id: studioId,
+        student_id: draft.studentId,
+        step: draft.step,
+        status: draft.status,
+        answers: answersOf(draft),
+        completed_at:
+          draft.status === "active" ? (draft.completedAt ?? new Date().toISOString()) : null,
+      },
+      { onConflict: "studio_id,student_id" },
+    );
+  if (!error) return true;
+  if (missingTable(error)) {
+    console.warn(
+      "[enrolment-store] enrolment_progress missing (run 0024); progress kept for this session only",
+    );
+    return false;
+  }
+  throw friendly(error, "Couldn't save this step. Check your connection and try again.");
+}
+
 /** Fills saved enrolments, terms acceptances and consents. Failures are logged, not fatal. */
 export async function loadLiveEnrolments(
   workspace: Extract<StudioWorkspace, { mode: "live" }>,
@@ -88,7 +219,7 @@ export async function loadLiveEnrolments(
 ) {
   if (workspace.role === "guardian") return;
   const studioId = workspace.studioId;
-  const [inviteRes, linkRes, intakeRes, acceptRes, consentRes] = await Promise.all([
+  const [inviteRes, linkRes, intakeRes, acceptRes, consentRes, progressRes] = await Promise.all([
     c
       .from("invitation")
       .select("id, status, created_at")
@@ -106,6 +237,10 @@ export async function loadLiveEnrolments(
     c
       .from("consent_record")
       .select("id, student_id, type, granted, wording_version, given_by, given_at, withdrawn_at")
+      .eq("studio_id", studioId),
+    c
+      .from("enrolment_progress")
+      .select("student_id, step, status, answers, completed_at")
       .eq("studio_id", studioId),
   ]);
 
@@ -169,13 +304,27 @@ export async function loadLiveEnrolments(
       .filter((course) => course.status !== "archived")
       .map((course) => course.studentId),
   );
+  const progressByStudent = new Map<string, ProgressRow>();
+  if (progressRes.error) {
+    // A missing 0024 just means progress isn't saved yet; anything else is worth a log too.
+    console.warn("[enrolment-store] wizard progress not loaded", progressRes.error.message);
+  } else {
+    for (const row of (progressRes.data ?? []) as ProgressRow[])
+      progressByStudent.set(row.student_id, row);
+  }
   const seen = new Set(enrolmentDrafts.map((draft) => draft.studentId));
   for (const link of (linkRes.data ?? []) as LinkRow[]) {
     if (!liveInvites.has(link.invitation_id)) continue;
     if (seen.has(link.student_id) || withCourse.has(link.student_id)) continue;
+    const saved = progressByStudent.get(link.student_id);
     seen.add(link.student_id);
+    const draft = draftForInvitedStudent(
+      link.student_id,
+      intakeByStudent.get(link.student_id) ?? null,
+    );
+    // An "active" row whose course was later archived starts afresh.
     enrolmentDrafts.push(
-      draftForInvitedStudent(link.student_id, intakeByStudent.get(link.student_id) ?? null),
+      saved && saved.status !== "active" ? applySavedProgress(draft, saved) : draft,
     );
   }
 }
