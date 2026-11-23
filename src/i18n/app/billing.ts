@@ -529,4 +529,8 @@ export const billingStrings: AppStrings = {
   ],
   "Cancel notice: {hours} hours": ["取消通知：{hours} 小时", "Báo hủy: {hours} giờ"],
   "Stop notice: {weeks} weeks": ["停课通知：{weeks} 周", "Báo ngừng học: {weeks} tuần"],
+  "This isn't available for your studio yet. We'll let you know when it is.": [
+    "您的工作室暂时还不能使用此功能。上线后我们会通知您。",
+    "Tính năng này chưa có cho studio của bạn. Chúng tôi sẽ báo khi sẵn sàng.",
+  ],
 };

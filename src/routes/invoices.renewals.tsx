@@ -1,4 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { isLiveStudio } from "@/lib/studio-workspace";
+import { DemoOnlyNotice } from "@/components/DemoOnlyNotice";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { ArrowLeft, ArrowRight, Bell, RefreshCw, Send } from "lucide-react";
@@ -12,10 +14,15 @@ import { PROTOTYPE_TODAY } from "@/lib/calendar";
 import type { RenewalStatus, RenewalTerm } from "@/mocks/renewals";
 
 export const Route = createFileRoute("/invoices/renewals")({
-  loader: ({ context }) => context.queryClient.ensureQueryData(renewalsQuery),
+  loader: ({ context }) => (isLiveStudio() ? null : context.queryClient.ensureQueryData(renewalsQuery)),
   head: () => ({ meta: [{ title: "Term renewal communications — Keystone Music HQ" }, { name: "description", content: "Family renewal invitations, confirmations, reminders and approved term invoices for Keystone Music HQ." }, { property: "og:title", content: "Term renewal communications — Keystone Music HQ" }, { property: "og:description", content: "Family renewal invitations, confirmations, reminders and approved term invoices for Keystone Music HQ." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
   errorComponent: () => <p role="alert">Renewals could not be opened. Please refresh to try again.</p>,
-  component: Renewals,
+  component: () =>
+    isLiveStudio() ? (
+      <DemoOnlyNotice title="Renewal invitations & reminders" back={{ to: "/invoices", label: "All invoices" }} />
+    ) : (
+      <Renewals />
+    ),
 });
 const labels: Record<RenewalStatus, string> = { not_invited: "Not invited", awaiting: "Awaiting reply", confirmed: "Confirmed", change_requested: "Change requested", declined: "Not continuing" };
 function Renewals() {

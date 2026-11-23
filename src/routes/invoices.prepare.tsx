@@ -1,4 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { isLiveStudio } from "@/lib/studio-workspace";
+import { DemoOnlyNotice } from "@/components/DemoOnlyNotice";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { ArrowLeft, ArrowRight, Check, Send, MessageCircle } from "lucide-react";
@@ -11,9 +13,15 @@ import { formatAUD, formatShortDate } from "@/lib/format";
 import { renewalsQuery } from "@/lib/renewal-queries";
 
 export const Route = createFileRoute("/invoices/prepare")({
-  loader: ({ context }) => Promise.all([context.queryClient.ensureQueryData(term2Query), context.queryClient.ensureQueryData(term2DraftsQuery), context.queryClient.ensureQueryData(renewalsQuery)]),
+  loader: ({ context }) => isLiveStudio() ? null : Promise.all([context.queryClient.ensureQueryData(term2Query), context.queryClient.ensureQueryData(term2DraftsQuery), context.queryClient.ensureQueryData(renewalsQuery)]),
   head: () => ({ meta: [{ title: "Bill next term — Keystone Music HQ" }, { name: "description", content: "Review Term 2 2027 piano lessons and prepare one invoice per family." }, { property: "og:title", content: "Bill next term — Keystone Music HQ" }, { property: "og:description", content: "Review Term 2 2027 piano lessons and prepare one invoice per family." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
-  errorComponent: () => <p role="alert">Term invoices could not be opened. Please refresh to try again.</p>, component: PrepareInvoices,
+  errorComponent: () => <p role="alert">Term invoices could not be opened. Please refresh to try again.</p>,
+  component: () =>
+    isLiveStudio() ? (
+      <DemoOnlyNotice title="Bill next term" back={{ to: "/invoices", label: "All invoices" }} />
+    ) : (
+      <PrepareInvoices />
+    ),
 });
 function PrepareInvoices() {
   const { data: preview } = useSuspenseQuery(term2Query);

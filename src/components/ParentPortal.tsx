@@ -1,4 +1,5 @@
 import { Suspense, useEffect, useState } from "react";
+import { isLiveStudio } from "@/lib/studio-workspace";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { getReacceptanceStatus } from "@/services/terms";
 import { Home, MessageCircle, ChartNoAxesColumnIncreasing, Receipt, Megaphone, LifeBuoy } from "lucide-react";
@@ -82,7 +83,7 @@ function ParentViews() {
   return (
     <TourProvider
       tourId="family"
-      steps={familyTourSteps(audience)}
+      steps={isLiveStudio() ? familyTourSteps(audience).filter((step) => step.target !== "family-assignments") : familyTourSteps(audience)}
       lang={lang}
       cardBottomClass="bottom-[calc(6rem+env(safe-area-inset-bottom))]"
       paused={termsFirst}

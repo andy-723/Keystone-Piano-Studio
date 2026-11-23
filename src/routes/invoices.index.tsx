@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { isLiveStudio } from "@/lib/studio-workspace";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { ArrowRight, CircleAlert, FilePlus2, Plus, Receipt, RefreshCw, Bell } from "lucide-react";
@@ -114,16 +115,22 @@ function Invoices() {
               <Plus aria-hidden /> New invoice
             </Link>
           </Button>
-          <Button asChild variant="outline" className="max-w-full whitespace-normal">
-            <Link to="/invoices/prepare">
-              <FilePlus2 aria-hidden /> Bill next term
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="max-w-full whitespace-normal">
-            <Link to="/invoices/renewals">
-              <RefreshCw aria-hidden /> Renewal invitations & reminders
-            </Link>
-          </Button>
+          {/* Bill next term and renewals still run on the demo timetable and aren't saved for
+              real studios, so only the demo shows them. */}
+          {!isLiveStudio() && (
+            <>
+              <Button asChild variant="outline" className="max-w-full whitespace-normal">
+                <Link to="/invoices/prepare">
+                  <FilePlus2 aria-hidden /> Bill next term
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="max-w-full whitespace-normal">
+                <Link to="/invoices/renewals">
+                  <RefreshCw aria-hidden /> Renewal invitations & reminders
+                </Link>
+              </Button>
+            </>
+          )}
           <Button
             variant="outline"
             className="max-w-full whitespace-normal"
