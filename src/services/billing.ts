@@ -399,6 +399,8 @@ async function createInvoiceImpl(input: {
   billToGuardianId?: string;
   billingPeriod?: Invoice["billingPeriod"];
   collection?: Invoice["collection"];
+  /** Bill next term on real studios: one invoice per family and term. */
+  termKey?: string;
 }): Promise<Invoice> {
   const family = familyFor(input.familyId);
   if (!family) throw new Error("Family not found");
@@ -423,6 +425,7 @@ async function createInvoiceImpl(input: {
   const billTo = input.billToGuardianId ?? family.guardians[0]?.id;
   if (billTo) draftBase.billToGuardianId = billTo;
   if (input.billingPeriod) draftBase.billingPeriod = input.billingPeriod;
+  if (input.termKey) draftBase.termKey = input.termKey;
   const draft = taxView(draftBase);
   invoices.push(draft);
   pushEvent(id, "created");

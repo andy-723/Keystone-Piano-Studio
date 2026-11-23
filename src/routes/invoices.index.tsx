@@ -115,22 +115,17 @@ function Invoices() {
               <Plus aria-hidden /> New invoice
             </Link>
           </Button>
-          {/* Bill next term and renewals still run on the demo timetable and aren't saved for
-              real studios, so only the demo shows them. */}
-          {!isLiveStudio() && (
-            <>
-              <Button asChild variant="outline" className="max-w-full whitespace-normal">
-                <Link to="/invoices/prepare">
-                  <FilePlus2 aria-hidden /> Bill next term
-                </Link>
-              </Button>
-              <Button asChild variant="outline" className="max-w-full whitespace-normal">
-                <Link to="/invoices/renewals">
-                  <RefreshCw aria-hidden /> Renewal invitations & reminders
-                </Link>
-              </Button>
-            </>
-          )}
+          {/* Real studios: Bill next term and renewals are Pro (0027); Base sees an upgrade page. */}
+          <Button asChild variant="outline" className="max-w-full whitespace-normal">
+            <Link to="/invoices/prepare">
+              <FilePlus2 aria-hidden /> Bill next term
+            </Link>
+          </Button>
+          <Button asChild variant="outline" className="max-w-full whitespace-normal">
+            <Link to="/invoices/renewals">
+              <RefreshCw aria-hidden /> {isLiveStudio() ? "Renewal invitations" : "Renewal invitations & reminders"}
+            </Link>
+          </Button>
           <Button
             variant="outline"
             className="max-w-full whitespace-normal"

@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { getInvoice, getInvoices, getTerm2Preview, getTerm2Drafts } from "@/services/billing";
-import { getFamilies, getStudio } from "@/services/roster";
+import { getFamilies, getLessonPrices, getStudio } from "@/services/roster";
 import type { Invoice, InvoiceStatus, PaymentMethod, LegacyPaymentMethod } from "@/mocks/types";
 
 export const invoiceListQuery = queryOptions({ queryKey: ["invoices"], queryFn: async () => {
@@ -73,3 +73,4 @@ export function paymentMethodLabel(method: PaymentMethod | LegacyPaymentMethod |
       return method;
   }
 }
+export const lessonPricesQuery = queryOptions({ queryKey: ["lesson-prices"], queryFn: getLessonPrices });

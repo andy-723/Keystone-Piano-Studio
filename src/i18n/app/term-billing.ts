@@ -1,0 +1,106 @@
+import type { AppStrings } from "./index";
+
+/** Bill next term, renewals and lesson prices on real studios (0027). */
+export const termBillingStrings: AppStrings = {
+  "Bill next term": ["下学期账单", "Lập hóa đơn học kỳ tới"],
+  "One invoice per family for the term's lessons. You check the drafts before anything is sent.": [
+    "每个家庭一张本学期课程发票。发送前您会先检查草稿。",
+    "Mỗi gia đình một hóa đơn cho các buổi học trong học kỳ. Bạn kiểm tra bản nháp trước khi gửi.",
+  ],
+  Term: ["学期", "Học kỳ"],
+  "Term number": ["学期编号", "Số học kỳ"],
+  "Other dates": ["其他日期", "Ngày khác"],
+  "First day": ["第一天", "Ngày đầu"],
+  "Last day": ["最后一天", "Ngày cuối"],
+  "Enter your studio's term dates.": [
+    "请输入您工作室的学期日期。",
+    "Nhập ngày học kỳ của studio bạn.",
+  ],
+  "{name} school term dates. Change them if your studio's term is different.": [
+    "{name} 学校学期日期。如果您工作室的学期不同，请修改。",
+    "Ngày học kỳ trường học {name}. Hãy sửa nếu học kỳ của studio bạn khác.",
+  ],
+  "Public holidays and closures": ["公众假期和停课日", "Ngày lễ và ngày nghỉ"],
+  "Your holiday rule:": ["您的假期规则：", "Quy tắc ngày lễ của bạn:"],
+  "No lesson and no charge": ["不上课，不收费", "Không học và không tính phí"],
+  "No lesson, and a make-up lesson is offered (charged)": [
+    "不上课，但提供补课（收费）",
+    "Không học, có buổi học bù (có tính phí)",
+  ],
+  "Lessons go ahead as normal": ["照常上课", "Học bình thường"],
+  "Change it in studio terms": ["在工作室条款中修改", "Thay đổi trong điều khoản studio"],
+  "No public holidays in these dates.": [
+    "这些日期内没有公众假期。",
+    "Không có ngày lễ trong những ngày này.",
+  ],
+  " · tick if it applies to your area": [
+    " · 如适用于您所在地区请勾选",
+    " · đánh dấu nếu áp dụng cho khu vực của bạn",
+  ],
+  "Studio closed (no lesson, no charge)": [
+    "工作室停课（不上课，不收费）",
+    "Studio nghỉ (không học, không tính phí)",
+  ],
+  "Add closure": ["添加停课日", "Thêm ngày nghỉ"],
+  Renewals: ["续报", "Gia hạn"],
+  "Optional. Ask families if they're continuing first, or bill everyone with lessons in the term.":
+    [
+      "可选。先询问家庭是否继续，或直接为本学期有课的所有人开账单。",
+      "Không bắt buộc. Hỏi gia đình có tiếp tục không trước, hoặc lập hóa đơn cho tất cả học sinh có buổi học trong học kỳ.",
+    ],
+  "Counting lessons…": ["正在计算课程…", "Đang đếm buổi học…"],
+  Families: ["家庭", "Gia đình"],
+  "Draft ready": ["草稿已准备好", "Bản nháp đã sẵn sàng"],
+  "Ready to bill": ["可以开账单", "Sẵn sàng lập hóa đơn"],
+  "Nothing to bill": ["无需开账单", "Không có gì để lập hóa đơn"],
+  "No weekly lesson in these dates.": [
+    "这些日期内没有每周课程。",
+    "Không có buổi học hằng tuần trong những ngày này.",
+  ],
+  "Open calendar": ["打开日历", "Mở lịch"],
+  "Set lesson prices": ["设置课程价格", "Đặt giá buổi học"],
+  "Lesson dates": ["上课日期", "Ngày học"],
+  "Prepare drafts": ["准备草稿", "Chuẩn bị bản nháp"],
+  "Preparing…": ["正在准备…", "Đang chuẩn bị…"],
+  "Send all": ["全部发送", "Gửi tất cả"],
+  "Not yet": ["暂不", "Chưa"],
+  "Sending…": ["正在发送…", "Đang gửi…"],
+  "Open draft": ["打开草稿", "Mở bản nháp"],
+  "Open invoice": ["打开发票", "Mở hóa đơn"],
+  "Upgrade to Pro": ["升级到 Pro", "Nâng cấp lên Pro"],
+  "Ask every family if they're continuing next term. Invitations and reminders go to family chat, and families answer on Home in the family app.":
+    [
+      "询问每个家庭下学期是否继续。邀请和提醒会发送到家庭聊天，家庭在家庭应用的首页回复。",
+      "Hỏi mỗi gia đình có tiếp tục học kỳ tới không. Lời mời và nhắc nhở được gửi qua trò chuyện gia đình, và gia đình trả lời ở Trang chủ trong ứng dụng gia đình.",
+    ],
+  "Reply by": ["回复截止", "Trả lời trước"],
+  "Send invitations to families": ["向家庭发送邀请", "Gửi lời mời cho các gia đình"],
+  "Sending invitations…": ["正在发送邀请…", "Đang gửi lời mời…"],
+  "Every family asked": ["已询问所有家庭", "Đã hỏi tất cả gia đình"],
+  "Send reminders now": ["立即发送提醒", "Gửi nhắc nhở ngay"],
+  "Sending reminders…": ["正在发送提醒…", "Đang gửi nhắc nhở…"],
+  "Awaiting reply": ["等待回复", "Đang chờ trả lời"],
+  Continuing: ["继续", "Tiếp tục"],
+  "Asked for a change": ["要求调整", "Muốn thay đổi"],
+  "Not continuing": ["不继续", "Không tiếp tục"],
+  "Not invited": ["未邀请", "Chưa mời"],
+  "All families": ["所有家庭", "Tất cả gia đình"],
+  "Record their answer": ["记录他们的回复", "Ghi lại câu trả lời"],
+  " (recorded by studio)": ["（由工作室记录）", " (do studio ghi lại)"],
+  "No families with this answer.": [
+    "没有家庭是这个回复。",
+    "Không có gia đình nào với câu trả lời này.",
+  ],
+  "Loading renewals…": ["正在加载续报…", "Đang tải gia hạn…"],
+  "Lesson prices": ["课程价格", "Giá buổi học"],
+  "The price of one lesson of each length. Bill next term uses the length of each student's weekly lesson in your calendar.":
+    [
+      "每种时长一节课的价格。下学期账单按日历中每位学生每周课程的时长计算。",
+      "Giá một buổi học cho mỗi độ dài. Lập hóa đơn học kỳ tới dùng độ dài buổi học hằng tuần của mỗi học sinh trong lịch.",
+    ],
+  Minutes: ["分钟", "Phút"],
+  "Price per lesson (A$)": ["每节课价格（澳元）", "Giá mỗi buổi (A$)"],
+  "Add a lesson length": ["添加课程时长", "Thêm độ dài buổi học"],
+  "Save prices": ["保存价格", "Lưu giá"],
+  "Saving…": ["正在保存…", "Đang lưu…"],
+};

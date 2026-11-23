@@ -11,6 +11,7 @@ import { tourStrings } from "./tour";
 import { benchmarkStrings } from "./benchmarks";
 import { extraStrings } from "./extra";
 import { assignmentStrings } from "./assignments";
+import { termBillingStrings } from "./term-billing";
 
 /**
  * Signed-in app copy (studio, family portal, admin, sign-in, wizards) for the DOM translator in
@@ -34,6 +35,7 @@ const ALL: AppStrings[] = [
   benchmarkStrings,
   extraStrings,
   assignmentStrings,
+  termBillingStrings,
 ];
 
 const exact: Record<Exclude<Lang, "en">, Map<string, string>> = {
