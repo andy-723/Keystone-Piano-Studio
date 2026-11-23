@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { assignCourseTemplate, getCourseAssignmentOptions } from "@/services/curriculum";
-import { onboardingTerms, termName } from "@/lib/onboarding";
+import { defaultTargetTerm, onboardingTermOptions, termName } from "@/lib/onboarding";
 import type { CourseTemplate } from "@/mocks/types";
 import { intakeField } from "./StudentIntake";
 
@@ -31,7 +31,7 @@ export function AssignCourseDialog({
   const [search, setSearch] = useState("");
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [replace, setReplace] = useState<Set<string>>(new Set());
-  const [targetTerm, setTargetTerm] = useState(onboardingTerms[1] ?? "2027-T3");
+  const [targetTerm, setTargetTerm] = useState(defaultTargetTerm);
   const toggle = (set: Set<string>, id: string, on: boolean) => {
     const next = new Set(set);
     if (on) next.add(id);
@@ -97,7 +97,7 @@ export function AssignCourseDialog({
               value={targetTerm}
               onChange={(event) => setTargetTerm(event.target.value)}
             >
-              {onboardingTerms.map((term) => (
+              {onboardingTermOptions().map((term) => (
                 <option key={term} value={term}>
                   {termName(term)}
                 </option>

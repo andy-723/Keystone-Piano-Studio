@@ -41,7 +41,10 @@ import { resetStudioWorkspaceForTests, isLiveStudio } from "@/lib/studio-workspa
 import { getStudents, getStudio } from "@/services/roster";
 import { deleteExampleStudent } from "@/services/students";
 import { saveTeacherProfile } from "@/services/community";
-import { startEnrolment } from "@/services/onboarding";
+import { activateEnrolment, saveEnrolment, startEnrolment } from "@/services/onboarding";
+import { enrolmentDrafts } from "@/mocks/onboarding";
+import { defaultTargetTerm, onboardingTermOptions, paceTerms } from "@/lib/onboarding";
+import { currentTermKey } from "@/lib/course-progress";
 import { getPlanBilling, setStudioPlan } from "@/services/plans";
 import { createInvitation } from "@/services/invitations";
 import { validateStartingAccess } from "@/server/platform";
@@ -111,10 +114,13 @@ type Call = {
 };
 
 /** Just enough of the Supabase query builder for the studio store. */
-function fakeSupabase(tables: Tables, options: { failOn?: string } = {}) {
+function fakeSupabase(
+  tables: Tables,
+  options: { failOn?: string; failWith?: { message: string; code: string } } = {},
+) {
   const calls: Call[] = [];
   const from = (table: string) => {
-    const call: Call = { table, op: "select", filters: [], other: [] };
+    const call: Call & { conflict?: string[] } = { table, op: "select", filters: [], other: [] };
     const rowsFor = () =>
       (tables[table] ?? []).filter(
         (row) =>
@@ -127,14 +133,18 @@ function fakeSupabase(tables: Tables, options: { failOn?: string } = {}) {
       if (options.failOn === `${table}.${call.op}`) {
         return {
           data: null,
-          error: { message: "new row violates row-level security policy", code: "42501" },
+          error: options.failWith ?? {
+            message: "new row violates row-level security policy",
+            code: "42501",
+          },
         };
       }
       if (call.op === "upsert") {
         const list = (Array.isArray(call.payload) ? call.payload : [call.payload]) as Row[];
         const current = tables[table] ?? [];
         for (const row of list) {
-          const existing = current.find((entry) => entry.id === row.id);
+          const keys = call.conflict ?? ["id"];
+          const existing = current.find((entry) => keys.every((key) => entry[key] === row[key]));
           if (existing) Object.assign(existing, row);
           else current.push({ ...row });
         }
@@ -168,9 +178,10 @@ function fakeSupabase(tables: Tables, options: { failOn?: string } = {}) {
         calls.push(call),
         builder
       ),
-      upsert: (payload: unknown) => (
+      upsert: (payload: unknown, opts?: { onConflict?: string }) => (
         (call.op = "upsert"),
         (call.payload = payload),
+        opts?.onConflict && (call.conflict = opts.onConflict.split(",")),
         calls.push(call),
         builder
       ),
@@ -312,7 +323,10 @@ const owner = {
   studioAccess: [{ studioId: STUDIO_ID, role: "owner", plan: "pro" as const }],
 };
 
-async function signInLive(tables = liveTables(), options: { failOn?: string } = {}) {
+async function signInLive(
+  tables = liveTables(),
+  options: { failOn?: string; failWith?: { message: string; code: string } } = {},
+) {
   const fake = fakeSupabase(tables, options);
   setStudioStoreClientForTests(fake.client);
   const choice = await chooseStudioWorkspace(owner, fake.client);
@@ -1223,5 +1237,162 @@ describe("live practice logs and notes (0023)", () => {
       }),
     ).rejects.toThrow();
     expect(practiceLogs).toHaveLength(0);
+  });
+});
+
+describe("live enrol wizard progress (0024)", () => {
+  beforeEach(() => resetStudioWorkspaceForTests());
+  afterEach(() => setStudioStoreClientForTests(null));
+
+  const STUDENT = "5f1c7e0e-3333-4333-8333-000000000099";
+  const INVITE = "5f1c7e0e-9999-4999-8999-000000000001";
+  const intake = {
+    experience: "beginner",
+    previousGrades: "",
+    theoryExams: "",
+    instrument: "digital",
+    goal: "Play for fun",
+    daysPerWeek: 5,
+    minutesPerDay: 15,
+  };
+  function invitedTables(): Tables {
+    const tables = liveTables();
+    tables.student!.push({
+      id: STUDENT,
+      studio_id: STUDIO_ID,
+      family_id: EXAMPLE_FAMILY,
+      first_name: "Mia",
+      last_name: "Nguyen",
+      birth_year: 2018,
+      exam_date: null,
+      target_term: null,
+      grade_goal: null,
+      is_example: false,
+    });
+    tables["invitation"] = [
+      { id: INVITE, studio_id: STUDIO_ID, status: "completed", created_at: "2026-11-20T00:00:00Z" },
+    ];
+    tables["invitation_student"] = [
+      { invitation_id: INVITE, student_id: STUDENT, studio_id: STUDIO_ID },
+    ];
+    tables["intake_response"] = [
+      {
+        studio_id: STUDIO_ID,
+        student_id: STUDENT,
+        answers: intake,
+        submitted_at: "2026-11-21T00:00:00Z",
+      },
+    ];
+    tables["enrolment_progress"] = [];
+    return tables;
+  }
+  const draft = () => {
+    const found = enrolmentDrafts.find((entry) => entry.studentId === STUDENT);
+    if (!found) throw new Error("no draft for the invited student");
+    return found;
+  };
+
+  it("starts real studios on today's terms, not the fixed 2027 list", async () => {
+    await signInLive(invitedTables());
+    const now = currentTermKey(new Date());
+    expect(onboardingTermOptions()[0]).toBe(now);
+    expect(onboardingTermOptions()).toHaveLength(5);
+    expect(paceTerms()).toEqual(onboardingTermOptions().slice(1, 4));
+    expect(defaultTargetTerm()).toBe(onboardingTermOptions()[2]);
+    expect(draft().targetTerm).toBe(defaultTargetTerm());
+  });
+
+  it("saves each step and resumes there after signing in again", async () => {
+    const tables = invitedTables();
+    await signInLive(tables);
+    const start = draft();
+    expect(start.step).toBe(1);
+    expect(start.status).toBe("intake_done");
+    const steps = start.welcomeTemplate!.steps.map((step) => step.contentItemId);
+    await saveEnrolment(start.id, { ...start, step: 2 });
+    await saveEnrolment(start.id, {
+      ...draft(),
+      welcomeChecks: steps,
+      startingStages: { Repertoire: 2 },
+      step: 3,
+    });
+    await saveEnrolment(start.id, {
+      ...draft(),
+      gradeHours: 30,
+      lessonMinutes: 45,
+      practiceGoal: 90,
+      targetTerm: onboardingTermOptions()[3]!,
+      step: 4,
+    });
+    await saveEnrolment(start.id, { ...draft(), strengths: "Good ear", workOn: "Posture" });
+    expect(tables["enrolment_progress"]).toHaveLength(1);
+    expect(tables["enrolment_progress"]![0]).toMatchObject({
+      studio_id: STUDIO_ID,
+      student_id: STUDENT,
+      step: 4,
+      status: "welcome_done",
+    });
+
+    // New sign-in (another device, a refresh): the wizard opens on step 4 with the answers.
+    resetStudioWorkspaceForTests();
+    await signInLive(tables);
+    expect(draft()).toMatchObject({
+      step: 4,
+      status: "welcome_done",
+      welcomeChecks: steps,
+      startingStages: { Repertoire: 2 },
+      gradeHours: 30,
+      lessonMinutes: 45,
+      practiceGoal: 90,
+      targetTerm: onboardingTermOptions()[3],
+      strengths: "Good ear",
+      workOn: "Posture",
+    });
+  });
+
+  it("keeps the teacher on the step when Supabase refuses the save", async () => {
+    const tables = invitedTables();
+    await signInLive(tables, { failOn: "enrolment_progress.upsert" });
+    const start = draft();
+    await expect(saveEnrolment(start.id, { ...start, step: 2 })).rejects.toThrow(
+      /permission|studio is read-only/,
+    );
+    expect(draft().step).toBe(1);
+    expect(tables["enrolment_progress"]).toHaveLength(0);
+  });
+
+  it("works as before, for this session only, until migration 0024 is run", async () => {
+    const tables = invitedTables();
+    await signInLive(tables, {
+      failOn: "enrolment_progress.upsert",
+      failWith: { message: 'relation "public.enrolment_progress" does not exist', code: "42P01" },
+    });
+    const start = draft();
+    await saveEnrolment(start.id, { ...start, step: 2 });
+    expect(draft().step).toBe(2);
+  });
+
+  it("marks progress active on activation and doesn't offer the student again", async () => {
+    const tables = invitedTables();
+    await signInLive(tables);
+    const start = draft();
+    const steps = start.welcomeTemplate!.steps.map((step) => step.contentItemId);
+    await saveEnrolment(start.id, {
+      ...start,
+      welcomeChecks: steps,
+      step: 4,
+      strengths: "Ear",
+      workOn: "Hands",
+    });
+    const done = await activateEnrolment(start.id);
+    expect(done.status).toBe("active");
+    expect(done.completedAt?.slice(0, 4)).toBe(String(new Date().getFullYear()));
+    expect(tables["enrolment_progress"]![0]).toMatchObject({ status: "active" });
+    expect(tables["enrolment_progress"]![0]!["completed_at"]).toBeTruthy();
+    expect(tables.student_course!.some((row) => row["student_id"] === STUDENT)).toBe(true);
+
+    resetStudioWorkspaceForTests();
+    await signInLive(tables);
+    expect(enrolmentDrafts.some((entry) => entry.studentId === STUDENT)).toBe(false);
   });
 });
