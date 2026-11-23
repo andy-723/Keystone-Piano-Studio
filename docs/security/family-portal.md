@@ -22,6 +22,7 @@ comes from one server function, `familyPortalFn` in `src/server/family-portal.ts
 | News | Published (or scheduled and due), not expired, for the whole studio, the family by id, or a manual group with one of the children in it. Group posts saved since 23 Nov 2026 also carry the families they reached (smart groups exist only in the app). Title, body, tag, dates, important and author name only; no author id, audience or attachments. |
 | Courses | Active course per child. Feedback only where the teacher marked it shared; private feedback and its comment stay on the server. |
 | Practice (0023) | The children's practice for the last 8 weeks (date, minutes, home or lesson). No user ids. |
+| Practice tasks (0026) | Assignments for the children due from 14 days ago: due date, tasks (text, minutes, days, https attachment link), tick, teacher's mark and shared comment. No course item ids or who marked it. |
 | Notes (0023) | Only `client_note` rows with `visibility = 'shared'`, about one of the children or the family. The query filters on shared and `familySharedNotes` filters again, so a private note never leaves the server. |
 
 ## Parents logging practice (0023)
@@ -33,7 +34,19 @@ family's own students, the date no later than today in the studio's timezone and
 Parents have no RLS grant on `practice_log` or `client_note`; staff read and write both under RLS
 (owner, admin, teacher), with the 0006 access gate. Triggers keep each row inside its own studio,
 stop a note moving to another student or family, and delete notes when their student or family
-is deleted. There is no delete button for practice entries yet (staff have the RLS grant for a later one).
+is deleted.
+
+## Parents ticking tasks and deleting practice (0026)
+
+`src/server/family-assignments.ts`, same identity and `canWrite` checks. `familyCompleteTaskFn`
+loads the task by id inside the family's studio, refuses it unless its assignment is for one of
+the family's own children, logs today's practice (`logged_by = 'parent'`, 1 to 600 minutes) and
+ticks the task only while it is unticked, so a double tap never logs twice.
+`familyDeletePracticeFn` deletes one practice entry only if it is for one of the family's
+children, was logged by a parent or student (never the teacher's minutes) and is from the last
+30 days. A `before delete` trigger on `practice_log` un-ticks the task that entry ticked.
+Parents have no grant on `assignment` or `assignment_task`; staff use RLS (owner, admin,
+teacher) with the 0006 access gate, and triggers keep tasks inside their assignment's studio.
 
 The browser puts this copy into the stores the parent screens already read
 (`src/services/live/family-store.ts`). Each news post is addressed to this family alone.
@@ -41,4 +54,5 @@ The browser puts this copy into the stores the parent screens already read
 Tests: `src/test/family-portal.test.ts` (another family's child, private feedback and notes,
 other studio, drafts, expired and future posts, archived groups, practice date and minute rules)
 and `supabase/tests/practice-notes.test.sql` (guardians read nothing, other studios can't read or
-write, cross-studio subjects refused, paused studio can't write).
+write, cross-studio subjects refused, paused studio can't write). Practice tasks:
+`src/test/assignments-live.test.ts` and `supabase/tests/assignments.test.sql`.

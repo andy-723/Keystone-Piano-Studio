@@ -17,6 +17,7 @@ import { isLiveStudio } from "@/lib/studio-workspace";
 import { GuardianSignInStatus } from "@/components/account/GuardianSignInStatus";
 import { useGuardianAccounts } from "@/lib/guardian-accounts";
 import { LiveStudentMakeUps } from "@/components/LiveStudentMakeUps";
+import { LivePracticeEntries, LiveStudentAssignments } from "@/components/LiveStudentAssignments";
 
 export const Route = createFileRoute("/students/$studentId")({
   loader: async ({ context, params }) => {
@@ -68,6 +69,7 @@ function StudentProfile() {
       </svg>
       <div className="mt-4 grid grid-cols-2 gap-5 sm:grid-cols-4">{data.practice.map((week) => <div key={week.start}><p className="text-base">{formatShortDate(week.start)} – {formatShortDate(week.end)}</p><p className="mt-1 font-semibold">{week.studentMinutes + week.teacherMinutes} min</p><p className="text-base text-muted-foreground">At home {week.studentMinutes} · In lessons {week.teacherMinutes}</p></div>)}</div>
     </section>
+    {live && <><LivePracticeEntries studentId={student.id} /><LiveStudentAssignments studentId={student.id} /></>}
     <StudentCourse data={data.course} />
     <section className="border-t border-border py-7" aria-labelledby="student-invoices"><h2 id="student-invoices" className="text-2xl font-semibold">Family invoices</h2><p className="mt-2 text-base text-muted-foreground">{family?.displayName}</p><div className="mt-4 divide-y divide-border">{data.invoices.map((invoice) => <Button key={invoice.id} asChild variant="ghost" className="h-auto w-full justify-start whitespace-normal rounded-none px-0 py-4 text-left"><Link to="/invoices/$invoiceId" params={{ invoiceId: invoice.id }}><div className="min-w-0 flex-1"><p className="break-all">{invoice.number}</p><p className="mt-1 text-base font-normal text-muted-foreground">Due {formatNumericDate(invoice.dueDate)} · {INVOICE_STATUS[invoice.status]}</p></div><span className="shrink-0">{formatAUD(invoice.totalCents)}</span><ArrowRight className="shrink-0" aria-hidden /></Link></Button>)}</div>{!data.invoices.length && <p className="mt-4 text-muted-foreground">No invoices for this family.</p>}</section>
   </div>;

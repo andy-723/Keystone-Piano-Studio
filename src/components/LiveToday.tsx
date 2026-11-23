@@ -4,6 +4,7 @@ import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import { Suspense } from "react";
 import { LatestNews } from "@/components/StudioNews";
 import { LessonClientNotes } from "@/components/LessonClientNotes";
+import { LiveLessonTasks } from "@/components/LiveLessonTasks";
 import { AttendanceMarker, invalidateAttendance } from "@/components/AttendanceMarker";
 import { calendarApi } from "@/lib/calendar-api";
 import { calendarWeekQuery } from "@/components/LessonCalendar";
@@ -17,7 +18,8 @@ import type { CalendarLesson } from "@/server/calendar";
  * Today page for a real studio: the real date in the studio's time zone and the studio's own
  * lessons from the calendar (lesson_series + lesson_exception), each with its lesson notes
  * (client_note, 0023; "Share with family" puts a note in the family portal), and the teacher's
- * attendance mark with its make-up credit choice (0025).
+ * attendance mark with its make-up credit choice (0025), and its practice tasks: mark last
+ * lesson's, set this week's (0026).
  */
 export function LiveToday({ date }: { date?: string | undefined }) {
   const today = studioToday();
@@ -143,6 +145,12 @@ export function LiveToday({ date }: { date?: string | undefined }) {
                     studentId={lesson.studentId}
                     name={lesson.studentName}
                     occurrenceId={lesson.key}
+                  />
+                  <LiveLessonTasks
+                    studentId={lesson.studentId}
+                    studentName={lesson.studentName}
+                    occurrenceKey={lesson.key}
+                    lessonDate={lesson.date}
                   />
                 </Suspense>
               )}

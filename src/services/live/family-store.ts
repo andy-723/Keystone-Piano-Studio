@@ -17,6 +17,8 @@ import {
   type FamilyMakeUps,
   type FamilyPortalContent,
 } from "@/server/family-portal";
+import { familyCompleteTaskFn, familyDeletePracticeFn } from "@/server/family-assignments";
+import type { FamilyAssignment } from "@/lib/live-assignments";
 import { pushCourseDocument } from "./course-store";
 
 export const familyPortalState: {
@@ -27,12 +29,15 @@ export const familyPortalState: {
   makeUps: FamilyMakeUps[];
   /** The last 8 weeks of marked lessons (0025). */
   attendance: FamilyAttendance[];
+  /** Practice tasks due from 14 days ago, with marks (0026). */
+  assignments: FamilyAssignment[];
 } = {
   loaded: false,
   today: null,
   lessons: [],
   makeUps: [],
   attendance: [],
+  assignments: [],
 };
 
 export type FamilyPortalLoader = (studioId: string) => Promise<FamilyPortalContent | null>;
@@ -82,6 +87,7 @@ export async function loadLiveFamilyPortal(
   familyPortalState.lessons = [];
   familyPortalState.makeUps = [];
   familyPortalState.attendance = [];
+  familyPortalState.assignments = [];
   if (workspace.role !== "guardian" || !familyId) return;
   let content: FamilyPortalContent | null;
   try {
@@ -103,5 +109,37 @@ export async function loadLiveFamilyPortal(
   // Make-ups and attendance (0025); an older server sends neither.
   familyPortalState.makeUps = content.makeUps ?? [];
   familyPortalState.attendance = content.attendance ?? [];
+  // Practice tasks (0026); an older server sends none.
+  familyPortalState.assignments = content.assignments ?? [];
   familyPortalState.loaded = true;
+}
+
+async function familyAccessToken() {
+  const session = (await getAuthClient()?.auth.getSession())?.data.session;
+  if (!session) throw new Error("Your sign-in has ended. Please sign in again.");
+  return session.access_token;
+}
+
+/** Ticks off a practice task and logs the minutes as today's practice (server-checked). */
+export async function completeLiveFamilyTask(studioId: string, taskId: string, minutes: number) {
+  const { assignment, log } = await familyCompleteTaskFn({
+    data: { accessToken: await familyAccessToken(), studioId, taskId, minutes },
+  });
+  const index = familyPortalState.assignments.findIndex((entry) => entry.id === assignment.id);
+  if (index >= 0) familyPortalState.assignments[index] = assignment;
+  if (log) practiceLogs.push(log);
+  return assignment;
+}
+
+/** Deletes one of the family's own practice entries; a task it ticked is un-ticked. */
+export async function deleteLiveFamilyPractice(studioId: string, practiceId: string) {
+  await familyDeletePracticeFn({
+    data: { accessToken: await familyAccessToken(), studioId, practiceId },
+  });
+  const index = practiceLogs.findIndex((entry) => entry.id === practiceId);
+  if (index >= 0) practiceLogs.splice(index, 1);
+  for (const assignment of familyPortalState.assignments)
+    for (const task of assignment.tasks)
+      if (task.practiceLogId === practiceId)
+        Object.assign(task, { doneAt: null, doneBy: null, practiceLogId: null });
 }
