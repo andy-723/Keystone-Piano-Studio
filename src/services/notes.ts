@@ -3,6 +3,7 @@ import { families, students, teacher } from "@/mocks/data";
 import type { ClientNote } from "@/mocks/types";
 import { melbourneIso, PROTOTYPE_TODAY } from "@/lib/calendar";
 import { respond } from "./_delay";
+import { deleteLiveNote, insertLiveNote, updateLiveNote } from "./live/notes-store";
 
 const ordered = (notes: ClientNote[]) => [...notes].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
 export const getNotes = (subjectType: ClientNote["subjectType"], subjectId: string) => respond(ordered(clientNotes.filter((note) => note.subjectType === subjectType && note.subjectId === subjectId)));
@@ -15,7 +16,10 @@ export async function getStudentNoteContext(studentId: string) {
 export async function addNote(input: Omit<ClientNote, "id" | "createdAt" | "authorName" | "visibility" | "pinned"> & Partial<Pick<ClientNote, "visibility" | "pinned" | "authorName">>) {
   if (!input.body.trim()) throw new Error("Write a note first");
   if (input.subjectType === "student" ? !students.some((student) => student.id === input.subjectId) : !families.some((family) => family.id === input.subjectId)) throw new Error("Note subject not found");
-  const note: ClientNote = { ...input, body: input.body.trim(), visibility: input.visibility ?? "private", pinned: input.pinned ?? false, authorName: input.authorName ?? teacher.name, id: `note-${crypto.randomUUID()}`, createdAt: new Date(Math.max(Date.parse(melbourneIso(PROTOTYPE_TODAY, "19:00")), ...clientNotes.map((note) => Date.parse(note.createdAt) + 1000))).toISOString() };
+  const draft = { ...input, body: input.body.trim(), visibility: input.visibility ?? "private", pinned: input.pinned ?? false, authorName: input.authorName ?? (teacher.name || "Your teacher") };
+  // Real studios: saved to the database first; it gives the id and the real time.
+  const saved = await insertLiveNote(draft);
+  const note: ClientNote = saved ?? { ...draft, id: `note-${crypto.randomUUID()}`, createdAt: new Date(Math.max(Date.parse(melbourneIso(PROTOTYPE_TODAY, "19:00")), ...clientNotes.map((note) => Date.parse(note.createdAt) + 1000))).toISOString() };
   clientNotes.push(note);
   return respond(note);
 }
@@ -23,7 +27,9 @@ export async function updateNote(id: string, input: Partial<Pick<ClientNote, "bo
   const note = clientNotes.find((entry) => entry.id === id);
   if (!note) throw new Error("Note not found");
   if (input.body !== undefined && !input.body.trim()) throw new Error("Write a note first");
-  Object.assign(note, input, input.body === undefined ? {} : { body: input.body.trim() });
+  const patch = { ...input, ...(input.body === undefined ? {} : { body: input.body.trim() }) };
+  await updateLiveNote(id, patch);
+  Object.assign(note, patch);
   return respond(note);
 }
 export async function togglePin(id: string) {
@@ -34,6 +40,7 @@ export async function togglePin(id: string) {
 export async function deleteNote(id: string) {
   const index = clientNotes.findIndex((entry) => entry.id === id);
   if (index < 0) throw new Error("Note not found");
-  clientNotes.splice(index, 1);
+  await deleteLiveNote(id);
+  clientNotes.splice(clientNotes.findIndex((entry) => entry.id === id), 1);
   return respond(undefined);
 }

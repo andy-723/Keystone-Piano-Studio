@@ -3,12 +3,14 @@
  * courses or the calendar under the database rules, so the server sends a family-safe copy
  * (src/server/family-portal.ts) and this puts it where the parent screens already look:
  * news posts (addressed to this family only), the children's active courses (shared feedback
- * only) and the next 4 weeks of lessons.
+ * only), the next 4 weeks of lessons, the last 8 weeks of practice and the teacher's shared notes.
  */
 import { getAuthClient } from "@/lib/auth-client";
 import type { FamilyLesson, FamilyNewsPost } from "@/lib/family-portal";
 import type { StudioWorkspace } from "@/lib/studio-workspace";
 import { newsState, type Announcement, type NewsTag } from "@/mocks/news";
+import { practiceLogs } from "@/mocks/data";
+import { clientNotes } from "@/mocks/notes";
 import { familyPortalFn, type FamilyPortalContent } from "@/server/family-portal";
 import { pushCourseDocument } from "./course-store";
 
@@ -77,6 +79,9 @@ export async function loadLiveFamilyPortal(
     toAnnouncement(post, workspace.studioId, familyId),
   );
   for (const doc of content.courses) pushCourseDocument(doc);
+  // Practice and shared notes (0023); an older server sends neither.
+  practiceLogs.push(...(content.practice ?? []));
+  clientNotes.push(...(content.notes ?? []));
   familyPortalState.today = content.today;
   familyPortalState.lessons = content.lessons;
   familyPortalState.loaded = true;

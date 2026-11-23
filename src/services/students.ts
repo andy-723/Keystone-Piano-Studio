@@ -10,6 +10,8 @@ import { getChatThread, getOrCreateFamilyConversation } from "./chat";
 import { addDays, PROTOTYPE_TODAY } from "@/lib/calendar";
 import { fourWeekPractice } from "@/lib/student-insights";
 import { readiness } from "@/lib/lesson-progress";
+import { isLiveStudio } from "@/lib/studio-workspace";
+import { todayIn } from "@/lib/lesson-calendar";
 
 export const getTeacherStudents = getStudents;
 
@@ -30,7 +32,9 @@ export async function getStudentProfile(id: string) {
     getRequirements(student.gradeGoal.replace(/^AMEB /, "")), getStudentProgress(id), getInvoices(),
   ]);
   const course = await getStudentCourse(id);
-  return { student, family, attendance, practice: fourWeekPractice(logs, PROTOTYPE_TODAY), requirements, progress, course,
+  // Real studios: the last four weeks up to and including today (the demo runs on its own date).
+  const practiceEnd = isLiveStudio() ? addDays(todayIn("Australia/Melbourne"), 1) : PROTOTYPE_TODAY;
+  return { student, family, attendance, practice: fourWeekPractice(logs, practiceEnd), requirements, progress, course,
     credits: await getCredits(id), readiness: course.readiness, invoices: invoices.filter((invoice) => invoice.familyId === student.familyId) };
 }
 
