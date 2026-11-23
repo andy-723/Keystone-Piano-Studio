@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { isLiveStudio } from "@/lib/studio-workspace";
-import { DemoOnlyNotice } from "@/components/DemoOnlyNotice";
+import { LiveRenewals } from "@/components/LiveTermBilling";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { ArrowLeft, ArrowRight, Bell, RefreshCw, Send } from "lucide-react";
@@ -19,7 +19,7 @@ export const Route = createFileRoute("/invoices/renewals")({
   errorComponent: () => <p role="alert">Renewals could not be opened. Please refresh to try again.</p>,
   component: () =>
     isLiveStudio() ? (
-      <DemoOnlyNotice title="Renewal invitations & reminders" back={{ to: "/invoices", label: "All invoices" }} />
+      <LiveRenewals />
     ) : (
       <Renewals />
     ),

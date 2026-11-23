@@ -20,6 +20,9 @@ import {
 import { familyCompleteTaskFn, familyDeletePracticeFn } from "@/server/family-assignments";
 import type { FamilyAssignment } from "@/lib/live-assignments";
 import { pushCourseDocument } from "./course-store";
+import { familyAnswerRenewalFn, familyRenewalsFn, type FamilyRenewal } from "@/server/family-renewals";
+import { renewalAnswerChatBody } from "@/lib/term-billing";
+import { getOrCreateFamilyConversation, sendMessage } from "../chat";
 
 export const familyPortalState: {
   loaded: boolean;
@@ -142,4 +145,41 @@ export async function deleteLiveFamilyPractice(studioId: string, practiceId: str
     for (const task of assignment.tasks)
       if (task.practiceLogId === practiceId)
         Object.assign(task, { doneAt: null, doneBy: null, practiceLogId: null });
+}
+
+/** The family's renewal invitations for terms that haven't ended (0027). */
+export async function liveFamilyRenewals(studioId: string): Promise<FamilyRenewal[]> {
+  const { renewals } = await familyRenewalsFn({
+    data: { accessToken: await familyAccessToken(), studioId },
+  });
+  return renewals;
+}
+
+/**
+ * Saves the family's answer on the server, then posts it to the family chat so the teacher
+ * sees it there too. A second tap saves nothing and posts nothing.
+ */
+export async function answerLiveFamilyRenewal(
+  studioId: string,
+  input: { responseId: string; status: "confirmed" | "change_requested" | "declined"; note: string },
+  author: { name: string },
+): Promise<FamilyRenewal> {
+  const { renewal, changed } = await familyAnswerRenewalFn({
+    data: { accessToken: await familyAccessToken(), studioId, ...input },
+  });
+  if (changed) {
+    try {
+      const conversation = await getOrCreateFamilyConversation(renewal.familyId);
+      await sendMessage({
+        conversationId: conversation.id,
+        authorName: author.name || "Parent",
+        authorRole: "guardian",
+        kind: "text",
+        body: renewalAnswerChatBody(renewal.status, renewal.termName, input.note),
+      });
+    } catch {
+      // The answer is saved; the teacher still sees it on the renewals screen.
+    }
+  }
+  return renewal;
 }

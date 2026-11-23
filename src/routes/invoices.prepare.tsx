@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { isLiveStudio } from "@/lib/studio-workspace";
-import { DemoOnlyNotice } from "@/components/DemoOnlyNotice";
+import { LiveBillNextTerm } from "@/components/LiveTermBilling";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { ArrowLeft, ArrowRight, Check, Send, MessageCircle } from "lucide-react";
@@ -18,7 +18,7 @@ export const Route = createFileRoute("/invoices/prepare")({
   errorComponent: () => <p role="alert">Term invoices could not be opened. Please refresh to try again.</p>,
   component: () =>
     isLiveStudio() ? (
-      <DemoOnlyNotice title="Bill next term" back={{ to: "/invoices", label: "All invoices" }} />
+      <LiveBillNextTerm />
     ) : (
       <PrepareInvoices />
     ),

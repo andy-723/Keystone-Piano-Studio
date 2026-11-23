@@ -25,7 +25,7 @@ import { createServiceSupabase } from "./supabase";
  * verified user's own guardian row; nothing in the request picks the family or the children.
  */
 
-async function familyWriteContext(accessToken: string, studioId?: string) {
+export async function familyWriteContext(accessToken: string, studioId?: string) {
   const session = await verifyAccessToken(accessToken);
   const supabase = createServiceSupabase();
   const ctx = await familyContextForUser(supabase, session.userId, studioId);

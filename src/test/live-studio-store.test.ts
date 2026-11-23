@@ -25,6 +25,12 @@ import {
   deleteDraft,
 } from "@/services/billing";
 import { resetLiveBillingForTests } from "@/services/live/billing-store";
+import {
+  liveTermDrafts,
+  prepareLiveTermDrafts,
+  previewLiveTerm,
+  sendLiveTermInvoices,
+} from "@/services/live/term-billing-store";
 import { addPractice, getStudentCourse, saveStudentCourse } from "@/services/curriculum";
 import { copyTemplate, saveCourseTemplate } from "@/services/library";
 import { clientNotes } from "@/mocks/notes";
@@ -196,6 +202,8 @@ function fakeSupabase(
       order: () => builder,
       limit: () => builder,
       gte: () => builder,
+      lte: () => builder,
+      or: () => builder,
       neq: (column: string, value: unknown) => (call.other.push([column, value, "neq"]), builder),
       is: (column: string, value: unknown) => (call.other.push([column, value, "is"]), builder),
       maybeSingle: async () => {
@@ -1394,5 +1402,136 @@ describe("live enrol wizard progress (0024)", () => {
     resetStudioWorkspaceForTests();
     await signInLive(tables);
     expect(enrolmentDrafts.some((entry) => entry.studentId === STUDENT)).toBe(false);
+  });
+});
+
+describe("bill next term on real studios (0027)", () => {
+  beforeEach(() => {
+    resetStudioWorkspaceForTests();
+    resetLiveBillingForTests();
+  });
+  afterEach(() => setStudioStoreClientForTests(null));
+
+  const FAMILY = "5f1c7e0e-2222-4222-8222-000000000002";
+  const KID = "5f1c7e0e-3333-4333-8333-000000000002";
+  const TERM = { key: "2027-T1", name: "Term 1 2027", start: "2027-02-03", end: "2027-04-09" };
+
+  function termTables(rule: "skip" | "make_up" | "charge" = "skip") {
+    const tables = liveTables();
+    (tables.studio![0] as Row).profile = {
+      studio: { state: "NSW", policies: { publicHolidays: rule } },
+      lessonTypes: [{ id: "lt-30", name: "30 min lesson", durationMin: 30, priceCents: 4500 }],
+    };
+    tables.family!.push({
+      id: FAMILY,
+      studio_id: STUDIO_ID,
+      display_name: "Chen family",
+      media_consent: null,
+      news_photo_consent: null,
+      is_example: false,
+      guardian: [{ id: "g-chen", full_name: "Lin Chen", email: "lin@example.com", mobile: null, preferred_language: "en" }],
+    });
+    tables.student!.push({
+      id: KID,
+      studio_id: STUDIO_ID,
+      family_id: FAMILY,
+      first_name: "Mia",
+      last_name: "Chen",
+      birth_year: 2016,
+      exam_date: null,
+      target_term: null,
+      grade_goal: null,
+      is_example: false,
+    });
+    (tables as Record<string, Row[]>)["lesson_series"] = [
+      {
+        id: "ser-mia",
+        studio_id: STUDIO_ID,
+        student_id: KID,
+        teacher_user_id: "owner-1",
+        repeat: "weekly",
+        first_date: "2026-11-02",
+        until_date: null,
+        start_time: "16:00:00",
+        duration_min: 30,
+      },
+    ];
+    (tables as Record<string, Row[]>)["lesson_exception"] = [];
+    (tables as Record<string, Row[]>)["makeup_credit"] = [];
+    return tables;
+  }
+  const input = { term: TERM, holidayDates: ["2027-03-26", "2027-03-29"], closures: [] };
+
+  it("counts the term's lessons, skips Easter Monday, and makes one draft per family once", async () => {
+    const fake = await signInLive(termTables());
+    const preview = await previewLiveTerm(input);
+    expect(preview.families.map((row) => row.familyName)).toEqual(["Chen family"]);
+    const mia = preview.families[0]!.students[0]!;
+    expect(mia).toMatchObject({ problem: null, unitCents: 4500, skipped: ["2027-03-29"] });
+    expect(mia.dates).toHaveLength(8);
+    expect(preview.families[0]!.ready).toBe(true);
+
+    const drafts = await prepareLiveTermDrafts(input);
+    expect(drafts).toHaveLength(1);
+    expect(drafts[0]).toMatchObject({ termKey: "2027-T1", totalCents: 36000, dueDate: "2027-02-03" });
+    expect(fake.tables.invoice).toHaveLength(1);
+    expect(fake.tables.invoice![0]).toMatchObject({ term_key: "2027-T1", billing_period_start: "2027-02-03", status: "draft" });
+    // Preparing again adds nothing.
+    await prepareLiveTermDrafts(input);
+    expect(fake.tables.invoice).toHaveLength(1);
+    expect((await previewLiveTerm(input)).families[0]!.invoice?.status).toBe("draft");
+
+    const sent = await sendLiveTermInvoices("2027-T1");
+    expect(sent).toHaveLength(1);
+    expect(fake.tables.invoice![0]).toMatchObject({ status: "sent", number: "INV-000001" });
+    expect(liveTermDrafts("2027-T1")).toEqual([]);
+  });
+
+  it("charges a make-up holiday and names it on the line", async () => {
+    await signInLive(termTables("make_up"));
+    const [draft] = await prepareLiveTermDrafts(input);
+    expect(draft!.lines[0]!.qty).toBe(9);
+    expect(draft!.lines[0]!.description).toContain("29 Mar public holiday, make-up offered");
+  });
+
+  it("leaves out students with no price, and families who haven't confirmed a renewal", async () => {
+    const tables = termTables();
+    (tables.studio![0] as Row).profile.lessonTypes = [{ id: "lt-30", name: "30 min lesson", durationMin: 30, priceCents: 0 }];
+    await signInLive(tables);
+    const preview = await previewLiveTerm(input);
+    expect(preview.families[0]!.students[0]!.problem).toBe("no_price");
+    expect(await prepareLiveTermDrafts(input)).toEqual([]);
+
+    resetStudioWorkspaceForTests();
+    resetLiveBillingForTests();
+    const asked = termTables();
+    (asked as Record<string, Row[]>)["renewal_campaign"] = [
+      {
+        id: "camp-1",
+        studio_id: STUDIO_ID,
+        term_key: "2027-T1",
+        term_start: TERM.start,
+        term_end: TERM.end,
+        deadline: "2027-01-20",
+        renewal_response: [
+          { id: "resp-1", family_id: FAMILY, status: "awaiting", invited_at: "2026-12-01T00:00:00Z", reminded_at: null, responded_at: null, responded_by: null, note: null },
+        ],
+      },
+    ];
+    await signInLive(asked);
+    const waiting = await previewLiveTerm(input);
+    expect(waiting.families[0]).toMatchObject({ renewal: "awaiting", ready: false });
+    expect(await prepareLiveTermDrafts(input)).toEqual([]);
+  });
+
+  it("is Pro only", async () => {
+    const tables = termTables();
+    owner.studioAccess[0]!.plan = "base" as never;
+    try {
+      await signInLive(tables);
+      await expect(prepareLiveTermDrafts(input)).rejects.toThrow(/Pro/);
+    } finally {
+      owner.studioAccess[0]!.plan = "pro";
+    }
   });
 });
