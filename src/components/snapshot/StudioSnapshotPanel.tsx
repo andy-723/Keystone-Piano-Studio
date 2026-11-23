@@ -106,7 +106,7 @@ function tileHint(snapshot: StudioSnapshot, id: SnapshotTileId): string {
         ? `Quiet or below threshold · ${snapshot.practiceNotStarted.length} not started`
         : "Quiet or below threshold";
     case "lessons":
-      return `${snapshot.lessons.cancelled} cancelled · ${snapshot.lessons.noShow} no-show`;
+      return `${snapshot.lessons.cancelled} cancelled · ${snapshot.lessons.noShow} no-show${snapshot.lessons.scheduled ? ` · ${snapshot.lessons.scheduled} not marked` : ""}`;
   }
 }
 
@@ -142,7 +142,10 @@ const LESSON_LABEL: Record<string, string> = {
   absent: "No-show",
   cancelled_by_studio: "Cancelled by studio",
   cancelled_late: "Late cancel",
+  cancelled_with_notice: "Cancelled with notice",
+  cancelled: "Cancelled",
   scheduled: "Scheduled",
+  not_marked: "Not marked",
 };
 
 export function StudioSnapshotPanel({

@@ -14,6 +14,13 @@ import {
 import { addDays, todayIn, type LessonException, type LessonSeries } from "@/lib/lesson-calendar";
 import type { CourseDocument } from "@/services/live/course-store";
 import type { ClientNote, PracticeLog } from "@/mocks/types";
+import {
+  creditLots,
+  familyOutcome,
+  type AttendanceStatus,
+  type CreditEntry,
+  type FamilyOutcome,
+} from "@/lib/makeup-credits";
 import { isMockOnboarding } from "./env";
 import { studioPaused } from "./authz";
 import { ProblemError } from "./problem";
@@ -39,7 +46,35 @@ export type FamilyPortalContent = {
   practice: PracticeLog[];
   /** Notes the teacher marked shared, about the children or the family. Never private ones. */
   notes: ClientNote[];
+  /** Make-up credits each child can use now, with their use-by dates (0025). */
+  makeUps?: FamilyMakeUps[];
+  /** The last 8 weeks of marked lessons: attended, cancelled or missed. No reasons (0025). */
+  attendance?: FamilyAttendance[];
 };
+
+export type FamilyMakeUps = { studentId: string; balance: number; useBy: string[] };
+export type FamilyAttendance = {
+  key: string;
+  studentId: string;
+  date: string;
+  outcome: FamilyOutcome;
+};
+
+/** Family-safe make-up summary: available credits only, no reasons or teacher choices. */
+export function familyMakeUps(
+  entries: CreditEntry[],
+  childIds: string[],
+  today: string,
+): FamilyMakeUps[] {
+  const lots = creditLots(entries, today);
+  return childIds.map((studentId) => {
+    const available = lots
+      .filter((lot) => lot.studentId === studentId && lot.state === "available")
+      .map((lot) => lot.expiresOn)
+      .sort();
+    return { studentId, balance: available.length, useBy: available };
+  });
+}
 
 /** Weeks of practice history the family portal sends. */
 export const FAMILY_PRACTICE_DAYS = 56;
@@ -166,63 +201,91 @@ export async function loadFamilyPortal(
 ): Promise<FamilyPortalContent> {
   const today = todayIn(ctx.timeZone, now);
   if (!ctx.childIds.length)
-    return { today, lessons: [], news: [], courses: [], practice: [], notes: [] };
+    return {
+      today,
+      lessons: [],
+      news: [],
+      courses: [],
+      practice: [],
+      notes: [],
+      makeUps: [],
+      attendance: [],
+    };
   const lastDay = addDays(today, FAMILY_LESSON_DAYS - 1);
-  const [seriesRes, newsRes, groupRes, courseRes, practiceRes, noteRes] = await Promise.all([
-    supabase
-      .from("lesson_series")
-      .select(
-        "id, studio_id, student_id, teacher_user_id, repeat, first_date, until_date, start_time, duration_min",
-      )
-      .eq("studio_id", ctx.studioId)
-      .in("student_id", ctx.childIds)
-      .lte("first_date", lastDay)
-      .or(`until_date.is.null,until_date.gte.${addDays(today, -365)}`),
-    supabase
-      .from("news_post")
-      .select(
-        "id, author_name, title, body, tag, audience, important, status, publish_at, pinned_until, expires_at, event_date, edited_at",
-      )
-      .eq("studio_id", ctx.studioId)
-      .in("status", ["published", "scheduled"])
-      .lte("publish_at", now.toISOString())
-      .order("publish_at", { ascending: false })
-      .limit(200),
-    supabase
-      .from("student_group")
-      .select("id, student_ids, archived")
-      .eq("studio_id", ctx.studioId)
-      .overlaps("student_ids", ctx.childIds),
-    supabase
-      .from("student_course")
-      .select("id, student_id, status, data")
-      .eq("studio_id", ctx.studioId)
-      .in("student_id", ctx.childIds)
-      .eq("status", "active"),
-    supabase
-      .from("practice_log")
-      .select("id, student_id, practice_date, minutes, logged_by")
-      .eq("studio_id", ctx.studioId)
-      .in("student_id", ctx.childIds)
-      .gte("practice_date", addDays(today, -(FAMILY_PRACTICE_DAYS - 1)))
-      .order("practice_date", { ascending: true }),
-    // Shared notes only, filtered again below so a private note can never slip through.
-    supabase
-      .from("client_note")
-      .select(
-        "id, subject_type, subject_id, body, category, visibility, pinned, lesson_occurrence_id, author_name, created_at",
-      )
-      .eq("studio_id", ctx.studioId)
-      .eq("visibility", "shared")
-      .in("subject_id", [...ctx.childIds, ctx.familyId])
-      .order("created_at", { ascending: true }),
-  ]);
+  const [seriesRes, newsRes, groupRes, courseRes, practiceRes, noteRes, creditRes, markRes] =
+    await Promise.all([
+      supabase
+        .from("lesson_series")
+        .select(
+          "id, studio_id, student_id, teacher_user_id, repeat, first_date, until_date, start_time, duration_min",
+        )
+        .eq("studio_id", ctx.studioId)
+        .in("student_id", ctx.childIds)
+        .lte("first_date", lastDay)
+        .or(`until_date.is.null,until_date.gte.${addDays(today, -365)}`),
+      supabase
+        .from("news_post")
+        .select(
+          "id, author_name, title, body, tag, audience, important, status, publish_at, pinned_until, expires_at, event_date, edited_at",
+        )
+        .eq("studio_id", ctx.studioId)
+        .in("status", ["published", "scheduled"])
+        .lte("publish_at", now.toISOString())
+        .order("publish_at", { ascending: false })
+        .limit(200),
+      supabase
+        .from("student_group")
+        .select("id, student_ids, archived")
+        .eq("studio_id", ctx.studioId)
+        .overlaps("student_ids", ctx.childIds),
+      supabase
+        .from("student_course")
+        .select("id, student_id, status, data")
+        .eq("studio_id", ctx.studioId)
+        .in("student_id", ctx.childIds)
+        .eq("status", "active"),
+      supabase
+        .from("practice_log")
+        .select("id, student_id, practice_date, minutes, logged_by")
+        .eq("studio_id", ctx.studioId)
+        .in("student_id", ctx.childIds)
+        .gte("practice_date", addDays(today, -(FAMILY_PRACTICE_DAYS - 1)))
+        .order("practice_date", { ascending: true }),
+      // Shared notes only, filtered again below so a private note can never slip through.
+      supabase
+        .from("client_note")
+        .select(
+          "id, subject_type, subject_id, body, category, visibility, pinned, lesson_occurrence_id, author_name, created_at",
+        )
+        .eq("studio_id", ctx.studioId)
+        .eq("visibility", "shared")
+        .in("subject_id", [...ctx.childIds, ctx.familyId])
+        .order("created_at", { ascending: true }),
+      supabase
+        .from("makeup_credit")
+        .select(
+          "id, studio_id, student_id, amount, reason, occurrence_key, applies_to, makeup_series_id, expires_on, created_at",
+        )
+        .eq("studio_id", ctx.studioId)
+        .in("student_id", ctx.childIds)
+        .order("created_at", { ascending: true }),
+      supabase
+        .from("lesson_attendance")
+        .select("occurrence_key, student_id, lesson_date, status")
+        .eq("studio_id", ctx.studioId)
+        .in("student_id", ctx.childIds)
+        .gte("lesson_date", addDays(today, -(FAMILY_PRACTICE_DAYS - 1)))
+        .lte("lesson_date", today)
+        .order("lesson_date", { ascending: false }),
+    ]);
   fail(seriesRes.error, "Lessons lookup failed");
   fail(newsRes.error, "News lookup failed");
   fail(groupRes.error, "Groups lookup failed");
   fail(courseRes.error, "Course lookup failed");
   if (!missingTable(practiceRes.error)) fail(practiceRes.error, "Practice lookup failed");
   if (!missingTable(noteRes.error)) fail(noteRes.error, "Notes lookup failed");
+  if (!missingTable(creditRes.error)) fail(creditRes.error, "Make-up lookup failed");
+  if (!missingTable(markRes.error)) fail(markRes.error, "Attendance lookup failed");
 
   const series: LessonSeries[] = (
     (seriesRes.data ?? []) as Array<{
@@ -314,6 +377,54 @@ export async function loadFamilyPortal(
     notes: noteRes.error
       ? []
       : familySharedNotes((noteRes.data ?? []) as SharedNoteRow[], ctx.familyId, ctx.childIds),
+    makeUps: creditRes.error
+      ? []
+      : familyMakeUps(
+          (
+            (creditRes.data ?? []) as Array<{
+              id: string;
+              studio_id: string;
+              student_id: string;
+              amount: number;
+              reason: CreditEntry["reason"];
+              occurrence_key: string | null;
+              applies_to: string | null;
+              makeup_series_id: string | null;
+              expires_on: string | null;
+              created_at: string;
+            }>
+          ).map((row) => ({
+            id: row.id,
+            studioId: row.studio_id,
+            studentId: row.student_id,
+            amount: (row.amount > 0 ? 1 : row.amount < 0 ? -1 : 0) as CreditEntry["amount"],
+            reason: row.reason,
+            occurrenceKey: row.occurrence_key,
+            appliesTo: row.applies_to,
+            makeupSeriesId: row.makeup_series_id,
+            expiresOn: row.expires_on,
+            createdAt: row.created_at,
+          })),
+          ctx.childIds,
+          today,
+        ),
+    attendance: markRes.error
+      ? []
+      : (
+          (markRes.data ?? []) as Array<{
+            occurrence_key: string;
+            student_id: string;
+            lesson_date: string;
+            status: AttendanceStatus;
+          }>
+        )
+          .filter((row) => ctx.childIds.includes(row.student_id))
+          .map((row) => ({
+            key: row.occurrence_key,
+            studentId: row.student_id,
+            date: row.lesson_date,
+            outcome: familyOutcome(row.status),
+          })),
   };
 }
 

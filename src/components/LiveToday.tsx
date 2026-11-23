@@ -1,9 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import { Suspense } from "react";
 import { LatestNews } from "@/components/StudioNews";
 import { LessonClientNotes } from "@/components/LessonClientNotes";
+import { AttendanceMarker, invalidateAttendance } from "@/components/AttendanceMarker";
+import { calendarApi } from "@/lib/calendar-api";
 import { calendarWeekQuery } from "@/components/LessonCalendar";
 import { Button } from "@/components/ui/button";
 import { formatLongDate } from "@/lib/format";
@@ -14,8 +16,8 @@ import type { CalendarLesson } from "@/server/calendar";
 /**
  * Today page for a real studio: the real date in the studio's time zone and the studio's own
  * lessons from the calendar (lesson_series + lesson_exception), each with its lesson notes
- * (client_note, 0023; "Share with family" puts a note in the family portal). Attendance is not
- * saved for real studios yet, so this page leaves it out (pilot).
+ * (client_note, 0023; "Share with family" puts a note in the family portal), and the teacher's
+ * attendance mark with its make-up credit choice (0025).
  */
 export function LiveToday({ date }: { date?: string | undefined }) {
   const today = studioToday();
@@ -25,6 +27,12 @@ export function LiveToday({ date }: { date?: string | undefined }) {
     .filter((lesson) => lesson.date === day)
     .sort((a, b) => a.startTime.localeCompare(b.startTime));
   const active = lessons.filter((lesson) => lesson.status !== "cancelled");
+  const unmarked = active.filter((lesson) => !lesson.attendance);
+  const client = useQueryClient();
+  const markAll = useMutation({
+    mutationFn: () => calendarApi.markDayAttended(day),
+    onSuccess: () => invalidateAttendance(client),
+  });
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -59,7 +67,20 @@ export function LiveToday({ date }: { date?: string | undefined }) {
         {query.data && (
           <p className="mt-2 text-lg text-muted-foreground">
             {active.length === 1 ? "1 lesson" : `${active.length} lessons`}
+            {day <= today && unmarked.length > 0 ? ` · ${unmarked.length} not marked` : ""}
           </p>
+        )}
+        {query.data && day <= today && unmarked.length > 1 && (
+          <div className="mt-4">
+            <Button variant="outline" disabled={markAll.isPending} onClick={() => markAll.mutate()}>
+              Mark all {unmarked.length} attended
+            </Button>
+            {markAll.error != null && (
+              <p role="alert" className="mt-2 text-base text-destructive">
+                {markAll.error instanceof Error ? markAll.error.message : "Not saved. Try again."}
+              </p>
+            )}
+          </div>
         )}
 
         <div className="mt-8 space-y-5">
@@ -96,7 +117,8 @@ export function LiveToday({ date }: { date?: string | undefined }) {
                   {lesson.location ? ` · ${lesson.location}` : ""}
                 </span>
               </div>
-              {lesson.status === "cancelled" && (
+              {lesson.makeUp && <p className="mt-3 text-base font-semibold">Make-up lesson.</p>}
+              {lesson.status === "cancelled" && !lesson.attendance && (
                 <p className="mt-3 text-base font-semibold">Cancelled this week.</p>
               )}
               {lesson.status === "moved" && (
@@ -106,6 +128,14 @@ export function LiveToday({ date }: { date?: string | undefined }) {
                 <p data-no-translate className="mt-3 text-base text-muted-foreground">
                   {lesson.note}
                 </p>
+              )}
+              {query.data && (
+                <AttendanceMarker
+                  lesson={lesson}
+                  today={today}
+                  rules={query.data.lessonRules}
+                  credits={query.data.credits[lesson.studentId]}
+                />
               )}
               {lesson.status !== "cancelled" && (
                 <Suspense fallback={null}>

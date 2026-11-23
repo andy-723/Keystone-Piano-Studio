@@ -11,15 +11,29 @@ import type { StudioWorkspace } from "@/lib/studio-workspace";
 import { newsState, type Announcement, type NewsTag } from "@/mocks/news";
 import { practiceLogs } from "@/mocks/data";
 import { clientNotes } from "@/mocks/notes";
-import { familyPortalFn, type FamilyPortalContent } from "@/server/family-portal";
+import {
+  familyPortalFn,
+  type FamilyAttendance,
+  type FamilyMakeUps,
+  type FamilyPortalContent,
+} from "@/server/family-portal";
 import { pushCourseDocument } from "./course-store";
 
-export const familyPortalState: { loaded: boolean; today: string | null; lessons: FamilyLesson[] } =
-  {
-    loaded: false,
-    today: null,
-    lessons: [],
-  };
+export const familyPortalState: {
+  loaded: boolean;
+  today: string | null;
+  lessons: FamilyLesson[];
+  /** Make-up credits each child can use (0025). */
+  makeUps: FamilyMakeUps[];
+  /** The last 8 weeks of marked lessons (0025). */
+  attendance: FamilyAttendance[];
+} = {
+  loaded: false,
+  today: null,
+  lessons: [],
+  makeUps: [],
+  attendance: [],
+};
 
 export type FamilyPortalLoader = (studioId: string) => Promise<FamilyPortalContent | null>;
 
@@ -66,6 +80,8 @@ export async function loadLiveFamilyPortal(
   familyPortalState.loaded = false;
   familyPortalState.today = null;
   familyPortalState.lessons = [];
+  familyPortalState.makeUps = [];
+  familyPortalState.attendance = [];
   if (workspace.role !== "guardian" || !familyId) return;
   let content: FamilyPortalContent | null;
   try {
@@ -84,5 +100,8 @@ export async function loadLiveFamilyPortal(
   clientNotes.push(...(content.notes ?? []));
   familyPortalState.today = content.today;
   familyPortalState.lessons = content.lessons;
+  // Make-ups and attendance (0025); an older server sends neither.
+  familyPortalState.makeUps = content.makeUps ?? [];
+  familyPortalState.attendance = content.attendance ?? [];
   familyPortalState.loaded = true;
 }
