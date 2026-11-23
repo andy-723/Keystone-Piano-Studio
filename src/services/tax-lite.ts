@@ -31,7 +31,20 @@ import {
 import type { Invoice, InvoiceLine, Payment, PaymentMethod } from "@/mocks/types";
 import { createInvoice, getInvoices, updateDraft } from "@/services/billing";
 import { listDayLessonsSync, weekMonday } from "@/services/schedule";
+import { isLiveStudio } from "@/lib/studio-workspace";
+import {
+  insertLiveTaxAdminSession,
+  insertLiveTaxExpense,
+  insertLiveTaxKm,
+  loadLiveLessonFacts,
+  refreshLiveStripeFees,
+  upsertLiveHomeLessons,
+} from "@/services/live/tax-store";
 import { respond } from "./_delay";
+
+/** Record ids are uuids in a real studio (database keys); the demo keeps readable prefixes. */
+const recordId = (prefix: string) =>
+  isLiveStudio() ? crypto.randomUUID() : `${prefix}-${crypto.randomUUID()}`;
 
 const STRIPE_METHODS: PaymentMethod[] = ["stripe_card", "stripe_becs", "stripe_payto"];
 
@@ -224,7 +237,7 @@ export async function logTaxLiteExpense(input: {
   }
 
   const expense: TaxLiteExpense = {
-    id: `tax-exp-${crypto.randomUUID()}`,
+    id: recordId("tax-exp"),
     date: input.date,
     vendor,
     category: input.category,
@@ -236,6 +249,18 @@ export async function logTaxLiteExpense(input: {
     ...(passThroughFamilyId ? { passThroughFamilyId } : {}),
     ...(attachedInvoiceId ? { attachedInvoiceId } : {}),
   };
+  if (isLiveStudio()) {
+    try {
+      await insertLiveTaxExpense(expense);
+    } catch (err) {
+      if (attachedInvoiceId) {
+        throw new Error(
+          "The cost was added to the family's draft invoice, but the expense record didn't save. Please log it again without the student.",
+        );
+      }
+      throw err;
+    }
+  }
   taxLiteExpenses.unshift(expense);
   return respond(expense);
 }
@@ -278,8 +303,32 @@ export async function getTaxLiteStripeSummary(
 
 type ScheduledLesson = TaxLitePendingLesson;
 
-/** Scheduled (not cancelled) lessons in range: the pre-fill for confirmation, never counted on their own. */
-function scheduledLessons(start: string, end: string): ScheduledLesson[] {
+/**
+ * Scheduled (not cancelled) lessons in range: the pre-fill for confirmation, never counted on
+ * their own. Real studios read the lesson calendar and attendance marks (0010, 0025).
+ */
+async function scheduledLessons(start: string, end: string): Promise<ScheduledLesson[]> {
+  if (end < start) return [];
+  if (isLiveStudio()) {
+    const { lessons } = await loadLiveLessonFacts(start, end);
+    const firstName = new Map(students.map((student) => [student.id, student.firstName]));
+    return lessons
+      .filter(
+        (lesson) =>
+          lesson.date >= start &&
+          lesson.date <= end &&
+          lesson.calendarStatus !== "cancelled" &&
+          !(lesson.mark ?? "").startsWith("cancelled_") &&
+          lesson.durationMin > 0,
+      )
+      .map((lesson) => ({
+        lessonId: lesson.key,
+        date: lesson.date,
+        startsAt: lesson.startTime ? `${lesson.date}T${lesson.startTime}:00` : `${lesson.date}T00:00:00`,
+        studentFirstName: firstName.get(lesson.studentId) ?? "Student",
+        minutes: lesson.durationMin,
+      }));
+  }
   const out: ScheduledLesson[] = [];
   for (const date of eachDateInclusive(start, end)) {
     const day = listDayLessonsSync(date);
@@ -310,7 +359,7 @@ export async function getTaxLiteHomeStudioHours(
   fy: TaxLiteFyKey = "ytd",
 ): Promise<TaxLiteHomeStudioHours> {
   const { bounds, teachEnd } = teachRange(fy);
-  const scheduled = scheduledLessons(bounds.start, teachEnd);
+  const scheduled = await scheduledLessons(bounds.start, teachEnd);
   let confirmedMinutes = 0;
   let lessonCount = 0;
   let pendingLessonCount = 0;
@@ -352,7 +401,7 @@ export async function listTaxLitePendingWeeks(
 ): Promise<TaxLitePendingWeek[]> {
   const { bounds, teachEnd } = teachRange(fy);
   const byWeek = new Map<string, TaxLitePendingLesson[]>();
-  for (const lesson of scheduledLessons(bounds.start, teachEnd)) {
+  for (const lesson of await scheduledLessons(bounds.start, teachEnd)) {
     if (taxLiteLessonConfirmations[lesson.lessonId]) continue;
     const week = weekMonday(lesson.date);
     byWeek.set(week, [...(byWeek.get(week) ?? []), lesson]);
@@ -373,10 +422,13 @@ export async function confirmTaxLiteLessons(input: {
   taughtFromHome: string[];
   notFromHome?: string[];
 }): Promise<number> {
-  const all = scheduledLessons("2000-01-01", studioToday());
+  const today = studioToday();
+  // Real studios: the last two financial years is plenty (and keeps the calendar read small).
+  const from = isLiveStudio() ? `${australianFyStartYear(today) - 1}-07-01` : "2000-01-01";
+  const all = await scheduledLessons(from, today);
   const byId = new Map(all.map((lesson) => [lesson.lessonId, lesson]));
   const confirmedAt = new Date().toISOString();
-  let count = 0;
+  const rows: Array<{ key: string; date: string; minutes: number; fromHome: boolean }> = [];
   for (const [ids, fromHome] of [
     [input.taughtFromHome, true],
     [input.notFromHome ?? [], false],
@@ -384,11 +436,19 @@ export async function confirmTaxLiteLessons(input: {
     for (const id of ids) {
       const lesson = byId.get(id);
       if (!lesson) throw new Error("Only lessons already taught can be confirmed");
-      taxLiteLessonConfirmations[id] = { date: lesson.date, minutes: lesson.minutes, fromHome, confirmedAt };
-      count += 1;
+      rows.push({ key: id, date: lesson.date, minutes: lesson.minutes, fromHome });
     }
   }
-  return respond(count);
+  if (isLiveStudio()) await upsertLiveHomeLessons(rows);
+  for (const row of rows) {
+    taxLiteLessonConfirmations[row.key] = {
+      date: row.date,
+      minutes: row.minutes,
+      fromHome: row.fromHome,
+      confirmedAt,
+    };
+  }
+  return respond(rows.length);
 }
 
 /** Log an admin session worked from home, as it happens (T-05). */
@@ -405,12 +465,13 @@ export async function addTaxLiteAdminSession(input: {
   const note = input.note.trim();
   if (!note) throw new Error("Say what the admin time was for");
   const session: TaxLiteAdminSession = {
-    id: `tax-admin-${crypto.randomUUID()}`,
+    id: recordId("tax-admin"),
     date: input.date,
     hours: Math.round(input.hours * 100) / 100,
     note,
     createdAt: new Date().toISOString(),
   };
+  if (isLiveStudio()) await insertLiveTaxAdminSession(session);
   taxLiteAdminSessions.unshift(session);
   return respond(session);
 }
@@ -436,17 +497,20 @@ export async function logTaxLiteKm(input: {
   }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date)) throw new Error("Enter a valid date");
   const entry: TaxLiteKmEntry = {
-    id: `tax-km-${crypto.randomUUID()}`,
+    id: recordId("tax-km"),
     date: input.date,
     kilometres: Math.round(input.kilometres * 10) / 10,
     purpose,
     createdAt: new Date().toISOString(),
   };
+  if (isLiveStudio()) await insertLiveTaxKm(entry);
   taxLiteKmEntries.unshift(entry);
   return respond(entry);
 }
 
 export async function getTaxLitePack(fy: TaxLiteFyKey = "ytd"): Promise<TaxLitePack> {
+  // Real studios: ask Stripe for any fee it hasn't reported to us yet (actual fees only, T-06).
+  if (isLiveStudio()) await refreshLiveStripeFees();
   const [stripe, expenses, homeStudio, kmEntries] = await Promise.all([
     getTaxLiteStripeSummary(fy),
     listTaxLiteExpenses(fy),

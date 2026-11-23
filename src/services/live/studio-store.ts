@@ -38,6 +38,7 @@ import { loadLiveBilling } from "./billing-store";
 import { loadLiveEnrolments } from "./enrolment-store";
 import { loadLiveFamilyPortal } from "./family-store";
 import { loadLivePracticeAndNotes } from "./notes-store";
+import { loadLiveTaxLite } from "./tax-store";
 import {
   isLiveStudio,
   liveStudioId,
@@ -287,6 +288,7 @@ export async function loadLiveStudio(
   await loadLiveNews(workspace, c);
   await loadLiveCourses(workspace, c);
   await loadLiveBilling(workspace, c);
+  await loadLiveTaxLite(workspace, c);
   await loadLiveEnrolments(workspace, c, terms);
   await loadLivePracticeAndNotes(workspace, c);
   // Parents: their lessons, news and children's courses come from the server (family-safe copy).

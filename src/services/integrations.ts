@@ -69,6 +69,11 @@ async function liveXero(request: { accessToken: string; studioId: string }): Pro
   }
 }
 
+/** Real studios: just the Xero connection (Pro CFO health and queue). */
+export async function getLiveXeroStatus(): Promise<LiveXero> {
+  return liveXero(await liveRequest());
+}
+
 /** Real studios: Xero's sign-in page for the studio owner (Pro). */
 export async function startLiveXeroConnect(): Promise<string> {
   const { startXeroConnectFn } = await import("@/server/xero");

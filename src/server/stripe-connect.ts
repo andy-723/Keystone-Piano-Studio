@@ -576,6 +576,11 @@ const supabaseRecorder: PaymentRecorder = async (input) => {
       online: true,
     },
   });
+  // Save Stripe's actual fee for Tax Lite now if Stripe has it (0028). Never blocks the payment:
+  // anything missing is fetched again when the owner opens Tax Lite.
+  await import("./stripe-fees")
+    .then((fees) => fees.fillMissingStripeFees(input.studioId, 3))
+    .catch((err: Error) => console.error("[stripe-connect] fee lookup skipped", err.message));
   return "recorded";
 };
 
