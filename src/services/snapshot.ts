@@ -18,6 +18,9 @@ import {
 } from "@/services/invitations";
 import { getStudents, type StudentSummary } from "@/services/roster";
 import { listDayLessonsSync } from "@/services/schedule";
+import { isLiveStudio } from "@/lib/studio-workspace";
+import { wallClockIso } from "@/lib/family-portal";
+import type { LessonRecordStatus } from "@/server/attendance";
 import { respond } from "./_delay";
 
 /** Expected student practice minutes in the selected range before counting as "at risk". */
@@ -82,7 +85,8 @@ export type SnapshotLessonRow = {
   date: string;
   studentId: string;
   studentName: string;
-  status: LessonStatus;
+  /** Real studios (0025) add "cancelled_with_notice", "not_marked" and "cancelled" (no mark). */
+  status: LessonStatus | LessonRecordStatus;
   startsAt: string;
 };
 
@@ -263,6 +267,40 @@ function buildPracticeAtRisk(
     .sort((a, b) => a.minutesInRange - b.minutesInRange || a.name.localeCompare(b.name));
 }
 
+function summariseLessons(rows: SnapshotLessonRow[]) {
+  const taught = rows.filter((row) => row.status === "attended").length;
+  const cancelled = rows.filter((row) => String(row.status).startsWith("cancelled")).length;
+  const noShow = rows.filter((row) => row.status === "absent").length;
+  const scheduled = rows.filter(
+    (row) => row.status === "scheduled" || row.status === "not_marked",
+  ).length;
+  return {
+    taught,
+    cancelled,
+    noShow,
+    scheduled,
+    rows: rows.sort((a, b) => b.date.localeCompare(a.date) || a.startsAt.localeCompare(b.startsAt)),
+  };
+}
+
+/** Real studios: past lessons from the calendar with the teacher's marks (0025). */
+async function buildLiveLessons(start: string, end: string, today: string) {
+  const through = end < today ? end : today;
+  if (through < start) return summariseLessons([]);
+  const { calendarApi } = await import("@/lib/calendar-api");
+  const { rows } = await calendarApi.lessonRecord(start, through);
+  return summariseLessons(
+    rows.map((row) => ({
+      occurrenceId: row.key,
+      date: row.date,
+      studentId: row.studentId,
+      studentName: row.studentName,
+      status: row.status,
+      startsAt: wallClockIso(row.date, row.startTime ?? "00:00"),
+    })),
+  );
+}
+
 function buildLessons(start: string, end: string, today: string) {
   const through = end < today ? end : today;
   const rows: SnapshotLessonRow[] = [];
@@ -279,19 +317,7 @@ function buildLessons(start: string, end: string, today: string) {
       });
     }
   }
-  const taught = rows.filter((row) => row.status === "attended").length;
-  const cancelled = rows.filter(
-    (row) => row.status === "cancelled_by_studio" || row.status === "cancelled_late",
-  ).length;
-  const noShow = rows.filter((row) => row.status === "absent").length;
-  const scheduled = rows.filter((row) => row.status === "scheduled").length;
-  return {
-    taught,
-    cancelled,
-    noShow,
-    scheduled,
-    rows: rows.sort((a, b) => b.date.localeCompare(a.date) || a.startsAt.localeCompare(b.startsAt)),
-  };
+  return summariseLessons(rows);
 }
 
 export async function getStudioSnapshot(
@@ -321,7 +347,9 @@ export async function getStudioSnapshot(
   }));
   const practiceAtRisk = buildPracticeAtRisk(roster, bounds.start, today, range);
   const practiceNotStarted = buildPracticeNotStarted(roster);
-  const lessons = buildLessons(bounds.start, bounds.end, today);
+  const lessons = isLiveStudio()
+    ? await buildLiveLessons(bounds.start, bounds.end, today)
+    : buildLessons(bounds.start, bounds.end, today);
   return respond({
     bounds,
     asOf: today,

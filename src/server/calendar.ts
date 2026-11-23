@@ -46,6 +46,22 @@ import {
   type LessonRepeat,
   type LessonSeries,
 } from "@/lib/lesson-calendar";
+import { getAttendanceStore } from "./attendance-store";
+import {
+  clearDroppedMarks,
+  commitMark,
+  giveBackMakeUpCredit,
+  planMark,
+  type MarkTarget,
+} from "./attendance-ledger";
+import {
+  CREDIT_DAYS,
+  creditBalance,
+  creditLots,
+  creditsEarnedSince,
+  type AttendanceStatus,
+  type StudioLessonRules,
+} from "@/lib/makeup-credits";
 
 /**
  * Lesson calendar (0010). Every function checks requireStudioRole before it touches the
@@ -69,7 +85,11 @@ export const DEMO_CALENDAR_ACTOR: CalendarActor = {
 
 const STAFF: StudioRole[] = ["owner", "admin", "teacher"];
 
-async function authorize(actor: CalendarActor, studioId: string, access: "read" | "write") {
+export async function authorizeCalendar(
+  actor: CalendarActor,
+  studioId: string,
+  access: "read" | "write",
+) {
   if (actor.demo) {
     if (studioId !== DEMO_CALENDAR_STUDIO) throw forbidden();
     return "owner" as StudioRole;
@@ -88,6 +108,10 @@ export type CalendarLesson = LessonOccurrence & {
   firstDate: string;
   googleSyncStatus: LessonSeries["googleSyncStatus"];
   googleSyncError: string | null;
+  /** The teacher's mark for this lesson (0025), or null when not marked. */
+  attendance: { status: AttendanceStatus; credit: boolean } | null;
+  /** A one-off lesson booked with a make-up credit. */
+  makeUp: boolean;
 };
 
 export type GoogleStatus = {
@@ -109,6 +133,10 @@ export type CalendarWeek = {
   lessons: CalendarLesson[];
   students: CalendarStudent[];
   google: GoogleStatus;
+  /** Cancel notice and make-up allowance from the studio agreement (a reminder when marking). */
+  lessonRules: StudioLessonRules;
+  /** Per student in this week: credits available now, and credits earned in the last 90 days. */
+  credits: Record<string, { balance: number; earnedRecently: number }>;
 };
 
 function googleStatus(connection: CalendarConnection | null): GoogleStatus {
@@ -130,21 +158,39 @@ export async function getCalendarWeek(
   studioId: string,
   date: string,
 ): Promise<CalendarWeek> {
-  await authorize(actor, studioId, "read");
+  await authorizeCalendar(actor, studioId, "read");
   const store = getCalendarStore();
   const timeZone = await store.studioTimezone(studioId);
   const today = todayIn(timeZone);
   const weekStart = mondayOf(isDate(date) ? date : today);
   const weekEnd = addDays(weekStart, 6);
-  const [{ series, exceptions }, students, connection] = await Promise.all([
+  const attendance = getAttendanceStore();
+  const [{ series, exceptions }, students, connection, marks, lessonRules] = await Promise.all([
     store.listLessons(studioId, weekStart, weekEnd),
     store.listStudents(studioId),
     actor.demo ? Promise.resolve(null) : store.getConnection(studioId, actor.userId),
+    attendance.listMarks(studioId, addDays(weekStart, -7), addDays(weekEnd, 7)),
+    attendance.lessonRules(studioId),
   ]);
   const byId = new Map(series.map((s) => [s.id, s]));
   const studentById = new Map(students.map((s) => [s.id, s]));
-  const lessons = expandLessons(series, exceptions, weekStart, weekEnd).map((o): CalendarLesson => {
+  const markByKey = new Map(marks.map((m) => [m.occurrenceKey, m]));
+  const occurrences = expandLessons(series, exceptions, weekStart, weekEnd);
+  const weekStudents = [...new Set(occurrences.map((o) => o.studentId))];
+  const lots = creditLots(await attendance.listCredits(studioId, weekStudents), today);
+  const makeUpSeries = new Set(
+    lots.flatMap((lot) => (lot.makeupSeriesId ? [lot.makeupSeriesId] : [])),
+  );
+  const since = addDays(today, -CREDIT_DAYS);
+  const credits = Object.fromEntries(
+    weekStudents.map((id) => {
+      const own = lots.filter((lot) => lot.studentId === id);
+      return [id, { balance: creditBalance(own), earnedRecently: creditsEarnedSince(own, since) }];
+    }),
+  );
+  const lessons = occurrences.map((o): CalendarLesson => {
     const s = byId.get(o.seriesId);
+    const mark = markByKey.get(o.key);
     return {
       ...o,
       studentName: fullName(studentById.get(o.studentId)),
@@ -154,6 +200,8 @@ export async function getCalendarWeek(
       firstDate: s?.firstDate ?? o.originalDate,
       googleSyncStatus: s?.googleSyncStatus ?? "off",
       googleSyncError: s?.googleSyncError ?? null,
+      attendance: mark ? { status: mark.status, credit: mark.credit } : null,
+      makeUp: makeUpSeries.has(o.seriesId),
     };
   });
   return {
@@ -166,6 +214,8 @@ export async function getCalendarWeek(
     google: actor.demo
       ? { ...googleStatus(null), configured: false, demo: true }
       : googleStatus(connection),
+    lessonRules,
+    credits,
   };
 }
 
@@ -273,7 +323,7 @@ export async function addLesson(
   studioId: string,
   input: AddLessonInput,
 ): Promise<LessonSeries> {
-  await authorize(actor, studioId, "write");
+  await authorizeCalendar(actor, studioId, "write");
   checkTime(input.date, input.startTime, input.durationMin);
   if (input.repeat !== "weekly" && input.repeat !== "once")
     throw new ProblemError(400, "Choose how often");
@@ -311,7 +361,7 @@ export async function addLesson(
   return series;
 }
 
-async function loadSeries(studioId: string, seriesId: string) {
+export async function loadSeries(studioId: string, seriesId: string) {
   const found = await getCalendarStore().getSeries(studioId, seriesId);
   if (!found)
     throw new ProblemError(
@@ -322,7 +372,7 @@ async function loadSeries(studioId: string, seriesId: string) {
   return found;
 }
 
-function assertOnSeries(series: LessonSeries, originalDate: string) {
+export function assertOnSeries(series: LessonSeries, originalDate: string) {
   if (!isDate(originalDate) || !expandLessons([series], [], originalDate, originalDate).length) {
     throw new ProblemError(400, "Lesson not found", "There is no lesson on that day.");
   }
@@ -339,7 +389,7 @@ export async function moveOneLesson(
     allowClash?: boolean;
   },
 ): Promise<LessonException> {
-  await authorize(actor, studioId, "write");
+  await authorizeCalendar(actor, studioId, "write");
   const { series } = await loadSeries(studioId, input.seriesId);
   assertOnSeries(series, input.originalDate);
   checkTime(input.newDate, input.newStartTime, series.durationMin);
@@ -371,7 +421,7 @@ export async function cancelOneLesson(
   studioId: string,
   input: { seriesId: string; originalDate: string },
 ) {
-  await authorize(actor, studioId, "write");
+  await authorizeCalendar(actor, studioId, "write");
   const { series, exceptions } = await loadSeries(studioId, input.seriesId);
   assertOnSeries(series, input.originalDate);
   const previous = exceptions.find((e) => e.originalDate === input.originalDate);
@@ -394,9 +444,31 @@ export async function restoreOneLesson(
   studioId: string,
   input: { exceptionId: string },
 ) {
-  await authorize(actor, studioId, "write");
-  const removed = await getCalendarStore().deleteException(studioId, input.exceptionId);
+  await authorizeCalendar(actor, studioId, "write");
+  const store = getCalendarStore();
+  const removed = await store.deleteException(studioId, input.exceptionId);
   if (!removed) throw new ProblemError(404, "Already restored", "Refresh the calendar.");
+  if (removed.action === "cancel") {
+    // A cancelled lesson put back loses its cancellation mark and any unused credit it earned.
+    const found = await store.getSeries(studioId, removed.seriesId);
+    if (found) {
+      const today = todayIn(await store.studioTimezone(studioId));
+      const target: MarkTarget = {
+        occurrenceKey: `${removed.seriesId}_${removed.originalDate}`,
+        seriesId: removed.seriesId,
+        studentId: found.series.studentId,
+        lessonDate: removed.originalDate,
+      };
+      try {
+        const plan = await planMark(studioId, target, null, null, today);
+        await commitMark(plan, actor.userId, today);
+      } catch (error) {
+        const { id: _id, ...again } = removed;
+        await store.upsertException({ ...again, createdBy: actor.userId });
+        throw error;
+      }
+    }
+  }
   await pushSeries(studioId, removed.seriesId, removed.action === "move" ? [removed.id] : []);
   return removed;
 }
@@ -417,7 +489,7 @@ export async function changeFromWeek(
     allowClash?: boolean;
   },
 ): Promise<LessonSeries> {
-  await authorize(actor, studioId, "write");
+  await authorizeCalendar(actor, studioId, "write");
   const { series, exceptions } = await loadSeries(studioId, input.seriesId);
   if (series.repeat !== "weekly")
     throw new ProblemError(400, "Not a weekly lesson", "Use Move for a single lesson.");
@@ -459,9 +531,10 @@ export async function changeFromWeek(
   });
   const dropped = exceptions.filter((e) => e.originalDate >= input.fromDate);
   for (const e of dropped) await store.deleteException(studioId, e.id);
+  await clearCancelMarks(studioId, series, dropped, actor.userId);
   const droppedMoves = dropped.filter((e) => e.action === "move").map((e) => e.id);
   if (input.fromDate <= series.firstDate) {
-    await removeSeries(studioId, series, exceptions);
+    await removeSeries(studioId, series, exceptions, actor.userId);
   } else {
     await store.updateSeries(studioId, series.id, { untilDate: addDays(input.fromDate, -1) });
     await pushSeries(studioId, series.id, droppedMoves);
@@ -476,16 +549,17 @@ export async function endWeeklyLessons(
   studioId: string,
   input: { seriesId: string; lastDate: string },
 ) {
-  await authorize(actor, studioId, "write");
+  await authorizeCalendar(actor, studioId, "write");
   if (!isDate(input.lastDate)) throw new ProblemError(400, "Choose a date");
   const { series, exceptions } = await loadSeries(studioId, input.seriesId);
   if (input.lastDate < series.firstDate) {
-    await removeSeries(studioId, series, exceptions);
+    await removeSeries(studioId, series, exceptions, actor.userId);
     return { deleted: true };
   }
   const store = getCalendarStore();
   const dropped = exceptions.filter((e) => e.originalDate > input.lastDate);
   for (const e of dropped) await store.deleteException(studioId, e.id);
+  await clearCancelMarks(studioId, series, dropped, actor.userId);
   await store.updateSeries(studioId, series.id, { untilDate: input.lastDate });
   await pushSeries(
     studioId,
@@ -500,14 +574,47 @@ export async function deleteLessons(
   studioId: string,
   input: { seriesId: string },
 ) {
-  await authorize(actor, studioId, "write");
+  await authorizeCalendar(actor, studioId, "write");
   const { series, exceptions } = await loadSeries(studioId, input.seriesId);
-  await removeSeries(studioId, series, exceptions);
+  await removeSeries(studioId, series, exceptions, actor.userId);
   return { deleted: true };
 }
 
-async function removeSeries(studioId: string, series: LessonSeries, exceptions: LessonException[]) {
+/** Cancelled weeks that no longer exist lose their marks (and unused credits). */
+async function clearCancelMarks(
+  studioId: string,
+  series: LessonSeries,
+  dropped: LessonException[],
+  actorUserId: string,
+) {
+  const cancels = dropped.filter((e) => e.action === "cancel");
+  if (!cancels.length) return;
+  const today = todayIn(await getCalendarStore().studioTimezone(studioId));
+  await clearDroppedMarks(
+    studioId,
+    cancels.map((e) => ({
+      occurrenceKey: `${series.id}_${e.originalDate}`,
+      seriesId: series.id,
+      studentId: series.studentId,
+      lessonDate: e.originalDate,
+    })),
+    actorUserId,
+    today,
+  );
+}
+
+async function removeSeries(
+  studioId: string,
+  series: LessonSeries,
+  exceptions: LessonException[],
+  actorUserId: string | null = null,
+) {
   const store = getCalendarStore();
+  // A deleted make-up lesson gives its credit back. Lesson marks stay as history.
+  if (series.repeat === "once") {
+    const today = todayIn(await store.studioTimezone(studioId));
+    await giveBackMakeUpCredit(studioId, series.studentId, series.id, actorUserId, today);
+  }
   // Remove from Google first while we still know the event ids; a failure is logged, not fatal.
   await withGoogle(studioId, series.teacherUserId, async (token, calendarId) => {
     await deleteEvent(token, calendarId, googleSeriesEventId(series.id));
@@ -613,12 +720,12 @@ export async function syncTeacherLessons(studioId: string, teacherUserId: string
 }
 
 export async function syncNow(actor: CalendarActor, studioId: string) {
-  await authorize(actor, studioId, "write");
+  await authorizeCalendar(actor, studioId, "write");
   return syncTeacherLessons(studioId, actor.userId);
 }
 
 export async function startGoogleConnect(actor: CalendarActor, studioId: string) {
-  await authorize(actor, studioId, "write");
+  await authorizeCalendar(actor, studioId, "write");
   if (actor.demo)
     throw new ProblemError(400, "Demo mode", "Google Calendar needs a signed-in studio.");
   return {
@@ -640,7 +747,7 @@ export async function finishGoogleConnect(
       "This Google link was started by another Keystone sign-in. Start again from the Calendar.",
     );
   }
-  await authorize(actor, state.studioId, "write");
+  await authorizeCalendar(actor, state.studioId, "write");
   if (typeof input.code !== "string" || !input.code)
     throw new ProblemError(400, "Missing code", "Start the Google connection again.");
   const store = getCalendarStore();
@@ -667,7 +774,7 @@ export async function finishGoogleConnect(
  * the teacher's Google account until they delete it there.
  */
 export async function disconnectGoogle(actor: CalendarActor, studioId: string) {
-  await authorize(actor, studioId, "write");
+  await authorizeCalendar(actor, studioId, "write");
   const store = getCalendarStore();
   const connection = await store.getConnection(studioId, actor.userId);
   if (!connection) return { disconnected: true };
@@ -693,7 +800,7 @@ export async function disconnectGoogle(actor: CalendarActor, studioId: string) {
 // ---------------------------------------------------------------------------
 // Server functions (browser entry points)
 // ---------------------------------------------------------------------------
-async function actorFrom(accessToken: string): Promise<CalendarActor> {
+export async function actorFrom(accessToken: string): Promise<CalendarActor> {
   if (isMockOnboarding() && !accessToken) return DEMO_CALENDAR_ACTOR;
   const session = await verifyAccessToken(accessToken);
   return { userId: session.userId, aal: session.aal, email: session.email };

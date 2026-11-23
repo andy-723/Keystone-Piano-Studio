@@ -16,6 +16,7 @@ import { Suspense } from "react";
 import { isLiveStudio } from "@/lib/studio-workspace";
 import { GuardianSignInStatus } from "@/components/account/GuardianSignInStatus";
 import { useGuardianAccounts } from "@/lib/guardian-accounts";
+import { LiveStudentMakeUps } from "@/components/LiveStudentMakeUps";
 
 export const Route = createFileRoute("/students/$studentId")({
   loader: async ({ context, params }) => {
@@ -36,8 +37,8 @@ function StudentProfile() {
   const { data } = useSuspenseQuery(studentProfileQuery(studentId));
   const { data: subscription } = useSuspenseQuery(planBillingQuery());
   const pro = subscription.plan !== "base";
-  // Make-up credits and attendance are not saved for real studios yet (pilot): hide them.
-  // Practice is (0023), so the chart shows for every studio.
+  // Real studios read make-up credits and attendance from the server (0025); the demo keeps its
+  // in-browser scheduling. Practice (0023) shows for every studio.
   const live = isLiveStudio();
   const guardianAccounts = useGuardianAccounts(data?.family?.id);
   if (!data) return null;
@@ -53,7 +54,7 @@ function StudentProfile() {
       <h3 className="mt-6 text-xl font-semibold">Guardians</h3><div className="mt-3 space-y-4">{family?.guardians.map((guardian) => <div key={guardian.id}><p className="font-semibold">{guardian.name}</p><p className="break-all text-base text-muted-foreground">{guardian.email}</p>{guardian.mobile && <p className="text-base text-muted-foreground">{guardian.mobile}</p>}<p className="text-base text-muted-foreground">Preferred language: {guardian.preferredLanguage === "zh-CN" ? "中文" : "English"}</p><GuardianSignInStatus guardianId={guardian.id} accounts={guardianAccounts.data} /></div>)}</div>
       <Suspense fallback={<p className="mt-6 text-muted-foreground">Loading groups…</p>}><StudentProfileGroups studentId={student.id} /></Suspense>
     </section>
-    {!live && <>
+    {live ? <LiveStudentMakeUps studentId={student.id} name={`${student.firstName} ${student.lastName}`} /> : <>
     <section className="border-t border-border py-7"><h2 className="text-2xl font-semibold">Make-up lessons · {data.credits.balance} owed</h2><LessonScheduling student={{ id: student.id, name: `${student.firstName} ${student.lastName}`, durationMin: student.durationMin }} movable={false} balance={data.credits.balance} history /></section>
     <section className="border-t border-border py-7" aria-labelledby="attendance-history"><h2 id="attendance-history" className="text-2xl font-semibold">Attendance history</h2><p className="mt-2 text-base text-muted-foreground">Term 1 to date · {data.attendance.filter((lesson) => lesson.status === "attended").length} attended of {data.attendance.length} lessons</p>
       <div className="mt-4 divide-y divide-border">{data.attendance.map((lesson) => <div key={lesson.id} className="flex flex-wrap justify-between gap-3 py-4"><div><p>{formatShortDate(lesson.date)} · {formatTime(lesson.startsAt)}</p><p className="text-base text-muted-foreground">{lesson.lessonType.name}</p></div><span className={`text-base font-semibold ${lesson.status === "absent" || lesson.status === "cancelled_late" ? "text-destructive" : lesson.status === "attended" ? "text-success" : "text-muted-foreground"}`}>{attendanceLabels[lesson.status]}</span></div>)}</div>{!data.attendance.length && <p className="mt-4 text-muted-foreground">No lessons in this period.</p>}

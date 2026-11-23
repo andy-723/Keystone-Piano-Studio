@@ -21,6 +21,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { calendarApi } from "@/lib/calendar-api";
+import { AttendanceMarker } from "@/components/AttendanceMarker";
+import { ATTENDANCE_LABELS } from "@/lib/makeup-credits";
 import { addDays, formatClock, fromMinutes, mondayOf, toMinutes } from "@/lib/lesson-calendar";
 import { formatLongDate, formatShortDate } from "@/lib/format";
 import type { CalendarLesson, CalendarWeek } from "@/server/calendar";
@@ -163,11 +165,13 @@ function lessonClasses(lesson: CalendarLesson) {
 
 function lessonLabel(lesson: CalendarLesson) {
   const status =
-    lesson.status === "cancelled"
+    (lesson.makeUp ? ", make-up" : "") +
+    (lesson.attendance ? `, ${ATTENDANCE_LABELS[lesson.attendance.status].toLowerCase()}` : "") +
+    (lesson.status === "cancelled"
       ? ", cancelled"
       : lesson.status === "moved"
         ? ", moved this week"
-        : "";
+        : "");
   return `${lesson.studentName}, ${formatShortDate(lesson.date)} ${formatClock(lesson.startTime)}, ${lesson.durationMin} minutes${status}`;
 }
 
@@ -275,6 +279,9 @@ function DayList({ week, days, onAdd, onSelect }: GridProps) {
                       {lesson.durationMin} min{lesson.repeat === "weekly" ? " · weekly" : ""}
                       {lesson.status === "moved" ? " · moved" : ""}
                       {lesson.status === "cancelled" ? " · cancelled" : ""}
+                      {lesson.makeUp ? " · make-up" : ""}
+                      {lesson.attendance?.status === "attended" ? " · attended" : ""}
+                      {lesson.attendance?.status === "absent" ? " · absent" : ""}
                     </span>
                   </span>
                 </Button>
@@ -624,7 +631,7 @@ function AddLessonForm({
   );
 }
 
-type Mode = "menu" | "move" | "change" | "end" | "delete";
+type Mode = "menu" | "move" | "change" | "end" | "delete" | "cancel";
 
 function LessonActions({
   lesson,
@@ -641,14 +648,6 @@ function LessonActions({
     await refresh();
     onDone();
   };
-  const cancel = useMutation({
-    mutationFn: async () =>
-      calendarApi.cancelLesson({
-        seriesId: lesson.seriesId,
-        originalDate: lesson.originalDate,
-      }),
-    onSuccess: done,
-  });
   const restore = useMutation({
     mutationFn: async () => calendarApi.restoreLesson(lesson.exceptionId ?? ""),
     onSuccess: done,
@@ -669,13 +668,25 @@ function LessonActions({
       {lesson.status === "moved" && (
         <p className="mt-2 text-base">Moved from {formatLongDate(lesson.originalDate)}.</p>
       )}
-      {lesson.status === "cancelled" && <p className="mt-2 text-base">Cancelled this week.</p>}
+      {lesson.makeUp && <p className="mt-2 text-base font-semibold">Make-up lesson.</p>}
+      {lesson.status === "cancelled" && !lesson.attendance && (
+        <p className="mt-2 text-base">Cancelled this week.</p>
+      )}
       {lesson.googleSyncStatus === "error" && (
         <p className="mt-2 text-base text-destructive">
           Not in Google Calendar yet: {lesson.googleSyncError}
         </p>
       )}
 
+      {mode === "menu" && (
+        <AttendanceMarker
+          lesson={lesson}
+          today={week.today}
+          rules={week.lessonRules}
+          credits={week.credits[lesson.studentId]}
+          onDone={onDone}
+        />
+      )}
       {mode === "menu" && (
         <div className="mt-5 grid gap-2">
           {lesson.status !== "scheduled" && (
@@ -693,7 +704,7 @@ function LessonActions({
             </Button>
           )}
           {lesson.status !== "cancelled" && (
-            <Button variant="outline" disabled={cancel.isPending} onClick={() => cancel.mutate()}>
+            <Button variant="outline" onClick={() => setMode("cancel")}>
               Cancel this {weekly ? "week" : "lesson"}
             </Button>
           )}
@@ -710,15 +721,22 @@ function LessonActions({
           <Button variant="ghost" className="text-destructive" onClick={() => setMode("delete")}>
             Delete {weekly ? "all of these lessons" : "this lesson"}
           </Button>
-          {(cancel.error ?? restore.error) != null && (
+          {restore.error != null && (
             <p role="alert" className="text-base text-destructive">
-              {errorMessage(cancel.error ?? restore.error)}
+              {errorMessage(restore.error)}
             </p>
           )}
-          <p className="text-sm text-muted-foreground">
-            Cancelling here doesn&apos;t give a make-up credit or change invoices yet.
-          </p>
         </div>
+      )}
+      {mode === "cancel" && (
+        <AttendanceMarker
+          lesson={lesson}
+          today={week.today}
+          rules={week.lessonRules}
+          credits={week.credits[lesson.studentId]}
+          cancelOnly
+          onDone={onDone}
+        />
       )}
       {mode === "move" && <MoveForm lesson={lesson} onDone={done} />}
       {mode === "change" && <ChangeForm lesson={lesson} onDone={done} />}

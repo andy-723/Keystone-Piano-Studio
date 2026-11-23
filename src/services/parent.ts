@@ -65,7 +65,29 @@ export async function getParentHome() {
     }
   }
   const latestTeacher = thread?.messages.filter((message) => message.authorRole === "teacher").at(-1);
-  return { ...session, nextLesson: nextLesson ?? null, upcoming, unpaid: invoices.filter((invoice) => ["sent", "partially_paid"].includes(invoice.status) && (invoice.balanceCents ?? invoice.totalCents) > 0), latestTeacher: latestTeacher ?? null, makeUps: await Promise.all(session.children.map(async (child) => ({ studentId: child.id, name: child.firstName, ...await getCredits(child.id) }))), sharedNotes: await getParentSharedNotes() };
+  return { ...session, nextLesson: nextLesson ?? null, upcoming, unpaid: invoices.filter((invoice) => ["sent", "partially_paid"].includes(invoice.status) && (invoice.balanceCents ?? invoice.totalCents) > 0), latestTeacher: latestTeacher ?? null, makeUps: await parentMakeUps(session.children), recentLessons: isLiveStudio() ? parentRecentLessons(session.children) : [], sharedNotes: await getParentSharedNotes() };
+}
+export type ParentMakeUp = { studentId: string; name: string; balance: number; requested: boolean; useBy: string[] };
+/** Make-up credits per child: real studios from the server (0025), the demo from its ledger. */
+async function parentMakeUps(children: Array<{ id: string; firstName: string }>): Promise<ParentMakeUp[]> {
+  if (isLiveStudio()) {
+    return children.map((child) => {
+      const entry = familyPortalState.makeUps.find((item) => item.studentId === child.id);
+      return { studentId: child.id, name: child.firstName, balance: entry?.balance ?? 0, requested: parentMakeUpRequests.has(child.id), useBy: entry?.useBy ?? [] };
+    });
+  }
+  return Promise.all(children.map(async (child) => { const credits = await getCredits(child.id); return { studentId: child.id, name: child.firstName, balance: credits.balance, requested: credits.requested, useBy: [] }; }));
+}
+export type ParentRecentLesson = { key: string; name: string; date: string; outcome: "attended" | "cancelled" | "missed" };
+function parentRecentLessons(children: Array<{ id: string; firstName: string }>): ParentRecentLesson[] {
+  return familyPortalState.attendance.flatMap((entry) => {
+    const child = children.find((item) => item.id === entry.studentId);
+    return child ? [{ key: entry.key, name: child.firstName, date: entry.date, outcome: entry.outcome }] : [];
+  }).slice(0, 12);
+}
+async function availableCredits(studentId: string) {
+  if (isLiveStudio()) return familyPortalState.makeUps.find((item) => item.studentId === studentId)?.balance ?? 0;
+  return (await getCredits(studentId)).balance;
 }
 export async function getParentSharedNotes() {
   const { family, children } = await getParentSession();
@@ -132,7 +154,7 @@ export async function queryParentInvoice(id: string, messageBody: string) {
 export async function requestParentMakeUp(studentId: string, lang: "en" | "zh-CN" | "vi") {
   const { children } = await getParentSession(); const child = children.find((entry) => entry.id === studentId);
   if (!child) throw new Error("Child not in this family");
-  const credits = await getCredits(studentId); if (credits.balance < 1) throw new Error("No make-up credit available");
+  if ((await availableCredits(studentId)) < 1) throw new Error("No make-up credit available");
   if (parentMakeUpRequests.has(studentId)) return respond({ requested: true });
   parentMakeUpRequests.add(studentId);
   try { await sendParentMessage({ kind: "text", body: lang === "zh-CN" ? `请为${child.firstName}安排一节补课。请老师告知可用时间，谢谢。` : lang === "vi" ? `Thầy/cô vui lòng sắp xếp một buổi học bù cho ${child.firstName}. Xin cho gia đình biết thời gian trống phù hợp. Cảm ơn thầy/cô.` : `Could you please book a make-up lesson for ${child.firstName}? Please let us know a suitable free time. Thank you.` }); }
