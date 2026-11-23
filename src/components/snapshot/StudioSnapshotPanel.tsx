@@ -101,7 +101,9 @@ function tileHint(snapshot: StudioSnapshot, id: SnapshotTileId): string {
     case "invites":
       return "Sent or opened";
     case "practice":
-      return "Quiet or below threshold";
+      return snapshot.practiceNotStarted.length
+        ? `Quiet or below threshold · ${snapshot.practiceNotStarted.length} not started`
+        : "Quiet or below threshold";
     case "lessons":
       return `${snapshot.lessons.cancelled} cancelled · ${snapshot.lessons.noShow} no-show`;
   }
@@ -118,7 +120,7 @@ function drillCount(snapshot: StudioSnapshot, id: SnapshotTileId): number {
     case "invites":
       return snapshot.incompleteInvites.length;
     case "practice":
-      return snapshot.practiceAtRisk.length;
+      return snapshot.practiceAtRisk.length + snapshot.practiceNotStarted.length;
     case "lessons":
       return snapshot.lessons.rows.length;
   }
@@ -393,7 +395,7 @@ export function StudioSnapshotPanel({
                 </li>
               ))}
             {drill === "practice" &&
-              data.practiceAtRisk.map((row) => (
+              [...data.practiceAtRisk, ...data.practiceNotStarted].map((row) => (
                 <li key={row.studentId} className="flex flex-wrap items-center justify-between gap-2 py-3">
                   <div>
                     <p className="font-semibold text-[#15100D]">{row.name}</p>

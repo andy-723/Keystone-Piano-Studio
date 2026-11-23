@@ -96,6 +96,8 @@ export type StudioSnapshot = {
   activeStudents: SnapshotStudentRow[];
   incompleteInvites: SnapshotInviteRow[];
   practiceAtRisk: SnapshotPracticeRow[];
+  /** Students with no practice ever logged: listed as "not started", not counted as at risk. */
+  practiceNotStarted: SnapshotPracticeRow[];
   lessons: {
     taught: number;
     cancelled: number;
@@ -204,6 +206,30 @@ function practiceWindow(
   return { start: boundsStart, end: today, quietDays: 14 };
 }
 
+/** Home practice (student or parent) ever logged for this student. */
+function hasAnyPractice(studentId: string) {
+  return practiceLogs.some((log) => log.studentId === studentId && log.loggedBy === "student");
+}
+
+/**
+ * A student nobody has logged practice for yet isn't "at risk": the family may not have started
+ * logging (real studios begin with no history). They're listed separately so the teacher can
+ * nudge them, without inflating the at-risk count.
+ */
+function buildPracticeNotStarted(roster: StudentSummary[]): SnapshotPracticeRow[] {
+  return roster
+    .filter((student) => !hasAnyPractice(student.id))
+    .map((student) => ({
+      studentId: student.id,
+      name: `${student.firstName} ${student.lastName}`,
+      familyName: student.familyName,
+      minutesInRange: 0,
+      lastPracticeDate: null,
+      reason: "No practice logged yet",
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
 function buildPracticeAtRisk(
   roster: StudentSummary[],
   boundsStart: string,
@@ -214,6 +240,7 @@ function buildPracticeAtRisk(
   const { start, end, quietDays } = practiceWindow(range, boundsStart, today);
   const quietSince = addDays(end, -quietDays + 1);
   return roster
+    .filter((student) => hasAnyPractice(student.id))
     .map((student) => {
       const minutes = minutesInRange(practiceLogs, student.id, start, end);
       const last = lastPracticeDate(practiceLogs, student.id, end);
@@ -293,6 +320,7 @@ export async function getStudioSnapshot(
     studentNames: invite.studentIds.map(studentName).join(", "),
   }));
   const practiceAtRisk = buildPracticeAtRisk(roster, bounds.start, today, range);
+  const practiceNotStarted = buildPracticeNotStarted(roster);
   const lessons = buildLessons(bounds.start, bounds.end, today);
   return respond({
     bounds,
@@ -302,6 +330,7 @@ export async function getStudioSnapshot(
     activeStudents,
     incompleteInvites,
     practiceAtRisk,
+    practiceNotStarted,
     lessons,
   });
 }

@@ -36,7 +36,8 @@ function StudentProfile() {
   const { data } = useSuspenseQuery(studentProfileQuery(studentId));
   const { data: subscription } = useSuspenseQuery(planBillingQuery());
   const pro = subscription.plan !== "base";
-  // Make-up credits, attendance and practice are not saved for real studios yet (pilot): hide them.
+  // Make-up credits and attendance are not saved for real studios yet (pilot): hide them.
+  // Practice is (0023), so the chart shows for every studio.
   const live = isLiveStudio();
   const guardianAccounts = useGuardianAccounts(data?.family?.id);
   if (!data) return null;
@@ -57,6 +58,7 @@ function StudentProfile() {
     <section className="border-t border-border py-7" aria-labelledby="attendance-history"><h2 id="attendance-history" className="text-2xl font-semibold">Attendance history</h2><p className="mt-2 text-base text-muted-foreground">Term 1 to date · {data.attendance.filter((lesson) => lesson.status === "attended").length} attended of {data.attendance.length} lessons</p>
       <div className="mt-4 divide-y divide-border">{data.attendance.map((lesson) => <div key={lesson.id} className="flex flex-wrap justify-between gap-3 py-4"><div><p>{formatShortDate(lesson.date)} · {formatTime(lesson.startsAt)}</p><p className="text-base text-muted-foreground">{lesson.lessonType.name}</p></div><span className={`text-base font-semibold ${lesson.status === "absent" || lesson.status === "cancelled_late" ? "text-destructive" : lesson.status === "attended" ? "text-success" : "text-muted-foreground"}`}>{attendanceLabels[lesson.status]}</span></div>)}</div>{!data.attendance.length && <p className="mt-4 text-muted-foreground">No lessons in this period.</p>}
     </section>
+    </>}
     <section className="border-t border-border py-7" aria-labelledby="practice-history"><h2 id="practice-history" className="text-2xl font-semibold">Weekly goal vs actual</h2><p className="mt-2 text-base text-muted-foreground">{totalMinutes} minutes total · Weekly goal {data.course.course.weeklyPracticeGoalMin} min</p>
       <div className="my-4 flex flex-wrap gap-5 text-base"><span className="inline-flex items-center gap-2"><span className="size-3 bg-success" aria-hidden /> At home</span><span className="inline-flex items-center gap-2"><span className="size-3 bg-primary" aria-hidden /> In lessons</span></div>
       <svg viewBox="0 0 560 160" className="h-40 w-full" role="img" aria-label="Practice minutes across four weeks, with exact totals below">
@@ -65,7 +67,6 @@ function StudentProfile() {
       </svg>
       <div className="mt-4 grid grid-cols-2 gap-5 sm:grid-cols-4">{data.practice.map((week) => <div key={week.start}><p className="text-base">{formatShortDate(week.start)} – {formatShortDate(week.end)}</p><p className="mt-1 font-semibold">{week.studentMinutes + week.teacherMinutes} min</p><p className="text-base text-muted-foreground">At home {week.studentMinutes} · In lessons {week.teacherMinutes}</p></div>)}</div>
     </section>
-    </>}
     <StudentCourse data={data.course} />
     <section className="border-t border-border py-7" aria-labelledby="student-invoices"><h2 id="student-invoices" className="text-2xl font-semibold">Family invoices</h2><p className="mt-2 text-base text-muted-foreground">{family?.displayName}</p><div className="mt-4 divide-y divide-border">{data.invoices.map((invoice) => <Button key={invoice.id} asChild variant="ghost" className="h-auto w-full justify-start whitespace-normal rounded-none px-0 py-4 text-left"><Link to="/invoices/$invoiceId" params={{ invoiceId: invoice.id }}><div className="min-w-0 flex-1"><p className="break-all">{invoice.number}</p><p className="mt-1 text-base font-normal text-muted-foreground">Due {formatNumericDate(invoice.dueDate)} · {INVOICE_STATUS[invoice.status]}</p></div><span className="shrink-0">{formatAUD(invoice.totalCents)}</span><ArrowRight className="shrink-0" aria-hidden /></Link></Button>)}</div>{!data.invoices.length && <p className="mt-4 text-muted-foreground">No invoices for this family.</p>}</section>
   </div>;

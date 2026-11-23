@@ -21,9 +21,24 @@ comes from one server function, `familyPortalFn` in `src/server/family-portal.ts
 | Lessons | Next 28 days from today in the studio's timezone, the family's children only, cancelled and moved weeks included. No teacher id, location or note. |
 | News | Published (or scheduled and due), not expired, for the whole studio, the family by id, or a manual group with one of the children in it. Group posts saved since 23 Nov 2026 also carry the families they reached (smart groups exist only in the app). Title, body, tag, dates, important and author name only; no author id, audience or attachments. |
 | Courses | Active course per child. Feedback only where the teacher marked it shared; private feedback and its comment stay on the server. |
+| Practice (0023) | The children's practice for the last 8 weeks (date, minutes, home or lesson). No user ids. |
+| Notes (0023) | Only `client_note` rows with `visibility = 'shared'`, about one of the children or the family. The query filters on shared and `familySharedNotes` filters again, so a private note never leaves the server. |
+
+## Parents logging practice (0023)
+
+`familyLogPracticeFn` does the same checks (verified token, own guardian row) and then requires
+full access (`canWrite`, a paused studio takes no new rows). The child must be one of the
+family's own students, the date no later than today in the studio's timezone and no more than
+30 days back, and 1 to 600 minutes. It inserts `logged_by = 'parent'` with the parent's user id.
+Parents have no RLS grant on `practice_log` or `client_note`; staff read and write both under RLS
+(owner, admin, teacher), with the 0006 access gate. Triggers keep each row inside its own studio,
+stop a note moving to another student or family, and delete notes when their student or family
+is deleted. There is no delete button for practice entries yet (staff have the RLS grant for a later one).
 
 The browser puts this copy into the stores the parent screens already read
 (`src/services/live/family-store.ts`). Each news post is addressed to this family alone.
 
-Tests: `src/test/family-portal.test.ts` (another family's child, private feedback, other
-studio, drafts, expired and future posts, archived groups).
+Tests: `src/test/family-portal.test.ts` (another family's child, private feedback and notes,
+other studio, drafts, expired and future posts, archived groups, practice date and minute rules)
+and `supabase/tests/practice-notes.test.sql` (guardians read nothing, other studios can't read or
+write, cross-studio subjects refused, paused studio can't write).

@@ -7,7 +7,15 @@ import {
   wallClockIso,
   type FamilyNewsRow,
 } from "@/lib/family-portal";
-import { familyContextForUser, loadFamilyPortal } from "@/server/family-portal";
+import {
+  familyContextForUser,
+  familyPracticeProblem,
+  familySharedNotes,
+  insertFamilyPractice,
+  loadFamilyPortal,
+} from "@/server/family-portal";
+import { practiceLogs } from "@/mocks/data";
+import { clientNotes } from "@/mocks/notes";
 import type { CourseDocument } from "@/services/live/course-store";
 import type { LessonSeries } from "@/lib/lesson-calendar";
 import { familyPortalState, loadLiveFamilyPortal } from "@/services/live/family-store";
@@ -26,6 +34,7 @@ function fake(tables: Record<string, any[]>) {
         eq: (k: string, v: unknown) => (filters.push((r) => r[k] === v), q),
         in: (k: string, v: unknown[]) => (filters.push((r) => v.includes(r[k])), q),
         lte: (k: string, v: string) => (filters.push((r) => r[k] <= v), q),
+        gte: (k: string, v: string) => (filters.push((r) => r[k] >= v), q),
         overlaps: (k: string, v: unknown[]) => (
           filters.push((r) => (r[k] ?? []).some((x: unknown) => v.includes(x))),
           q
@@ -33,6 +42,13 @@ function fake(tables: Record<string, any[]>) {
         or: () => q,
         order: () => q,
         limit: () => q,
+        insert: (row: any) => {
+          const saved = { id: `new-${(tables[table] ?? []).length + 1}`, ...row };
+          (tables[table] ??= []).push(saved);
+          filters.push((r) => r === saved);
+          return q;
+        },
+        single: async () => ({ data: rows()[0] ?? null, error: null }),
         maybeSingle: async () => ({ data: rows()[0] ?? null, error: null }),
         then: (resolve: (v: unknown) => void) => resolve({ data: rows(), error: null }),
       };
@@ -197,7 +213,76 @@ const tables = {
     course("c-2", "kid-2"),
     course("c-old", "kid-1", "archived"),
   ],
+  practice_log: [
+    {
+      id: "p-1",
+      studio_id: "s-a",
+      student_id: "kid-1",
+      practice_date: "2026-11-30",
+      minutes: 20,
+      logged_by: "parent",
+    },
+    {
+      id: "p-2",
+      studio_id: "s-a",
+      student_id: "kid-1",
+      practice_date: "2026-11-28",
+      minutes: 30,
+      logged_by: "teacher",
+    },
+    {
+      id: "p-old",
+      studio_id: "s-a",
+      student_id: "kid-1",
+      practice_date: "2026-09-01",
+      minutes: 10,
+      logged_by: "student",
+    },
+    {
+      id: "p-kid-2",
+      studio_id: "s-a",
+      student_id: "kid-2",
+      practice_date: "2026-11-30",
+      minutes: 15,
+      logged_by: "parent",
+    },
+  ],
+  client_note: [
+    note({
+      id: "n-shared",
+      subject_id: "kid-1",
+      visibility: "shared",
+      body: "Lovely scales today",
+    }),
+    note({
+      id: "n-family",
+      subject_type: "family",
+      subject_id: "fam-1",
+      visibility: "shared",
+      body: "Term plan",
+    }),
+    note({
+      id: "n-private",
+      subject_id: "kid-1",
+      visibility: "private",
+      body: "Private: fees worry",
+    }),
+    note({ id: "n-kid-2", subject_id: "kid-2", visibility: "shared", body: "Someone else's note" }),
+  ],
 };
+
+function note(over: Record<string, unknown>): any {
+  return {
+    studio_id: "s-a",
+    subject_type: "student",
+    category: "lesson",
+    pinned: false,
+    lesson_occurrence_id: null,
+    author_name: "Ms A",
+    created_at: "2026-11-30T08:00:00Z",
+    ...over,
+  };
+}
 
 describe("family portal (server)", () => {
   it("finds the family from the verified user's own guardian row only", async () => {
@@ -245,8 +330,51 @@ describe("family portal (server)", () => {
 
     expect(content.courses.map((c) => c.course.id)).toEqual(["c-1"]);
     expect(content.courses[0]!.feedback.map((f) => f.id)).toEqual(["c-1-f1"]);
+    expect(content.practice.map((p) => `${p.id}:${p.loggedBy}`).sort()).toEqual([
+      "p-1:student",
+      "p-2:teacher",
+    ]);
+    expect(content.notes.map((n) => n.id).sort()).toEqual(["n-family", "n-shared"]);
     expect(JSON.stringify(content)).not.toContain("Private");
     expect(JSON.stringify(content)).not.toContain("kid-2");
+  });
+
+  it("never passes on a private note, even if the query let one through", () => {
+    const rows = tables.client_note;
+    expect(
+      familySharedNotes(rows, "fam-1", ["kid-1"])
+        .map((n) => n.id)
+        .sort(),
+    ).toEqual(["n-family", "n-shared"]);
+  });
+
+  it("lets a parent log practice for their own child only, today or up to 30 days back", async () => {
+    const ctx = (await familyContextForUser(fake(tables), "u-1"))!;
+    const ok = { studentId: "kid-1", date: "2026-12-01", minutes: 25 };
+    expect(familyPracticeProblem(ok, ctx, NOW)).toBeNull();
+    expect(familyPracticeProblem({ ...ok, studentId: "kid-2" }, ctx, NOW)).toMatch(/family/);
+    expect(familyPracticeProblem({ ...ok, date: "2026-12-02" }, ctx, NOW)).toMatch(/future/);
+    expect(familyPracticeProblem({ ...ok, date: "2026-10-01" }, ctx, NOW)).toMatch(/30 days/);
+    expect(familyPracticeProblem({ ...ok, date: "garbage" }, ctx, NOW)).toMatch(/date/);
+    expect(familyPracticeProblem({ ...ok, minutes: 0 }, ctx, NOW)).toMatch(/600/);
+    expect(familyPracticeProblem({ ...ok, minutes: 601 }, ctx, NOW)).toMatch(/600/);
+
+    const db = { ...tables, practice_log: [...tables.practice_log] };
+    const log = await insertFamilyPractice(fake(db), ctx, "u-1", ok, NOW);
+    expect(log).toMatchObject({
+      studentId: "kid-1",
+      date: "2026-12-01",
+      minutes: 25,
+      loggedBy: "student",
+    });
+    expect(db.practice_log.at(-1)).toMatchObject({
+      studio_id: "s-a",
+      logged_by: "parent",
+      logged_by_user_id: "u-1",
+    });
+    await expect(
+      insertFamilyPractice(fake(db), ctx, "u-1", { ...ok, studentId: "kid-2" }, NOW),
+    ).rejects.toThrow(/family/);
   });
 });
 
@@ -314,6 +442,8 @@ describe("loadLiveFamilyPortal (browser)", () => {
     newsState.demo.posts = [];
     studentCourses.splice(0);
     courseFeedback.splice(0);
+    practiceLogs.splice(0);
+    clientNotes.splice(0);
   });
   const workspace = {
     mode: "live",
@@ -335,6 +465,8 @@ describe("loadLiveFamilyPortal (browser)", () => {
       ),
     ).toBe(true);
     expect(studentCourses.map((c) => c.id)).toEqual(["c-1"]);
+    expect(practiceLogs.map((p) => p.id).sort()).toEqual(["p-1", "p-2"]);
+    expect(clientNotes.every((n) => n.visibility === "shared")).toBe(true);
   });
 
   it("does nothing for staff and survives a failed load", async () => {

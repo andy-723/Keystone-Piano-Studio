@@ -3,12 +3,9 @@ import { PROTOTYPE_TODAY } from "@/lib/calendar";
 import { canViewStudioSnapshot } from "@/lib/app-settings";
 import { snapshotBounds } from "@/lib/snapshot-range";
 import { resetInvitationState } from "@/mocks/invitations";
-import {
-  getStudioSnapshot,
-  snapshotDrillCsv,
-  resendSnapshotInvitation,
-} from "@/services/snapshot";
+import { getStudioSnapshot, snapshotDrillCsv, resendSnapshotInvitation } from "@/services/snapshot";
 import { listIncompleteInvitations } from "@/services/invitations";
+import { practiceLogs, students } from "@/mocks/data";
 
 beforeEach(() => {
   resetInvitationState();
@@ -58,6 +55,25 @@ describe("getStudioSnapshot", () => {
         snapshot.lessons.noShow +
         snapshot.lessons.scheduled,
     ).toBe(snapshot.lessons.rows.length);
+  });
+
+  it("lists a student with no practice ever logged as not started, not at risk", async () => {
+    const studentId = students[0]!.id;
+    const saved = [...practiceLogs];
+    practiceLogs.splice(
+      0,
+      practiceLogs.length,
+      ...saved.filter((log) => log.studentId !== studentId),
+    );
+    try {
+      const snapshot = await getStudioSnapshot("week");
+      expect(snapshot.practiceAtRisk.some((row) => row.studentId === studentId)).toBe(false);
+      expect(snapshot.practiceNotStarted.find((row) => row.studentId === studentId)?.reason).toBe(
+        "No practice logged yet",
+      );
+    } finally {
+      practiceLogs.splice(0, practiceLogs.length, ...saved);
+    }
   });
 
   it("month range includes earlier March payments and lesson history", async () => {

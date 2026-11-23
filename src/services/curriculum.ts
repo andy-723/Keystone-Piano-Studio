@@ -12,6 +12,7 @@ import type { CourseItem, Feedback, FrameworkSection, FrameworkSlot, Student, St
 import { isLiveStudio } from "@/lib/studio-workspace";
 import { currentTermKey, termAfterKey } from "@/lib/course-progress";
 import { withLiveCourseSave } from "./live/course-store";
+import { saveLivePractice } from "./live/notes-store";
 
 /**
  * Real studios get an empty starter course (not saved until the teacher edits it) instead of the
@@ -182,7 +183,9 @@ export const getPracticeLogs = (studentId: string): Promise<PracticeLog[]> =>
   respond(practiceLogs.filter((l) => l.studentId === studentId));
 
 export async function addPractice(input: Omit<PracticeLog, "id">): Promise<PracticeLog> {
-  const log = { ...input, id: `pl-${practiceLogs.length + 1}` };
+  // Real studios: saved first (parents through the server), then shown.
+  const saved = await saveLivePractice(input);
+  const log = saved ?? { ...input, id: `pl-${practiceLogs.length + 1}` };
   practiceLogs.push(log);
   return respond(log);
 }

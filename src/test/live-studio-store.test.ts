@@ -12,7 +12,8 @@ import {
 import { newsState } from "@/mocks/news";
 import { courseItems, studentCourses } from "@/mocks/curriculum";
 import { libraryState } from "@/mocks/library";
-import { payments } from "@/mocks/data";
+import { payments, practiceLogs } from "@/mocks/data";
+import { addNote } from "@/services/notes";
 import { billingProfileState, creditNotes, invoiceEvents } from "@/mocks/billing-profile";
 import {
   createInvoice,
@@ -24,7 +25,7 @@ import {
   deleteDraft,
 } from "@/services/billing";
 import { resetLiveBillingForTests } from "@/services/live/billing-store";
-import { getStudentCourse, saveStudentCourse } from "@/services/curriculum";
+import { addPractice, getStudentCourse, saveStudentCourse } from "@/services/curriculum";
 import { copyTemplate, saveCourseTemplate } from "@/services/library";
 import { clientNotes } from "@/mocks/notes";
 import { opusInvoices } from "@/mocks/plans";
@@ -183,6 +184,7 @@ function fakeSupabase(tables: Tables, options: { failOn?: string } = {}) {
       eq: (column: string, value: unknown) => (call.filters.push([column, value]), builder),
       order: () => builder,
       limit: () => builder,
+      gte: () => builder,
       neq: (column: string, value: unknown) => (call.other.push([column, value, "neq"]), builder),
       is: (column: string, value: unknown) => (call.other.push([column, value, "is"]), builder),
       maybeSingle: async () => {
@@ -1113,5 +1115,113 @@ describe("live invoices (0004 + 0016)", () => {
       balanceCents: 25000,
     });
     expect(loaded!.lines.map((entry) => entry.description)).toEqual(["Lessons"]);
+  });
+});
+
+describe("live practice logs and notes (0023)", () => {
+  beforeEach(() => resetStudioWorkspaceForTests());
+  afterEach(() => setStudioStoreClientForTests(null));
+
+  it("loads the studio's practice and notes at sign-in", async () => {
+    const tables = liveTables();
+    const today = new Date().toISOString().slice(0, 10);
+    tables["practice_log"] = [
+      {
+        id: "pl-row-1",
+        studio_id: STUDIO_ID,
+        student_id: EXAMPLE_STUDENT,
+        practice_date: today,
+        minutes: 25,
+        logged_by: "parent",
+      },
+    ];
+    tables["client_note"] = [
+      {
+        id: "note-row-1",
+        studio_id: STUDIO_ID,
+        subject_type: "student",
+        subject_id: EXAMPLE_STUDENT,
+        body: "Scales next week",
+        category: "lesson",
+        visibility: "shared",
+        pinned: false,
+        lesson_occurrence_id: "ser-1:2026-11-23",
+        author_name: "Ms Phan",
+        created_at: "2026-11-23T07:00:00Z",
+      },
+    ];
+    await signInLive(tables);
+    expect(practiceLogs).toEqual([
+      { id: "pl-row-1", studentId: EXAMPLE_STUDENT, date: today, minutes: 25, loggedBy: "student" },
+    ]);
+    expect(clientNotes).toEqual([
+      expect.objectContaining({
+        id: "note-row-1",
+        lessonOccurrenceId: "ser-1:2026-11-23",
+        visibility: "shared",
+      }),
+    ]);
+  });
+
+  it("saves practice and lesson notes to the database before showing them", async () => {
+    const fake = await signInLive();
+    await addPractice({
+      studentId: EXAMPLE_STUDENT,
+      date: "2026-11-23",
+      minutes: 30,
+      loggedBy: "teacher",
+    });
+    expect(fake.tables["practice_log"]).toEqual([
+      expect.objectContaining({
+        studio_id: STUDIO_ID,
+        student_id: EXAMPLE_STUDENT,
+        minutes: 30,
+        logged_by: "teacher",
+        logged_by_user_id: "owner-1",
+      }),
+    ]);
+    await addNote({
+      subjectType: "student",
+      subjectId: EXAMPLE_STUDENT,
+      body: " Lovely tone ",
+      category: "lesson",
+      visibility: "shared",
+      lessonOccurrenceId: "ser-1:2026-11-23",
+    });
+    expect(fake.tables["client_note"]).toEqual([
+      expect.objectContaining({
+        studio_id: STUDIO_ID,
+        body: "Lovely tone",
+        visibility: "shared",
+        lesson_occurrence_id: "ser-1:2026-11-23",
+        author_user_id: "owner-1",
+      }),
+    ]);
+    expect(clientNotes).toHaveLength(1);
+  });
+
+  it("does not show a note or practice Supabase refused", async () => {
+    await signInLive(liveTables(), { failOn: "client_note.insert" });
+    await expect(
+      addNote({
+        subjectType: "student",
+        subjectId: EXAMPLE_STUDENT,
+        body: "Hi",
+        category: "lesson",
+      }),
+    ).rejects.toThrow();
+    expect(clientNotes).toHaveLength(0);
+    setStudioStoreClientForTests(null);
+    resetStudioWorkspaceForTests();
+    await signInLive(liveTables(), { failOn: "practice_log.insert" });
+    await expect(
+      addPractice({
+        studentId: EXAMPLE_STUDENT,
+        date: "2026-11-23",
+        minutes: 10,
+        loggedBy: "teacher",
+      }),
+    ).rejects.toThrow();
+    expect(practiceLogs).toHaveLength(0);
   });
 });

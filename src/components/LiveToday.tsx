@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import { Suspense } from "react";
 import { LatestNews } from "@/components/StudioNews";
+import { LessonClientNotes } from "@/components/LessonClientNotes";
 import { calendarWeekQuery } from "@/components/LessonCalendar";
 import { Button } from "@/components/ui/button";
 import { formatLongDate } from "@/lib/format";
@@ -12,8 +13,9 @@ import type { CalendarLesson } from "@/server/calendar";
 
 /**
  * Today page for a real studio: the real date in the studio's time zone and the studio's own
- * lessons from the calendar (lesson_series + lesson_exception). Attendance, lesson notes and
- * practice are not saved for real studios yet, so this page leaves them out (pilot, 13 Nov 2026).
+ * lessons from the calendar (lesson_series + lesson_exception), each with its lesson notes
+ * (client_note, 0023; "Share with family" puts a note in the family portal). Attendance is not
+ * saved for real studios yet, so this page leaves it out (pilot).
  */
 export function LiveToday({ date }: { date?: string | undefined }) {
   const today = studioToday();
@@ -100,7 +102,20 @@ export function LiveToday({ date }: { date?: string | undefined }) {
               {lesson.status === "moved" && (
                 <p className="mt-3 text-base font-semibold">Moved to this time for this week.</p>
               )}
-              {lesson.note && <p data-no-translate className="mt-3 text-base text-muted-foreground">{lesson.note}</p>}
+              {lesson.note && (
+                <p data-no-translate className="mt-3 text-base text-muted-foreground">
+                  {lesson.note}
+                </p>
+              )}
+              {lesson.status !== "cancelled" && (
+                <Suspense fallback={null}>
+                  <LessonClientNotes
+                    studentId={lesson.studentId}
+                    name={lesson.studentName}
+                    occurrenceId={lesson.key}
+                  />
+                </Suspense>
+              )}
             </section>
           ))}
         </div>

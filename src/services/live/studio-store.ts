@@ -37,6 +37,7 @@ import { loadLiveCourses } from "./course-store";
 import { loadLiveBilling } from "./billing-store";
 import { loadLiveEnrolments } from "./enrolment-store";
 import { loadLiveFamilyPortal } from "./family-store";
+import { loadLivePracticeAndNotes } from "./notes-store";
 import {
   isLiveStudio,
   liveStudioId,
@@ -287,9 +288,11 @@ export async function loadLiveStudio(
   await loadLiveCourses(workspace, c);
   await loadLiveBilling(workspace, c);
   await loadLiveEnrolments(workspace, c, terms);
+  await loadLivePracticeAndNotes(workspace, c);
   // Parents: their lessons, news and children's courses come from the server (family-safe copy).
   const familyId = workspace.guardianId
-    ? (families.find((family) => family.guardians.some((g) => g.id === workspace.guardianId))?.id ?? null)
+    ? (families.find((family) => family.guardians.some((g) => g.id === workspace.guardianId))?.id ??
+      null)
     : null;
   await loadLiveFamilyPortal(workspace, familyId);
   if (workspace.guardianId) setParentGuardianId(workspace.guardianId);

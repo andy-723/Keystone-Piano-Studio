@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { canRead } from "@/lib/subscription";
+import { canRead, canWrite } from "@/lib/subscription";
 import {
   familyLessons,
   familyNews,
@@ -13,6 +13,7 @@ import {
 } from "@/lib/family-portal";
 import { addDays, todayIn, type LessonException, type LessonSeries } from "@/lib/lesson-calendar";
 import type { CourseDocument } from "@/services/live/course-store";
+import type { ClientNote, PracticeLog } from "@/mocks/types";
 import { isMockOnboarding } from "./env";
 import { studioPaused } from "./authz";
 import { ProblemError } from "./problem";
@@ -34,7 +35,83 @@ export type FamilyPortalContent = {
   lessons: FamilyLesson[];
   news: FamilyNewsPost[];
   courses: CourseDocument[];
+  /** The children's practice for the last 8 weeks (PR B, 0023). */
+  practice: PracticeLog[];
+  /** Notes the teacher marked shared, about the children or the family. Never private ones. */
+  notes: ClientNote[];
 };
+
+/** Weeks of practice history the family portal sends. */
+export const FAMILY_PRACTICE_DAYS = 56;
+/** How far back a parent may log practice. */
+export const FAMILY_PRACTICE_BACKDATE_DAYS = 30;
+
+type PracticeRow = {
+  id: string;
+  student_id: string;
+  practice_date: string;
+  minutes: number;
+  logged_by: string;
+};
+
+type SharedNoteRow = {
+  id: string;
+  subject_type: ClientNote["subjectType"];
+  subject_id: string;
+  body: string;
+  category: ClientNote["category"];
+  visibility: string;
+  pinned: boolean;
+  lesson_occurrence_id: string | null;
+  author_name: string;
+  created_at: string;
+};
+
+function toPractice(row: PracticeRow): PracticeLog {
+  return {
+    id: row.id,
+    studentId: row.student_id,
+    date: row.practice_date,
+    minutes: row.minutes,
+    loggedBy: row.logged_by === "teacher" ? "teacher" : "student",
+  };
+}
+
+/** Family-safe copy of the notes: shared ones about this family or its children only. */
+export function familySharedNotes(
+  rows: SharedNoteRow[],
+  familyId: string,
+  childIds: string[],
+): ClientNote[] {
+  const children = new Set(childIds);
+  return rows
+    .filter(
+      (row) =>
+        row.visibility === "shared" &&
+        ((row.subject_type === "student" && children.has(row.subject_id)) ||
+          (row.subject_type === "family" && row.subject_id === familyId)),
+    )
+    .map((row) => ({
+      id: row.id,
+      subjectType: row.subject_type,
+      subjectId: row.subject_id,
+      authorName: row.author_name,
+      body: row.body,
+      category: row.category,
+      visibility: "shared",
+      pinned: row.pinned,
+      createdAt: row.created_at,
+      ...(row.lesson_occurrence_id ? { lessonOccurrenceId: row.lesson_occurrence_id } : {}),
+    }));
+}
+
+/**
+ * Optional 0023 tables: a studio database without them still gets the rest of the portal.
+ * Postgres 42P01 / PostgREST PGRST205 mean the table isn't there yet.
+ */
+function missingTable(error: { code?: string; message: string } | null) {
+  return Boolean(error && (error.code === "42P01" || error.code === "PGRST205"));
+}
 
 type FamilyContext = {
   studioId: string;
@@ -88,9 +165,10 @@ export async function loadFamilyPortal(
   now: Date = new Date(),
 ): Promise<FamilyPortalContent> {
   const today = todayIn(ctx.timeZone, now);
-  if (!ctx.childIds.length) return { today, lessons: [], news: [], courses: [] };
+  if (!ctx.childIds.length)
+    return { today, lessons: [], news: [], courses: [], practice: [], notes: [] };
   const lastDay = addDays(today, FAMILY_LESSON_DAYS - 1);
-  const [seriesRes, newsRes, groupRes, courseRes] = await Promise.all([
+  const [seriesRes, newsRes, groupRes, courseRes, practiceRes, noteRes] = await Promise.all([
     supabase
       .from("lesson_series")
       .select(
@@ -121,11 +199,30 @@ export async function loadFamilyPortal(
       .eq("studio_id", ctx.studioId)
       .in("student_id", ctx.childIds)
       .eq("status", "active"),
+    supabase
+      .from("practice_log")
+      .select("id, student_id, practice_date, minutes, logged_by")
+      .eq("studio_id", ctx.studioId)
+      .in("student_id", ctx.childIds)
+      .gte("practice_date", addDays(today, -(FAMILY_PRACTICE_DAYS - 1)))
+      .order("practice_date", { ascending: true }),
+    // Shared notes only, filtered again below so a private note can never slip through.
+    supabase
+      .from("client_note")
+      .select(
+        "id, subject_type, subject_id, body, category, visibility, pinned, lesson_occurrence_id, author_name, created_at",
+      )
+      .eq("studio_id", ctx.studioId)
+      .eq("visibility", "shared")
+      .in("subject_id", [...ctx.childIds, ctx.familyId])
+      .order("created_at", { ascending: true }),
   ]);
   fail(seriesRes.error, "Lessons lookup failed");
   fail(newsRes.error, "News lookup failed");
   fail(groupRes.error, "Groups lookup failed");
   fail(courseRes.error, "Course lookup failed");
+  if (!missingTable(practiceRes.error)) fail(practiceRes.error, "Practice lookup failed");
+  if (!missingTable(noteRes.error)) fail(noteRes.error, "Notes lookup failed");
 
   const series: LessonSeries[] = (
     (seriesRes.data ?? []) as Array<{
@@ -213,6 +310,10 @@ export async function loadFamilyPortal(
       now,
     ),
     courses,
+    practice: practiceRes.error ? [] : ((practiceRes.data ?? []) as PracticeRow[]).map(toPractice),
+    notes: noteRes.error
+      ? []
+      : familySharedNotes((noteRes.data ?? []) as SharedNoteRow[], ctx.familyId, ctx.childIds),
   };
 }
 
@@ -229,4 +330,84 @@ export const familyPortalFn = createServerFn({ method: "POST" })
     const { level } = await getStudioAccess(ctx.studioId);
     if (!canRead(level, "guardian")) throw studioPaused();
     return { content: await loadFamilyPortal(supabase, ctx) };
+  });
+
+export type FamilyPracticeInput = {
+  studentId: string;
+  date: string;
+  minutes: number;
+};
+
+/**
+ * Checks a parent's practice entry against their own family and the studio's calendar: one of
+ * their children, a real date no later than today and no more than 30 days back, 1 to 600
+ * minutes. Returns an error message, or null when it's fine.
+ */
+export function familyPracticeProblem(
+  input: FamilyPracticeInput,
+  ctx: FamilyContext,
+  now: Date = new Date(),
+): string | null {
+  if (!ctx.childIds.includes(input.studentId)) return "That student isn't in your family.";
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date) || Number.isNaN(Date.parse(input.date)))
+    return "Choose a practice date.";
+  const today = todayIn(ctx.timeZone, now);
+  if (input.date > today) return "Practice can't be logged for a future day.";
+  if (input.date < addDays(today, -FAMILY_PRACTICE_BACKDATE_DAYS))
+    return "Practice can only be logged for the last 30 days.";
+  if (!Number.isInteger(input.minutes) || input.minutes < 1 || input.minutes > 600)
+    return "Minutes must be between 1 and 600.";
+  return null;
+}
+
+export async function insertFamilyPractice(
+  supabase: SupabaseClient,
+  ctx: FamilyContext,
+  userId: string,
+  input: FamilyPracticeInput,
+  now: Date = new Date(),
+): Promise<PracticeLog> {
+  const problem = familyPracticeProblem(input, ctx, now);
+  if (problem) throw new ProblemError(400, "Practice not saved", problem);
+  const { data, error } = await supabase
+    .from("practice_log")
+    .insert({
+      studio_id: ctx.studioId,
+      student_id: input.studentId,
+      practice_date: input.date,
+      minutes: input.minutes,
+      logged_by: "parent",
+      logged_by_user_id: userId,
+    })
+    .select("id, student_id, practice_date, minutes, logged_by")
+    .single();
+  fail(error, "Practice not saved");
+  return toPractice(data as PracticeRow);
+}
+
+/** A parent logs practice for one of their own children. The family comes from the token. */
+export const familyLogPracticeFn = createServerFn({ method: "POST" })
+  .validator(
+    (data: {
+      accessToken: string;
+      studioId?: string;
+      studentId: string;
+      date: string;
+      minutes: number;
+    }) => data,
+  )
+  .handler(async ({ data }): Promise<{ log: PracticeLog }> => {
+    const session = await verifyAccessToken(data.accessToken);
+    const supabase = createServiceSupabase();
+    const ctx = await familyContextForUser(supabase, session.userId, data.studioId);
+    if (!ctx) throw new ProblemError(403, "Not a parent of this studio", "No family found.");
+    // Writing needs a studio with full access, the same gate RLS applies to staff writes.
+    const { level } = await getStudioAccess(ctx.studioId);
+    if (!canWrite(level)) throw studioPaused();
+    const log = await insertFamilyPractice(supabase, ctx, session.userId, {
+      studentId: data.studentId,
+      date: data.date,
+      minutes: Number(data.minutes),
+    });
+    return { log };
   });
