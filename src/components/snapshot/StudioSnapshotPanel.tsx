@@ -33,7 +33,7 @@ const TILES: Array<{
   id: SnapshotTileId;
   label: string;
   icon: typeof Receipt;
-  emptyAction: { label: string; to: "/invoices" | "/students" | "/students/enrol" | "/" };
+  emptyAction: { label: string; to: "/invoices" | "/students" | "/students/enrol" | "/today" };
 }> = [
   {
     id: "revenue",
@@ -69,7 +69,7 @@ const TILES: Array<{
     id: "lessons",
     label: "Lessons delivered",
     icon: CalendarCheck2,
-    emptyAction: { label: "Mark attendance", to: "/" },
+    emptyAction: { label: "Mark attendance", to: "/today" },
   },
 ];
 

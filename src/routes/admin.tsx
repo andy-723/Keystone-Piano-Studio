@@ -80,8 +80,8 @@ function AdminPage() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <AppLanguageSwitcher />
-          {/* Platform staff with no studio role see the Clarke demo studio at "/". */}
-          <a href="/" className="ks-btn ks-btn-secondary">
+          {/* Platform staff with no studio role see the Clarke demo studio at "/today". */}
+          <a href="/today" className="ks-btn ks-btn-secondary">
             Open demo studio
           </a>
           <button type="button" onClick={() => void signOut()} className="ks-btn ks-btn-secondary">

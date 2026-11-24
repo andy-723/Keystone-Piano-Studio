@@ -6,6 +6,7 @@ import { StudioShowcase } from "@/components/StudioShowcase";
 import { MarketingMotion } from "@/components/MarketingMotion";
 import teachingMoment from "@/assets/keystone-teaching-moment.jpg";
 import { MarketingNavbar } from "@/components/MarketingNavbar";
+import { SignInOrStudioLink } from "@/components/HomeLogoLink";
 import { MarketingFooter } from "@/components/MarketingFooter";
 import { ZoomHero } from "@/components/ZoomHero";
 import { FounderVideo } from "@/components/FounderVideo";
@@ -26,7 +27,6 @@ import {
   LayoutDashboard,
 } from "lucide-react";
 
-const SIGN_IN = "/login";
 const ENQUIRE = "/contact?topic=studio";
 
 export const Route = createFileRoute("/welcome")({
@@ -142,7 +142,7 @@ function Welcome() {
                   size="lg"
                   className="text-mk-paper underline decoration-mk-gold underline-offset-8 hover:bg-mk-paper/10 hover:text-mk-paper"
                 >
-                  <a href={SIGN_IN}>Sign in</a>
+                  <SignInOrStudioLink />
                 </Button>
               </div>
             </div>
@@ -439,7 +439,7 @@ function Welcome() {
                 size="lg"
                 className="border border-mk-ink/25 text-mk-ink hover:bg-mk-paper"
               >
-                <a href={SIGN_IN}>Sign in</a>
+                <SignInOrStudioLink />
               </Button>
             </div>
           </section>

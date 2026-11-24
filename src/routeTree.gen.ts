@@ -29,6 +29,7 @@ import { Route as StudentsRouteImport } from './routes/students'
 import { Route as StudioEnquiryRouteImport } from './routes/studio-enquiry'
 import { Route as SupportRouteImport } from './routes/support'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as TodayRouteImport } from './routes/today'
 import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
@@ -164,6 +165,11 @@ const SupportRoute = SupportRouteImport.update({
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TodayRoute = TodayRouteImport.update({
+  id: '/today',
+  path: '/today',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WelcomeRoute = WelcomeRouteImport.update({
@@ -370,6 +376,7 @@ export interface FileRoutesByFullPath {
   '/studio-enquiry': typeof StudioEnquiryRoute
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
+  '/today': typeof TodayRoute
   '/welcome': typeof WelcomeRoute
   '/api/health': typeof ApiHealthRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -424,6 +431,7 @@ export interface FileRoutesByTo {
   '/studio-enquiry': typeof StudioEnquiryRoute
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
+  '/today': typeof TodayRoute
   '/welcome': typeof WelcomeRoute
   '/api/health': typeof ApiHealthRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -483,6 +491,7 @@ export interface FileRoutesById {
   '/studio-enquiry': typeof StudioEnquiryRoute
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
+  '/today': typeof TodayRoute
   '/welcome': typeof WelcomeRoute
   '/api/health': typeof ApiHealthRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -543,6 +552,7 @@ export interface FileRouteTypes {
     | '/studio-enquiry'
     | '/support'
     | '/terms'
+    | '/today'
     | '/welcome'
     | '/api/health'
     | '/auth/callback'
@@ -597,6 +607,7 @@ export interface FileRouteTypes {
     | '/studio-enquiry'
     | '/support'
     | '/terms'
+    | '/today'
     | '/welcome'
     | '/api/health'
     | '/auth/callback'
@@ -655,6 +666,7 @@ export interface FileRouteTypes {
     | '/studio-enquiry'
     | '/support'
     | '/terms'
+    | '/today'
     | '/welcome'
     | '/api/health'
     | '/auth/callback'
@@ -714,6 +726,7 @@ export interface RootRouteChildren {
   StudioEnquiryRoute: typeof StudioEnquiryRoute
   SupportRoute: typeof SupportRoute
   TermsRoute: typeof TermsRoute
+  TodayRoute: typeof TodayRoute
   WelcomeRoute: typeof WelcomeRoute
   ApiHealthRoute: typeof ApiHealthRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
@@ -877,6 +890,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/today': {
+      id: '/today'
+      path: '/today'
+      fullPath: '/today'
+      preLoaderRoute: typeof TodayRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/welcome': {
@@ -1223,6 +1243,7 @@ const rootRouteChildren: RootRouteChildren = {
   StudioEnquiryRoute: StudioEnquiryRoute,
   SupportRoute: SupportRoute,
   TermsRoute: TermsRoute,
+  TodayRoute: TodayRoute,
   WelcomeRoute: WelcomeRoute,
   ApiHealthRoute: ApiHealthRoute,
   AuthCallbackRoute: AuthCallbackRoute,

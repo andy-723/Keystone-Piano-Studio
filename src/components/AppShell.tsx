@@ -40,7 +40,7 @@ import { TourHelpButton } from "@/components/tour/Tour";
 import { AppLanguageSwitcher } from "@/components/AppLanguageSwitcher";
 
 const NAV = [
-  { to: "/", labelKey: "navToday", icon: BookOpen },
+  { to: "/today", labelKey: "navToday", icon: BookOpen },
   { to: "/snapshot", labelKey: "navSnapshot", icon: LayoutDashboard, ownerAdminOnly: true },
   { to: "/calendar", labelKey: "navCalendar", icon: CalendarDays },
   { to: "/news", labelKey: "navNews", icon: Megaphone },
@@ -87,7 +87,7 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
           <Link
             key={to}
             to={to}
-            activeOptions={{ exact: to === "/" }}
+            activeOptions={{ exact: to === "/today" }}
             className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-lg px-2 text-base font-semibold text-sidebar-foreground transition-[background-color,color,transform] duration-150 fine-hover:hover:bg-sidebar-accent fine-hover:hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
             activeProps={{ className: "bg-sidebar-primary text-sidebar-primary-foreground fine-hover:hover:bg-sidebar-primary fine-hover:hover:text-sidebar-primary-foreground" }}
           >
@@ -197,7 +197,7 @@ export function AppShell({ children, studio }: { children: ReactNode; studio: St
           <Link
             key={to}
             to={to}
-            activeOptions={{ exact: to === "/" }}
+            activeOptions={{ exact: to === "/today" }}
             className="min-readable flex min-h-16 min-w-0 flex-col items-center justify-center gap-0.5 font-semibold text-sidebar-foreground transition-[background-color,color] duration-150 fine-hover:hover:bg-sidebar-accent/80 fine-hover:hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sidebar-ring"
             activeProps={{ className: "text-sidebar-primary underline underline-offset-4" }}
           >

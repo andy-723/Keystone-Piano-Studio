@@ -29,8 +29,8 @@ export function destinationForAccount(account: ResolvedAccount, next?: string | 
   const safe = safeNextPath(next);
   if (safe) return safe;
   if (account.platformStaff) return "/admin";
-  if (account.memberships.length > 0) return "/";
-  if (account.guardianFamilyIds.length > 0) return "/";
+  if (account.memberships.length > 0) return "/today";
+  if (account.guardianFamilyIds.length > 0) return "/today";
   return "/login";
 }
 
