@@ -215,7 +215,7 @@ function ProCfoDetail() {
     onSuccess: async (result) => {
       await invalidate();
       if (result.ok) toast.success("Pushed to Xero");
-      else toast.error("Retry failed — try again");
+      else toast.error(pack.live ? "Not in Xero yet. Check the error in Settings, Integrations." : "Retry failed — try again");
     },
     onError: (error: Error) => toast.error(error.message || "Could not retry Xero sync."),
   });
@@ -264,7 +264,7 @@ function ProCfoDetail() {
         <PulseTile
           label="Net cash collected"
           value={formatAUD(pack.pulse.netCashCents)}
-          hint={`${formatAUD(pack.pulse.grossCollectedCents)} gross · ${formatAUD(pack.pulse.stripeFeesCents)} Stripe fees`}
+          hint={`${formatAUD(pack.pulse.grossCollectedCents)} gross this financial year · ${formatAUD(pack.pulse.stripeFeesCents)} Stripe fees${pack.missingFeeCount ? ` (${pack.missingFeeCount} not reported by Stripe yet)` : ""}`}
         />
         <PulseTile
           label={pack.pulse.marginMode === "multi_teacher" ? "Studio margin" : "Solo net"}
@@ -301,9 +301,21 @@ function ProCfoDetail() {
               </dd>
               <dd className={muted}>
                 Value of lessons delivered in this window
+                {pack.live ? ` (${pack.revenueChurn.earnedLessonCount} lessons marked attended)` : ""}
               </dd>
             </div>
           </dl>
+          {pack.live && (pack.unpricedLessonCount ?? 0) > 0 && (
+            <p className={`mt-3 ${muted}`} role="note">
+              {pack.unpricedLessonCount} lesson{pack.unpricedLessonCount === 1 ? "" : "s"} or
+              credit{pack.unpricedLessonCount === 1 ? "" : "s"} have a length with no price, so they
+              count as $0. Add the price in{" "}
+              <Link to="/settings" className="font-semibold text-[#604A19] underline-offset-2 hover:underline">
+                Settings, Lesson prices
+              </Link>
+              .
+            </p>
+          )}
 
 
           <h4 className="mt-6 text-lg font-semibold text-[#15100D]">
@@ -342,7 +354,8 @@ function ProCfoDetail() {
                 <h3 className={title}>Xero queue</h3>
               </div>
               <p className={muted}>
-                {failedOrPending.length} open · mock sync, no live API poll
+                {failedOrPending.length} open ·{" "}
+                {pack.live ? "sent invoices not in Xero yet (syncs every 15 min)" : "mock sync, no live API poll"}
               </p>
             </div>
             {pack.xeroQueue.length === 0 ? (
@@ -384,6 +397,7 @@ function ProCfoDetail() {
         </div>
       </div>
 
+      {pack.live ? null : (
       <div className="mt-4">
         <section className={panel} aria-label="Teacher payouts">
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -443,6 +457,7 @@ function ProCfoDetail() {
         </section>
 
       </div>
+      )}
     </section>
   );
 }

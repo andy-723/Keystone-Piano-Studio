@@ -38,6 +38,14 @@ import { connectXero, pushInvoiceToXero } from "@/services/integrations";
 import { proFeaturesEnabled } from "@/services/plans";
 import { listDayLessonsSync } from "@/services/schedule";
 import { getTaxLiteStripeSummary } from "@/services/tax-lite";
+import { isLiveStudio } from "@/lib/studio-workspace";
+import { taxLiteFyBounds } from "@/lib/tax-lite-fy";
+import { priceFor } from "@/lib/term-billing";
+import { creditLots } from "@/lib/makeup-credits";
+import { getLiveXeroStatus, syncLiveXeroNow } from "@/services/integrations";
+import { loadLiveLessonFacts, reloadLiveXeroStamps, type LiveLessonFact } from "@/services/live/tax-store";
+import { saveLiveStudioDetails, studioSnapshot } from "@/services/live/studio-store";
+import type { IntegrationState } from "@/mocks/integrations";
 import { respond } from "./_delay";
 
 const QUIET_PRACTICE_DAYS = 14;
@@ -160,6 +168,12 @@ export type ProCfoPack = {
   payouts: ProCfoPayoutRow[];
   overdue: ProCfoOverdueChaseRow[];
   gstRadar: ProCfoGstRadar;
+  /** Real studio data (not the demo). Payouts are hidden until contractor rates exist. */
+  live?: boolean;
+  /** Real studios: lessons counted whose length has no price in Settings, Lesson prices. */
+  unpricedLessonCount?: number;
+  /** Real studios: online payments Stripe hasn't reported a fee for yet. */
+  missingFeeCount?: number;
 };
 
 function csvEscape(value: string | number): string {
@@ -460,7 +474,9 @@ function buildGstRadar(start: string, end: string, softPreview: boolean): ProCfo
         inRange(payment.receivedOn ?? payment.date ?? "", start, end),
     )
     .reduce((sum, payment) => sum + (payment.grossAmountCents ?? payment.amountCents), 0);
-  const projectedNext12mCents = proCfoGstProjection.next12mCents;
+  const projectedNext12mCents = isLiveStudio()
+    ? (studio.gstNext12mEstimateCents ?? null)
+    : proCfoGstProjection.next12mCents;
   const highest = Math.max(rolling12mTurnoverCents, projectedNext12mCents ?? 0);
   const percentOfThreshold =
     Math.round((rolling12mTurnoverCents / GST_TURNOVER_THRESHOLD_CENTS) * 1000) / 10;
@@ -481,11 +497,19 @@ export async function setProCfoProjectedTurnover(cents: number | null): Promise<
   if (cents !== null && (!Number.isFinite(cents) || cents < 0)) {
     throw new Error("Enter a dollar amount of zero or more");
   }
-  proCfoGstProjection.next12mCents = cents === null ? null : Math.round(cents);
+  const value = cents === null ? null : Math.round(cents);
+  if (isLiveStudio()) {
+    const before = studioSnapshot();
+    studio.gstNext12mEstimateCents = value;
+    await saveLiveStudioDetails(before);
+    return value;
+  }
+  proCfoGstProjection.next12mCents = value;
   return respond(proCfoGstProjection.next12mCents);
 }
 
 export async function getProCfoPack(today = studioToday()): Promise<ProCfoPack> {
+  if (isLiveStudio()) return getLiveProCfoPack(today);
   const { start, end } = rollingWindow(today);
   const proEnabled = proFeaturesEnabled();
   const stripe = await getTaxLiteStripeSummary("ytd");
@@ -540,6 +564,13 @@ export async function getProCfoPack(today = studioToday()): Promise<ProCfoPack> 
 
 export async function retryXeroQueueItem(invoiceId: string) {
   if (!proFeaturesEnabled()) throw new Error("Xero retry is available on Pro.");
+  if (isLiveStudio()) {
+    // Real studios: the same push as Settings, Sync now (every unsent invoice and payment).
+    await syncLiveXeroNow();
+    await reloadLiveXeroStamps();
+    const synced = Boolean(invoices.find((entry) => entry.id === invoiceId)?.xeroSyncedAt);
+    return { ok: synced, invoiceId, status: synced ? ("synced" as const) : ("failed" as const) };
+  }
   const xero = integrationState.demo.xero;
   if (xero.status !== "connected") await connectXero();
 
@@ -615,6 +646,7 @@ export function teacherRemittanceCsv(pack: ProCfoPack): { filename: string; csv:
 /** Mock push of contractor bills to Xero — stamps queue health only. */
 export async function pushTeacherBillsToXero() {
   if (!proFeaturesEnabled()) throw new Error("Teacher bill push is available on Pro.");
+  if (isLiveStudio()) throw new Error("Contractor payouts aren't set up for your studio yet.");
   if (integrationState.demo.xero.status !== "connected") await connectXero();
   integrationState.demo.xero.lastSyncedAt = melbourneIso(studioToday(), "11:20");
   return respond({
@@ -654,4 +686,237 @@ export async function sendOverdueChase(invoiceId: string) {
 
 function formatDollars(cents: number): string {
   return `$${(cents / 100).toFixed(2)}`;
+}
+
+// ---------------------------------------------------------------------------
+// Real studios (0028): the same pack from the studio's own records
+// ---------------------------------------------------------------------------
+
+const isMissed = (lesson: LiveLessonFact) =>
+  lesson.mark === "absent" || lesson.mark === "cancelled_late";
+const isCancelled = (lesson: LiveLessonFact) =>
+  lesson.calendarStatus === "cancelled" || (lesson.mark ?? "").startsWith("cancelled_");
+
+function liveXeroHealth(xero: IntegrationState["xero"]): ProCfoXeroHealth {
+  const connected = xero.status === "connected";
+  const issued = invoices.filter(
+    (invoice) => invoice.status !== "draft" && invoice.status !== "void" && invoice.isTaxInvoice,
+  );
+  let gstCollectedCents = 0;
+  for (const invoice of issued) {
+    const paid = payments
+      .filter((payment) => payment.invoiceId === invoice.id && payment.amountCents > 0)
+      .reduce((sum, payment) => sum + payment.amountCents, 0);
+    if (paid <= 0) continue;
+    const share = Math.min(1, paid / Math.max(invoice.totalCents, 1));
+    gstCollectedCents += Math.round((invoice.taxCents ?? 0) * share);
+  }
+  const gstCreditsCents = taxLiteExpenses
+    .filter((expense) => expense.includesGst && !expense.passThroughStudentId)
+    .reduce((sum, expense) => sum + gstOnInclusive(expense.amountCents), 0);
+  const lastError = xero.live?.lastError ?? null;
+  return {
+    connected,
+    mockConnected: false,
+    organisationName: connected ? xero.organisationName : null,
+    lastSyncedAt: connected ? xero.lastSyncedAt : null,
+    gstRegistered: Boolean(studio.gstRegistered),
+    gstCollectedCents,
+    gstCreditsCents,
+    basEstimateCents: Math.max(0, gstCollectedCents - gstCreditsCents),
+    basis: "cash",
+    label: connected
+      ? `Xero connected · ${xero.organisationName ?? "organisation"}${lastError ? ` · last error: ${lastError}` : ""}`
+      : xero.live?.needsReconnect
+        ? "Xero needs reconnecting (Settings, Integrations)"
+        : "Xero not connected",
+  };
+}
+
+function liveXeroQueue(xero: IntegrationState["xero"]): ProCfoXeroQueueRow[] {
+  if (xero.status !== "connected") return [];
+  const lastError = xero.live?.lastError ?? undefined;
+  return invoices
+    .filter((invoice) => invoice.status !== "draft" && invoice.status !== "void" && !invoice.xeroSyncedAt)
+    .map((invoice) => ({
+      id: `xero-q-${invoice.id}`,
+      invoiceId: invoice.id,
+      number: invoice.number ?? "—",
+      familyName: familyName(invoice.familyId),
+      totalCents: invoice.totalCents,
+      status: (lastError ? "failed" : "pending") as ProCfoXeroQueueStatus,
+      ...(lastError ? { lastError } : {}),
+    }))
+    .sort((a, b) => a.number.localeCompare(b.number));
+}
+
+async function getLiveProCfoPack(today: string): Promise<ProCfoPack> {
+  const { start, end } = rollingWindow(today);
+  const proEnabled = proFeaturesEnabled();
+  const ytd = taxLiteFyBounds("ytd", today);
+  const stripe = await getTaxLiteStripeSummary("ytd");
+  const received = payments.filter(
+    (payment) =>
+      payment.amountCents > 0 &&
+      !payment.reversesPaymentId &&
+      inRange(payment.receivedOn, ytd.start, ytd.end),
+  );
+  // D6: every way families pay (bank, cash, Stripe). Fees are Stripe's actual fees only.
+  const grossCollectedCents = received.reduce(
+    (sum, payment) => sum + (payment.grossAmountCents ?? payment.amountCents),
+    0,
+  );
+  const netCashCents = grossCollectedCents - stripe.merchantFeesCents;
+  const taxLiteExpenseCents = taxLiteExpenses
+    .filter((expense) => !expense.passThroughStudentId && inRange(expense.date, ytd.start, ytd.end))
+    .reduce((sum, expense) => sum + expense.amountCents, 0);
+
+  const lookaheadEnd = addDays(today, UNEARNED_LOOKAHEAD_DAYS);
+  const [{ lessons, credits }, xero] = await Promise.all([
+    loadLiveLessonFacts(start, lookaheadEnd),
+    proEnabled
+      ? getLiveXeroStatus().catch(
+          () => ({ status: "not_connected", organisationName: null, lastSyncedAt: null }) as IntegrationState["xero"],
+        )
+      : Promise.resolve({ status: "not_connected", organisationName: null, lastSyncedAt: null } as IntegrationState["xero"]),
+  ]);
+
+  // D7: prices come from Settings, Lesson prices, matched on lesson length (as Bill next term).
+  let unpriced = 0;
+  const priceOf = (durationMin: number) => {
+    const cents = priceFor(lessonTypes, durationMin)?.priceCents ?? 0;
+    if (!cents) unpriced += 1;
+    return cents;
+  };
+  const studentIds = new Set(students.map((student) => student.id));
+
+  let earnedCents = 0;
+  let earnedLessonCount = 0;
+  for (const lesson of lessons) {
+    if (lesson.date > today || lesson.mark !== "attended") continue;
+    earnedLessonCount += 1;
+    earnedCents += priceOf(lesson.durationMin);
+  }
+
+  const prepaidFamilies = new Set(
+    invoices
+      .filter((invoice) => invoice.status !== "draft" && invoice.status !== "void")
+      .filter((invoice) =>
+        payments.some((payment) => payment.invoiceId === invoice.id && payment.amountCents > 0),
+      )
+      .map((invoice) => invoice.familyId),
+  );
+  const familyOf = new Map(students.map((student) => [student.id, student.familyId]));
+  let unearnedTuitionCents = 0;
+  let unearnedLessonCount = 0;
+  for (const lesson of lessons) {
+    if (lesson.date <= today || lesson.date > lookaheadEnd || isCancelled(lesson)) continue;
+    const familyId = familyOf.get(lesson.studentId);
+    if (!familyId || !prepaidFamilies.has(familyId)) continue;
+    unearnedLessonCount += 1;
+    unearnedTuitionCents += priceOf(lesson.durationMin);
+  }
+
+  // At risk (D10): missed lessons in the last 12 months and little or no student practice.
+  const quietSince = addDays(today, -QUIET_PRACTICE_DAYS + 1);
+  const missed = new Map<string, number>();
+  for (const lesson of lessons) {
+    if (lesson.date > today || lesson.date < start || !isMissed(lesson)) continue;
+    missed.set(lesson.studentId, (missed.get(lesson.studentId) ?? 0) + 1);
+  }
+  const atRisk: ProCfoAtRiskRow[] = [];
+  for (const student of students) {
+    const count = missed.get(student.id) ?? 0;
+    if (count < 1) continue;
+    const own = practiceLogs.filter(
+      (log) => log.studentId === student.id && log.loggedBy === "student" && log.date <= today,
+    );
+    const practiceMinutes = own
+      .filter((log) => inRange(log.date, start, end))
+      .reduce((sum, log) => sum + log.minutes, 0);
+    const lastPracticeDate = own.map((log) => log.date).sort().at(-1) ?? null;
+    const quiet = !lastPracticeDate || lastPracticeDate < quietSince;
+    const below = practiceMinutes < PRACTICE_THRESHOLD_MIN;
+    if (!quiet && !below) continue;
+    const reasons = [`${count} missed lesson${count === 1 ? "" : "s"}`];
+    if (quiet) reasons.push(`No practice in ${QUIET_PRACTICE_DAYS} days`);
+    if (below) reasons.push(`Below ${PRACTICE_THRESHOLD_MIN} min practice`);
+    atRisk.push({
+      studentId: student.id,
+      name: `${student.firstName} ${student.lastName}`,
+      familyId: student.familyId,
+      familyName: familyName(student.familyId),
+      missedLessons: count,
+      practiceMinutes,
+      lastPracticeDate,
+      reason: reasons.join(" · "),
+    });
+  }
+  atRisk.sort((a, b) => b.missedLessons - a.missedLessons || a.name.localeCompare(b.name));
+
+  // Make-up credits still to teach, priced at the student's latest lesson length.
+  const latestLength = new Map<string, number>();
+  for (const lesson of lessons) {
+    if (lesson.date <= today && lesson.durationMin > 0) latestLength.set(lesson.studentId, lesson.durationMin);
+  }
+  for (const lesson of lessons) {
+    if (!latestLength.has(lesson.studentId) && lesson.durationMin > 0)
+      latestLength.set(lesson.studentId, lesson.durationMin);
+  }
+  const open = new Map<string, number>();
+  for (const lot of creditLots(credits, today)) {
+    if (lot.state !== "available" || !studentIds.has(lot.studentId)) continue;
+    open.set(lot.studentId, (open.get(lot.studentId) ?? 0) + 1);
+  }
+  const makeupCredits: ProCfoMakeupRow[] = [];
+  for (const [studentId, balance] of open) {
+    const student = students.find((entry) => entry.id === studentId);
+    if (!student) continue;
+    const length = latestLength.get(studentId) ?? 0;
+    const unitCents = length ? priceFor(lessonTypes, length)?.priceCents ?? 0 : 0;
+    if (!unitCents) unpriced += balance;
+    makeupCredits.push({
+      studentId,
+      name: `${student.firstName} ${student.lastName}`,
+      familyName: familyName(student.familyId),
+      creditBalance: balance,
+      unitCents,
+      liabilityCents: balance * unitCents,
+    });
+  }
+  makeupCredits.sort((a, b) => b.liabilityCents - a.liabilityCents || a.name.localeCompare(b.name));
+
+  return {
+    asOf: today,
+    windowStart: start,
+    windowEnd: end,
+    proEnabled,
+    live: true,
+    unpricedLessonCount: unpriced,
+    missingFeeCount: stripe.missingFeeCount,
+    pulse: {
+      grossCollectedCents,
+      stripeFeesCents: stripe.merchantFeesCents,
+      netCashCents,
+      teacherPayoutCents: 0,
+      taxLiteExpenseCents,
+      studioMarginCents: netCashCents - taxLiteExpenseCents,
+      marginMode: "solo",
+      unearnedTuitionCents,
+      unearnedLessonCount,
+    },
+    xeroHealth: liveXeroHealth(xero),
+    revenueChurn: {
+      earnedCents,
+      collectedCents: buildCollected(start, end),
+      earnedLessonCount,
+      atRisk,
+      makeupCredits,
+      makeupLiabilityCents: makeupCredits.reduce((sum, row) => sum + row.liabilityCents, 0),
+    },
+    xeroQueue: proEnabled ? liveXeroQueue(xero) : [],
+    payouts: [],
+    overdue: buildOverdue(today),
+    gstRadar: buildGstRadar(start, end, !proEnabled),
+  };
 }

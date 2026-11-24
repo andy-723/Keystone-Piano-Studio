@@ -1,5 +1,4 @@
 import { Link } from "@tanstack/react-router";
-import { isLiveStudio } from "@/lib/studio-workspace";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import {
@@ -455,13 +454,9 @@ export function StudioSnapshotPanel({
         </Button>
       </footer>
 
-      {/* Tax Lite and Pro CFO still read demo figures, so real studios don't see them yet. */}
-      {!isLiveStudio() && (
-        <>
-          <TaxLitePanel fy={taxFy} onFyChange={onTaxFyChange} />
-          <ProCfoPanel />
-        </>
-      )}
+      {/* Tax Lite (all plans) then Pro CFO (Pro; Base sees the locked teaser). Real studios read their own data (0028). */}
+      <TaxLitePanel fy={taxFy} onFyChange={onTaxFyChange} />
+      <ProCfoPanel />
     </div>
   );
 }

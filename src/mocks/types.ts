@@ -66,6 +66,8 @@ export interface Studio {
   policies?: StudioLessonPolicies;
   services?: StudioServiceSwitches;
   additionalTerms?: string;
+  /** Owner's estimate of GST turnover for the next 12 months, in cents (Pro CFO, T-01). */
+  gstNext12mEstimateCents?: number | null;
   /** Pending billing values applied on next material version effectiveAt. */
   pendingBilling?: Partial<StudioBillingSettings> & { effectiveAt?: string };
 }
