@@ -15,6 +15,7 @@ import {
 } from "@/services/billing-profile";
 import { exportBillingCsv } from "@/services/billing";
 import { queryOptions } from "@tanstack/react-query";
+import { ensureRecentMfa, STEP_UP_CANCELLED } from "@/lib/step-up";
 
 const billingProfileQuery = (scope: IntegrationScope) =>
   queryOptions({
@@ -90,7 +91,11 @@ export function BillingSettings({ scope = "demo" }: { scope?: IntegrationScope }
   });
 
   const exporting = useMutation({
-    mutationFn: () => exportBillingCsv(),
+    mutationFn: async () => {
+      // Exports ask for the authenticator code again on a real sign-in (10-minute window).
+      await ensureRecentMfa();
+      return exportBillingCsv();
+    },
     onSuccess: (files) => {
       for (const [name, csv] of [
         ["family-invoices.csv", files.invoices],
@@ -107,7 +112,10 @@ export function BillingSettings({ scope = "demo" }: { scope?: IntegrationScope }
       }
       toast.success("CSV exported for your accountant");
     },
-    onError: () => toast.error("Export could not be prepared."),
+    onError: (error: Error) =>
+      toast.error(
+        error.message === STEP_UP_CANCELLED ? error.message : "Export could not be prepared.",
+      ),
   });
 
   return (

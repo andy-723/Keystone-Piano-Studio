@@ -24,6 +24,8 @@ import {
 import { signOutForSessionTimeout, signOutLocal } from "@/lib/sign-out";
 import { useOptionalAppSettings } from "@/lib/app-settings";
 import { SessionTimeout } from "@/components/SessionTimeout";
+import { StepUpDialog } from "@/components/auth/StepUpDialog";
+import { refreshDeviceTrust } from "@/lib/trust-device-client";
 import { StudioPausedScreen, StudioReadOnlyBanner } from "@/components/StudioAccessNotice";
 import { resolveAccountFn } from "@/server/account";
 import { QueryClientContext } from "@tanstack/react-query";
@@ -32,6 +34,8 @@ import { markWorkspaceLoaded, resetStudioWorkspaceForTests } from "@/lib/studio-
 
 /** Set once this tab has decided between demo data and the signed-in studio's own data. */
 let workspaceReady = false;
+/** Asked the server once per page load whether this browser is trusted (30-day sign-in). */
+let trustCheckedFor: string | null = null;
 
 type GuardState = "checking" | "ok" | "unavailable" | "studio_error";
 
@@ -39,6 +43,7 @@ export function resetLiveAuthGuardForTests() {
   resetLiveAuthCacheForTests();
   resetSessionTimeoutForTests();
   workspaceReady = false;
+  trustCheckedFor = null;
   resetStudioWorkspaceForTests();
 }
 
@@ -112,6 +117,12 @@ export function LiveAuthGuard({ children }: { children: ReactNode }) {
         clearVerifiedAccess();
         window.location.replace(signedOutRedirect(pathname, search || ""));
         return;
+      }
+      // Trusted browser? The server decides (cookie + record); this sets which limits apply.
+      if (trustCheckedFor !== (session.user?.id ?? "")) {
+        trustCheckedFor = session.user?.id ?? "";
+        await refreshDeviceTrust(session.access_token);
+        if (cancelled) return;
       }
       // Idle / absolute lifetime applies to every account, including the demo account.
       if (isSessionTimedOut()) {
@@ -236,6 +247,7 @@ export function LiveAuthGuard({ children }: { children: ReactNode }) {
     return (
       <>
         <SessionTimeout />
+        <StepUpDialog />
         <StudioPausedScreen ownerStudioId={accessGate.ownerStudioId} ended={accessGate.ended} />
       </>
     );
@@ -244,6 +256,7 @@ export function LiveAuthGuard({ children }: { children: ReactNode }) {
     return (
       <>
         <SessionTimeout />
+        <StepUpDialog />
         <StudioReadOnlyBanner studioId={accessGate.studioId} />
         {children}
       </>
@@ -252,6 +265,7 @@ export function LiveAuthGuard({ children }: { children: ReactNode }) {
   return (
     <>
       <SessionTimeout />
+      <StepUpDialog />
       {children}
     </>
   );

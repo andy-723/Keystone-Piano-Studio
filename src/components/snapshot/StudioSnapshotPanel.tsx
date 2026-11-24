@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { downloadCsv } from "@/lib/csv-download";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import {
@@ -124,16 +125,6 @@ function drillCount(snapshot: StudioSnapshot, id: SnapshotTileId): number {
     case "lessons":
       return snapshot.lessons.rows.length;
   }
-}
-
-function downloadCsv(filename: string, csv: string) {
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = filename;
-  anchor.click();
-  URL.revokeObjectURL(url);
 }
 
 const LESSON_LABEL: Record<string, string> = {
@@ -281,7 +272,7 @@ export function StudioSnapshotPanel({
             disabled={count === 0}
             onClick={() => {
               const file = snapshotDrillCsv(drill, data);
-              downloadCsv(file.filename, file.csv);
+              void downloadCsv(file.filename, file.csv);
               toast.success("CSV exported");
             }}
           >
@@ -445,7 +436,7 @@ export function StudioSnapshotPanel({
           disabled={count === 0}
           onClick={() => {
             const file = snapshotDrillCsv(drill, data);
-            downloadCsv(file.filename, file.csv);
+            void downloadCsv(file.filename, file.csv);
             toast.success("CSV exported");
           }}
         >

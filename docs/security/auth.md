@@ -46,25 +46,62 @@ A platform admin can reset another user’s TOTP from `/admin` → Team (type th
 
 ## Sessions
 
-Follow Supabase defaults for access / refresh tokens. **Recommended inactivity timeout for Andrew to set in the dashboard:** 7–14 days refresh token reuse / inactivity (studio staff leave devices signed in between lessons; shorter than consumer apps is fine). Leave the actual dashboard toggle to Andrew — document the choice here when set.
+Supabase keeps the session (access token about 1 hour, refresh token rotated). The app sets the
+lifetime in the browser and, for trusted devices, on the server.
 
 ### App-level session timeout (all accounts)
 
-The browser also enforces shorter lifetimes so a restored Supabase session (or the
-demo/prototype path) cannot stay signed in indefinitely. Applies equally to real
-accounts and the demo account — no keep-alive exception.
-
-| Timer | Default | Behaviour |
+| Browser | Idle | Absolute |
 | --- | --- | --- |
-| Idle | **30 minutes** without clicks, keypresses or navigation | Signs out |
-| Absolute | **8 hours** from sign-in | Signs out even if the person stays active |
+| Not trusted (default, shared computers) | **30 minutes** without clicks, keypresses or navigation | **8 hours** from sign-in |
+| Trusted ("Trust this device for 30 days") | **7 days** without use | until the trust ends, **30 days** from when it was trusted |
 
-Implementation: `src/lib/session-timeout.ts`, watched by `SessionTimeout` inside
-`LiveAuthGuard`. On timeout the app calls `signOut({ scope: "local" })`, clears the
-verified-access cache and session markers, and redirects to `/login` or `/welcome`
-with `?reason=session_timeout` (no silent re-auth from leftover storage).
+Implementation: `src/lib/session-timeout.ts` (`sessionLimits()`), watched by `SessionTimeout`
+inside `LiveAuthGuard`. On timeout the app calls `signOut({ scope: "local" })`, clears the
+verified-access cache and session markers, and redirects to `/login` or `/welcome` with
+`?reason=session_timeout`. Applies equally to real accounts and the demo account.
 
-Sign-out (live mode) uses `signOut({ scope: "local" })` and returns to `/login`.
+### Trusted devices (0029, Andrew 24 Nov 2026)
+
+- Tick box (unticked by default) on `/login`, the email-link Continue screen (`/auth/callback`)
+  and the code screen (`/auth/mfa`); `TrustDeviceCheckbox`, choice in `src/lib/trust-device-client.ts`.
+  When sign-in finishes (code entered for staff; at once for families with no code) the app calls
+  `trustThisDeviceFn`.
+- Server (`src/server/trusted-device.ts`, service role only): a random 32-byte token goes in the
+  `kmhq_trusted_device` cookie (httpOnly, Secure, SameSite=Lax, 30 days); `trusted_device` stores
+  only its SHA-256 hash, the user id, a short label ("Chrome on Mac"), last seen and expiry.
+  Staff (platform staff or studio members) can only trust a browser from an aal2 session.
+- `LiveAuthGuard` asks the server once per page load (`checkThisDeviceFn`): trusted means the row
+  is this user's, not revoked, not expired and seen in the last 7 days. The answer sets which
+  limits the browser timer uses. A dead cookie is cleared; another person's cookie is left alone.
+- Trust keeps the existing Supabase session alive. It does not skip the code on a brand-new
+  sign-in: aal2 comes only from Supabase after the TOTP code.
+- Ends trust: Sign out (that browser), "Sign out other devices" in Settings / family Help (every
+  other browser, plus `signOut({ scope: "others" })` for every other Supabase session), revoke
+  access (staff, owner, parent), removal from the platform team, MFA reset (every browser).
+  Rules are pure in `src/lib/trusted-device.ts`.
+
+### Re-asking for the code on sensitive actions (step-up)
+
+The JWT `amr` "totp" timestamp says when the code was last entered in this session. Sensitive
+server actions call `requireRecentMfa(session)` (`src/server/authz.ts`), which needs that to be
+within **10 minutes**, trusted device or not, or throws 403 `mfa_step_up_required`:
+Stripe link/unlink, Xero connect/disconnect, revoke/restore staff, owner or parent access, remove
+platform staff, MFA reset. In the browser `ensureRecentMfa()` / `sensitiveAccessToken()`
+(`src/lib/step-up.ts`) open `StepUpDialog` first and re-verify with `mfa.challengeAndVerify`,
+which refreshes the timestamp. CSV exports (billing, Snapshot, Tax Lite, Pro CFO) use the same
+prompt in the browser only (the data is already on screen). Bank details keep their own code box.
+
+### Supabase dashboard (Andrew)
+
+Authentication → Sessions (time-box and inactivity timeout are Pro-plan settings):
+- **Time-box user sessions: 30 days** (720 hours) — a hard server-side end for every session,
+  matching the longest trusted device. Never shorter than 30 days or trusted devices stop early.
+- **Inactivity timeout: 7 days** (168 hours) — server-side backstop for the 7-day idle rule.
+- **Single session per user: off** (people use a phone and a laptop).
+- Leave refresh token rotation on, and the reuse interval at the default 10 seconds.
+- JWT expiry (Settings → JWT): leave at 3600 seconds.
+If those settings aren't available on the current plan, the app-level rules above still apply.
 
 ## No-account behaviour
 

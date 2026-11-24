@@ -42,3 +42,16 @@ export function mfaRequired(detail = "Two-step sign-in is required.") {
     "mfa_required",
   );
 }
+
+/** A sensitive action needs the authenticator code entered in the last 10 minutes. */
+export function stepUpRequired(
+  detail = "For your security, enter your authenticator code again to do this.",
+) {
+  return new ProblemError(
+    403,
+    "Code needed",
+    detail,
+    "https://keystone.music/problems/mfa-step-up-required",
+    "mfa_step_up_required",
+  );
+}

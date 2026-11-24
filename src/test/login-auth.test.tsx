@@ -86,13 +86,27 @@ describe("login page (mock mode)", () => {
     expect(screen.getAllByText(/Demo mode/i).length).toBeGreaterThan(0);
   });
 
+  it("offers 'Trust this device for 30 days', unticked, and remembers the choice", async () => {
+    const { isTrustRequested, setTrustRequested } = await import("@/lib/trust-device-client");
+    setTrustRequested(false);
+    renderLoginCard();
+    await screen.findByText("Welcome back");
+    const box = screen.getByRole("checkbox", {
+      name: /Trust this device for 30 days/i,
+    }) as HTMLInputElement;
+    expect(box.checked).toBe(false);
+    fireEvent.click(box);
+    expect(isTrustRequested()).toBe(true);
+    setTrustRequested(false);
+  });
+
   it("shows Check your inbox for any email", async () => {
     renderLoginCard();
     await screen.findByText("Welcome back");
     fireEvent.change(screen.getByLabelText(/Email address/i), {
       target: { value: "anyone@example.com" },
     });
-    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("checkbox", { name: /Security check/i }));
     fireEvent.click(screen.getByRole("button", { name: /Continue with email/i }));
     await waitFor(() => expect(screen.getByTestId("login-check-inbox")).toBeTruthy());
     expect(screen.getByText(/Check your inbox/i)).toBeTruthy();
@@ -150,7 +164,10 @@ describe("route guard helpers", () => {
 describe("live auth verified-access cache", () => {
   it("survives a memory clear via sessionStorage for the same token", () => {
     rememberVerifiedAccess("tok-admin", { kind: "ok" }, "teacher");
-    expect(getVerifiedAccess("tok-admin")).toEqual({ access: { kind: "ok" }, shellRole: "teacher" });
+    expect(getVerifiedAccess("tok-admin")).toEqual({
+      access: { kind: "ok" },
+      shellRole: "teacher",
+    });
     clearVerifiedAccess();
     expect(getVerifiedAccess("tok-admin")).toBeUndefined();
     rememberVerifiedAccess("tok-admin", { kind: "ok" }, "teacher");
@@ -162,7 +179,10 @@ describe("live auth verified-access cache", () => {
       JSON.stringify({ token: "tok-admin", gate: { kind: "ok" }, shellRole: "teacher" }),
     );
     expect(getVerifiedAccess("tok-other")).toBeUndefined();
-    expect(getVerifiedAccess("tok-admin")).toEqual({ access: { kind: "ok" }, shellRole: "teacher" });
+    expect(getVerifiedAccess("tok-admin")).toEqual({
+      access: { kind: "ok" },
+      shellRole: "teacher",
+    });
   });
 
   it("sends platform staff to /admin by default", () => {

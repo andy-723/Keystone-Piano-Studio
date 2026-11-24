@@ -1,10 +1,7 @@
 import { getAuthClient } from "@/lib/auth-client";
 import { clearVerifiedAccess } from "@/lib/live-auth-cache";
 import { signedOutRedirect } from "@/lib/auth-paths";
-import {
-  clearSessionTimeoutState,
-  markSessionLoginRequired,
-} from "@/lib/session-timeout";
+import { clearSessionTimeoutState, markSessionLoginRequired } from "@/lib/session-timeout";
 
 export type SignOutOptions = {
   /** Where to send the browser after clearing local auth. Defaults to staying put when omitted. */
@@ -14,6 +11,8 @@ export type SignOutOptions = {
    * /login or /demo again instead of silently reopening the app.
    */
   requireLoginAgain?: boolean;
+  /** Leave this browser trusted (only for internal re-checks; Sign out never sets this). */
+  keepDeviceTrust?: boolean;
 };
 
 /**
@@ -26,6 +25,16 @@ export async function signOutLocal(options: SignOutOptions = {}) {
   clearVerifiedAccess();
   if (requireLoginAgain) markSessionLoginRequired();
   const client = getAuthClient();
+  // Signing out also stops trusting this browser (server record + cookie).
+  if (options.keepDeviceTrust !== true && client?.auth.getSession) {
+    try {
+      const { data } = await client.auth.getSession();
+      const { forgetThisDevice } = await import("@/lib/trust-device-client");
+      await forgetThisDevice(data.session?.access_token);
+    } catch {
+      // Never block sign-out.
+    }
+  }
   try {
     await client?.auth.signOut({ scope: "local" });
   } catch {

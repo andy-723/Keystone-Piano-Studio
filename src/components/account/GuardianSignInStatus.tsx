@@ -1,3 +1,4 @@
+import { sensitiveAccessToken } from "@/lib/step-up";
 import { useQueryClient } from "@tanstack/react-query";
 import { liveStudioId } from "@/lib/studio-workspace";
 import { accessToken, type useGuardianAccounts } from "@/lib/guardian-accounts";
@@ -34,7 +35,13 @@ export function GuardianSignInStatus({
           revoked={status.state === "revoked"}
           onChange={async (revoke) =>
             setGuardianAccessFn({
-              data: { accessToken: await accessToken(), studioId, guardianId, revoke },
+              data: {
+                // Revoking needs the authenticator code from the last 10 minutes.
+                accessToken: revoke ? await sensitiveAccessToken() : await accessToken(),
+                studioId,
+                guardianId,
+                revoke,
+              },
             })
           }
           onDone={() => void queryClient.invalidateQueries({ queryKey: ["guardian-accounts"] })}

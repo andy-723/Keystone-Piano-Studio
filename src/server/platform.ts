@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getServerEnv, isMockOnboarding } from "./env";
-import { requirePlatformAdmin } from "./authz";
+import { requirePlatformAdmin, requireRecentMfa } from "./authz";
+import { revokeAllTrustedDevices } from "./trusted-device";
 import { verifyAccessToken } from "./session";
 import { createServiceSupabase } from "./supabase";
 import { writePlatformAudit } from "./account";
@@ -405,6 +406,7 @@ export const removePlatformStaffFn = createServerFn({ method: "POST" })
     if (isMockOnboarding())
       throw new ProblemError(400, "Mock mode", "Admin console needs live mode.");
     const session = await gateAdmin(data.accessToken, data.ip);
+    requireRecentMfa(session);
     if (data.targetUserId === session.userId) {
       throw forbidden("You cannot remove yourself.");
     }
@@ -430,6 +432,7 @@ export const removePlatformStaffFn = createServerFn({ method: "POST" })
       .delete()
       .eq("user_id", data.targetUserId);
     if (error) throw new ProblemError(500, "Staff remove failed", error.message);
+    await revokeAllTrustedDevices(data.targetUserId);
     await writePlatformAudit({
       actorUserId: session.userId,
       event: "staff_removed",
@@ -454,6 +457,7 @@ export const resetMfaFn = createServerFn({ method: "POST" })
     if (isMockOnboarding())
       throw new ProblemError(400, "Mock mode", "Admin console needs live mode.");
     const session = await gateAdmin(data.accessToken, data.ip);
+    requireRecentMfa(session);
     // Service-key MFA factor delete — guarded by requirePlatformAdmin.
     const supabase = createServiceSupabase();
     const { data: userData, error: userError } = await supabase.auth.admin.getUserById(
@@ -475,6 +479,7 @@ export const resetMfaFn = createServerFn({ method: "POST" })
       });
     }
     await supabase.auth.admin.signOut(data.targetUserId, "global");
+    await revokeAllTrustedDevices(data.targetUserId);
     await writePlatformAudit({
       actorUserId: session.userId,
       event: "mfa_reset",

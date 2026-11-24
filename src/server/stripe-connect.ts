@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { forbidden, ProblemError, requireStudioRole } from "./authz";
+import { forbidden, ProblemError, requireRecentMfa, requireStudioRole } from "./authz";
 import { getServerEnv, isMockOnboarding, isStripeConnectConfigured } from "./env";
 import { verifyAccessToken } from "./session";
 import { stripeGet, stripePost, type StripeEvent } from "./stripe";
@@ -335,6 +335,8 @@ export async function startStripeOnboarding(input: StudioRequest): Promise<{ url
   requireConfigured();
   const session = await verifyAccessToken(input.accessToken);
   await requireStudioRole(session.userId, input.studioId, ["owner"], { aal: session.aal });
+  // Linking a bank account: ask for the code again if it's older than 10 minutes.
+  requireRecentMfa(session);
   const env = getServerEnv();
   const store = getConnectStore();
   let row = await store.get(input.studioId);
@@ -392,6 +394,7 @@ export async function startStripeOnboarding(input: StudioRequest): Promise<{ url
 export async function disconnectStripeConnect(input: StudioRequest): Promise<ConnectStatus> {
   const session = await verifyAccessToken(input.accessToken);
   await requireStudioRole(session.userId, input.studioId, ["owner"], { aal: session.aal });
+  requireRecentMfa(session);
   const store = getConnectStore();
   const row = await store.get(input.studioId);
   if (row && !row.disconnectedAt) {

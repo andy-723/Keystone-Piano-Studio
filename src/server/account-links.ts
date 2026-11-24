@@ -6,7 +6,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getServerEnv, isMockOnboarding } from "./env";
-import { requirePlatformAdmin, requireStudioRole } from "./authz";
+import { requirePlatformAdmin, requireRecentMfa, requireStudioRole } from "./authz";
+import { revokeAllTrustedDevices } from "./trusted-device";
 import { verifyAccessToken } from "./session";
 import { createServiceSupabase } from "./supabase";
 import { writeAuthAudit, writePlatformAudit } from "./account";
@@ -188,6 +189,13 @@ export async function sendSignInLink(
     tags: [{ name: "kind", value: `sign_in_link_${input.audience}` }],
   });
   return { emailMasked: maskEmail(email) };
+}
+
+/** Revoke/restore also need the authenticator code from the last 10 minutes. */
+async function gateAdminSensitive(accessToken: string, ip?: string) {
+  const session = await gateAdmin(accessToken, ip);
+  requireRecentMfa(session);
+  return session;
 }
 
 async function gateAdmin(accessToken: string, ip?: string) {
@@ -428,7 +436,7 @@ export const setStaffAccessFn = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     if (isMockOnboarding())
       throw new ProblemError(400, "Mock mode", "Admin console needs live mode.");
-    const session = await gateAdmin(data.accessToken, data.ip);
+    const session = await gateAdminSensitive(data.accessToken, data.ip);
     if (data.revoke && data.targetUserId === session.userId) {
       throw new ProblemError(403, "Not allowed", "You can't revoke your own access.");
     }
@@ -442,6 +450,7 @@ export const setStaffAccessFn = createServerFn({ method: "POST" })
     if (error) throw new ProblemError(500, "Staff lookup failed", error.message);
     if (!row) throw new ProblemError(404, "Not team staff", "That person isn't on the team.");
     await setBanned(supabase, data.targetUserId, data.revoke);
+    if (data.revoke) await revokeAllTrustedDevices(data.targetUserId);
     await writePlatformAudit({
       actorUserId: session.userId,
       event: data.revoke ? "access_revoked" : "access_restored",
@@ -460,7 +469,7 @@ export const setOwnerAccessFn = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     if (isMockOnboarding())
       throw new ProblemError(400, "Mock mode", "Admin console needs live mode.");
-    const session = await gateAdmin(data.accessToken, data.ip);
+    const session = await gateAdminSensitive(data.accessToken, data.ip);
     // Service-key reads and auth admin calls below — guarded by requirePlatformAdmin.
     const supabase = createServiceSupabase();
     const { data: studio, error } = await supabase
@@ -476,6 +485,7 @@ export const setOwnerAccessFn = createServerFn({ method: "POST" })
       throw new ProblemError(403, "Not allowed", "You can't revoke your own access.");
     }
     await setBanned(supabase, ownerId, data.revoke);
+    if (data.revoke) await revokeAllTrustedDevices(ownerId);
     await writePlatformAudit({
       actorUserId: session.userId,
       event: data.revoke ? "access_revoked" : "access_restored",
@@ -502,6 +512,7 @@ export const setGuardianAccessFn = createServerFn({ method: "POST" })
     await requireStudioRole(session.userId, data.studioId, ["owner", "admin"], {
       aal: session.aal,
     });
+    if (data.revoke) requireRecentMfa(session);
     // Service-key reads and writes below — guarded by requireStudioRole and the check that the
     // guardian's family belongs to this studio.
     const supabase = createServiceSupabase();
@@ -526,6 +537,8 @@ export const setGuardianAccessFn = createServerFn({ method: "POST" })
         })
         .eq("id", guardian.id);
       if (error) throw new ProblemError(500, "Revoke failed", error.message);
+      // Their browsers stop being trusted too (they keep any other studio, after signing in).
+      await revokeAllTrustedDevices(guardian.user_id);
     } else {
       if (!guardian.revoked_user_id) {
         throw new ProblemError(409, "Not revoked", "This parent's access isn't revoked.");
