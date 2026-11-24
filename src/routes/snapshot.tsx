@@ -71,7 +71,7 @@ function SnapshotPage() {
           Teachers stay on Today for the day-book and their roll.
         </p>
         <p className="mt-6">
-          <Link to="/" className="font-semibold text-[#604A19] underline-offset-2 hover:underline">
+          <Link to="/today" className="font-semibold text-[#604A19] underline-offset-2 hover:underline">
             Back to Today
           </Link>
         </p>

@@ -18,7 +18,7 @@ const lessonQuery = (id: string) => queryOptions({ queryKey: ["live-lesson", id]
 export const Route = createFileRoute("/lessons/$lessonId")({
   loader: async ({ context, params }) => { if (!await context.queryClient.ensureQueryData(lessonQuery(params.lessonId))) throw notFound(); },
   errorComponent: () => <p role="alert">This lesson could not be opened. Please refresh to try again.</p>,
-  notFoundComponent: () => <div><h1 className="text-3xl">Lesson not found</h1><Button asChild className="mt-4"><Link to="/">Back to Today</Link></Button></div>,
+  notFoundComponent: () => <div><h1 className="text-3xl">Lesson not found</h1><Button asChild className="mt-4"><Link to="/today">Back to Today</Link></Button></div>,
   head: () => ({ meta: [
     { title: "Live Lesson — Keystone Music HQ" }, { name: "description", content: "Record piano lesson progress, practice and notes, and send a summary to the family." },
     { property: "og:title", content: "Live Lesson — Keystone Music HQ" }, { property: "og:description", content: "Piano lesson progress, practice and family summaries." },
@@ -65,7 +65,7 @@ function LessonSession({ data }: { data: NonNullable<Awaited<ReturnType<typeof g
   const conversationId = sent?.conversationId ?? data.draft.conversationId;
 
   return <div className="mx-auto max-w-5xl">
-    <Button variant="ghost" asChild><Link to="/" search={{ date }}><ArrowLeft aria-hidden /> Back to day-book</Link></Button>
+    <Button variant="ghost" asChild><Link to="/today" search={{ date }}><ArrowLeft aria-hidden /> Back to day-book</Link></Button>
     <header className="mt-5 flex flex-wrap items-center justify-between gap-6 border-b border-border pb-6">
       <div><p className="text-base font-semibold text-muted-foreground">Live Lesson · {formatShortDate(date)} · {formatTime(lesson.startsAt)}</p>
         <h1 className="mt-2 text-4xl font-semibold">{lesson.student.firstName} {lesson.student.lastName}</h1>

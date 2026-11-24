@@ -43,19 +43,19 @@ export function LiveToday({ date }: { date?: string | undefined }) {
       </Suspense>
       <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-2 sm:flex sm:flex-wrap sm:justify-between sm:gap-3">
         <Button variant="outline" className="px-2 sm:px-3 md:px-5" asChild>
-          <Link to="/" search={{ date: addDays(day, -1) }}>
+          <Link to="/today" search={{ date: addDays(day, -1) }}>
             <ChevronLeft aria-hidden /> Previous day
           </Link>
         </Button>
         {day !== today && (
           <Button variant="ghost" className="col-span-2 row-start-2 sm:order-none" asChild>
-            <Link to="/" search={{}}>
+            <Link to="/today" search={{}}>
               Back to today
             </Link>
           </Button>
         )}
         <Button variant="outline" className="col-start-2 row-start-1 px-2 sm:px-3 md:px-5" asChild>
-          <Link to="/" search={{ date: addDays(day, 1) }}>
+          <Link to="/today" search={{ date: addDays(day, 1) }}>
             Next day <ChevronRight aria-hidden />
           </Link>
         </Button>

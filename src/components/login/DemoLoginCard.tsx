@@ -84,7 +84,7 @@ export function DemoLoginCard({ siteKey = "" }: { siteKey?: string }) {
       return;
     }
     markSessionStarted();
-    window.location.replace("/");
+    window.location.replace("/today");
   }
 
   return (

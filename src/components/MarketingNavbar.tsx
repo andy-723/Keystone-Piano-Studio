@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { HomeLogoLink } from "@/components/HomeLogoLink";
+import { HomeLogoLink, SignInOrStudioLink } from "@/components/HomeLogoLink";
 import { SiteLanguageSwitcher } from "@/components/SiteLanguageSwitcher";
 import { Menu, MenuItem, MenuLink } from "@/components/ui/navbar-menu";
 import logo from "@/assets/brand/keystone-lockup-horizontal-40@3x.png";
@@ -24,9 +24,13 @@ function NavUtilities({ className }: { className: string }) {
         variant="ghost"
         className="min-h-10 rounded-full px-4 text-base text-mk-ink hover:bg-mk-cream"
       >
-        <a href="/login">
-          Sign in <ArrowUpRight aria-hidden className="size-4" />
-        </a>
+        <SignInOrStudioLink
+          signInLabel={
+            <>
+              Sign in <ArrowUpRight aria-hidden className="size-4" />
+            </>
+          }
+        />
       </Button>
     </div>
   );
