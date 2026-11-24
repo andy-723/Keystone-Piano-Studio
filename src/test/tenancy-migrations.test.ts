@@ -16,6 +16,8 @@ const STUDIO_ID_ALLOWLIST: Record<string, string> = {
   platform_audit: "platform-wide append-only audit — studio id optional on some events",
   notification_preference:
     "a person's own email switches (0018), across all their studios; RLS is user_id = auth.uid()",
+  trusted_device:
+    "a person's own trusted browsers (0029), across all their studios; service role only, no policies",
 };
 
 function sqlFiles() {

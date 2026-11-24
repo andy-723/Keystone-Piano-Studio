@@ -1,5 +1,6 @@
 import { createServiceSupabase } from "./supabase";
-import { forbidden, mfaRequired, ProblemError } from "./problem";
+import { forbidden, mfaRequired, ProblemError, stepUpRequired } from "./problem";
+import { stepUpNeeded } from "@/lib/trusted-device";
 import { isMockOnboarding } from "./env";
 import { getStudioAccess } from "./subscription-store";
 import { canRead, canWrite } from "@/lib/subscription";
@@ -130,4 +131,17 @@ export async function requirePlatformAdmin(
   return { role: "platform_admin", displayName: data.display_name as string };
 }
 
-export { ProblemError, forbidden, mfaRequired };
+/**
+ * Sensitive actions (Stripe/Xero link or unlink, revoke access, remove staff, MFA reset): the
+ * authenticator code must have been entered in the last 10 minutes, even on a trusted device.
+ * Live callers pass the verified session; mock mode without a time skips the check.
+ */
+export function requireRecentMfa(
+  session: { mfaVerifiedAt?: number | null } | null | undefined,
+  now = Date.now(),
+) {
+  if (isMockOnboarding() && (!session || !("mfaVerifiedAt" in session))) return;
+  if (stepUpNeeded(session?.mfaVerifiedAt ?? null, now)) throw stepUpRequired();
+}
+
+export { ProblemError, forbidden, mfaRequired, stepUpRequired };

@@ -1,4 +1,5 @@
 import { Suspense, useEffect, useState } from "react";
+import { TrustedDevicesCard } from "@/components/auth/TrustedDevicesCard";
 import { isLiveStudio } from "@/lib/studio-workspace";
 import { familyPortalState } from "@/services/live/family-store";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
@@ -128,6 +129,7 @@ function ParentViews() {
             </Button>
           </div>
         )}
+        {view === "help" && <TrustedDevicesCard variant="card" />}
         {!deferReaccept && (
           <Suspense fallback={null}>
             <ReacceptanceCard

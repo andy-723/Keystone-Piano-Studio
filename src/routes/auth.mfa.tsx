@@ -7,6 +7,8 @@ import { rememberVerifiedAccess } from "@/lib/live-auth-cache";
 import { decideStudioAccessGate,
   shellRoleForAccount, destinationForAccount } from "@/lib/post-login";
 import { markSessionStarted } from "@/lib/session-timeout";
+import { applyTrustChoice } from "@/lib/trust-device-client";
+import { TrustDeviceCheckbox } from "@/components/auth/TrustDeviceCheckbox";
 import { resolveAccountFn } from "@/server/account";
 
 export const Route = createFileRoute("/auth/mfa")({
@@ -67,6 +69,7 @@ function MfaChallengePage() {
     // aal2 session is verified — seed the guard cache so /admin (or studio) skips a second round-trip.
     rememberVerifiedAccess(token, decideStudioAccessGate(account), shellRoleForAccount(account));
     markSessionStarted();
+    await applyTrustChoice(token);
     window.location.replace(destinationForAccount(account, safeNextPath(next)));
   }
 
@@ -86,6 +89,7 @@ function MfaChallengePage() {
             error={error}
           />
         </div>
+        <TrustDeviceCheckbox className="mt-5" />
         <p className="mt-6 text-sm text-[#5A4F43]">
           <Link
             to="/auth/mfa-recovery"

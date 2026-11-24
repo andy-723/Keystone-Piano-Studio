@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { downloadCsv } from "@/lib/csv-download";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import {
   Download,
@@ -28,16 +29,6 @@ import {
   teacherRemittanceCsv,
   type ProCfoPack,
 } from "@/services/pro-cfo";
-
-function downloadCsv(filename: string, csv: string) {
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = filename;
-  anchor.click();
-  URL.revokeObjectURL(url);
-}
 
 const panel =
   "rounded-[2px] border border-[#D9C79E] bg-[#FBF7EE] px-4 py-5 md:px-6 md:py-6";
@@ -437,7 +428,7 @@ function ProCfoDetail() {
               className="border-[#CDBF9F]"
               onClick={() => {
                 const file = teacherRemittanceCsv(pack);
-                downloadCsv(file.filename, file.csv);
+                void downloadCsv(file.filename, file.csv);
                 toast.success("Remittance CSV exported");
               }}
             >

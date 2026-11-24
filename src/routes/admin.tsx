@@ -3,6 +3,7 @@ import { Fragment, useEffect, useState } from "react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { AppLanguageSwitcher } from "@/components/AppLanguageSwitcher";
 import { getAuthClient, isLiveAuthConfigured } from "@/lib/auth-client";
+import { sensitiveAccessToken } from "@/lib/step-up";
 import { signOutLocal } from "@/lib/sign-out";
 import {
   AU_TIMEZONES,
@@ -208,9 +209,13 @@ function StudiosTab({ token, onError }: { token: string; onError: (m: string | n
                       {row.ownerAccount.state !== "no_account" && (
                         <AccessToggleButton
                           revoked={row.ownerAccount.state === "revoked"}
-                          onChange={(revoke) =>
+                          onChange={async (revoke) =>
                             setOwnerAccessFn({
-                              data: { accessToken: token, studioId: row.id, revoke },
+                              data: {
+                                accessToken: await sensitiveAccessToken(),
+                                studioId: row.id,
+                                revoke,
+                              },
                             })
                           }
                           onDone={() => setVersion((v) => v + 1)}
@@ -616,9 +621,13 @@ function TeamTab({ token, onError }: { token: string; onError: (m: string | null
                     )}
                     <AccessToggleButton
                       revoked={row.account?.state === "revoked"}
-                      onChange={(revoke) =>
+                      onChange={async (revoke) =>
                         setStaffAccessFn({
-                          data: { accessToken: token, targetUserId: row.userId, revoke },
+                          data: {
+                            accessToken: await sensitiveAccessToken(),
+                            targetUserId: row.userId,
+                            revoke,
+                          },
                         })
                       }
                       onDone={() =>
@@ -631,9 +640,12 @@ function TeamTab({ token, onError }: { token: string; onError: (m: string | null
                       type="button"
                       className="ks-btn ks-btn-link"
                       onClick={() =>
-                        void removePlatformStaffFn({
-                          data: { accessToken: token, targetUserId: row.userId },
-                        })
+                        void sensitiveAccessToken()
+                          .then((fresh) =>
+                            removePlatformStaffFn({
+                              data: { accessToken: fresh, targetUserId: row.userId },
+                            }),
+                          )
                           .then(() => reload())
                           .catch((e) => onError(e instanceof Error ? e.message : "Remove failed"))
                       }
@@ -696,13 +708,16 @@ function TeamTab({ token, onError }: { token: string; onError: (m: string | null
         className="max-w-lg space-y-3 rounded-[16px] border border-[#D9C79E] bg-[#FBF7EE] p-6"
         onSubmit={(e) => {
           e.preventDefault();
-          void resetMfaFn({
-            data: {
-              accessToken: token,
-              targetUserId: resetUserId,
-              confirmEmail,
-            },
-          })
+          void sensitiveAccessToken()
+            .then((fresh) =>
+              resetMfaFn({
+                data: {
+                  accessToken: fresh,
+                  targetUserId: resetUserId,
+                  confirmEmail,
+                },
+              }),
+            )
             .then(() => {
               setResetUserId("");
               setConfirmEmail("");

@@ -1,6 +1,6 @@
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import { createServerFn } from "@tanstack/react-start";
-import { ProblemError, requireStudioRole } from "./authz";
+import { ProblemError, requireRecentMfa, requireStudioRole } from "./authz";
 import { getServerEnv } from "./env";
 import { verifyAccessToken } from "./session";
 import { getStudioAccess } from "./subscription-store";
@@ -429,6 +429,7 @@ export async function startXeroConnect(input: StudioRequest): Promise<{ url: str
   }
   const session = await verifyAccessToken(input.accessToken);
   await requireStudioRole(session.userId, input.studioId, ["owner"], { aal: session.aal });
+  requireRecentMfa(session);
   if ((await studioPlan(input.studioId)) !== "pro") {
     throw new ProblemError(402, "Pro plan needed", "Xero sync is part of Pro.");
   }
@@ -525,6 +526,7 @@ export async function saveXeroSettings(
 export async function disconnectXero(input: StudioRequest): Promise<XeroStatus> {
   const session = await verifyAccessToken(input.accessToken);
   await requireStudioRole(session.userId, input.studioId, ["owner"], { aal: session.aal });
+  requireRecentMfa(session);
   const connection = await getConnection(input.studioId);
   if (connection) {
     // Tell Xero too, so the connection stops counting against Keystone's limit.

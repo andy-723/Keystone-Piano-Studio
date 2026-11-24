@@ -19,7 +19,12 @@ import { isLiveStudio, liveStudioId } from "@/lib/studio-workspace";
  */
 const isLive = (scope: IntegrationScope) => scope === "demo" && isLiveStudio();
 
-async function liveRequest() {
+async function liveRequest(options: { sensitive?: boolean } = {}) {
+  // Linking or unlinking payments/accounting asks for the authenticator code again (10 minutes).
+  if (options.sensitive) {
+    const { ensureRecentMfa } = await import("@/lib/step-up");
+    await ensureRecentMfa();
+  }
   const studioId = liveStudioId();
   if (!studioId) throw new Error("Studio not loaded. Reload and try again.");
   const { getAuthClient } = await import("@/lib/auth-client");
@@ -77,7 +82,7 @@ export async function getLiveXeroStatus(): Promise<LiveXero> {
 /** Real studios: Xero's sign-in page for the studio owner (Pro). */
 export async function startLiveXeroConnect(): Promise<string> {
   const { startXeroConnectFn } = await import("@/server/xero");
-  const { url } = await startXeroConnectFn({ data: await liveRequest() });
+  const { url } = await startXeroConnectFn({ data: await liveRequest({ sensitive: true }) });
   return url;
 }
 
@@ -97,7 +102,7 @@ export async function syncLiveXeroNow() {
 /** Real studios: Stripe-hosted onboarding URL for the studio's own account. */
 export async function startLiveStripeOnboarding(): Promise<string> {
   const { startStripeOnboardingFn } = await import("@/server/stripe-connect");
-  const { url } = await startStripeOnboardingFn({ data: await liveRequest() });
+  const { url } = await startStripeOnboardingFn({ data: await liveRequest({ sensitive: true }) });
   return url;
 }
 
@@ -138,7 +143,7 @@ export async function connectStripe(
 export async function disconnectStripe(scope: IntegrationScope = "demo") {
   if (isLive(scope)) {
     const { disconnectStripeConnectFn } = await import("@/server/stripe-connect");
-    await disconnectStripeConnectFn({ data: await liveRequest() });
+    await disconnectStripeConnectFn({ data: await liveRequest({ sensitive: true }) });
     return liveIntegrations().then((state) => state.stripe);
   }
   integrationState[scope].stripe = { status: "not_connected", businessName: null, bankLast4: null };
@@ -156,7 +161,7 @@ export async function connectXero(scope: IntegrationScope = "demo") {
 export async function disconnectXero(scope: IntegrationScope = "demo") {
   if (isLive(scope)) {
     const { disconnectXeroFn } = await import("@/server/xero");
-    await disconnectXeroFn({ data: await liveRequest() });
+    await disconnectXeroFn({ data: await liveRequest({ sensitive: true }) });
     return liveIntegrations().then((state) => state.xero);
   }
   integrationState[scope].xero = {
@@ -166,7 +171,9 @@ export async function disconnectXero(scope: IntegrationScope = "demo") {
   };
   return respond(integrationState[scope].xero);
 }
-export async function pushInvoiceToXero(invoiceId: string): Promise<{ synced: boolean; syncedAt?: string }> {
+export async function pushInvoiceToXero(
+  invoiceId: string,
+): Promise<{ synced: boolean; syncedAt?: string }> {
   const xero = integrationState.demo.xero;
   if (isLiveStudio()) return respond({ synced: false });
   if (!proFeaturesEnabled() || xero.status !== "connected") return respond({ synced: false });

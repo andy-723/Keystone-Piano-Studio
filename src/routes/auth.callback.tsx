@@ -16,6 +16,8 @@ import {
   NO_ACCOUNT_MESSAGE,
 } from "@/lib/post-login";
 import { markSessionStarted } from "@/lib/session-timeout";
+import { applyTrustChoice } from "@/lib/trust-device-client";
+import { TrustDeviceCheckbox } from "@/components/auth/TrustDeviceCheckbox";
 import { resolveAccountFn, recordNoAccountFn } from "@/server/account";
 import { Button } from "@/components/ui/button";
 
@@ -169,6 +171,8 @@ function AuthCallbackPage() {
         shellRoleForAccount(account),
       );
       markSessionStarted();
+      // Families (no code step): trust this browser now if they ticked the box.
+      await applyTrustChoice(session.access_token);
       window.location.replace(destinationForAccount(account, nextSafe));
     }
     void run();
@@ -185,6 +189,7 @@ function AuthCallbackPage() {
           <p className="mt-3 max-w-md text-center text-base text-[#5A4F43]">
             Tap continue to finish signing in to Keystone Music HQ.
           </p>
+          <TrustDeviceCheckbox className="mt-5 max-w-sm" />
           <Button
             className="mt-6"
             onClick={() => setConfirmed(true)}

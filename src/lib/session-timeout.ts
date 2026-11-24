@@ -7,7 +7,11 @@
  * Defaults Andrew can ask to change:
  * - Idle: 30 minutes without activity
  * - Absolute: 8 hours from sign-in, even if the person stays active
+ *
+ * A browser the person chose to trust (src/lib/trusted-device.ts, checked by the server on every
+ * page load) gets 7 days idle and lasts until the trust ends (30 days from when it was trusted).
  */
+import { TRUSTED_IDLE_MS } from "./trusted-device";
 
 /** Idle timeout — no clicks, keypresses or navigation. */
 export const SESSION_IDLE_MS = 30 * 60 * 1000;
@@ -19,6 +23,8 @@ const STARTED_KEY = "kmhq.session.startedAt";
 const ACTIVITY_KEY = "kmhq.session.lastActivityAt";
 /** After a timeout (or sign-out), mock/prototype mode must go through /login or /demo again. */
 const LOGIN_REQUIRED_KEY = "kmhq.session.loginRequired";
+/** Set from the server's trusted-device check; cleared when the server says "not trusted". */
+const TRUSTED_UNTIL_KEY = "kmhq.session.trustedUntil";
 
 export type SessionTimeoutReason = "idle" | "absolute";
 
@@ -73,11 +79,44 @@ export function getSessionLastActivityAt(): number | null {
   return readNumber(ACTIVITY_KEY);
 }
 
+/** Record what the server said about this browser (null = not trusted). */
+export function setSessionTrustedUntil(expiresAt: string | number | null) {
+  if (typeof localStorage === "undefined") return;
+  const value =
+    expiresAt == null ? null : typeof expiresAt === "number" ? expiresAt : Date.parse(expiresAt);
+  try {
+    if (value == null || !Number.isFinite(value)) localStorage.removeItem(TRUSTED_UNTIL_KEY);
+    else localStorage.setItem(TRUSTED_UNTIL_KEY, String(value));
+  } catch {
+    // ignore
+  }
+}
+
+/** When this browser's trust ends (ms), or null when it isn't trusted. */
+export function getSessionTrustedUntil(now = Date.now()): number | null {
+  const until = readNumber(TRUSTED_UNTIL_KEY);
+  return until != null && until > now ? until : null;
+}
+
+/** Idle and absolute limits for this browser right now. */
+export function sessionLimits(now = Date.now()): { idleMs: number; absoluteMs: number } {
+  const trustedUntil = getSessionTrustedUntil(now);
+  const startedAt = readNumber(STARTED_KEY) ?? now;
+  if (trustedUntil != null) {
+    return {
+      idleMs: TRUSTED_IDLE_MS,
+      absoluteMs: Math.max(trustedUntil - startedAt, SESSION_ABSOLUTE_MS),
+    };
+  }
+  return { idleMs: SESSION_IDLE_MS, absoluteMs: SESSION_ABSOLUTE_MS };
+}
+
 export function clearSessionTimeoutState() {
   if (typeof localStorage === "undefined") return;
   try {
     localStorage.removeItem(STARTED_KEY);
     localStorage.removeItem(ACTIVITY_KEY);
+    localStorage.removeItem(TRUSTED_UNTIL_KEY);
   } catch {
     // ignore
   }
@@ -114,8 +153,8 @@ export function isSessionLoginRequired(): boolean {
 /** Pure check — absolute wins when both would fire. */
 export function getSessionTimeoutReason(
   now = Date.now(),
-  idleMs = SESSION_IDLE_MS,
-  absoluteMs = SESSION_ABSOLUTE_MS,
+  idleMs = sessionLimits(now).idleMs,
+  absoluteMs = sessionLimits(now).absoluteMs,
 ): SessionTimeoutReason | null {
   const startedAt = readNumber(STARTED_KEY);
   if (startedAt == null) return null;

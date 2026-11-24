@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { downloadCsv } from "@/lib/csv-download";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { studioToday } from "@/lib/studio-clock";
@@ -41,16 +42,6 @@ import {
   logTaxLiteKm,
   taxLiteEofyCsv,
 } from "@/services/tax-lite";
-
-function downloadCsv(filename: string, csv: string) {
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = filename;
-  anchor.click();
-  URL.revokeObjectURL(url);
-}
 
 function dollarsToCents(raw: string): number | null {
   const cleaned = raw.replace(/[$,\s]/g, "").trim();
@@ -658,7 +649,7 @@ export function TaxLitePanel({
           disabled={!reviewed}
           onClick={() => {
             const file = taxLiteEofyCsv(pack);
-            downloadCsv(file.filename, file.csv);
+            void downloadCsv(file.filename, file.csv);
             toast.success("EOFY summary exported");
           }}
         >

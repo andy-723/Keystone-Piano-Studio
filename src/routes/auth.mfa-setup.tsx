@@ -11,6 +11,7 @@ import {
   destinationForAccount,
 } from "@/lib/post-login";
 import { markSessionStarted } from "@/lib/session-timeout";
+import { applyTrustChoice } from "@/lib/trust-device-client";
 import { recordMfaEnrolledFn, resolveAccountFn } from "@/server/account";
 
 export const Route = createFileRoute("/auth/mfa-setup")({
@@ -89,6 +90,7 @@ function MfaSetupPage() {
     const account = await resolveAccountFn({ data: { accessToken: token } });
     rememberVerifiedAccess(token, decideStudioAccessGate(account), shellRoleForAccount(account));
     markSessionStarted();
+    await applyTrustChoice(token);
     window.location.replace(destinationForAccount(account, safeNextPath(next)));
   }
 

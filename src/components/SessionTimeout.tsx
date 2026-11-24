@@ -4,8 +4,7 @@ import {
   getSessionLastActivityAt,
   getSessionStartedAt,
   getSessionTimeoutReason,
-  SESSION_ABSOLUTE_MS,
-  SESSION_IDLE_MS,
+  sessionLimits,
   touchSessionActivity,
 } from "@/lib/session-timeout";
 import { signOutForSessionTimeout } from "@/lib/sign-out";
@@ -14,9 +13,12 @@ const ACTIVITY_EVENTS = ["pointerdown", "keydown", "click", "touchstart"] as con
 
 /** How often to re-check timers while the tab is open (activity also re-arms the idle alarm). */
 const CHECK_EVERY_MS = 30_000;
+/** Browsers fire a setTimeout longer than ~24.8 days at once; the 30-second check covers the rest. */
+const MAX_ALARM_MS = 24 * 60 * 60 * 1000;
 
 /**
- * Enforces idle + absolute session timeouts while the person is in the app.
+ * Enforces idle + absolute session timeouts while the person is in the app (longer on a
+ * trusted device, see src/lib/session-timeout.ts).
  * Mount only after LiveAuthGuard has allowed the route (demo and live alike).
  */
 export function SessionTimeout() {
@@ -38,7 +40,10 @@ export function SessionTimeout() {
     function armIdleAlarm() {
       if (idleAlarm) clearTimeout(idleAlarm);
       const last = getSessionLastActivityAt() ?? Date.now();
-      const remaining = Math.max(0, last + SESSION_IDLE_MS - Date.now());
+      const remaining = Math.min(
+        MAX_ALARM_MS,
+        Math.max(0, last + sessionLimits().idleMs - Date.now()),
+      );
       idleAlarm = setTimeout(() => {
         void expire();
       }, remaining);
@@ -59,7 +64,10 @@ export function SessionTimeout() {
     }
 
     const startedAt = getSessionStartedAt() ?? Date.now();
-    const absoluteRemaining = Math.max(0, startedAt + SESSION_ABSOLUTE_MS - Date.now());
+    const absoluteRemaining = Math.min(
+      MAX_ALARM_MS,
+      Math.max(0, startedAt + sessionLimits().absoluteMs - Date.now()),
+    );
     const absoluteAlarm = setTimeout(() => {
       void expire();
     }, absoluteRemaining);

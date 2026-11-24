@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { getServerEnv, isMockOnboarding } from "./env";
 import { ProblemError } from "./problem";
+import { lastMfaAt } from "@/lib/trusted-device";
 
 export type VerifiedSession = {
   userId: string;
@@ -8,6 +9,10 @@ export type VerifiedSession = {
   aal: string | null;
   /** How this session was signed in (JWT amr), e.g. ["password"], ["otp"], ["oauth", "totp"]. */
   signInMethods: string[];
+  /** When the authenticator code was last entered in this session (ms), from the JWT amr. */
+  mfaVerifiedAt: number | null;
+  /** Supabase session id (JWT session_id), when present. */
+  sessionId: string | null;
   accessToken: string;
 };
 
@@ -41,17 +46,27 @@ export async function verifyAccessToken(accessToken: string): Promise<VerifiedSe
 
   let aal: string | null = null;
   let signInMethods: string[] = [];
+  let mfaVerifiedAt: number | null = null;
+  let sessionId: string | null = null;
   try {
     const payload = JSON.parse(
       Buffer.from(accessToken.split(".")[1] ?? "", "base64url").toString("utf8"),
-    ) as { aal?: string; amr?: Array<{ method?: string }> };
+    ) as {
+      aal?: string;
+      amr?: Array<{ method?: string; timestamp?: number }>;
+      session_id?: string;
+    };
     aal = payload.aal ?? null;
+    mfaVerifiedAt = lastMfaAt(payload.amr);
+    sessionId = typeof payload.session_id === "string" ? payload.session_id : null;
     signInMethods = (payload.amr ?? [])
       .map((entry) => entry?.method)
       .filter((method): method is string => typeof method === "string");
   } catch {
     aal = null;
     signInMethods = [];
+    mfaVerifiedAt = null;
+    sessionId = null;
   }
 
   return {
@@ -59,6 +74,8 @@ export async function verifyAccessToken(accessToken: string): Promise<VerifiedSe
     email: data.user.email ?? null,
     aal,
     signInMethods,
+    mfaVerifiedAt,
+    sessionId,
     accessToken,
   };
 }

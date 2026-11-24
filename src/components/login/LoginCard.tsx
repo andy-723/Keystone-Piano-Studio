@@ -4,6 +4,7 @@ import { TurnstileField } from "./TurnstileField";
 import { maskEmail } from "@/lib/auth-paths";
 import { getAuthClient, isDemoModeAllowed, isLiveAuthConfigured } from "@/lib/auth-client";
 import { markSessionStarted } from "@/lib/session-timeout";
+import { TrustDeviceCheckbox } from "@/components/auth/TrustDeviceCheckbox";
 
 const GoogleMark = () => (
   <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true">
@@ -256,6 +257,8 @@ export function LoginCard({ nextPath, siteKey = "", sessionTimedOut = false }: P
           Continue with email
         </button>
       </form>
+
+      <TrustDeviceCheckbox />
 
       {/* The demo account is the only one with a password (ADR-062); everyone else gets a link. */}
       <a href="/demo" className={btnSecondary} data-testid="login-demo-link">
